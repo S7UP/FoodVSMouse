@@ -41,3 +41,6 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: Mouse
+    uniqueID: 2538047881
+    locked: 0

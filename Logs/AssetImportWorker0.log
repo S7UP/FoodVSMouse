@@ -1,0 +1,786 @@
+Using pre-set license
+Built from '2020.3/china_unity/release' branch; Version is '2020.3.15f2c1 (b25d0e34ed8a) revision 11689230'; Using compiler version '192528614'; Build Type 'Release'
+OS: 'Windows 10 Home China; OS build 19042.1415; Version 2009; 64bit' Language: 'zh' Physical Memory: 15774 MB
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1, IsPro: 0
+
+ COMMAND LINE ARGUMENTS:
+C:\Program Files\Unity\Hub\Editor\2020.3.15f2c1\Editor\Unity.exe
+-adb2
+-batchMode
+-noUpm
+-name
+AssetImportWorker0
+-projectPath
+C:/Unity Workplace/FoodVSMouse
+-logFile
+Logs/AssetImportWorker0.log
+-srvPort
+57329
+Successfully changed project path to: C:/Unity Workplace/FoodVSMouse
+C:/Unity Workplace/FoodVSMouse
+Using Asset Import Pipeline V2.
+Refreshing native plugins compatible for Editor in 39.38 ms, found 3 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Initialize engine version: 2020.3.15f2c1 (b25d0e34ed8a)
+[Subsystems] Discovering subsystems at path C:/Program Files/Unity/Hub/Editor/2020.3.15f2c1/Editor/Data/Resources/UnitySubsystems
+[Subsystems] Discovering subsystems at path C:/Unity Workplace/FoodVSMouse/Assets
+GfxDevice: creating device client; threaded=0
+Direct3D:
+    Version:  Direct3D 11.0 [level 11.1]
+    Renderer: NVIDIA GeForce RTX 3050 Ti Laptop GPU (ID=0x25a0)
+    Vendor:   
+    VRAM:     3990 MB
+    Driver:   27.21.14.6235
+Initialize mono
+Mono path[0] = 'C:/Program Files/Unity/Hub/Editor/2020.3.15f2c1/Editor/Data/Managed'
+Mono path[1] = 'C:/Program Files/Unity/Hub/Editor/2020.3.15f2c1/Editor/Data/MonoBleedingEdge/lib/mono/unityjit'
+Mono config path = 'C:/Program Files/Unity/Hub/Editor/2020.3.15f2c1/Editor/Data/MonoBleedingEdge/etc'
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56080
+Begin MonoManager ReloadAssembly
+Registering precompiled unity dll's ...
+Register platform support module: C:/Program Files/Unity/Hub/Editor/2020.3.15f2c1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll
+Registered in 0.120602 seconds.
+Native extension for WindowsStandalone target not found
+Refreshing native plugins compatible for Editor in 38.07 ms, found 3 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Mono: successfully reloaded assembly
+- Completed reload, in  3.433 seconds
+Domain Reload Profiling:
+	ReloadAssembly (3433ms)
+		BeginReloadAssembly (2108ms)
+			ExecutionOrderSort (0ms)
+			DisableScriptedObjects (0ms)
+			BackupInstance (0ms)
+			ReleaseScriptingObjects (0ms)
+			CreateAndSetChildDomain (1ms)
+		EndReloadAssembly (615ms)
+			LoadAssemblies (2106ms)
+			RebuildTransferFunctionScriptingTraits (0ms)
+			SetupTypeCache (354ms)
+			ReleaseScriptCaches (0ms)
+			RebuildScriptCaches (24ms)
+			SetupLoadedEditorAssemblies (151ms)
+				LogAssemblyErrors (0ms)
+				InitializePlatformSupportModulesInManaged (3ms)
+				SetLoadedEditorAssemblies (0ms)
+				RefreshPlugins (38ms)
+				BeforeProcessingInitializeOnLoad (12ms)
+				ProcessInitializeOnLoadAttributes (66ms)
+				ProcessInitializeOnLoadMethodAttributes (30ms)
+				AfterProcessingInitializeOnLoad (0ms)
+				EditorAssembliesLoaded (0ms)
+			ExecutionOrderSort2 (0ms)
+			AwakeInstancesAfterBackupRestoration (0ms)
+Platform modules already initialized, skipping
+Registering precompiled user dll's ...
+Registered in 0.588329 seconds.
+Begin MonoManager ReloadAssembly
+Native extension for WindowsStandalone target not found
+Refreshing native plugins compatible for Editor in 36.39 ms, found 3 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Mono: successfully reloaded assembly
+- Completed reload, in  3.464 seconds
+Domain Reload Profiling:
+	ReloadAssembly (3469ms)
+		BeginReloadAssembly (122ms)
+			ExecutionOrderSort (0ms)
+			DisableScriptedObjects (4ms)
+			BackupInstance (0ms)
+			ReleaseScriptingObjects (0ms)
+			CreateAndSetChildDomain (17ms)
+		EndReloadAssembly (3291ms)
+			LoadAssemblies (1879ms)
+			RebuildTransferFunctionScriptingTraits (0ms)
+			SetupTypeCache (748ms)
+			ReleaseScriptCaches (1ms)
+			RebuildScriptCaches (35ms)
+			SetupLoadedEditorAssemblies (528ms)
+				LogAssemblyErrors (0ms)
+				InitializePlatformSupportModulesInManaged (4ms)
+				SetLoadedEditorAssemblies (0ms)
+				RefreshPlugins (36ms)
+				BeforeProcessingInitializeOnLoad (96ms)
+				ProcessInitializeOnLoadAttributes (373ms)
+				ProcessInitializeOnLoadMethodAttributes (11ms)
+				AfterProcessingInitializeOnLoad (8ms)
+				EditorAssembliesLoaded (0ms)
+			ExecutionOrderSort2 (0ms)
+			AwakeInstancesAfterBackupRestoration (6ms)
+Platform modules already initialized, skipping
+========================================================================
+Worker process is ready to serve import requests
+Launched and connected shader compiler UnityShaderCompiler.exe after 0.10 seconds
+Refreshing native plugins compatible for Editor in 0.53 ms, found 3 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 2090 Unused Serialized files (Serialized files now loaded: 0)
+System memory in use before: 93.4 MB.
+System memory in use after: 93.5 MB.
+
+Unloading 27 unused Assets to reduce memory usage. Loaded Objects now: 2529.
+Total: 2.624000 ms (FindLiveObjects: 0.211700 ms CreateObjectMapping: 0.068100 ms MarkObjects: 2.266500 ms  DeleteObjects: 0.076600 ms)
+
+AssetImportParameters requested are different than current active one (requested -> active):
+  custom:framework-win-MediaFoundation: 216162199b28c13a410421893ffa2e32 -> 
+  custom:video-decoder-ogg-theora: a1e56fd34408186e4bbccfd4996cb3dc -> 
+  custom:container-muxer-webm: aa71ff27fc2769a1b78a27578f13a17b -> 
+  custom:container-demuxer-webm: 4f35f7cbe854078d1ac9338744f61a02 -> 
+  custom:container-demuxer-ogg: 62fdf1f143b41e24485cea50d1cbac27 -> 
+  custom:video-encoder-webm-vp8: eb34c28f22e8b96e1ab97ce403110664 -> 
+  custom:video-codec-MediaFoundation-h265: 746d11721c4dcdbdad8f713fa42b33f4 -> 
+  custom:video-decoder-webm-vp8: 9c59270c3fd7afecdb556c50c9e8de78 -> 
+  custom:audio-decoder-ogg-vorbis: bf7c407c2cedff20999df2af8eb42d56 -> 
+  custom:audio-encoder-webm-vorbis: bf7c407c2cedff20999df2af8eb42d56 -> 
+========================================================================
+Received Import Request.
+  path: Assets/Resources/Pictures/Mouse/HugeMouse
+  artifactKey: Guid(ea9e1a5e6a8e5ca4981f5c426599555a) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Pictures/Mouse/HugeMouse using Guid(ea9e1a5e6a8e5ca4981f5c426599555a) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'e933c7da01f5aff598fe1c53d058aea2') in 0.011582 seconds 
+  Import took 0.014791 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000282 seconds.
+  path: Assets/Resources/Pictures/Mouse/HugeMouse/cut.png
+  artifactKey: Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Pictures/Mouse/HugeMouse/cut.png using Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '1b8d1d11821e316812367a2c8c60dcf3') in 0.059245 seconds 
+  Import took 0.062146 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 33.348322 seconds.
+  path: Assets/Resources/Pictures/Mouse/HugeMouse/cut.png
+  artifactKey: Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Pictures/Mouse/HugeMouse/cut.png using Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '367cc324e3061f03c6f4a031e9113bf8') in 0.051046 seconds 
+  Import took 0.054872 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 476.752843 seconds.
+  path: Assets/Resources/Pictures/Mouse/HugeMouse/cut.png
+  artifactKey: Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Pictures/Mouse/HugeMouse/cut.png using Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '7785fd3cec62aac05b2065b8772fe4ef') in 0.018130 seconds 
+  Import took 0.021867 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 10889.140665 seconds.
+  path: Assets/Resources/Pictures/Mouse/HugeMouse/cut.png
+  artifactKey: Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Pictures/Mouse/HugeMouse/cut.png using Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '4ac70083f34c5f37ef9d1671589ff1f4') in 0.029458 seconds 
+  Import took 0.033643 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 214.042679 seconds.
+  path: Assets/Resources/Pictures/Mouse/HugeMouse/cut.png
+  artifactKey: Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Pictures/Mouse/HugeMouse/cut.png using Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'a5a802317af065d722f1284102762add') in 0.017679 seconds 
+  Import took 0.021473 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 1095.913249 seconds.
+  path: Assets/Resources/Pictures/Mouse/HugeMouse/cut.png
+  artifactKey: Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Pictures/Mouse/HugeMouse/cut.png using Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'c5d05db0b85470777062dc5543a49233') in 0.017434 seconds 
+  Import took 0.021575 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 118.144432 seconds.
+  path: Assets/Resources/Pictures/Mouse/HugeMouse/cut.png
+  artifactKey: Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Pictures/Mouse/HugeMouse/cut.png using Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'd4ddf3af6e5a2eb74a19ff1ba50ff557') in 0.022786 seconds 
+  Import took 0.026865 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 729.670980 seconds.
+  path: Assets/Resources/Pictures/Mouse/HugeMouse/cut.png
+  artifactKey: Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Pictures/Mouse/HugeMouse/cut.png using Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'a025a29bfa8b83be3b44db052fd4f67e') in 0.032979 seconds 
+  Import took 0.037403 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 938.378419 seconds.
+  path: Assets/Resources/Pictures/Mouse/HugeMouse/cut.png
+  artifactKey: Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Pictures/Mouse/HugeMouse/cut.png using Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '20eecf032fdf00d941df2427cdbc9b04') in 0.018554 seconds 
+  Import took 0.022731 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 200.844867 seconds.
+  path: Assets/Resources/Pictures/Mouse/HugeMouse/cut.png
+  artifactKey: Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Pictures/Mouse/HugeMouse/cut.png using Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'b70ddc9ed6db1c02c2d12e9e1f806a3e') in 0.023788 seconds 
+  Import took 0.028467 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 533.709970 seconds.
+  path: Assets/Resources/Pictures/Mouse/HugeMouse/cut.png
+  artifactKey: Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Pictures/Mouse/HugeMouse/cut.png using Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '8dff8af97631e4da1bd4ad77921318fb') in 0.022418 seconds 
+  Import took 0.026213 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 26.295828 seconds.
+  path: Assets/Resources/Pictures/Mouse/HugeMouse/cut.png
+  artifactKey: Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Pictures/Mouse/HugeMouse/cut.png using Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '7ecd12dbb6cc85191d4cfefd2e58d79a') in 0.023441 seconds 
+  Import took 0.027123 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 721.245281 seconds.
+  path: Assets/Resources/Pictures/Mouse/HugeMouse/cut.png
+  artifactKey: Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Pictures/Mouse/HugeMouse/cut.png using Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'c95e96c1c84240957ba18b17e0c984a0') in 0.019991 seconds 
+  Import took 0.024090 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 43.666698 seconds.
+  path: Assets/Resources/Pictures/Mouse/HugeMouse/cut.png
+  artifactKey: Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Pictures/Mouse/HugeMouse/cut.png using Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '1b9a334d332ed15de2d4befc68a70348') in 0.016995 seconds 
+  Import took 0.020922 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 206.457792 seconds.
+  path: Assets/Resources/Pictures/Mouse/HugeMouse/cut.png
+  artifactKey: Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Pictures/Mouse/HugeMouse/cut.png using Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'a6d1dfce6287cf29b0d6db5d94fc9064') in 0.017415 seconds 
+  Import took 0.021397 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 5428.628359 seconds.
+  path: Assets/Resources/Animator/Animation/Mouse
+  artifactKey: Guid(6809479fb7e2cde48915dc509607e957) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Animator/Animation/Mouse using Guid(6809479fb7e2cde48915dc509607e957) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'bf7ba5e7b85f4867ba5cb46ee0363b88') in 0.008529 seconds 
+  Import took 0.012658 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 7.296460 seconds.
+  path: Assets/Resources/Animator/AnimatorController/Mouse
+  artifactKey: Guid(4e7f7ef205ae0fd4187d6e4ee7c078ef) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Animator/AnimatorController/Mouse using Guid(4e7f7ef205ae0fd4187d6e4ee7c078ef) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '7534525f81f5c93703eb18d293879206') in 0.003169 seconds 
+  Import took 0.006818 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 18.339901 seconds.
+  path: Assets/Resources/Animator/AnimatorController/Mouse/HugeMouse.anim
+  artifactKey: Guid(48e00440f3e9ffc48923e6f021f38cd6) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Animator/AnimatorController/Mouse/HugeMouse.anim using Guid(48e00440f3e9ffc48923e6f021f38cd6) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '291175c99e2b5c35c08f5978d20f1b42') in 0.012131 seconds 
+  Import took 0.016276 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 9.918030 seconds.
+  path: Assets/Resources/Animator/Animation/Mouse/New Folder
+  artifactKey: Guid(1df0bc39b369f6a48954c7f31c3c8188) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Animator/Animation/Mouse/New Folder using Guid(1df0bc39b369f6a48954c7f31c3c8188) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '26eb04ffaf076a43e8a7dad1c66da344') in 0.009458 seconds 
+  Import took 0.013230 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 11.717871 seconds.
+  path: Assets/Resources/Animator/Animation/Mouse/HugeMouse.anim
+  artifactKey: Guid(309840cdffb390b419e3cb3931527ae7) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Animator/Animation/Mouse/HugeMouse.anim using Guid(309840cdffb390b419e3cb3931527ae7) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '4c98097e249ed27463073c7d31c3c465') in 0.005265 seconds 
+  Import took 0.009633 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 55.430056 seconds.
+  path: Assets/Resources/Animator/AnimatorController/Mouse/SpriteGo.controller
+  artifactKey: Guid(26447aa196656c2419e74276298967fd) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Animator/AnimatorController/Mouse/SpriteGo.controller using Guid(26447aa196656c2419e74276298967fd) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '9c3bc6eb5fe8ca7a15c0ecae8ee5c294') in 0.011978 seconds 
+  Import took 0.015572 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.001752 seconds.
+  path: Assets/Resources/Animator/AnimatorController/Mouse/SpriteGo.controller
+  artifactKey: Guid(26447aa196656c2419e74276298967fd) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Animator/AnimatorController/Mouse/SpriteGo.controller using Guid(26447aa196656c2419e74276298967fd) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '9c3bc6eb5fe8ca7a15c0ecae8ee5c294') in 0.004110 seconds 
+  Import took 0.007724 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 19.285106 seconds.
+  path: Assets/Resources/Animator/AnimatorController/Mouse/HugeMouse.controller
+  artifactKey: Guid(26447aa196656c2419e74276298967fd) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Animator/AnimatorController/Mouse/HugeMouse.controller using Guid(26447aa196656c2419e74276298967fd) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '3268264892b8f6f1e1f8e2a77c8ac7cd') in 0.004455 seconds 
+  Import took 0.008327 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 50.563644 seconds.
+  path: Assets/Resources/Animator/Animation/Mouse/HugeMouse
+  artifactKey: Guid(a3e981a0e5d0abe448bae67c93300a7a) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Animator/Animation/Mouse/HugeMouse using Guid(a3e981a0e5d0abe448bae67c93300a7a) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'e6c6e37cc7fe6060a15d1fc17057a5ca') in 0.003810 seconds 
+  Import took 0.007705 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 13.466529 seconds.
+  path: Assets/Resources/Animator/Animation/Mouse/HugeMouse/Idle.anim
+  artifactKey: Guid(309840cdffb390b419e3cb3931527ae7) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Animator/Animation/Mouse/HugeMouse/Idle.anim using Guid(309840cdffb390b419e3cb3931527ae7) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'd4c4d813f1210363bbe2295b8c9f51ec') in 0.008740 seconds 
+  Import took 0.012293 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 824.593168 seconds.
+  path: Assets/Resources/Pictures/Mouse/HugeMouse/cut.png
+  artifactKey: Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Pictures/Mouse/HugeMouse/cut.png using Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'e01a586cc8165b6057488d3b48766dd7') in 0.024553 seconds 
+  Import took 0.029016 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 904.879643 seconds.
+  path: Assets/Resources/Animator/AnimatorController/Mouse/HugeMouse.controller
+  artifactKey: Guid(26447aa196656c2419e74276298967fd) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Animator/AnimatorController/Mouse/HugeMouse.controller using Guid(26447aa196656c2419e74276298967fd) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '792b42d1ff2f2078ba09a4d052574d3b') in 0.004581 seconds 
+  Import took 0.008772 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 1550.091053 seconds.
+  path: Assets/Resources/Animator/Animation/Mouse/HugeMouse/Idle.anim
+  artifactKey: Guid(309840cdffb390b419e3cb3931527ae7) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Animator/Animation/Mouse/HugeMouse/Idle.anim using Guid(309840cdffb390b419e3cb3931527ae7) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '80936b3bc32ff3f2af20eb04ad0abbf9') in 0.004767 seconds 
+  Import took 0.008627 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000872 seconds.
+  path: Assets/Resources/Animator/Animation/Mouse/HugeMouse/Idle.anim
+  artifactKey: Guid(309840cdffb390b419e3cb3931527ae7) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Animator/Animation/Mouse/HugeMouse/Idle.anim using Guid(309840cdffb390b419e3cb3931527ae7) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '80936b3bc32ff3f2af20eb04ad0abbf9') in 0.005523 seconds 
+  Import took 0.008959 seconds .
+
+========================================================================
+Received Prepare
+Registering precompiled user dll's ...
+Registered in 0.006823 seconds.
+Begin MonoManager ReloadAssembly
+Native extension for WindowsStandalone target not found
+Refreshing native plugins compatible for Editor in 0.58 ms, found 3 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Mono: successfully reloaded assembly
+- Completed reload, in  1.161 seconds
+Domain Reload Profiling:
+	ReloadAssembly (1162ms)
+		BeginReloadAssembly (123ms)
+			ExecutionOrderSort (0ms)
+			DisableScriptedObjects (7ms)
+			BackupInstance (0ms)
+			ReleaseScriptingObjects (0ms)
+			CreateAndSetChildDomain (33ms)
+		EndReloadAssembly (957ms)
+			LoadAssemblies (107ms)
+			RebuildTransferFunctionScriptingTraits (0ms)
+			SetupTypeCache (284ms)
+			ReleaseScriptCaches (1ms)
+			RebuildScriptCaches (40ms)
+			SetupLoadedEditorAssemblies (434ms)
+				LogAssemblyErrors (0ms)
+				InitializePlatformSupportModulesInManaged (5ms)
+				SetLoadedEditorAssemblies (0ms)
+				RefreshPlugins (1ms)
+				BeforeProcessingInitializeOnLoad (102ms)
+				ProcessInitializeOnLoadAttributes (307ms)
+				ProcessInitializeOnLoadMethodAttributes (8ms)
+				AfterProcessingInitializeOnLoad (10ms)
+				EditorAssembliesLoaded (0ms)
+			ExecutionOrderSort2 (0ms)
+			AwakeInstancesAfterBackupRestoration (10ms)
+Platform modules already initialized, skipping
+Refreshing native plugins compatible for Editor in 0.60 ms, found 3 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 2079 Unused Serialized files (Serialized files now loaded: 0)
+System memory in use before: 95.7 MB.
+System memory in use after: 95.8 MB.
+
+Unloading 16 unused Assets to reduce memory usage. Loaded Objects now: 2539.
+Total: 2.776700 ms (FindLiveObjects: 0.225600 ms CreateObjectMapping: 0.063600 ms MarkObjects: 2.465700 ms  DeleteObjects: 0.020600 ms)
+
+AssetImportParameters requested are different than current active one (requested -> active):
+  custom:framework-win-MediaFoundation: 216162199b28c13a410421893ffa2e32 -> 
+  custom:video-decoder-ogg-theora: a1e56fd34408186e4bbccfd4996cb3dc -> 
+  custom:container-muxer-webm: aa71ff27fc2769a1b78a27578f13a17b -> 
+  custom:container-demuxer-webm: 4f35f7cbe854078d1ac9338744f61a02 -> 
+  custom:container-demuxer-ogg: 62fdf1f143b41e24485cea50d1cbac27 -> 
+  custom:video-encoder-webm-vp8: eb34c28f22e8b96e1ab97ce403110664 -> 
+  custom:video-codec-MediaFoundation-h265: 746d11721c4dcdbdad8f713fa42b33f4 -> 
+  custom:video-decoder-webm-vp8: 9c59270c3fd7afecdb556c50c9e8de78 -> 
+  custom:audio-decoder-ogg-vorbis: bf7c407c2cedff20999df2af8eb42d56 -> 
+  custom:audio-encoder-webm-vorbis: bf7c407c2cedff20999df2af8eb42d56 -> 
+========================================================================
+Received Import Request.
+  Time since last request: 6.958706 seconds.
+  path: Assets/Resources/Animator/Animation/Mouse/HugeMouse/Idle.anim
+  artifactKey: Guid(309840cdffb390b419e3cb3931527ae7) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Animator/Animation/Mouse/HugeMouse/Idle.anim using Guid(309840cdffb390b419e3cb3931527ae7) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'f3123eef6f3f4d61dc1006495be77427') in 0.021766 seconds 
+  Import took 0.026082 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.634722 seconds.
+  path: Assets/Resources/Animator/Animation/Mouse/HugeMouse/Idle.anim
+  artifactKey: Guid(309840cdffb390b419e3cb3931527ae7) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Animator/Animation/Mouse/HugeMouse/Idle.anim using Guid(309840cdffb390b419e3cb3931527ae7) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'f3123eef6f3f4d61dc1006495be77427') in 0.004804 seconds 
+  Import took 0.008290 seconds .
+
+========================================================================
+Received Prepare
+Registering precompiled user dll's ...
+Registered in 0.007607 seconds.
+Begin MonoManager ReloadAssembly
+Native extension for WindowsStandalone target not found
+Refreshing native plugins compatible for Editor in 0.61 ms, found 3 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Mono: successfully reloaded assembly
+- Completed reload, in  1.443 seconds
+Domain Reload Profiling:
+	ReloadAssembly (1444ms)
+		BeginReloadAssembly (165ms)
+			ExecutionOrderSort (0ms)
+			DisableScriptedObjects (8ms)
+			BackupInstance (0ms)
+			ReleaseScriptingObjects (0ms)
+			CreateAndSetChildDomain (51ms)
+		EndReloadAssembly (1184ms)
+			LoadAssemblies (130ms)
+			RebuildTransferFunctionScriptingTraits (0ms)
+			SetupTypeCache (351ms)
+			ReleaseScriptCaches (1ms)
+			RebuildScriptCaches (47ms)
+			SetupLoadedEditorAssemblies (539ms)
+				LogAssemblyErrors (0ms)
+				InitializePlatformSupportModulesInManaged (7ms)
+				SetLoadedEditorAssemblies (1ms)
+				RefreshPlugins (1ms)
+				BeforeProcessingInitializeOnLoad (132ms)
+				ProcessInitializeOnLoadAttributes (376ms)
+				ProcessInitializeOnLoadMethodAttributes (9ms)
+				AfterProcessingInitializeOnLoad (13ms)
+				EditorAssembliesLoaded (0ms)
+			ExecutionOrderSort2 (0ms)
+			AwakeInstancesAfterBackupRestoration (12ms)
+Platform modules already initialized, skipping
+Refreshing native plugins compatible for Editor in 0.60 ms, found 3 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 2079 Unused Serialized files (Serialized files now loaded: 0)
+System memory in use before: 95.8 MB.
+System memory in use after: 95.9 MB.
+
+Unloading 16 unused Assets to reduce memory usage. Loaded Objects now: 2542.
+Total: 3.828700 ms (FindLiveObjects: 0.244700 ms CreateObjectMapping: 0.119500 ms MarkObjects: 3.436700 ms  DeleteObjects: 0.026300 ms)
+
+AssetImportParameters requested are different than current active one (requested -> active):
+  custom:framework-win-MediaFoundation: 216162199b28c13a410421893ffa2e32 -> 
+  custom:video-decoder-ogg-theora: a1e56fd34408186e4bbccfd4996cb3dc -> 
+  custom:container-muxer-webm: aa71ff27fc2769a1b78a27578f13a17b -> 
+  custom:container-demuxer-webm: 4f35f7cbe854078d1ac9338744f61a02 -> 
+  custom:container-demuxer-ogg: 62fdf1f143b41e24485cea50d1cbac27 -> 
+  custom:video-encoder-webm-vp8: eb34c28f22e8b96e1ab97ce403110664 -> 
+  custom:video-codec-MediaFoundation-h265: 746d11721c4dcdbdad8f713fa42b33f4 -> 
+  custom:video-decoder-webm-vp8: 9c59270c3fd7afecdb556c50c9e8de78 -> 
+  custom:audio-decoder-ogg-vorbis: bf7c407c2cedff20999df2af8eb42d56 -> 
+  custom:audio-encoder-webm-vorbis: bf7c407c2cedff20999df2af8eb42d56 -> 
+========================================================================
+Received Import Request.
+  Time since last request: 392.115758 seconds.
+  path: Assets/Resources/Animator/Animation/Mouse/HugeMouse/Move.anim
+  artifactKey: Guid(ab27e210e1eb1b14c86dfa0bb014053f) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Animator/Animation/Mouse/HugeMouse/Move.anim using Guid(ab27e210e1eb1b14c86dfa0bb014053f) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '2c0809e2a36ad740f6ec5846052f4492') in 0.021936 seconds 
+  Import took 0.025917 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000324 seconds.
+  path: Assets/Resources/Animator/Animation/Mouse/HugeMouse/Move.anim
+  artifactKey: Guid(ab27e210e1eb1b14c86dfa0bb014053f) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Animator/Animation/Mouse/HugeMouse/Move.anim using Guid(ab27e210e1eb1b14c86dfa0bb014053f) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '2c0809e2a36ad740f6ec5846052f4492') in 0.004066 seconds 
+  Import took 0.007687 seconds .
+
+========================================================================
+Received Prepare
+Registering precompiled user dll's ...
+Registered in 0.006935 seconds.
+Begin MonoManager ReloadAssembly
+Native extension for WindowsStandalone target not found
+Refreshing native plugins compatible for Editor in 0.71 ms, found 3 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Mono: successfully reloaded assembly
+- Completed reload, in  1.296 seconds
+Domain Reload Profiling:
+	ReloadAssembly (1296ms)
+		BeginReloadAssembly (150ms)
+			ExecutionOrderSort (0ms)
+			DisableScriptedObjects (7ms)
+			BackupInstance (0ms)
+			ReleaseScriptingObjects (0ms)
+			CreateAndSetChildDomain (48ms)
+		EndReloadAssembly (1070ms)
+			LoadAssemblies (115ms)
+			RebuildTransferFunctionScriptingTraits (0ms)
+			SetupTypeCache (307ms)
+			ReleaseScriptCaches (1ms)
+			RebuildScriptCaches (47ms)
+			SetupLoadedEditorAssemblies (493ms)
+				LogAssemblyErrors (0ms)
+				InitializePlatformSupportModulesInManaged (6ms)
+				SetLoadedEditorAssemblies (1ms)
+				RefreshPlugins (1ms)
+				BeforeProcessingInitializeOnLoad (115ms)
+				ProcessInitializeOnLoadAttributes (351ms)
+				ProcessInitializeOnLoadMethodAttributes (8ms)
+				AfterProcessingInitializeOnLoad (11ms)
+				EditorAssembliesLoaded (0ms)
+			ExecutionOrderSort2 (0ms)
+			AwakeInstancesAfterBackupRestoration (11ms)
+Platform modules already initialized, skipping
+Refreshing native plugins compatible for Editor in 0.62 ms, found 3 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 2079 Unused Serialized files (Serialized files now loaded: 0)
+System memory in use before: 95.8 MB.
+System memory in use after: 95.9 MB.
+
+Unloading 16 unused Assets to reduce memory usage. Loaded Objects now: 2545.
+Total: 2.970900 ms (FindLiveObjects: 0.313700 ms CreateObjectMapping: 0.083700 ms MarkObjects: 2.549700 ms  DeleteObjects: 0.022500 ms)
+
+AssetImportParameters requested are different than current active one (requested -> active):
+  custom:framework-win-MediaFoundation: 216162199b28c13a410421893ffa2e32 -> 
+  custom:video-decoder-ogg-theora: a1e56fd34408186e4bbccfd4996cb3dc -> 
+  custom:container-muxer-webm: aa71ff27fc2769a1b78a27578f13a17b -> 
+  custom:container-demuxer-webm: 4f35f7cbe854078d1ac9338744f61a02 -> 
+  custom:container-demuxer-ogg: 62fdf1f143b41e24485cea50d1cbac27 -> 
+  custom:video-encoder-webm-vp8: eb34c28f22e8b96e1ab97ce403110664 -> 
+  custom:video-codec-MediaFoundation-h265: 746d11721c4dcdbdad8f713fa42b33f4 -> 
+  custom:video-decoder-webm-vp8: 9c59270c3fd7afecdb556c50c9e8de78 -> 
+  custom:audio-decoder-ogg-vorbis: bf7c407c2cedff20999df2af8eb42d56 -> 
+  custom:audio-encoder-webm-vorbis: bf7c407c2cedff20999df2af8eb42d56 -> 
+========================================================================
+Received Import Request.
+  Time since last request: 4708.678080 seconds.
+  path: Assets/Resources/Animator/Animation/Mouse/HugeMouse/Attack.anim
+  artifactKey: Guid(157a54c8d12e9ee4a98322b263421768) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Animator/Animation/Mouse/HugeMouse/Attack.anim using Guid(157a54c8d12e9ee4a98322b263421768) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '9b150479e1b56798b284c659a7e42690') in 0.022699 seconds 
+  Import took 0.026763 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 6.821166 seconds.
+  path: Assets/Resources/Animator/AnimatorController/Mouse/HugeMouse.controller
+  artifactKey: Guid(26447aa196656c2419e74276298967fd) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Animator/AnimatorController/Mouse/HugeMouse.controller using Guid(26447aa196656c2419e74276298967fd) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '1cca9a75e495c1f27653e96bf4ac7bfb') in 0.006109 seconds 
+  Import took 0.009896 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.001012 seconds.
+  path: Assets/Resources/Animator/AnimatorController/Mouse/HugeMouse.controller
+  artifactKey: Guid(26447aa196656c2419e74276298967fd) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Animator/AnimatorController/Mouse/HugeMouse.controller using Guid(26447aa196656c2419e74276298967fd) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '1cca9a75e495c1f27653e96bf4ac7bfb') in 0.005960 seconds 
+  Import took 0.009845 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 6377.115253 seconds.
+  path: Assets/Resources/Pictures/Mouse/HugeMouse/cut.png
+  artifactKey: Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Pictures/Mouse/HugeMouse/cut.png using Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '2b41526438aacee2b38df9511ae50c9c') in 0.055878 seconds 
+  Import took 0.060048 seconds .
+
+========================================================================
+Received Prepare
+Registering precompiled user dll's ...
+Registered in 0.154664 seconds.
+Begin MonoManager ReloadAssembly
+Native extension for WindowsStandalone target not found
+Refreshing native plugins compatible for Editor in 0.52 ms, found 3 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Mono: successfully reloaded assembly
+- Completed reload, in  1.049 seconds
+Domain Reload Profiling:
+	ReloadAssembly (1049ms)
+		BeginReloadAssembly (112ms)
+			ExecutionOrderSort (0ms)
+			DisableScriptedObjects (5ms)
+			BackupInstance (0ms)
+			ReleaseScriptingObjects (0ms)
+			CreateAndSetChildDomain (34ms)
+		EndReloadAssembly (880ms)
+			LoadAssemblies (86ms)
+			RebuildTransferFunctionScriptingTraits (0ms)
+			SetupTypeCache (236ms)
+			ReleaseScriptCaches (1ms)
+			RebuildScriptCaches (33ms)
+			SetupLoadedEditorAssemblies (443ms)
+				LogAssemblyErrors (0ms)
+				InitializePlatformSupportModulesInManaged (5ms)
+				SetLoadedEditorAssemblies (0ms)
+				RefreshPlugins (1ms)
+				BeforeProcessingInitializeOnLoad (84ms)
+				ProcessInitializeOnLoadAttributes (336ms)
+				ProcessInitializeOnLoadMethodAttributes (6ms)
+				AfterProcessingInitializeOnLoad (10ms)
+				EditorAssembliesLoaded (0ms)
+			ExecutionOrderSort2 (0ms)
+			AwakeInstancesAfterBackupRestoration (9ms)
+Platform modules already initialized, skipping
+Refreshing native plugins compatible for Editor in 0.54 ms, found 3 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 2079 Unused Serialized files (Serialized files now loaded: 0)
+System memory in use before: 95.8 MB.
+System memory in use after: 95.9 MB.
+
+Unloading 16 unused Assets to reduce memory usage. Loaded Objects now: 2549.
+Total: 2.778500 ms (FindLiveObjects: 0.215300 ms CreateObjectMapping: 0.081300 ms MarkObjects: 2.462900 ms  DeleteObjects: 0.018000 ms)
+
+AssetImportParameters requested are different than current active one (requested -> active):
+  custom:framework-win-MediaFoundation: 216162199b28c13a410421893ffa2e32 -> 
+  custom:video-decoder-ogg-theora: a1e56fd34408186e4bbccfd4996cb3dc -> 
+  custom:container-muxer-webm: aa71ff27fc2769a1b78a27578f13a17b -> 
+  custom:container-demuxer-webm: 4f35f7cbe854078d1ac9338744f61a02 -> 
+  custom:container-demuxer-ogg: 62fdf1f143b41e24485cea50d1cbac27 -> 
+  custom:video-encoder-webm-vp8: eb34c28f22e8b96e1ab97ce403110664 -> 
+  custom:video-codec-MediaFoundation-h265: 746d11721c4dcdbdad8f713fa42b33f4 -> 
+  custom:video-decoder-webm-vp8: 9c59270c3fd7afecdb556c50c9e8de78 -> 
+  custom:audio-decoder-ogg-vorbis: bf7c407c2cedff20999df2af8eb42d56 -> 
+  custom:audio-encoder-webm-vorbis: bf7c407c2cedff20999df2af8eb42d56 -> 
+========================================================================
+Received Import Request.
+  Time since last request: 4378.212740 seconds.
+  path: Assets/Resources/Pictures/Mouse/HugeMouse/cut.png
+  artifactKey: Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/Pictures/Mouse/HugeMouse/cut.png using Guid(aa974601659e3f448bb33c9e7a4eac06) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'e11818c02b891375afa61f699fd4e920') in 0.077141 seconds 
+  Import took 0.081105 seconds .
+
+========================================================================
+Received Prepare
+Registering precompiled user dll's ...
+Registered in 0.006899 seconds.
+Begin MonoManager ReloadAssembly
+Native extension for WindowsStandalone target not found
+Refreshing native plugins compatible for Editor in 0.53 ms, found 3 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Mono: successfully reloaded assembly
+- Completed reload, in  0.991 seconds
+Domain Reload Profiling:
+	ReloadAssembly (992ms)
+		BeginReloadAssembly (123ms)
+			ExecutionOrderSort (0ms)
+			DisableScriptedObjects (5ms)
+			BackupInstance (0ms)
+			ReleaseScriptingObjects (0ms)
+			CreateAndSetChildDomain (34ms)
+		EndReloadAssembly (807ms)
+			LoadAssemblies (92ms)
+			RebuildTransferFunctionScriptingTraits (0ms)
+			SetupTypeCache (243ms)
+			ReleaseScriptCaches (1ms)
+			RebuildScriptCaches (34ms)
+			SetupLoadedEditorAssemblies (362ms)
+				LogAssemblyErrors (0ms)
+				InitializePlatformSupportModulesInManaged (5ms)
+				SetLoadedEditorAssemblies (0ms)
+				RefreshPlugins (1ms)
+				BeforeProcessingInitializeOnLoad (87ms)
+				ProcessInitializeOnLoadAttributes (255ms)
+				ProcessInitializeOnLoadMethodAttributes (5ms)
+				AfterProcessingInitializeOnLoad (8ms)
+				EditorAssembliesLoaded (0ms)
+			ExecutionOrderSort2 (0ms)
+			AwakeInstancesAfterBackupRestoration (7ms)
+Platform modules already initialized, skipping
+Refreshing native plugins compatible for Editor in 0.52 ms, found 3 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 2079 Unused Serialized files (Serialized files now loaded: 0)
+System memory in use before: 95.8 MB.
+System memory in use after: 95.9 MB.
+
+Unloading 16 unused Assets to reduce memory usage. Loaded Objects now: 2553.
+Total: 2.552100 ms (FindLiveObjects: 0.183500 ms CreateObjectMapping: 0.077300 ms MarkObjects: 2.271900 ms  DeleteObjects: 0.018400 ms)
+
+AssetImportParameters requested are different than current active one (requested -> active):
+  custom:framework-win-MediaFoundation: 216162199b28c13a410421893ffa2e32 -> 
+  custom:video-decoder-ogg-theora: a1e56fd34408186e4bbccfd4996cb3dc -> 
+  custom:container-muxer-webm: aa71ff27fc2769a1b78a27578f13a17b -> 
+  custom:container-demuxer-webm: 4f35f7cbe854078d1ac9338744f61a02 -> 
+  custom:container-demuxer-ogg: 62fdf1f143b41e24485cea50d1cbac27 -> 
+  custom:video-encoder-webm-vp8: eb34c28f22e8b96e1ab97ce403110664 -> 
+  custom:video-codec-MediaFoundation-h265: 746d11721c4dcdbdad8f713fa42b33f4 -> 
+  custom:video-decoder-webm-vp8: 9c59270c3fd7afecdb556c50c9e8de78 -> 
+  custom:audio-decoder-ogg-vorbis: bf7c407c2cedff20999df2af8eb42d56 -> 
+  custom:audio-encoder-webm-vorbis: bf7c407c2cedff20999df2af8eb42d56 -> 
+========================================================================
+Received Prepare
+Registering precompiled user dll's ...
+Registered in 0.011284 seconds.
+Begin MonoManager ReloadAssembly
+Native extension for WindowsStandalone target not found
+Refreshing native plugins compatible for Editor in 0.66 ms, found 3 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Mono: successfully reloaded assembly
+- Completed reload, in  1.419 seconds
+Domain Reload Profiling:
+	ReloadAssembly (1420ms)
+		BeginReloadAssembly (179ms)
+			ExecutionOrderSort (0ms)
+			DisableScriptedObjects (7ms)
+			BackupInstance (0ms)
+			ReleaseScriptingObjects (0ms)
+			CreateAndSetChildDomain (47ms)
+		EndReloadAssembly (1156ms)
+			LoadAssemblies (150ms)
+			RebuildTransferFunctionScriptingTraits (0ms)
+			SetupTypeCache (344ms)
+			ReleaseScriptCaches (1ms)
+			RebuildScriptCaches (49ms)
+			SetupLoadedEditorAssemblies (517ms)
+				LogAssemblyErrors (0ms)
+				InitializePlatformSupportModulesInManaged (6ms)
+				SetLoadedEditorAssemblies (1ms)
+				RefreshPlugins (1ms)
+				BeforeProcessingInitializeOnLoad (125ms)
+				ProcessInitializeOnLoadAttributes (363ms)
+				ProcessInitializeOnLoadMethodAttributes (9ms)
+				AfterProcessingInitializeOnLoad (12ms)
+				EditorAssembliesLoaded (0ms)
+			ExecutionOrderSort2 (0ms)
+			AwakeInstancesAfterBackupRestoration (11ms)
+Platform modules already initialized, skipping
+Refreshing native plugins compatible for Editor in 0.76 ms, found 3 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 2079 Unused Serialized files (Serialized files now loaded: 0)
+System memory in use before: 95.8 MB.
+System memory in use after: 96.0 MB.
+
+Unloading 16 unused Assets to reduce memory usage. Loaded Objects now: 2556.
+Total: 3.430700 ms (FindLiveObjects: 0.259900 ms CreateObjectMapping: 0.067400 ms MarkObjects: 3.078800 ms  DeleteObjects: 0.022600 ms)
+
+AssetImportParameters requested are different than current active one (requested -> active):
+  custom:framework-win-MediaFoundation: 216162199b28c13a410421893ffa2e32 -> 
+  custom:video-decoder-ogg-theora: a1e56fd34408186e4bbccfd4996cb3dc -> 
+  custom:container-muxer-webm: aa71ff27fc2769a1b78a27578f13a17b -> 
+  custom:container-demuxer-webm: 4f35f7cbe854078d1ac9338744f61a02 -> 
+  custom:container-demuxer-ogg: 62fdf1f143b41e24485cea50d1cbac27 -> 
+  custom:video-encoder-webm-vp8: eb34c28f22e8b96e1ab97ce403110664 -> 
+  custom:video-codec-MediaFoundation-h265: 746d11721c4dcdbdad8f713fa42b33f4 -> 
+  custom:video-decoder-webm-vp8: 9c59270c3fd7afecdb556c50c9e8de78 -> 
+  custom:audio-decoder-ogg-vorbis: bf7c407c2cedff20999df2af8eb42d56 -> 
+  custom:audio-encoder-webm-vorbis: bf7c407c2cedff20999df2af8eb42d56 -> 
+AssetImportWorkerClient::OnTransportError - code=2 error=End of file
