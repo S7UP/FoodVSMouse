@@ -6,16 +6,16 @@ using static UnityEngine.GraphicsBuffer;
 
 public class FoodUnit : BaseUnit
 {
-    public FoodUnit(GameObject gameObject):base(gameObject)
+    public override void Awake()
     {
-
+        base.Awake();
     }
 
-    public override void Init()
+    public override void MInit()
     {
-        base.Init();
+        base.MInit();
         SetActionState(new FoodIdleState(this));
-        mGameObject.transform.GetChild(0).gameObject.GetComponent<Animator>().runtimeAnimatorController = (RuntimeAnimatorController)Resources.Load("Animator/AnimatorController/Food/0/2");
+        gameObject.transform.GetChild(0).gameObject.GetComponent<Animator>().runtimeAnimatorController = (RuntimeAnimatorController)Resources.Load("Animator/AnimatorController/Food/7/2");
     }
 }
 
@@ -32,7 +32,7 @@ public class FoodAttackState : BaseActionState
     public FoodAttackState(FoodUnit foodUnit)
     {
         mFoodUnit = foodUnit;
-        animator = mFoodUnit.mGameObject.transform.GetChild(0).gameObject.GetComponent<Animator>();
+        animator = mFoodUnit.gameObject.transform.GetChild(0).gameObject.GetComponent<Animator>();
         canDamage = true;
     }
 
@@ -60,7 +60,15 @@ public class FoodAttackState : BaseActionState
         float percent = info.normalizedTime - c;
         if (percent >= 0.65 && canDamage)
         {
-            Debug.Log("¿¨Æ¬¹¥»÷ÁË£¡");
+            // Debug.Log("¿¨Æ¬¹¥»÷ÁË£¡");
+            for (int i = -1; i <= 1; i++)
+            {
+                for (int j = 0; j < 2; j++)
+                {
+                    GameController.Instance.CreateBullet(mFoodUnit.transform.position + Vector3.right*0.5f*j + Vector3.up*0.7f*i);
+                }
+            }
+            
             canDamage = false;
         }else if (info.normalizedTime >= 1.0f)
         {
@@ -78,7 +86,7 @@ public class FoodIdleState : BaseActionState
     public FoodIdleState(FoodUnit foodUnit)
     {
         mFoodUnit = foodUnit;
-        animator = mFoodUnit.mGameObject.transform.GetChild(0).gameObject.GetComponent<Animator>();
+        animator = mFoodUnit.gameObject.transform.GetChild(0).gameObject.GetComponent<Animator>();
     }
 
     public override void OnEnter()

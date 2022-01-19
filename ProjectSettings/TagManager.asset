@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Food
   - Mouse
+  - Bullet
   layers:
   - Default
   - TransparentFX
@@ -15,7 +16,7 @@ TagManager:
   - UI
   - Ally
   - Enemy
-  - 
+  - Bullet
   - 
   - 
   - 
@@ -48,4 +49,7 @@ TagManager:
     locked: 0
   - name: Mouse
     uniqueID: 2538047881
+    locked: 0
+  - name: Bullet
+    uniqueID: 2833085521
     locked: 0

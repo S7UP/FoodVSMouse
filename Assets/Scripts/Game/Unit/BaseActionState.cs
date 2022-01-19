@@ -38,18 +38,18 @@ public class BaseActionState: IBaseActionState
 public class MouseMoveState : BaseActionState
 {
     private MouseUnit mMouseUnit;
-    private Rigidbody2D rigidbody2D;
+    //private Rigidbody2D rigidbody2D;
 
     public MouseMoveState(MouseUnit mouseUnit)
     {
         mMouseUnit = mouseUnit;
-        rigidbody2D = mouseUnit.mGameObject.GetComponent<Rigidbody2D>();
+        //rigidbody2D = mouseUnit.mGameObject.GetComponent<Rigidbody2D>();
     }
 
     public override void OnEnter()
     {
         // 获取sprite的obj，并修改动画播放
-        GameObject go = mMouseUnit.mGameObject.transform.GetChild(0).gameObject;
+        GameObject go = mMouseUnit.gameObject.transform.GetChild(0).gameObject;
         Animator ani = go.GetComponent<Animator>();
         ani.Play("Move");
     }
@@ -57,11 +57,7 @@ public class MouseMoveState : BaseActionState
     public override void OnUpdate()
     {
         // 移动更新
-        // mMouseUnit.mGameObject.transform.localPosition += new Vector3(-mMouseUnit.mCurrentMoveSpeed * 0.005f, 0, 0);
-        // 注：一个Collider2D不应该直接使用Transform或者其offset属性来移动它，而是应该使用Rigidbody2D的移动代替之。这样会得到最好的表现和正确的碰撞检测。
-        // 因此，操作老鼠移动不应该用上面的transform,而是用下面的rigibody2D
-        rigidbody2D.MovePosition(rigidbody2D.position + Vector2.left * mMouseUnit.mCurrentMoveSpeed * 0.005f);
-        // Debug.Log(rigidbody2D.position);
+        mMouseUnit.SetPosition((Vector2)mMouseUnit.GetPosition() + Vector2.left * mMouseUnit.mCurrentMoveSpeed * 0.005f);
     }
 }
 
@@ -71,7 +67,7 @@ public class MouseMoveState : BaseActionState
 public class MouseAttackState : BaseActionState
 {
     // Target由外部给定或者临时计算给定，并且允许为空；
-    public GameObject mTarget;
+    public BaseUnit mTargetUnit;
 
     private MouseUnit mMouseUnit; // 持有此状态的MouseUnit引用
     private Animator animator;
@@ -82,7 +78,7 @@ public class MouseAttackState : BaseActionState
     public MouseAttackState(MouseUnit mouseUnit)
     {
         mMouseUnit = mouseUnit;
-        animator = mMouseUnit.mGameObject.transform.GetChild(0).gameObject.GetComponent<Animator>();
+        animator = mMouseUnit.gameObject.transform.GetChild(0).gameObject.GetComponent<Animator>();
         attackCount = 0;
         isFirstFrame = true;
         canDamage = true;
@@ -114,9 +110,11 @@ public class MouseAttackState : BaseActionState
         if (percent >= 0.65 && canDamage)
         {
             // TakeDamage()
-            if (mTarget != null)
+            if (mTargetUnit!=null && mTargetUnit.isGameObjectValid)
             {
-                GameController.Destroy(mTarget);
+                mMouseUnit.TakeDamage(mTargetUnit);
+                // GameController.Destroy(mTarget);
+                // GameManager.Instance.RecycleUnit(mMouseUnit);
             }
             Debug.Log("打出伤害判定了！！");
             canDamage = false;
@@ -130,7 +128,7 @@ public class MouseAttackState : BaseActionState
             canDamage = true;
             // 检查一下还有没有被阻挡
             // IsBlocked()
-            if (mTarget == null)
+            if (mTargetUnit == null || !mTargetUnit.isGameObjectValid)
             {
                 mMouseUnit.SetActionState(new MouseMoveState(mMouseUnit));
                 Debug.Log("切换为走路模式");

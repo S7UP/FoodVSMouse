@@ -2,10 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BaseUnit : IGameControllerMember
+public class BaseUnit : MonoBehaviour, IGameControllerMember
 {
     // 由外部赋值的引用
-    public GameObject mGameObject; // 该脚本所管理的游戏对象
+    public bool isGameObjectValid;
 
     // 管理的变量
     public float mBaseHp; //+ 基础生命值
@@ -27,12 +27,12 @@ public class BaseUnit : IGameControllerMember
 
     public IBaseActionState mCurrentActionState; //+ 当前动作状态
 
-    public BaseUnit(GameObject gameObject)
+    public virtual void Awake()
     {
-        mGameObject = gameObject;
+        isGameObjectValid = true;
     }
 
-    public virtual void Init()
+    public virtual void MInit()
     {
         // 血量
         mBaseHp = 100;
@@ -64,7 +64,53 @@ public class BaseUnit : IGameControllerMember
         mCurrentActionState.OnEnter();
     }
 
-    public virtual void Update()
+    // 受到伤害
+    public virtual void OnDamage(float dmg)
+    {
+        mCurrentHp -= dmg;
+        if(mCurrentHp <= 0)
+        {
+            BeforeDeath();
+        }
+    }
+
+    public virtual Vector3 GetPosition()
+    {
+        return gameObject.transform.position;
+    }
+
+    // 设置位置
+    public virtual void SetPosition(Vector3 V3)
+    {
+        gameObject.transform.position = V3;
+    }
+
+    // 濒死（可能是用来给你抢救的）
+    public virtual void BeforeDeath()
+    {
+        Debug.Log("BeforeDeath()");
+        // 队友呢队友呢救一下啊
+        // ....
+        DuringDeath();
+    }
+
+    // 这下是真死了()
+    public virtual void DuringDeath()
+    {
+        // 不知道要干啥了，反正这个地方肯定救不了了
+        Debug.Log("DuringDeath()");
+        GameManager.Instance.RecycleUnit(this, "Food/Pre_Food");
+        AfterDeath();
+    }
+
+    // 还愣着干什么，人没了救不了了
+    public virtual void AfterDeath()
+    {
+        Debug.Log("AfterDeath()");
+        // 我死了也要化身为腻鬼！！
+    }
+
+    public virtual void MUpdate()
     {
         // 基础数据更新
         if (mAttackCDLeft > 0)
@@ -75,17 +121,17 @@ public class BaseUnit : IGameControllerMember
         mCurrentActionState.OnUpdate();
     }
 
-    public virtual void Destory()
+    public virtual void MDestory()
     {
 
     }
 
-    public virtual void Pause()
+    public virtual void MPause()
     {
 
     }
 
-    public virtual void Resume()
+    public virtual void MResume()
     {
 
     }

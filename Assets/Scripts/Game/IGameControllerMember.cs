@@ -5,13 +5,13 @@ using UnityEngine;
 public interface IGameControllerMember
 {
     //初始化方法
-    public void Init();
+    public void MInit();
     //帧更新方法
-    public void Update();
+    public void MUpdate();
     //暂停时的方法
-    public void Pause();
+    public void MPause();
     //恢复时的方法
-    public void Resume();
+    public void MResume();
     //销毁时的方法
-    public void Destory();
+    public void MDestory();
 }
