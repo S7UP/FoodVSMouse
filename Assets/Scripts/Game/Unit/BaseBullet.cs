@@ -106,7 +106,6 @@ public class BulletFlyActionState : IBaseActionState
     // 实现动作状态
     public virtual void OnUpdate()
     {
-        Debug.Log("flying!");
         mBaseBullet.transform.position += (Vector3)mBaseBullet.mRotate* mBaseBullet.mVelocity * 0.05f;
     }
 }
@@ -151,7 +150,35 @@ public class BulletHitActionState : IBaseActionState
         if (info.normalizedTime >= 1.0f)
         {
             GameManager.Instance.RecycleBullet(mBaseBullet, "Bullet/Pre_Bullet");
-            mBaseBullet.SetActionState(new BaseActionState());
+            mBaseBullet.SetActionState(new BulletDefaultActionState(mBaseBullet));
         }
+    }
+}
+
+public class BulletDefaultActionState : IBaseActionState
+{
+    private BaseBullet mBaseBullet;
+
+    public BulletDefaultActionState(BaseBullet baseBullet)
+    {
+        mBaseBullet = baseBullet;
+    }
+
+    // 当进入时
+    public virtual void OnEnter()
+    {
+
+    }
+
+    // 当退出时
+    public virtual void OnExit()
+    {
+
+    }
+
+    // 实现动作状态
+    public virtual void OnUpdate()
+    {
+
     }
 }

@@ -1,11 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
-public class BaseUnit : MonoBehaviour, IGameControllerMember
+/// <summary>
+/// 战斗场景中最基本的游戏单位
+/// </summary>
+public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplementor
 {
-    // 由外部赋值的引用
-    public bool isGameObjectValid;
+    // 
+    public bool isGameObjectValid; // 是否存活
+    
 
     // 管理的变量
     public float mBaseHp; //+ 基础生命值
@@ -26,31 +29,12 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember
     public int mShape; // 当前种类单位的外观（同一张卡的0、1、2转，老鼠的0、1、2转或者其他变种）
 
     public IBaseActionState mCurrentActionState; //+ 当前动作状态
+    public int currentStateTimer = 0; // 当前状态的持续时间（切换状态时会重置）
 
     public virtual void Awake()
     {
         isGameObjectValid = true;
-    }
-
-    public virtual void MInit()
-    {
-        // 血量
-        mBaseHp = 100;
-        mMaxHp = mBaseHp;
-        mCurrentHp = mMaxHp;
-        // 攻击力
-        mBaseAttack = 10;
-        mCurrentAttack = mBaseAttack;
-        // 攻击速度与攻击间隔
-        mBaseAttackSpeed = 0.5f;
-        mCurrentAttackSpeed = mBaseAttackSpeed;
-        mAttackCD = Mathf.FloorToInt(ConfigManager.fps / (mCurrentAttackSpeed));
-        mAttackCDLeft = 0;
-        // 高度
-        mHeight = 0;
-
-        // 初始化当前动作状态
-        SetActionState(new BaseActionState());
+        currentStateTimer = -1;
     }
 
     // 切换动作状态
@@ -61,6 +45,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember
             mCurrentActionState.OnExit();
         }
         mCurrentActionState = state;
+        currentStateTimer = -1; // 重置计数器，重置为-1是保证下一次执行到状态Update时，读取到的计数器值一定为0，详细实现见下述MUpdate()内容
         mCurrentActionState.OnEnter();
     }
 
@@ -110,6 +95,29 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember
         // 我死了也要化身为腻鬼！！
     }
 
+
+    // 以下为 IGameControllerMember 接口方法的实现
+    public virtual void MInit()
+    {
+        // 血量
+        mBaseHp = 100;
+        mMaxHp = mBaseHp;
+        mCurrentHp = mMaxHp;
+        // 攻击力
+        mBaseAttack = 10;
+        mCurrentAttack = mBaseAttack;
+        // 攻击速度与攻击间隔
+        mBaseAttackSpeed = 0.5f;
+        mCurrentAttackSpeed = mBaseAttackSpeed;
+        mAttackCD = Mathf.FloorToInt(ConfigManager.fps / (mCurrentAttackSpeed));
+        mAttackCDLeft = 0;
+        // 高度
+        mHeight = 0;
+
+        // 初始化当前动作状态
+        SetActionState(new BaseActionState(this));
+    }
+
     public virtual void MUpdate()
     {
         // 基础数据更新
@@ -118,6 +126,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember
             mAttackCDLeft--;
         }
         // 单位动作状态由状态机决定（如移动、攻击、待机、死亡）
+        currentStateTimer += 1; 
         mCurrentActionState.OnUpdate();
     }
 
@@ -135,4 +144,27 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember
     {
 
     }
+
+    // 以下为 IBaseStateImplementor 接口的方法实现
+    public virtual void OnIdleState()
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public virtual void OnMoveState()
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public virtual void OnAttackState()
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public virtual void OnStaticState()
+    {
+        throw new System.NotImplementedException();
+    }
+
+    // 继续
 }
