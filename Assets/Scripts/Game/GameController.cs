@@ -18,12 +18,12 @@ public class GameController : MonoBehaviour
     public GameObject allyListGo; // 用于存放友方单位的父对象
 
 
-    //BaseStage mCurrentStage; //+ 当前关卡
-    //BaseCostController mCostController; //+ 费用控制器
-    //BaseCardController mCardController; //+ 卡片建造器
-    //BaseSkillController mSkillController; //+ 技能控制器
-    //BaseProgressController mProgressController; //+ 游戏进度控制器
-    //BaseGrid[] mGridList; //+ 格子表
+    public BaseStage mCurrentStage; //+ 当前关卡
+    public BaseCostController mCostController; //+ 费用控制器
+    public BaseCardController mCardController; //+ 卡片建造器
+    public BaseSkillController mSkillController; //+ 技能控制器
+    public BaseProgressController mProgressController; //+ 游戏进度控制器
+    public BaseGrid[,] mGridList; //+ 格子表
     public List<BaseUnit> mEnemyList; //+ 存活的敌方单位表
     public List<BaseUnit> mAllyList; // 存活的友方单位表
     public List<BaseBullet> mBulletList; // 存活的子弹表
@@ -32,6 +32,13 @@ public class GameController : MonoBehaviour
     //Recorder mRecorder; //+ 用户操作记录者
 
     private int mFrameNum; //+ 当前游戏帧
+    public bool isPause;
+
+    // 所有需要放到GameController管理Init、Update的东西
+    protected List<IGameControllerMember> MMemberList;
+
+    // 场景内引用
+    public GameObject uICanvasGo;
 
     // 定义私有构造函数，使外界不能创建该类实例
     private GameController()
@@ -53,19 +60,31 @@ public class GameController : MonoBehaviour
 
     private void Awake()
     {
+        uICanvasGo = GameObject.Find("UICanvas");
+        Debug.Log(uICanvasGo);
+
+        MMemberList = new List<IGameControllerMember>();
+        mCardController = new BaseCardController();
+        MMemberList.Add(mCardController);
+
         _instance = this;
         mFrameNum = 0;
         mEnemyList = new List<BaseUnit>();
         mAllyList = new List<BaseUnit>();
         mBulletList = new List<BaseBullet>();
-        // 加载ConfigManager，目前的作用仅仅是锁60帧
-        new ConfigManager();
+        isPause = true;
     }
 
 
     // Start is called before the first frame update
     void Start()
     {
+        // 
+        foreach (IGameControllerMember member in MMemberList)
+        {
+            member.MInit();
+        }
+
         // testing
         // 美食生成
         {
@@ -128,6 +147,11 @@ public class GameController : MonoBehaviour
         mFrameNum++;
         // Debug.Log("Frame:"+mFrameNum);
         // 各种组件的Update()
+        foreach(IGameControllerMember member in MMemberList)
+        {
+            member.MUpdate();
+        }
+
         for (int i = 0; i < mEnemyList.Count; i++)
         {
             BaseUnit unit = mEnemyList[i];
