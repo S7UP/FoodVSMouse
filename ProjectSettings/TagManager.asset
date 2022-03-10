@@ -17,7 +17,7 @@ TagManager:
   - Ally
   - Enemy
   - Bullet
-  - 
+  - Grid
   - 
   - 
   - 
@@ -52,4 +52,7 @@ TagManager:
     locked: 0
   - name: Bullet
     uniqueID: 2833085521
+    locked: 0
+  - name: UI
+    uniqueID: 1293379449
     locked: 0

@@ -7,7 +7,6 @@ using static UnityEngine.UI.CanvasScaler;
 public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
 {
     // 来自外部引用
-    public bool isGameObjectValid;
     public BaseUnit mMasterBaseUnit; // 发射它的主人单位
 
     // 动画
@@ -53,12 +52,14 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
         throw new System.NotImplementedException();
     }
 
+    /// <summary>
+    /// 每次初始化都要做的事
+    /// </summary>
     public virtual void MInit()
     {
         mVelocity = 1.0f;
         mRotate = Vector2.right;
         mDamage = 10;
-        isGameObjectValid = true;
         SetActionState(new BulletFlyActionState(this));
     }
 
@@ -76,6 +77,52 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     {
         // 单位动作状态由状态机决定（如移动、攻击、待机、死亡）
         mCurrentActionState.OnUpdate();
+        // 子弹若出屏了请自删
+        if (!IsInView())
+        {
+            GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, "Bullet/Pre_Bullet", gameObject);
+        }
+    }
+
+    /// <summary>
+    /// 判断子弹在不在屏幕内
+    /// </summary>
+    public bool IsInView()
+    {
+        Vector3 worldPos = transform.position;
+        Vector2 viewPos = Camera.main.WorldToViewportPoint(worldPos); // 世界坐标转为屏幕坐标，然后判断是不是在(0,0)-(1,1)之间
+        if (viewPos.x >= 0 && viewPos.x <= 1 && viewPos.y >= 0 && viewPos.y <= 1)
+            return true;
+        else
+            return false;
+    }
+
+    /// <summary>
+    /// 获取当前单位所在行下标
+    /// </summary>
+    /// <returns></returns>
+    public virtual int GetRowIndex()
+    {
+        return MapManager.GetYIndex(transform.position.y);
+    }
+
+    /// <summary>
+    /// 获取当前单位所在列下标
+    /// </summary>
+    /// <returns></returns>
+    public virtual int GetColumnIndex()
+    {
+        return MapManager.GetXIndex(transform.position.x);
+    }
+
+    /// <summary>
+    /// 判定子弹能否击中单位 
+    /// </summary>
+    /// <returns></returns>
+    public virtual bool CanHit(BaseUnit unit)
+    {
+        // TODO 先暂时置为true，之后做出子类务必置为false
+        return true;
     }
 }
 
@@ -149,7 +196,7 @@ public class BulletHitActionState : IBaseActionState
         // Debug.Log(info.normalizedTime);
         if (info.normalizedTime >= 1.0f)
         {
-            GameManager.Instance.RecycleBullet(mBaseBullet, "Bullet/Pre_Bullet");
+            GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, "Bullet/Pre_Bullet", mBaseBullet.gameObject);
             mBaseBullet.SetActionState(new BulletDefaultActionState(mBaseBullet));
         }
     }

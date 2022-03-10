@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+
 using UnityEditor.SceneManagement;
 
 using UnityEngine;
@@ -47,6 +49,11 @@ public class GameManager : MonoBehaviour
         return factoryManager.spriteFactory.GetSingleResources(resourcePath);
     }
 
+    public Sprite[] GetSprites(string resourcePath)
+    {
+        return Resources.LoadAll<Sprite>(resourcePath);
+    }
+
     public AudioClip GetAudioClip(string resourcePath)
     {
         return factoryManager.audioClipFactory.GetSingleResources(resourcePath);
@@ -68,17 +75,11 @@ public class GameManager : MonoBehaviour
         factoryManager.factoryDict[factoryType].PushItem(resourcePath, itemGo);
     }
 
-
-    public void RecycleUnit(BaseUnit unit, string resourcePath)
+    // 对于游戏对象工厂的来说，有一个缓冲池和一个真正的取回游戏对象的对象池，被回收的游戏对象会先进入缓冲池，需要调用这个方法将缓冲池的东西放进对象池以待命
+    public void PushGameObjectFromBufferToPool()
     {
-        PushGameObjectToFactory(FactoryType.GameFactory, resourcePath, unit.gameObject);
-        unit.isGameObjectValid = false;
-    }
-
-    public void RecycleBullet(BaseBullet unit, string resourcePath)
-    {
-        PushGameObjectToFactory(FactoryType.GameFactory, resourcePath, unit.gameObject);
-        unit.isGameObjectValid = false;
+        GameFactory f = (GameFactory)factoryManager.factoryDict[FactoryType.GameFactory];
+        f.PushItemFromBuffer();
     }
 
     // Start is called before the first frame update

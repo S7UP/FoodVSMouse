@@ -5,4 +5,5 @@ using UnityEngine;
 public class StringManager
 {
     public const string GameNormalPanel = "GameNormalPanel";
+    public const string EditorPanel = "EditorPanel";
 }

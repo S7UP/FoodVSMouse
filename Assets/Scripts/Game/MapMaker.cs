@@ -73,8 +73,4 @@ public class MapMaker : MonoBehaviour
             }
         }
     }
-    //private void OnMouseDown()
-    //{
-    //    Debug.Log("Mouse Position:" + Input.mousePosition);
-    //}
 }

@@ -13,6 +13,4 @@ public interface IBaseCardBuilder
     public void InitInstance();
 
     public BaseUnit GetResult();
-
-    public void CardBuilderUpdate();
 }

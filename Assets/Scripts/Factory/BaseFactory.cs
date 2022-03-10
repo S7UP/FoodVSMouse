@@ -20,7 +20,7 @@ public class BaseFactory : IBaseFactory
     }
 
     //·ÅÈë³Ø×Ó
-    public void PushItem(string itemName, GameObject item)
+    public virtual void PushItem(string itemName, GameObject item)
     {
         item.SetActive(false);
         item.transform.SetParent(GameManager.Instance.transform);

@@ -4,16 +4,13 @@ using UnityEngine;
 
 public class IdleState : BaseActionState
 {
-    protected Animator animator;
-
     public IdleState(BaseUnit baseUnit) : base(baseUnit)
     {
-        animator = baseUnit.gameObject.transform.GetChild(0).gameObject.GetComponent<Animator>();
     }
 
     public override void OnEnter()
     {
-        animator.Play("Idle");
+        mBaseUnit.OnIdleStateEnter();
     }
 
     public override void OnUpdate()

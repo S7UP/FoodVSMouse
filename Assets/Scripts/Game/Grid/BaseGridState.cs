@@ -2,16 +2,27 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BaseGridState : MonoBehaviour
+public class BaseGridState
 {
-    // Start is called before the first frame update
-    void Start()
+    // 持有该状态的格子
+    private BaseGrid mGrid;
+
+    public BaseGridState(BaseGrid grid)
     {
-        
+        mGrid = grid;
     }
 
-    // Update is called once per frame
-    void Update()
+    public virtual void OnEnter()
+    {
+
+    }
+
+    public virtual void OnExit() 
+    {
+
+    }
+
+    public virtual void OnUpdate() 
     {
         
     }
