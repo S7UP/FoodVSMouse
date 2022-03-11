@@ -327,11 +327,11 @@ public class MouseUnit : BaseUnit
         {
             baseAttrbute = new BaseUnit.Attribute()
             {
-                name = "黄瓜平民鼠", // 单位的具体名称
+                name = "机械平民鼠", // 单位的具体名称
                 type = 0, // 单位属于的分类
-                shape = 3, // 单位在当前分类的变种编号
+                shape = 6, // 单位在当前分类的变种编号
 
-                baseHP = 170, // 基础血量
+                baseHP = 270, // 基础血量
                 baseAttack = 10, // 基础攻击
                 baseAttackSpeed = 1.0, // 基础攻击速度
                 attackPercent = 0.6,

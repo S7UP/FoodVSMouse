@@ -158,7 +158,7 @@ public class BaseStage
     /// </summary>
     public void DemoLoad()
     {
-        mStageInfo = Load("test");
+        mStageInfo = Load("test¹Ø¿¨2");
     }
 
     public static StageInfo Load(string path)
