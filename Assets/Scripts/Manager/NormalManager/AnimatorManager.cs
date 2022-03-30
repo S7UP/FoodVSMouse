@@ -47,4 +47,38 @@ public class AnimatorManager
     {
         return 1 + Mathf.FloorToInt(GetNormalizedTime(animator) * animator.GetCurrentAnimatorClipInfo(0)[0].clip.length * animator.GetCurrentAnimatorClipInfo(0)[0].clip.frameRate);
     }
+
+    /// <summary>
+    /// 获取某个动画片段的时长
+    /// </summary>
+    /// <param name="animator"></param>
+    /// <param name="name"></param>
+    /// <returns></returns>
+    public static float GetClipTime(Animator animator, string name)
+    {
+        RuntimeAnimatorController c = animator.runtimeAnimatorController;
+        for (int i = 0; i < c.animationClips.Length; i++)
+        {
+            AnimationClip animationClip = c.animationClips[i];
+            if (animationClip.name.Equals(name))
+            {
+                return animationClip.length;
+            }
+        }
+        return -1;
+    }
+
+    public static void SetClipSpeed(Animator animator, string name, float speed)
+    {
+        RuntimeAnimatorController c = animator.runtimeAnimatorController;
+        for (int i = 0; i < c.animationClips.Length; i++)
+        { 
+            AnimationClip animationClip = c.animationClips[i];
+            if (animationClip.name.Equals(name))
+            {
+                animator.speed = speed;
+                break;
+            }
+        }
+    }
 }

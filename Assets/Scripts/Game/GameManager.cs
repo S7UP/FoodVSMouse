@@ -13,6 +13,7 @@ public class GameManager : MonoBehaviour
     public AudioSourceManager audioSourceManager;
     public UIManager uiManager;
     public ConfigManager configManager;
+    public AbilityManager abilityManager;
 
     private static GameManager _instance;
 
@@ -30,11 +31,30 @@ public class GameManager : MonoBehaviour
         playerManager = new PlayerManager();
         factoryManager = new FactoryManager();
         audioSourceManager = new AudioSourceManager();
-        uiManager = new UIManager();
-        uiManager.mUIFacade.currentSceneState.EnterScene();
-
         // 加载ConfigManager，目前的作用仅仅是锁60帧
-        configManager =  new ConfigManager();
+        configManager = new ConfigManager();
+        abilityManager = AbilityManager.GetSingleton();
+
+        uiManager = new UIManager();
+        EnterComBatScene();
+    }
+
+    /// <summary>
+    /// 进入编辑器场景
+    /// </summary>
+    public void EnterEditorScene()
+    {
+        uiManager.mUIFacade.currentSceneState = new EditorSceneState(uiManager.mUIFacade);
+        uiManager.mUIFacade.currentSceneState.EnterScene();
+    }
+
+    /// <summary>
+    /// 进入战斗场景
+    /// </summary>
+    public void EnterComBatScene()
+    {
+        uiManager.mUIFacade.currentSceneState = new GameNormalSceneState(uiManager.mUIFacade);
+        uiManager.mUIFacade.currentSceneState.EnterScene();
     }
 
     public GameObject CreateItem(GameObject itemGo)

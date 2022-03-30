@@ -18,4 +18,9 @@ public class MoveState : BaseActionState
     {
         mBaseUnit.OnMoveState();
     }
+
+    public override void OnExit()
+    {
+        mBaseUnit.OnMoveStateExit();
+    }
 }

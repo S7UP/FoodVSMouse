@@ -54,15 +54,15 @@ public class Emp_SelectEnemyItem : MonoBehaviour, IPointerClickHandler
             }
             else
             {
-                master.SetSelectedEnemyType(GetArrayIndex());
-                master.SetSelectedEnemyShape(0);
+                master.SetSelectedEnemyTypeByArrayIndex(GetArrayIndex());
+                master.SetSelectedEnemyShapeByArrayIndex(0);
             }
             master.UpdateUIAndModel();
         }
         else
         {
             // 第二层 选变种
-            master.SetSelectedEnemyShape(GetArrayIndex());
+            master.SetSelectedEnemyShapeByArrayIndex(GetArrayIndex());
             master.UpdateUIAndModel();
             master.gameObject.SetActive(false);
         }

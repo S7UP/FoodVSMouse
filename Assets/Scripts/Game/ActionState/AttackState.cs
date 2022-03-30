@@ -17,4 +17,9 @@ public class AttackState : BaseActionState
     {
         mBaseUnit.OnAttackState();
     }
+
+    public override void OnExit()
+    {
+        mBaseUnit.OnAttackStateExit();
+    }
 }

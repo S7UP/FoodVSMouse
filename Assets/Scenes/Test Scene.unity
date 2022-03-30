@@ -236,15 +236,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   overGrid: {fileID: 0}
-  enemyListGo: {fileID: 1268699698}
-  allyListGo: {fileID: 1445391313}
   gridListGo: {fileID: 1389063058}
   mCostController: {fileID: 0}
   mCardController: {fileID: 0}
   mSkillController: {fileID: 0}
   mProgressController: {fileID: 0}
-  mEnemyList: []
-  mAllyList: []
   mBulletList: []
   isPause: 0
   uICanvasGo: {fileID: 0}

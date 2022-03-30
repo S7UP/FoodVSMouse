@@ -351,14 +351,6 @@ public class EditorPanel : BasePanel
             }
             // 添加按钮应该滚到最后一边
             Emp_ApartAddTrans.SetAsLastSibling();
-            //// 根据面板项目数目来制定长度
-            //HorizontalLayoutGroup hor = scrContentApartEditViewTrans.GetComponent<HorizontalLayoutGroup>();
-            //float width = hor.padding.left;
-            //for (int i = 0; i < scrContentApartEditViewTrans.childCount; i++)
-            //{
-            //    width += scrContentApartEditViewTrans.GetChild(i).GetComponent<RectTransform>().rect.width + hor.spacing;
-            //}
-            //scrContentApartEditViewTrans.GetComponent<RectTransform>().sizeDelta = new Vector2(width, Emp_ApartAddTrans.GetComponent<RectTransform>().rect.height);
             // 自动更新滚动框宽度
             UpdateScrollerContentWidth(scrContentApartEditViewTrans);
         }

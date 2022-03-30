@@ -1,0 +1,73 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+using static UnityEditor.Progress;
+/// <summary>
+/// 加血类老鼠的技能
+/// </summary>
+public class HealMouse:MouseUnit
+{
+    private static List<float> healHpList = new List<float>{200, 400, 600, 800}; // 形态与回复量的映射表，后期可以单独拆成xml文件存储，实现数据与逻辑分离
+    private GeneralAttackSkillAbility generalAttackSkillAbility; // 平A技能
+    private PreSkillAbility preSkillAbility; // 演奏前置
+    private EnemyHealSkillAbility enemyHealSkillAbility; // 演奏 
+
+    /// <summary>
+    /// 加载技能，加载普通攻击与回血技能
+    /// </summary>
+    public override void LoadSkillAbility()
+    {
+        List<SkillAbility.SkillAbilityInfo> infoList = AbilityManager.Instance.GetSkillAbilityInfoList(mUnitType, mType, mShape);
+        // 普通攻击
+        if (infoList.Count > 0)
+        {
+            generalAttackSkillAbility = new GeneralAttackSkillAbility(this, infoList[0]);
+            skillAbilityManager.AddSkillAbility(generalAttackSkillAbility);
+        }
+            
+        // 回血技能
+        if (infoList.Count > 2)
+        {
+            preSkillAbility = new PreSkillAbility(this, infoList[1]);
+            skillAbilityManager.AddSkillAbility(preSkillAbility);
+            enemyHealSkillAbility = new EnemyHealSkillAbility(this, infoList[2]);
+            skillAbilityManager.AddSkillAbility(enemyHealSkillAbility);
+        }
+        preSkillAbility.SetTargetSkillAbility(enemyHealSkillAbility);
+        preSkillAbility.SetSkillCondition(IsMeetingSkillCondition);
+        preSkillAbility.SetBeforeSkillAction(BeforeSpell);
+    }
+
+    /// <summary>
+    /// 释放技能的条件
+    /// </summary>
+    /// <returns></returns>
+    private bool IsMeetingSkillCondition()
+    {
+        return true;
+    }
+
+    /// <summary>
+    /// 释放技能前的事件
+    /// </summary>
+    private void BeforeSpell()
+    {
+        // 切换为施法状态
+        SetActionState(new CastState(this));
+    }
+
+    public override void OnCastStateEnter()
+    {
+        animator.Play("Cast");
+    }
+
+    /// <summary>
+    /// 获取回复量
+    /// </summary>
+    /// <returns></returns>
+    public float GetHealValue()
+    {
+        return healHpList[mShape];
+    }
+}

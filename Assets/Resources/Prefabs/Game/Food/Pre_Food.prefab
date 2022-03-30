@@ -72,7 +72,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f06798e6510a4d4eb693cba67f85ba9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isGameObjectValid: 0
   mBaseHp: 0
   mMaxHp: 0
   mCurrentHp: 0
@@ -83,8 +82,7 @@ MonoBehaviour:
   mAttackCD: 0
   mAttackCDLeft: 0
   mHeight: 0
-  mRow: 0
-  mColumn: 0
+  isDeathState: 0
   mName: 
   mType: 0
   mShape: 0
@@ -160,8 +158,8 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 2056711865
-  m_SortingLayer: 1
+  m_SortingLayerID: 481756845
+  m_SortingLayer: 4
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: 9cb7bea38db56934d82bad399fd15e2f, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -245,8 +243,16 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4918401844580172110, guid: eda71e04dfd1bbe4aa1c0f498a732b19, type: 3}
+      propertyPath: m_SortingLayer
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4918401844580172110, guid: eda71e04dfd1bbe4aa1c0f498a732b19, type: 3}
       propertyPath: m_SortingOrder
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4918401844580172110, guid: eda71e04dfd1bbe4aa1c0f498a732b19, type: 3}
+      propertyPath: m_SortingLayerID
+      value: 481756845
       objectReference: {fileID: 0}
     - target: {fileID: 4918401844580172144, guid: eda71e04dfd1bbe4aa1c0f498a732b19, type: 3}
       propertyPath: m_Name

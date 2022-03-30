@@ -14,7 +14,7 @@ public class UIManager
         currentScenePanelDict = new Dictionary<string, GameObject>();
         mUIFacade = new UIFacade(this);
         //mUIFacade.currentSceneState = new StartLoadSceneState(mUIFacade);
-        mUIFacade.currentSceneState = new GameNormalSceneState(mUIFacade);
+        //mUIFacade.currentSceneState = new GameNormalSceneState(mUIFacade);
         //mUIFacade.currentSceneState = new EditorSceneState(mUIFacade);
     }
 

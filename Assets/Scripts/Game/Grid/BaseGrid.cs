@@ -63,7 +63,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
 
     private void OnMouseDown()
     {
-        Debug.Log("aaaa");
+
     }
 
 

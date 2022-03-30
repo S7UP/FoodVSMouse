@@ -34,6 +34,7 @@ public class Scr_SelectEnemyType : MonoBehaviour
     // ItemList
     private List<Emp_SelectEnemyItem> itemList;
 
+
     private void Awake()
     {
         scrContentSelectEnemyTypeTrans = transform.Find("Viewport").Find("Content");
@@ -82,14 +83,30 @@ public class Scr_SelectEnemyType : MonoBehaviour
         UpdateUIAndModel();
     }
 
+    /// <summary>
+    /// 获取对应Type在数组中的下标
+    /// </summary>
+    /// <returns></returns>
+    private int GetSelectEnemyTypeArrayIndex()
+    {
+        int selectIndex = 0;
+        foreach (var info in typeList)
+        {
+            if (info.attr.type == selectedEnemyType)
+                return selectIndex;
+            selectIndex++;
+        }
+        return -1;
+    }
+
     public int GetSelectedEnemyType()
     {
         return selectedEnemyType;
     }
 
-    public void SetSelectedEnemyType(int type)
+    public void SetSelectedEnemyTypeByArrayIndex(int arrayIndex)
     {
-        selectedEnemyType = type;
+        selectedEnemyType = typeList[arrayIndex].attr.type;
     }
 
     public int GetSelectedEnemyShape()
@@ -97,9 +114,9 @@ public class Scr_SelectEnemyType : MonoBehaviour
         return selectedEnemyShape;
     }
 
-    public void SetSelectedEnemyShape(int shape)
+    public void SetSelectedEnemyShapeByArrayIndex(int arrayIndex)
     {
-        selectedEnemyShape = shape;
+        selectedEnemyShape = shapeList[GetSelectEnemyTypeArrayIndex()][arrayIndex].attr.shape;
     }
 
     /// <summary>
@@ -107,7 +124,7 @@ public class Scr_SelectEnemyType : MonoBehaviour
     /// </summary>
     public void UpdateSelectedEnemyShape()
     {
-        SetSelectedEnemyShape(mEnemyGroup.mEnemyInfo.shape);
+        selectedEnemyShape = mEnemyGroup.mEnemyInfo.shape;
     }
 
     /// <summary>
@@ -155,25 +172,29 @@ public class Scr_SelectEnemyType : MonoBehaviour
         {
             // 选择敌人变种界面
             Emp_ReturnSelectEnemyType.SetActive(true);
-            foreach (var info in shapeList[selectedEnemyType])
+            int selectIndex = GetSelectEnemyTypeArrayIndex();
+            if(selectIndex > -1)
             {
-                Emp_SelectEnemyItem item = GameManager.Instance.GetGameObjectResource(FactoryType.UIFactory, "Emp_SelectEnemyItem").GetComponent<Emp_SelectEnemyItem>();
-                item.SetMaster(this.gameObject);
-                item.SetSprite(info.sprite); // 修改显示贴图
-                item.SetArrayIndex(itemList.Count);
-                item.transform.SetParent(scrContentSelectEnemyTypeTrans);
-                item.transform.localScale = Vector3.one;
-                // 被选中项高亮显示
-                if (selectedEnemyShape == info.attr.shape)
+                foreach (var info in shapeList[selectIndex])
                 {
-                    item.SetSelected(true);
+                    Emp_SelectEnemyItem item = GameManager.Instance.GetGameObjectResource(FactoryType.UIFactory, "Emp_SelectEnemyItem").GetComponent<Emp_SelectEnemyItem>();
+                    item.SetMaster(this.gameObject);
+                    item.SetSprite(info.sprite); // 修改显示贴图
+                    item.SetArrayIndex(itemList.Count);
+                    item.transform.SetParent(scrContentSelectEnemyTypeTrans);
+                    item.transform.localScale = Vector3.one;
+                    // 被选中项高亮显示
+                    if (selectedEnemyShape == info.attr.shape)
+                    {
+                        item.SetSelected(true);
+                    }
+                    itemList.Add(item);
                 }
-                itemList.Add(item);
                 // 更新返回上级的图片
-                Emp_ReturnSelectEnemyType.GetComponent<Image>().sprite = info.sprite;
+                Emp_ReturnSelectEnemyType.GetComponent<Image>().sprite = typeList[selectIndex].sprite;
+                // 返回上级按钮始终置于最前
+                Emp_ReturnSelectEnemyType.transform.SetAsFirstSibling();
             }
-            // 返回上级按钮始终置于最前
-            Emp_ReturnSelectEnemyType.transform.SetAsFirstSibling();
             // 如果更新模型成功了（即用户在这层选择了任一敌人），则隐藏该obj
             if (UpdateModel())
             {
@@ -190,12 +211,12 @@ public class Scr_SelectEnemyType : MonoBehaviour
         bool flag = false;
         if(selectedEnemyType != -1 && selectedEnemyType != mEnemyGroup.mEnemyInfo.type)
         {
-            mEnemyGroup.mEnemyInfo.type = typeList[selectedEnemyType].attr.type;
+            mEnemyGroup.mEnemyInfo.type = selectedEnemyType;
             flag = true;
         }
         if (selectedEnemyShape != -1 && selectedEnemyShape != mEnemyGroup.mEnemyInfo.shape)
         {
-            mEnemyGroup.mEnemyInfo.shape = shapeList[selectedEnemyType][selectedEnemyShape].attr.shape;
+            mEnemyGroup.mEnemyInfo.shape = selectedEnemyShape;
             flag = true;
         }
         if (flag)
@@ -228,38 +249,34 @@ public class Scr_SelectEnemyType : MonoBehaviour
             {
                 string path = "Mouse/" + typeFile.Name.Replace(typeFile.Extension, "") + "/0";
                 Debug.Log("path = " + path);
-                BaseUnit.Attribute attr = JsonManager.Load<BaseUnit.Attribute>(path);
+                MouseUnit.Attribute attr = JsonManager.Load<MouseUnit.Attribute>(path);
                 typeList.Add(new SelectEnemyInfo()
                 {
-                    attr = attr,
-                    sprite = GameManager.Instance.GetSprite("Mouse/" + attr.type + "/" + attr.shape + "/0")
+                    attr = attr.baseAttrbute,
+                    sprite = GameManager.Instance.GetSprite("Mouse/" + attr.baseAttrbute.type + "/" + attr.baseAttrbute.shape + "/0")
                 });
             }
             List<SelectEnemyInfo> oneShapeList = new List<SelectEnemyInfo>();
             shapeList.Add(oneShapeList);
-            // 遍历每个文件夹目录
-            DirectoryInfo[] directions = typeFile.Directory.GetDirectories();
-            foreach (var dir in directions)
+
+            FileInfo[] shapeFiles = new DirectoryInfo(Application.dataPath + "/Resources/Json/Mouse/"+type).GetFiles("*");
+            foreach (var f in shapeFiles)
             {
-                FileInfo[] shapeFiles = dir.GetFiles("*");
-                foreach (var f in shapeFiles)
+                Debug.Log("shapeFileName = " + f.FullName);
+                string name = f.Name.Replace(f.Extension, "");
+                // 只读取JSON
+                if (name.EndsWith(".json"))
                 {
-                    Debug.Log("shapeFileName = " + f.FullName);
-                    string name = f.Name.Replace(f.Extension, "");
-                    // 只读取JSON
-                    if (name.EndsWith(".json"))
+                    Debug.Log("Name = " + name);
+                    int shape = int.Parse(name.Replace(".json", ""));
                     {
-                        Debug.Log("Name = " + name);
-                        int shape = int.Parse(name.Replace(".json", ""));
+                        string path = "Mouse/" + typeFile.Name.Replace(typeFile.Extension, "") + "/" + shape;
+                        MouseUnit.Attribute attr = JsonManager.Load<MouseUnit.Attribute>(path);
+                        oneShapeList.Add(new SelectEnemyInfo()
                         {
-                            string path = "Mouse/" + typeFile.Name.Replace(typeFile.Extension, "") + "/" + shape;
-                            MouseUnit.Attribute attr = JsonManager.Load<MouseUnit.Attribute>(path);
-                            oneShapeList.Add(new SelectEnemyInfo()
-                            {
-                                attr = attr.baseAttrbute,
-                                sprite = GameManager.Instance.GetSprite("Mouse/" + attr.baseAttrbute.type + "/" + attr.baseAttrbute.shape + "/0")
-                            });
-                        }
+                            attr = attr.baseAttrbute,
+                            sprite = GameManager.Instance.GetSprite("Mouse/" + attr.baseAttrbute.type + "/" + attr.baseAttrbute.shape + "/0")
+                        });
                     }
                 }
             }

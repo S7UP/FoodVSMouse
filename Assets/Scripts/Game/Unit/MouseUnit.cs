@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -12,22 +13,22 @@ public class MouseUnit : BaseUnit
     new public struct Attribute
     {
         public BaseUnit.Attribute baseAttrbute;
-        public double baseMoveSpeed;
-        public double[] hertRateList; 
+        // public double baseMoveSpeed;
+        public double[] hertRateList;
     }
 
     // Awake里Find一次的组件
     public Rigidbody2D rigibody2D;
+    private SpriteRenderer spriteRenderer;
     protected Animator animator;
 
     // 其他属性
-    public float mBaseMoveSpeed; // 基础移动速度
-    public float mCurrentMoveSpeed; // 当前移动速度
-    protected double[] mHertRateList; // 切换贴图时的受伤比率（高->低)
+
+    protected List<double> mHertRateList; // 切换贴图时的受伤比率（高->低)
     public int mHertIndex; // 受伤贴图阶段
 
     // 索敌相关
-    protected bool isBlock; // 是否被阻挡
+    protected bool isBlock { get; set; } // 是否被阻挡
     protected BaseUnit mBlockUnit; // 阻挡者
 
     /// <summary>
@@ -36,18 +37,30 @@ public class MouseUnit : BaseUnit
     public override void MInit()
     {
         base.MInit();
+        
         // 从Json中读取的属性以及相关的初始化
         MouseUnit.Attribute attr = GameController.Instance.GetMouseAttribute();
-
-        mBaseMoveSpeed = (float)attr.baseMoveSpeed; // 移动速度值为格/秒，默认设为0.5格/秒
-        mCurrentMoveSpeed = mBaseMoveSpeed;
-        mHertRateList = (double[])attr.hertRateList;
+        mHertRateList = new List<double>();
+        foreach (var item in attr.hertRateList)
+        {
+            mHertRateList.Add(item);
+        }
         mHertIndex = 0;
 
-        // 移动状态test
+        // 初始为移动状态
         SetActionState(new MoveState(this));
         // 更新贴图
         UpdateRuntimeAnimatorController();
+        // 添加几个行动点响应事件
+        // 在受到伤害结算之后，更新受伤贴图状态
+        AddActionPointListener(ActionPointType.PostReceiveDamage, delegate { UpdateHertMap(); });
+        // 在接收治疗结算之后，更新受伤贴图状成
+        AddActionPointListener(ActionPointType.PostReceiveCure, delegate { UpdateHertMap(); });
+    }
+
+    public override void SetUnitType()
+    {
+        mUnitType = UnitType.Mouse;
     }
 
     /// <summary>
@@ -56,11 +69,10 @@ public class MouseUnit : BaseUnit
     public override void Awake()
     {
         base.Awake();
-        jsonPath += "Mouse/";
-        mPreFabPath = "Mouse/Pre_Mouse";
         // 组件获取
         rigibody2D = gameObject.GetComponent<Rigidbody2D>();
         animator = gameObject.transform.Find("Ani_Mouse").gameObject.GetComponent<Animator>();
+        spriteRenderer = gameObject.transform.Find("Ani_Mouse").gameObject.GetComponent<SpriteRenderer>();
     }
 
     /// <summary>
@@ -70,8 +82,6 @@ public class MouseUnit : BaseUnit
     {
         base.OnDisable();
         // 其他属性
-        mBaseMoveSpeed = 0; // 基础移动速度
-        mCurrentMoveSpeed = 0; // 当前移动速度
         mHertRateList = null;
 
         // 索敌相关
@@ -79,7 +89,19 @@ public class MouseUnit : BaseUnit
         mBlockUnit = null; // 阻挡者
     }
 
-
+    /// <summary>
+    /// 加载技能，此处仅加载普通攻击，具体技能加载实现请在子类中重写
+    /// </summary>
+    public override void LoadSkillAbility()
+    {
+        foreach (var item in AbilityManager.Instance.GetSkillAbilityInfoList(mUnitType, mType, mShape))
+        {
+            if (item.skillType == SkillAbility.Type.GeneralAttack)
+            {
+                skillAbilityManager.AddSkillAbility(new GeneralAttackSkillAbility(this, item));
+            }
+        }
+    }
 
     /// <summary>
     /// 至少大部分老鼠应该有一个能直接攻击的手段
@@ -87,7 +109,7 @@ public class MouseUnit : BaseUnit
     /// <param name="unit"></param>
     public void TakeDamage(BaseUnit unit)
     {
-        unit.OnDamage(mCurrentAttack);
+        new DamageAction(CombatAction.ActionType.CauseDamage, this, unit, mCurrentAttack).ApplyAction();
     }
 
 
@@ -98,103 +120,147 @@ public class MouseUnit : BaseUnit
         rigibody2D.MovePosition(V3);
     }
 
-    // 判断是否发现攻击目标
-    protected virtual void SearchTarget()
+    /// <summary>
+    /// 是否满足普通攻击的条件
+    /// </summary>
+    /// <returns></returns>
+    public override bool IsMeetGeneralAttackCondition()
     {
-        // 被阻挡了
-        if (isBlock)
-        {
-            // 阻挡对象是否有效
-            if (mBlockUnit.IsValid())
-            {
-                SetActionState(new AttackState(this));
-            }
-            else
-            {
-                isBlock = false;
-                SetActionState(new MoveState(this));
-            }
-        }
-    } 
-
-    // 判断能不能攻击了，限定在OnAttackState()里调用，允许子类重写
-    protected virtual bool CanAttack()
-    {
-        // 获取Attack的动作信息，使得伤害判定与动画显示尽可能同步
-        AnimatorStateInfo info = animator.GetCurrentAnimatorStateInfo(0);
-        // 这个normalizedTime的小数可以近似表示一个动画播放进度的百分比，个位数则可以表示已循环的次数。
-        int c = Mathf.FloorToInt(info.normalizedTime);
-
-        // 动画进度在到一定时启动伤害判定
-        float percent = info.normalizedTime - c;
-        if (percent >= attackPercent && mAttackFlag)
-        {
-            return true;
-        }
-        return false;
+        // 被阻挡了 且 阻挡对象是有效的
+        return IsHasTarget();
     }
 
-    // 当真正攻击时做出的具体操作。
-    protected virtual void Attack()
+    /// <summary>
+    /// 进入普通攻击动画状态
+    /// </summary>
+    public override void BeforeGeneralAttack()
     {
-        if (mBlockUnit != null && mBlockUnit.IsValid())
-        {
-            TakeDamage(mBlockUnit);
-        }
+        // 切换为攻击动画贴图
+        SetActionState(new AttackState(this));
     }
 
-
-    // 以下为 IBaseStateImplementor 接口的方法实现
-    public override void OnIdleState()
-    {
-        // 攻击重置
-        mAttackFlag = true;
-        // 索敌逻辑
-        SearchTarget();
-    }
-
-    public override void OnMoveState()
-    {
-        // 攻击重置
-        mAttackFlag = true;
-        // 移动更新
-        SetPosition((Vector2)GetPosition() + Vector2.left * mCurrentMoveSpeed * 0.005f);
-        // 索敌逻辑
-        SearchTarget();
-    }
-
-    public override void OnAttackState()
+    /// <summary>
+    /// 普通攻击期间
+    /// </summary>
+    public override void OnGeneralAttack()
     {
         // 切换时的第一帧直接不执行update()，因为下述的info.normalizedTime的值还停留在上一个状态，逻辑会出问题！
         if (currentStateTimer <= 0)
         {
             return;
         }
-        // 获取Attack的动作信息，使得伤害判定与动画显示尽可能同步
-        AnimatorStateInfo info = animator.GetCurrentAnimatorStateInfo(0);
-        if (CanAttack())
+        // 伤害判定帧应当执行判定
+        if (IsDamageJudgment())
         {
-            Attack();
             mAttackFlag = false;
-        }
-        else if (info.normalizedTime >= 1.0f) // 攻击动画播放完一次后转为待机状态
-        {
-            SetActionState(new IdleState(this));
+            ExecuteDamage();
         }
     }
 
     /// <summary>
-    /// 老鼠单位默认都是处在同行被美食阻挡
+    /// 退出普通攻击的条件
+    /// </summary>
+    /// <returns></returns>
+    public override bool IsMeetEndGeneralAttackCondition()
+    {
+        return animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 1.0f; // 攻击动画播放完整一次后视为技能结束
+    }
+
+    /// <summary>
+    /// 退出普通攻击后要做的事
+    /// </summary>
+    public override void AfterGeneralAttack()
+    {
+        mAttackFlag = true;
+        // 如果有可以攻击的目标，则停下来等待下一次攻击，否则前进
+        if (IsHasTarget())
+            SetActionState(new IdleState(this));
+        else
+            SetActionState(new MoveState(this));
+        UpdateBlockState(); // 更新阻挡状态
+    }
+
+    /// <summary>
+    /// 判断是有有效的攻击目标
+    /// </summary>
+    /// <returns></returns>
+    protected virtual bool IsHasTarget()
+    {
+        return (isBlock && mBlockUnit.IsAlive());
+    }
+
+    /// <summary>
+    /// 获取当前攻击目标，上述判断一并使用
+    /// </summary>
+    /// <returns></returns>
+    protected virtual BaseUnit GetCurrentTarget()
+    {
+        return mBlockUnit;
+    }
+
+    /// <summary>
+    /// 更新阻挡的状态
+    /// </summary>
+    protected virtual void UpdateBlockState()
+    {
+        if (mBlockUnit.IsAlive())
+            isBlock = true;
+        else
+            isBlock = false;
+    }
+
+    /// <summary>
+    /// 给予群攻型敌人一种可以选择多个目标的接口
+    /// </summary>
+    /// <returns></returns>
+    protected virtual List<BaseUnit> GetCurrentTargetList()
+    {
+        return null;
+    }
+
+    /// <summary>
+    /// 是否为伤害判定时刻（近战攻击为打出实际伤害，远程攻击为确定发射弹体）
+    /// </summary>
+    /// <returns></returns>
+    public virtual bool IsDamageJudgment()
+    {
+        AnimatorStateInfo info = animator.GetCurrentAnimatorStateInfo(0);
+        return (info.normalizedTime - Mathf.FloorToInt(info.normalizedTime) >= attackPercent && mAttackFlag);
+    }
+
+    /// <summary>
+    /// 执行具体的攻击，位于伤害判定为真之后
+    /// </summary>
+    public virtual void ExecuteDamage()
+    {
+        if (IsHasTarget())
+            TakeDamage(GetCurrentTarget());
+    }
+
+    // 以下为 IBaseStateImplementor 接口的方法实现
+    public override void OnIdleState()
+    {
+
+    }
+
+    public override void OnMoveState()
+    {
+        // 移动更新
+        SetPosition((Vector2)GetPosition() + Vector2.left * mCurrentMoveSpeed * 0.003f);
+    }
+
+    public override void OnAttackState()
+    {
+
+    }
+
+    /// <summary>
+    /// 老鼠单位默认都是处在同行且同高度时被美食阻挡
     /// 提示，特殊类型老鼠可以重写这个方法而强制设为不可阻挡，如幽灵鼠
     /// </summary>
     public override bool CanBlock(BaseUnit unit)
     {
-        if(unit is FoodUnit)
-        {
-            Debug.Log("检测到美食单位");
-            return GetRowIndex() == unit.GetRowIndex();
-        }
-        return false;
+        return (unit is FoodUnit && GetRowIndex() == unit.GetRowIndex() && mHeight == unit.mHeight);
     }
     
     /// <summary>
@@ -204,13 +270,13 @@ public class MouseUnit : BaseUnit
     /// <returns></returns>
     public override bool CanHit(BaseBullet bullet)
     {
-        return GetRowIndex() == bullet.GetRowIndex();
+        return (GetRowIndex() == bullet.GetRowIndex() && mHeight == bullet.mHeight);
     }
 
     /// <summary>
-    /// 每帧检测血量，更新单位贴图状态
+    /// 当受伤或者被治疗时，更新单位贴图状态
     /// </summary>
-    protected virtual void UpdateHertMap()
+    protected void UpdateHertMap()
     {
         // 要是死了的话就免了吧
         if (isDeathState)
@@ -225,7 +291,7 @@ public class MouseUnit : BaseUnit
             flag = true;
         }
         // 下一个受伤贴图的检测
-        while(mHertIndex < mHertRateList.Length && GetHeathPercent() <= mHertRateList[mHertIndex])
+        while(mHertIndex < mHertRateList.Count && GetHeathPercent() <= mHertRateList[mHertIndex])
         {
             mHertIndex ++;
             flag = true;
@@ -242,10 +308,38 @@ public class MouseUnit : BaseUnit
     public void UpdateRuntimeAnimatorController()
     {
         animator.runtimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Mouse/" + mType + "/" + mShape + "/" + mHertIndex);
+        OnUpdateRuntimeAnimatorController();
     }
 
-    // rigibody相关
-    private void OnTriggerEnter2D(Collider2D collision)
+    /// <summary>
+    /// 当贴图更新时要做的事，由子类override
+    /// </summary>
+    public virtual void OnUpdateRuntimeAnimatorController()
+    {
+        // demo...
+        //switch (mHertIndex)
+        //{
+        //    case 0:
+        //        break;
+        //    default:
+        //        break;
+        //}
+    }
+
+    /// <summary>
+    /// 当确定碰撞到美食单位
+    /// </summary>
+    public virtual void OnCollideFoodUnit(FoodUnit unit)
+    {
+        isBlock = true;
+        mBlockUnit = unit;
+    }
+
+    /// <summary>
+    /// 碰撞事件
+    /// </summary>
+    /// <param name="collision"></param>
+    public void OnCollision(Collider2D collision)
     {
         // 死亡动画时不接受任何碰撞事件
         if (isDeathState)
@@ -259,26 +353,36 @@ public class MouseUnit : BaseUnit
             FoodUnit food = collision.GetComponent<FoodUnit>();
             if (UnitManager.CanBlock(this, food)) // 检测双方能否互相阻挡
             {
-                isBlock = true;
-                mBlockUnit = food;
+                OnCollideFoodUnit(food);
             }
         }
         else if (collision.tag.Equals("Bullet"))
         {
             // 检测到子弹单位碰撞了
             BaseBullet bullet = collision.GetComponent<BaseBullet>();
-            if(UnitManager.CanBulletHit(this, bullet)) // 检测双方能否互相击中
+            if (UnitManager.CanBulletHit(this, bullet)) // 检测双方能否互相击中
             {
                 bullet.TakeDamage(this);
             }
         }
     }
 
+    // rigibody相关
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        OnCollision(collision);
+    }
+
+    private void OnTriggerStay2D(Collider2D collision)
+    {
+        OnCollision(collision);
+    }
+
     public override void MUpdate()
     {
         base.MUpdate();
         // 更新贴图控制器状态
-        UpdateHertMap();
+        // UpdateHertMap();
     }
 
     /// <summary>
@@ -320,6 +424,15 @@ public class MouseUnit : BaseUnit
         }
     }
 
+    /// <summary>
+    /// 是否存活
+    /// </summary>
+    /// <returns></returns>
+    public override bool IsAlive()
+    {
+        return (!isDeathState && base.IsAlive());
+    }
+
 
     public static void SaveNewMouseInfo()
     {
@@ -327,22 +440,32 @@ public class MouseUnit : BaseUnit
         {
             baseAttrbute = new BaseUnit.Attribute()
             {
-                name = "机械平民鼠", // 单位的具体名称
-                type = 0, // 单位属于的分类
-                shape = 6, // 单位在当前分类的变种编号
+                name = "僵尸魔笛鼠", // 单位的具体名称
+                type = 5, // 单位属于的分类
+                shape = 3, // 单位在当前分类的变种编号
 
-                baseHP = 270, // 基础血量
+                baseHP = 1700, // 基础血量
                 baseAttack = 10, // 基础攻击
                 baseAttackSpeed = 1.0, // 基础攻击速度
                 attackPercent = 0.6,
+                baseDefense = 0,
+                baseMoveSpeed = 1.0,
                 baseHeight = 0, // 基础高度
             },
-            baseMoveSpeed = 1.0,
-            hertRateList = new double[] { 0.5 }
+            hertRateList = new double[] {  }
         };
 
         Debug.Log("开始存档老鼠信息！");
         JsonManager.Save(attr, "Mouse/" + attr.baseAttrbute.type + "/" + attr.baseAttrbute.shape + "");
         Debug.Log("老鼠信息存档完成！");
+    }
+
+    /// <summary>
+    /// 设置在同种类敌人的渲染层级
+    /// </summary>
+    /// <param name="arrayIndex"></param>
+    public override void UpdateRenderLayer(int arrayIndex)
+    {
+        spriteRenderer.sortingOrder = LayerManager.CalculateSortingLayer(LayerManager.UnitType.Enemy, GetRowIndex(), 0, arrayIndex);
     }
 }

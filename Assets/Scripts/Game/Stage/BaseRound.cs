@@ -62,19 +62,22 @@ public class BaseRound
             yield return GameController.Instance.StartCoroutine(GameController.Instance.WaitForIEnumerator(mRoundInfo.interval));
         }
 
+        int waitTime = 0;
+        for (int i = 0; i < mRoundInfo.endTime; i++)
+        {
+            waitTime++;
+            yield return null;
+        }
+
         // 执行完后执行自身子轮的刷怪组内容
         for (int i = 0; i < mRoundList.Count; i++)
         {
             BaseRound round = mRoundList[i];
             yield return GameController.Instance.StartCoroutine(round.Execute());
         }
-        int waitTime = 0;
+        
         Debug.Log("本轮刷怪完成！");
-        for (int i = 0; i < mRoundInfo.endTime; i++)
-        {
-            waitTime++;
-            yield return null;
-        }
+
         Debug.Log("本轮已结束，waitTime="+waitTime);
     }
 

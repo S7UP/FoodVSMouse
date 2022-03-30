@@ -1,1 +1,1 @@
-{"baseAttrbute":{"name":"平民鼠","type":0,"shape":0,"baseHP":100.0,"baseAttack":10.0,"baseAttackSpeed":1.0,"attackPercent":0.6,"baseHeight":0},"baseMoveSpeed":1.0,"hertRateList":[0.5]}
+{"baseAttrbute":{"name":"平民鼠","type":0,"shape":0,"baseHP":100.0,"baseAttack":10.0,"baseAttackSpeed":1.0,"attackPercent":0.6,"baseMoveSpeed":1.0,"baseDefense":0.0,"baseHeight":0},"hertRateList":[0.5]}

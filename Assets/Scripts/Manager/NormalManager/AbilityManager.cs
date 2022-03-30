@@ -1,0 +1,189 @@
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+
+using UnityEngine;
+
+using static LayerManager;
+
+/// <summary>
+/// 管理技能的
+/// </summary>
+public class AbilityManager
+{
+    private static AbilityManager _instance;
+
+    // 引用
+    public static AbilityManager Instance { get => GetSingleton(); } //+ 自身单例
+    /// <summary>
+    /// 从外到里：
+    /// 1、先是用单位大类区分，如美食、老鼠；
+    /// 2、然后小类区分，如普通类老鼠、巨人类老鼠，
+    /// 3、然后在小类中用变种区分，如平民鼠、球迷鼠
+    /// 4、最后一层List代表这个变种老鼠的技能组，一个技能组包含了若干个技能属性信息
+    /// </summary>
+    public Dictionary<UnitType, List<List<List<SkillAbility.SkillAbilityInfo>>>> AbilityDict;
+
+    // 不让外界创建！
+    private AbilityManager()
+    {
+        _instance = this;
+        Init();
+    }
+
+    private void Init()
+    {
+        AbilityDict = new Dictionary<UnitType, List<List<List<SkillAbility.SkillAbilityInfo>>>>();
+        AbilityDict.Add(UnitType.Food, new List<List<List<SkillAbility.SkillAbilityInfo>>>());
+        AbilityDict.Add(UnitType.Mouse, new List<List<List<SkillAbility.SkillAbilityInfo>>>());
+        LoadAll();
+    }
+
+    public void Insert(SkillAbility.SkillAbilityInfo skillAbilityInfo, UnitType unitType, int typeIndex, int shapeIndex)
+    {
+        GetSkillAbilityInfoList(unitType, typeIndex, shapeIndex).Add(skillAbilityInfo);
+    }
+
+    public bool Update(SkillAbility.SkillAbilityInfo skillAbilityInfo, UnitType unitType, int typeIndex, int shapeIndex)
+    {
+        List<SkillAbility.SkillAbilityInfo> list = GetSkillAbilityInfoList(unitType, typeIndex, shapeIndex);
+        for (int i = 0; i < list.Count; i++)
+        {
+            if (list[i].name.Equals(skillAbilityInfo.name))
+            {
+                list[i] = skillAbilityInfo;
+                return true;
+            }
+        }
+        Debug.Log("更新失败，未找到匹配与目标SkillAbilityInfo.name='"+skillAbilityInfo.name+"'所匹配的项！");
+        return false;
+    }
+
+    public List<SkillAbility.SkillAbilityInfo> GetSkillAbilityInfoList(UnitType unitType, int typeIndex, int shapeIndex)
+    {
+        // 安全校验，如果Index比Lenght大，则必须强制扩展List的大小
+        List<List<SkillAbility.SkillAbilityInfo>> shapeList = GetSkillAbilityInfoShapeList(unitType, typeIndex);
+        int c = shapeIndex - shapeList.Count + 1;
+        for (int i = 0; i < c; i++)
+        {
+            shapeList.Add(new List<SkillAbility.SkillAbilityInfo>());
+        }
+        return shapeList[shapeIndex];
+    }
+
+    public List<List<SkillAbility.SkillAbilityInfo>> GetSkillAbilityInfoShapeList(UnitType unitType, int typeIndex)
+    {
+        // 安全校验，如果Index比Lenght大，则必须强制扩展List的大小
+        int c = typeIndex - AbilityDict[unitType].Count + 1;
+        for (int i = 0; i < c; i++)
+        {
+            AbilityDict[unitType].Add(new List<List<SkillAbility.SkillAbilityInfo>>());
+        }
+        return AbilityDict[unitType][typeIndex];
+    }
+
+    /// <summary>
+    /// 保存全部
+    /// </summary>
+    public void SaveAll()
+    {
+        Save(UnitType.Food);
+        Save(UnitType.Mouse);
+    }
+
+    private void Save(UnitType unitType)
+    {
+        string unitTypeStr = "";
+        switch (unitType)
+        {
+            case UnitType.Default:
+                break;
+            case UnitType.Food:
+                unitTypeStr += "Food";
+                break;
+            case UnitType.Mouse:
+                unitTypeStr += "Mouse";
+                break;
+            default:
+                break;
+        }
+        List<List<List<SkillAbility.SkillAbilityInfo>>> typelist = AbilityDict[unitType];
+        int typeIndex = 0;
+        foreach (var shapeList in typelist)
+        {
+            int shapeIndex = 0;
+            foreach (var infoList in shapeList)
+            {
+                JsonManager.Save<List<SkillAbility.SkillAbilityInfo>>(infoList, "Skill/" + unitTypeStr + "/" + typeIndex + "/" + shapeIndex);
+                shapeIndex++;
+            }
+            typeIndex++;
+        }
+    }
+
+    public void LoadAll()
+    {
+        Load(UnitType.Food);
+        Load(UnitType.Mouse);
+    }
+
+    private void Load(UnitType unitType)
+    {
+        //List<List<List<SkillAbility.SkillAbilityInfo>>> list = new List<List<List<SkillAbility.SkillAbilityInfo>>>();
+        string path = Application.dataPath + "/Resources/Json/Skill";
+        string unitTypeStr = "";
+        switch (unitType)
+        {
+            case UnitType.Default:
+                break;
+            case UnitType.Food:
+                unitTypeStr += "Food";
+                break;
+            case UnitType.Mouse:
+                unitTypeStr += "Mouse";
+                break;
+            default:
+                break;
+        }
+        path += "/" + unitTypeStr;
+        DirectoryInfo direction = new DirectoryInfo(path); // 获取JSON文件夹下的所有文件
+        FileInfo[] files = direction.GetFiles("*");
+        foreach (var typeFile in files)
+        {
+            int typeIndex = int.Parse(typeFile.Name.Replace(typeFile.Extension, "")); // 去后缀
+            // 进入这层子文件夹读取
+            // List<List<SkillAbility.SkillAbilityInfo>> shapeList = GetSkillAbilityInfoShapeList(unitType, typeIndex);
+            FileInfo[] shapeFiles = new DirectoryInfo(path + "/" + typeIndex).GetFiles("*");
+            foreach (var f in shapeFiles)
+            {
+                string name = f.Name.Replace(f.Extension, "");
+                // 只读取JSON
+                if (name.EndsWith(".json"))
+                {
+                    Debug.Log("Name = " + name);
+                    int shapeIndex = int.Parse(name.Replace(".json", ""));
+                    //int c2 = shapeIndex - shapeList.Count + 1;
+                    //for (int j = 0; j < c2; j++)
+                    //{
+                    //    shapeList.Add(new List<SkillAbility.SkillAbilityInfo>());
+                    //}
+                    List<SkillAbility.SkillAbilityInfo> infoList = JsonManager.Load<List<SkillAbility.SkillAbilityInfo>>("Skill/" + unitTypeStr + "/" + typeIndex + "/" + shapeIndex);
+                    List<SkillAbility.SkillAbilityInfo> list = GetSkillAbilityInfoList(unitType, typeIndex, shapeIndex);
+                    foreach (var item in infoList)
+                    {
+                        list.Add(item);
+                    }
+                }
+            }
+        }
+    }
+
+    public static AbilityManager GetSingleton()
+    {
+        if (_instance == null)
+        {
+            _instance = new AbilityManager();
+        }
+        return _instance;
+    }
+}

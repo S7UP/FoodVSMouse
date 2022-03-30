@@ -166,7 +166,7 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
     /// </summary>
     public void Constructe()
     {
-        mProduct = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Food/Pre_Food").GetComponent<FoodUnit>();
+        mProduct = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Food/" + mType).GetComponent<FoodUnit>();
     }
 
     /// <summary>
@@ -180,12 +180,12 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
             mGameController.SetFoodAttribute(JsonManager.Load<FoodUnit.Attribute>("Food/" + mType + "/" + mShape + "")); // 在自动MInit（）之前需要先获取初始化信息
             mProduct.MInit();
             overGrid.SetFoodUnitInGrid(mProduct); // 将卡片初始化并与种下的格子绑定
-            GameController.Instance.AddFoodUnit(mProduct); // 将这个实体添加到战场上
+            GameController.Instance.AddFoodUnit(mProduct, overGrid.gridIndex.yIndex); // 将这个实体添加到战场上
         }
         else
         {
             // 按理来说不应该存在这种情况，如果存在了那报个错然后回收该对象
-            GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, "Food/Pre_Food", mProduct.gameObject);
+            GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, "Food/" + mType, mProduct.gameObject);
             Debug.LogError("在种植卡片时未找到指定的格子！！");
         }
     }

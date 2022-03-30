@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 using UnityEngine;
+using UnityEngine.UIElements;
 
 using static UnityEngine.GraphicsBuffer;
 
@@ -12,15 +13,18 @@ public class FoodUnit : BaseUnit
     new public struct Attribute
     {
         public BaseUnit.Attribute baseAttrbute;
+        public float[] valueList; // 每级对应数值
         public FoodType foodType;
     }
 
     // Awake获取的组件
     protected Animator animator;
     protected Animator rankAnimator;
+    protected FoodUnit.Attribute attr;
 
     // 其他
     public FoodType mFoodType; // 美食职业划分
+    public int mLevel; //星级
 
     private BaseGrid mGrid; // 卡片所在的格子（单格卡)
     private List<BaseGrid> mGridList; // 卡片所在的格子（多格卡）
@@ -30,8 +34,6 @@ public class FoodUnit : BaseUnit
     public override void Awake()
     {
         base.Awake();
-        mPreFabPath = "Food/Pre_Food";
-        jsonPath = "Food/";
         animator = gameObject.transform.GetChild(0).gameObject.GetComponent<Animator>();
         rankAnimator = transform.Find("Ani_Rank").gameObject.GetComponent<Animator>();
     }
@@ -46,86 +48,127 @@ public class FoodUnit : BaseUnit
         isUseSingleGrid = false; // 是否只占一格
     }
 
-
-
-    // 判断能不能开火了，限定在OnAttackState()里调用，允许子类重写
-    protected virtual bool CanAttack()
-    {
-        // 获取Attack的动作信息，使得伤害判定与动画显示尽可能同步
-        AnimatorStateInfo info = animator.GetCurrentAnimatorStateInfo(0);
-        // 这个normalizedTime的小数可以近似表示一个动画播放进度的百分比，个位数则可以表示已循环的次数。
-        int c = Mathf.FloorToInt(info.normalizedTime);
-
-        // 动画进度在到一定时启动伤害判定
-        float percent = info.normalizedTime - c;
-        if (percent >= attackPercent && mAttackFlag)
-        {
-            return true;
-        }
-        return false;
-    }
-
-    // 当真正开火时发出的子弹相关内容，允许且需要子类重写以达到多态性。
-    protected virtual void Attack()
-    {
-        // Debug.Log("卡片攻击了！");
-        for (int i = -1; i <= 1; i++)
-        {
-            for (int j = 0; j < 2; j++)
-            {
-                GameController.Instance.CreateBullet(transform.position + Vector3.right * 0.5f * j + Vector3.up * 0.7f * i);
-            }
-        }
-    }
-
     // 每次对象被创建时要做的初始化工作
     public override void MInit()
     {
         base.MInit();
-
-        FoodUnit.Attribute attr = GameController.Instance.GetFoodAttribute();
+        
+        attr = GameController.Instance.GetFoodAttribute();
         mFoodType = attr.foodType;
 
         mGridList = new List<BaseGrid>();
         isUseSingleGrid = true;
 
-        animator.runtimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Food/7/2");
+        animator.runtimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Food/"+mType+"/"+mShape);
         SetActionState(new IdleState(this));
-        
-        rankAnimator.Play("12"); // 先播放12星级的图标动画
+
+        SetLevel(6);
+    }
+
+    public override void SetUnitType()
+    {
+        mUnitType = UnitType.Food;
+    }
+
+    public void SetLevel(int level)
+    {
+        mLevel = level;
+        NumericBox.Attack.SetBase((float)(attr.baseAttrbute.baseAttack + attr.valueList[mLevel]));
+        rankAnimator.Play(mLevel.ToString()); // 先播放星级的图标动画
+    }
+
+    /// <summary>
+    /// 加载技能，此处仅加载普通攻击，具体技能加载实现请在子类中重写
+    /// </summary>
+    public override void LoadSkillAbility()
+    {
+        foreach (var item in AbilityManager.Instance.GetSkillAbilityInfoList(mUnitType, mType, mShape))
+        {
+            if (item.skillType == SkillAbility.Type.GeneralAttack)
+            {
+                skillAbilityManager.AddSkillAbility(new GeneralAttackSkillAbility(this, item));
+            }
+        }
+    }
+
+    /// <summary>
+    /// 判断是否有有效的攻击目标
+    /// </summary>
+    /// <returns></returns>
+    protected virtual bool IsHasTarget()
+    {
+        return false;
+    }
+
+    /// <summary>
+    /// 是否满足普通攻击的条件
+    /// </summary>
+    /// <returns></returns>
+    public override bool IsMeetGeneralAttackCondition()
+    {
+        return false;
+    }
+
+    /// <summary>
+    /// 进入普通攻击动画状态
+    /// </summary>
+    public override void BeforeGeneralAttack()
+    {
+
+    }
+
+    /// <summary>
+    /// 普通攻击期间
+    /// </summary>
+    public override void OnGeneralAttack()
+    {
+
+    }
+
+    /// <summary>
+    /// 退出普通攻击的条件
+    /// </summary>
+    /// <returns></returns>
+    public override bool IsMeetEndGeneralAttackCondition()
+    {
+        return false;
+    }
+
+    /// <summary>
+    /// 退出普通攻击后要做的事
+    /// </summary>
+    public override void AfterGeneralAttack()
+    {
+
+    }
+
+    /// <summary>
+    /// 是否为伤害判定时刻（近战攻击为打出实际伤害，远程攻击为确定发射弹体）
+    /// </summary>
+    /// <returns></returns>
+    public virtual bool IsDamageJudgment()
+    {
+        return false;
+    }
+
+    /// <summary>
+    /// 执行具体的攻击，位于伤害判定为真之后
+    /// </summary>
+    public virtual void ExecuteDamage()
+    {
+
     }
 
     // 在待机状态时每帧要做的事
     public override void OnIdleState()
     {
-        // 默认为攻击计数器为零时才能发起攻击
-        if (mAttackCDLeft <= 0)
-        {
-            SetActionState(new AttackState(this));
-            mAttackCDLeft += mAttackCD;
-        }
+
     }
 
     // 在攻击状态时每帧要做的事
     public override void OnAttackState()
     {
-        // 切换时的第一帧直接不执行update()，因为下述的info.normalizedTime的值还停留在上一个状态，逻辑会出问题！
-        if (currentStateTimer <= 0)
-        {
-            return;
-        }
-        // 获取Attack的动作信息，使得伤害判定与动画显示尽可能同步
-        AnimatorStateInfo info = animator.GetCurrentAnimatorStateInfo(0);
-        if (CanAttack())
-        {
-            Attack();
-            mAttackFlag = false;
-        }
-        else if (info.normalizedTime >= 1.0f) // 攻击动画播放完一次后转为待机状态
-        {
-            mAttackFlag = true;
-            SetActionState(new IdleState(this));
-        }
+
     }
 
 
@@ -162,7 +205,6 @@ public class FoodUnit : BaseUnit
     {
         if(unit is MouseUnit)
         {
-            Debug.Log("检测到老鼠单位！");
             return GetRowIndex() == unit.GetRowIndex();
         }
         return false; // 别的单位暂时默认不能阻挡
@@ -188,12 +230,64 @@ public class FoodUnit : BaseUnit
 
     public override void OnAttackStateEnter()
     {
+        // 每次攻击时，最好根据攻速来计算一下播放速度，然后改变播放速度
+        UpdateAttackAnimationSpeed();
         animator.Play("Attack");
+    }
+
+    public override void OnAttackStateExit()
+    {
+        // 攻击结束后播放速度改回来
+        animator.speed = 1;
     }
 
     public override void OnDieStateEnter()
     {
         // 对于美食来说没有死亡动画的话，直接回收对象就行，在游戏里的体现就是直接消失
         GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, mPreFabPath, this.gameObject);
+    }
+
+    /// <summary>
+    /// 根据攻击速度来更新攻击动画的速度
+    /// </summary>
+    private void UpdateAttackAnimationSpeed()
+    {
+        float time = AnimatorManager.GetClipTime(animator, "Attack"); // 1倍情况下，一次攻击的默认时间 秒
+        float interval = 1/NumericBox.AttackSpeed.Value; // 攻击间隔  秒
+        float rate = Mathf.Max(1, time / interval);
+        AnimatorManager.SetClipSpeed(animator, "Attack", rate);
+    }
+
+    public static void SaveNewFoodInfo()
+    {
+        FoodUnit.Attribute attr = new FoodUnit.Attribute()
+        {
+            baseAttrbute = new BaseUnit.Attribute()
+            {
+                name = "终结者酒架", // 单位的具体名称
+                type = 7, // 单位属于的分类
+                shape = 2, // 单位在当前分类的变种编号
+
+                baseHP = 50, // 基础血量
+                baseAttack = 0, // 基础攻击
+                baseAttackSpeed = 1.05, // 基础攻击速度
+                attackPercent = 0.5,
+                baseDefense = 0,
+                baseMoveSpeed = 0,
+                baseRange = 9,
+                baseHeight = 0, // 基础高度
+            },
+            valueList = new float[] {10, 12, 14, 15, 18, 20, 22, 26, 32, 40, 55, 70, 85, 100, 115, 130, 145 },
+            foodType = FoodType.Shooter
+        };
+
+        Debug.Log("开始存档美食信息！");
+        JsonManager.Save(attr, "Food/" + attr.baseAttrbute.type + "/" + attr.baseAttrbute.shape + "");
+        Debug.Log("美食信息存档完成！");
+
+        //Debug.Log("开始读取美食信息！");
+        //foodAttribute = JsonManager.Load<FoodUnit.Attribute>("Food/" + attr.baseAttrbute.type + "/" + attr.baseAttrbute.shape + "");
+        //Debug.Log("name=" + foodAttribute.baseAttrbute.name);
+        //Debug.Log("读取美食信息成功！");
     }
 }

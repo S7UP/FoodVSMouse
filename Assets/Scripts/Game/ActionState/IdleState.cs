@@ -18,4 +18,8 @@ public class IdleState : BaseActionState
         mBaseUnit.OnIdleState();
     }
 
+    public override void OnExit()
+    {
+        mBaseUnit.OnIdleStateExit();
+    }
 }
