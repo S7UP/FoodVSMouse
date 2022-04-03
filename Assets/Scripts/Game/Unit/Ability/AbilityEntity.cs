@@ -36,7 +36,7 @@ public abstract class AbilityEntity
     //尝试激活能力
     public void TryActivateAbility()
     {
-        if (CanSkill())
+        if (CanActive())
         {
             ActivateAbility();
         }
@@ -48,13 +48,25 @@ public abstract class AbilityEntity
 
     }
 
+    /// <summary>
+    /// 每帧随着主人更新
+    /// </summary>
+    public virtual void Update()
+    {
+
+    }
+
     //结束能力
     public virtual void EndActivate()
     {
         
     }
 
-    public virtual bool CanSkill()
+    /// <summary>
+    /// 是否达到了激活的条件
+    /// </summary>
+    /// <returns></returns>
+    public virtual bool CanActive()
     {
         return true;
     }
@@ -69,13 +81,5 @@ public abstract class AbilityEntity
     public virtual void ApplyAbilityEffect(BaseUnit targetEntity)
     {
         //应用能力效果
-    }
-
-    /// <summary>
-    /// 每帧随着主人更新
-    /// </summary>
-    public virtual void Update()
-    {
-
     }
 }

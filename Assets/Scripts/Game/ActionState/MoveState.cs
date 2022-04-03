@@ -23,4 +23,14 @@ public class MoveState : BaseActionState
     {
         mBaseUnit.OnMoveStateExit();
     }
+
+    public override void OnInterrupt()
+    {
+        mBaseUnit.OnMoveStateInterrupt();
+    }
+
+    public override void OnContinue()
+    {
+        mBaseUnit.OnMoveStateContinue();
+    }
 }

@@ -28,4 +28,12 @@ public class BaseBulletActionState : IBaseActionState
     {
 
     }
+    public void OnInterrupt()
+    {
+        
+    }
+    public void OnContinue()
+    {
+        
+    }
 }

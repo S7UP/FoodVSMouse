@@ -31,7 +31,7 @@ public sealed class SkillAbilityManager
         foreach (var item in skillAbilityList)
         {
             // 作为候选技能的两个条件：1、技能本身达到施放条件；2、当前技能优先级比原本候选技能优先级大
-            if (item.CanSkill() && (skillAbility==null || skillAbility > item))
+            if (item.CanActive() && (skillAbility==null || skillAbility > item))
             {
                 skillAbility = item;
             }

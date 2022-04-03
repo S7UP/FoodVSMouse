@@ -22,4 +22,14 @@ public class AttackState : BaseActionState
     {
         mBaseUnit.OnAttackStateExit();
     }
+
+    public override void OnInterrupt()
+    {
+        mBaseUnit.OnAttackStateInterrupt();
+    }
+
+    public override void OnContinue()
+    {
+        mBaseUnit.OnAttackStateContinue();
+    }
 }

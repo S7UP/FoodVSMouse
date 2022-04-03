@@ -22,4 +22,14 @@ public class CastState : BaseActionState
     {
         mBaseUnit.OnCastStateExit();
     }
+
+    public override void OnInterrupt()
+    {
+        mBaseUnit.OnCastStateInterrupt();
+    }
+
+    public override void OnContinue()
+    {
+        mBaseUnit.OnCastStateContinue();
+    }
 }

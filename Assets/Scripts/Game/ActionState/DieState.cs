@@ -27,4 +27,14 @@ public class DieState : BaseActionState
         // 不，事实上，永远也无法达到离开死亡的真实！因此在正常流程下不应该调用到这里
         Debug.LogWarning("警告：有对象从死亡状态转换到其他状态了！！！");
     }
+
+    public override void OnInterrupt()
+    {
+        
+    }
+
+    public override void OnContinue()
+    {
+        
+    }
 }

@@ -47,12 +47,15 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     protected float attackPercent; // 攻击动画播放进度到attackPercent以上时允许出真正的攻击
     protected bool mAttackFlag; // 作用于一次攻击能否打出来的flag
     public int mHeight; //+ 高度
+    public bool isFrozenState; // 是否在冻结状态
     public bool isDeathState; // 是否在死亡状态
+    public bool isDisableSkill; // 是否禁用主动技能
 
     //public HealthPoint CurrentHealth { get; private set; } = new HealthPoint();
     public CombatNumericBox NumericBox { get; private set; } = new CombatNumericBox(); // 存储单位当前属性的盒子
     public ActionPointManager actionPointManager { get; set; } = new ActionPointManager(); // 行动点管理器
     public SkillAbilityManager skillAbilityManager { get; set; } = new SkillAbilityManager(); // 技能管理器
+    public StatusAbilityManager statusAbilityManager { get; set; } = new StatusAbilityManager(); // 时效状态（BUFF）管理器
 
     public string mName; // 当前单位的种类名称
     public int mType; // 当前单位的种类（如不同的卡，不同的老鼠）
@@ -107,6 +110,8 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         mAttackFlag = false; // 作用于一次攻击能否打出来的flag
         mHeight = 0; //+ 高度
         isDeathState = true;
+        isFrozenState = false;
+        isDisableSkill = false;
 
         mName = null; // 当前单位的种类名称
         mType = 0; // 当前单位的种类（如不同的卡，不同的老鼠）
@@ -118,19 +123,45 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         NumericBox.Initialize();
         actionPointManager.Initialize();
         skillAbilityManager.Initialize();
+        statusAbilityManager.Initialize();
     }
 
     // 切换动作状态
     public void SetActionState(IBaseActionState state)
     {
-        if (mCurrentActionState != null)
+        if(state is FrozenState)
         {
-            mCurrentActionState.OnExit();
+            Debug.Log("Enter FrozenState!");
+            if (mCurrentActionState != null)
+                mCurrentActionState.OnInterrupt();
+            mCurrentActionState = state;
+            mCurrentActionState.OnEnter();
+            // 不重置计数器，并且在Update中停止计数
         }
-        mCurrentActionState = state;
-        currentStateTimer = -1; // 重置计数器，重置为-1是保证下一次执行到状态Update时，读取到的计数器值一定为0，详细实现见下述MUpdate()内容
-        mCurrentActionState.OnEnter();
+        else
+        {
+            if (mCurrentActionState is FrozenState)
+            {
+                // 如果切换前的状态是冰冻，则不能执行OnExit（），因为其OnExit（）会包括该方法，最后会导致无限递归
+                mCurrentActionState = state;
+                // 不重置计数器，同时启用解冻后状态的继续方法
+                mCurrentActionState.OnContinue();
+            }
+            else
+            {
+                if (mCurrentActionState != null)
+                {
+                    mCurrentActionState.OnExit();
+                }
+                mCurrentActionState = state;
+                currentStateTimer = -1; // 重置计数器，重置为-1是保证下一次执行到状态Update时，读取到的计数器值一定为0，详细实现见下述MUpdate()内容
+                mCurrentActionState.OnEnter();
+            }
+
+        }
     }
+
+
 
     /// <summary>
     /// 计算当前血量百分比
@@ -219,10 +250,15 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
 
     public virtual void MUpdate()
     {
+        // 时效性状态管理器更新
+        statusAbilityManager.Update();
         // 技能管理器更新
-        skillAbilityManager.Update();
-        // 单位动作状态由状态机决定（如移动、攻击、待机、死亡）
-        currentStateTimer += 1; 
+        if (!isDisableSkill)
+            skillAbilityManager.Update();
+        // 当不处于冻结状态时，当前状态计时器每帧都+1
+        if (!isFrozenState)
+            currentStateTimer += 1;
+        // 单位动作状态由状态机决定（如移动、攻击、待机、冻结、死亡）
         mCurrentActionState.OnUpdate();
     }
 
@@ -308,23 +344,6 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public virtual bool CanHit(BaseBullet bullet)
     {
         return false;
-    }
-
-
-    /// <summary>
-    /// 当进入静止状态时
-    /// </summary>
-    public virtual void OnStaticStateEnter()
-    {
-
-    }
-
-    /// <summary>
-    /// 当退出静止状态时
-    /// </summary>
-    public virtual void OnStaticStateExit()
-    {
-
     }
 
     /// <summary>
@@ -460,6 +479,16 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         skillAbilityManager.RemoveSkillAbility(skillAbility);
     }
 
+    public void AddStatusAbility(StatusAbility statusAbility)
+    {
+        statusAbilityManager.AddStatusAbility(statusAbility);
+    }
+
+    public void RemoveStatusAbility(StatusAbility statusAbility)
+    {
+        statusAbilityManager.RemoveStatusAbility(statusAbility);
+    }
+
     /// <summary>
     /// 普通攻击的条件
     /// </summary>
@@ -531,10 +560,6 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     {
     }
 
-    public virtual void OnStaticState()
-    {
-    }
-
     public virtual void OnCastState()
     {
     }
@@ -573,5 +598,63 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     {
         
     }
+
+    public virtual void OnIdleStateInterrupt()
+    {
+    }
+
+    public virtual void OnMoveStateInterrupt()
+    {
+    }
+
+    public virtual void OnAttackStateInterrupt()
+    {
+    }
+
+    public virtual void OnCastStateInterrupt()
+    {
+    }
+
+    public virtual void OnTransitionStateInterrupt()
+    {
+    }
+
+    public virtual void OnIdleStateContinue()
+    {
+    }
+
+    public virtual void OnMoveStateContinue()
+    {
+    }
+
+    public virtual void OnAttackStateContinue()
+    {
+    }
+
+    public virtual void OnCastStateContinue()
+    {
+    }
+
+    public virtual void OnTransitionStateContinue()
+    {
+    }
+
+    /// <summary>
+    /// 由被冻结时调用，暂停当前动画
+    /// </summary>
+    public virtual void AnimatorStop()
+    {
+
+    }
+
+    /// <summary>
+    /// 由解除冻结时调用，解除暂停当前动画
+    /// </summary>
+    public virtual void AnimatorContinue()
+    {
+
+    }
+
+
     // 继续
 }

@@ -8,7 +8,7 @@ using UnityEngine.UIElements;
 /// </summary>
 public abstract class SkillAbility : AbilityEntity
 {
-    public SkillAbilityManager skillAbilityManager; 
+    public SkillAbilityManager skillAbilityManager { get; set; }
     public bool isSpelling { get; set; } // 是否处在技能生效状态
     public FloatNumeric needEnergy = new FloatNumeric(); // 施放需求能量值
     public FloatNumeric startEnergy = new FloatNumeric(); // 初始能量值
@@ -211,7 +211,7 @@ public abstract class SkillAbility : AbilityEntity
     /// <summary>
     /// 能否放技能
     /// </summary>
-    public override bool CanSkill()
+    public override bool CanActive()
     {
         return (IsActiveInDeath() && !isSpelling && currentEnergy >= needEnergy.Value && IsMeetSkillCondition());
     }

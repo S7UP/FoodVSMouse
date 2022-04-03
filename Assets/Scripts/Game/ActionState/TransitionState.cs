@@ -25,4 +25,14 @@ public class TransitionState : BaseActionState
     {
         mBaseUnit.OnTransitionStateExit();
     }
+
+    public override void OnInterrupt()
+    {
+        mBaseUnit.OnTransitionStateInterrupt();
+    }
+
+    public override void OnContinue()
+    {
+        mBaseUnit.OnTransitionStateContinue();
+    }
 }

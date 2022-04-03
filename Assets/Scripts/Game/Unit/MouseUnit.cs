@@ -307,7 +307,11 @@ public class MouseUnit : BaseUnit
     /// <param name="collision"></param>
     public void UpdateRuntimeAnimatorController()
     {
+        string name = animator.GetCurrentAnimatorClipInfo(0)[0].clip.name;
+        float time = AnimatorManager.GetNormalizedTime(animator);
         animator.runtimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Mouse/" + mType + "/" + mShape + "/" + mHertIndex);
+        // 保持当前动画播放
+        animator.Play(name, -1, time);
         OnUpdateRuntimeAnimatorController();
     }
 
@@ -467,5 +471,15 @@ public class MouseUnit : BaseUnit
     public override void UpdateRenderLayer(int arrayIndex)
     {
         spriteRenderer.sortingOrder = LayerManager.CalculateSortingLayer(LayerManager.UnitType.Enemy, GetRowIndex(), 0, arrayIndex);
+    }
+
+    public override void AnimatorStop()
+    {
+        animator.speed = 0;
+    }
+
+    public override void AnimatorContinue()
+    {
+        animator.speed = 1;
     }
 }

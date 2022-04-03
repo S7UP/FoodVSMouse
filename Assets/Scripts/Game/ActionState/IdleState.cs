@@ -22,4 +22,14 @@ public class IdleState : BaseActionState
     {
         mBaseUnit.OnIdleStateExit();
     }
+
+    public override void OnInterrupt()
+    {
+        mBaseUnit.OnIdleStateInterrupt();
+    }
+
+    public override void OnContinue()
+    {
+        mBaseUnit.OnIdleStateContinue();
+    }
 }

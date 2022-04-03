@@ -21,6 +21,8 @@ public class FoodUnit : BaseUnit
     protected Animator animator;
     protected Animator rankAnimator;
     protected FoodUnit.Attribute attr;
+    private SpriteRenderer spriteRenderer1;
+    private SpriteRenderer spriteRenderer2;
 
     // 其他
     public FoodType mFoodType; // 美食职业划分
@@ -34,8 +36,10 @@ public class FoodUnit : BaseUnit
     public override void Awake()
     {
         base.Awake();
-        animator = gameObject.transform.GetChild(0).gameObject.GetComponent<Animator>();
+        animator = transform.Find("Ani_Food").gameObject.GetComponent<Animator>();
         rankAnimator = transform.Find("Ani_Rank").gameObject.GetComponent<Animator>();
+        spriteRenderer1 = transform.Find("Ani_Food").gameObject.GetComponent<SpriteRenderer>();
+        spriteRenderer2 = transform.Find("Ani_Rank").gameObject.GetComponent<SpriteRenderer>();
     }
 
     // 单位被对象池回收时触发
@@ -241,6 +245,13 @@ public class FoodUnit : BaseUnit
         animator.speed = 1;
     }
 
+    public override void OnAttackStateContinue()
+    {
+        // 每次攻击时，最好根据攻速来计算一下播放速度，然后改变播放速度
+        UpdateAttackAnimationSpeed();
+        // animator.Play("Attack", -1, currentStateTimer/ConfigManager.fps);
+    }
+
     public override void OnDieStateEnter()
     {
         // 对于美食来说没有死亡动画的话，直接回收对象就行，在游戏里的体现就是直接消失
@@ -284,10 +295,25 @@ public class FoodUnit : BaseUnit
         Debug.Log("开始存档美食信息！");
         JsonManager.Save(attr, "Food/" + attr.baseAttrbute.type + "/" + attr.baseAttrbute.shape + "");
         Debug.Log("美食信息存档完成！");
+    }
 
-        //Debug.Log("开始读取美食信息！");
-        //foodAttribute = JsonManager.Load<FoodUnit.Attribute>("Food/" + attr.baseAttrbute.type + "/" + attr.baseAttrbute.shape + "");
-        //Debug.Log("name=" + foodAttribute.baseAttrbute.name);
-        //Debug.Log("读取美食信息成功！");
+    /// <summary>
+    /// 设置在同种类敌人的渲染层级
+    /// </summary>
+    /// <param name="arrayIndex"></param>
+    public override void UpdateRenderLayer(int arrayIndex)
+    {
+        spriteRenderer1.sortingOrder = LayerManager.CalculateSortingLayer(LayerManager.UnitType.Ally, GetRowIndex(), 0, 2*arrayIndex);
+        spriteRenderer2.sortingOrder = LayerManager.CalculateSortingLayer(LayerManager.UnitType.Ally, GetRowIndex(), 0, 2*arrayIndex+1);
+    }
+
+    public override void AnimatorStop()
+    {
+        animator.speed = 0;
+    }
+
+    public override void AnimatorContinue()
+    {
+        animator.speed = 1;
     }
 }
