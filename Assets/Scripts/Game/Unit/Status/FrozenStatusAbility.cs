@@ -8,6 +8,7 @@ using UnityEngine;
 public class FrozenStatusAbility : StatusAbility
 {
     private FrozenState frozenState;
+    private BoolModifier boolModifier;
 
     public FrozenStatusAbility(BaseUnit pmaster, float time) : base(pmaster, time)
     {
@@ -22,7 +23,8 @@ public class FrozenStatusAbility : StatusAbility
         // 目标动作状态转化为冻结状态
         frozenState = new FrozenState(master, master.mCurrentActionState);
         master.SetActionState(frozenState);
-        master.isDisableSkill = true;
+        if(boolModifier == null)
+            boolModifier = master.AddDisAbleSkillModifier();
     }
 
 
@@ -36,7 +38,8 @@ public class FrozenStatusAbility : StatusAbility
             frozenState.TryExitCurrentState();
             frozenState = null;
         }
-        master.isDisableSkill = false;
+        if(boolModifier != null)
+            master.RemoveDisAbleSkillModifier(boolModifier);
     }
 
     /// <summary>
@@ -50,7 +53,8 @@ public class FrozenStatusAbility : StatusAbility
             frozenState = new FrozenState(master, master.mCurrentActionState);
             master.SetActionState(frozenState);
         }
-        master.isDisableSkill = true;
+        if (boolModifier == null)
+            boolModifier = master.AddDisAbleSkillModifier();
     }
 
     /// <summary>
@@ -75,7 +79,8 @@ public class FrozenStatusAbility : StatusAbility
     /// <returns></returns>
     public override bool IsMeetingEndCondition()
     {
-        return false;
+        return master.isDeathState;
+        // return false;
     }
 
     /// <summary>
@@ -84,6 +89,7 @@ public class FrozenStatusAbility : StatusAbility
     public override void AfterEffect()
     {
         frozenState.TryExitCurrentState();
-        master.isDisableSkill = false;
+        if (boolModifier != null)
+            master.RemoveDisAbleSkillModifier(boolModifier);
     }
 }

@@ -21,6 +21,10 @@ public class CombatNumericBox
     public FloatNumeric Range = new FloatNumeric();
     // 护盾值
     public FloatNumeric Shield = new FloatNumeric();
+    // 禁用主动技能决定器
+    public BoolNumeric IsDisableSkill = new BoolNumeric();
+
+
 
     public void Initialize()
     {
@@ -81,5 +85,45 @@ public class CombatNumericBox
             }
         }
         return dmg;
+    }
+
+    /// <summary>
+    /// 添加禁用技能效果（沉默）
+    /// </summary>
+    /// <returns></returns>
+    public BoolModifier AddDisAbleSkillModifier()
+    {
+        BoolModifier boolModifier = new BoolModifier(true);
+        IsDisableSkill.AddDecideModifier(boolModifier);
+        return boolModifier;
+    }
+
+    /// <summary>
+    /// 添加免疫禁用技能效果（沉默免疫）
+    /// </summary>
+    /// <returns></returns>
+    public BoolModifier AddImmuneDisAbleSkillModifier()
+    {
+        BoolModifier boolModifier = new BoolModifier(true);
+        IsDisableSkill.AddImmuneModifier(boolModifier);
+        return boolModifier;
+    }
+
+    /// <summary>
+    /// 移除禁用技能效果（沉默）
+    /// </summary>
+    /// <returns></returns>
+    public void RemoveDisAbleSkillModifier(BoolModifier boolModifier)
+    {
+        IsDisableSkill.RemoveDecideModifier(boolModifier);
+    }
+
+    /// <summary>
+    /// 移除免疫禁用技能效果（沉默免疫）
+    /// </summary>
+    /// <returns></returns>
+    public void RemoveImmuneDisAbleSkillModifier(BoolModifier boolModifier)
+    {
+        IsDisableSkill.RemoveImmuneModifier(boolModifier);
     }
 }

@@ -52,6 +52,31 @@ public sealed class StatusAbilityManager
         }
     }
 
+    public void TryEndStatusAbility(int index)
+    {
+        statusAbilityList[index].TryEndActivate();
+    }
+
+    public void TryEndStatusAbility(string name)
+    {
+        foreach (var item in statusAbilityList)
+        {
+            if (item.name.Equals(name))
+            {
+                item.TryEndActivate();
+                return;
+            }
+        }
+    }
+
+    public void TryEndAllStatusAbility()
+    {
+        foreach (var item in statusAbilityList)
+        {
+            item.TryEndActivate();
+        }
+    }
+
     public void Update()
     {
         foreach (var item in statusAbilityList)

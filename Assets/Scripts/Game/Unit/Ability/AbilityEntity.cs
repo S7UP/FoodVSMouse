@@ -56,6 +56,14 @@ public abstract class AbilityEntity
 
     }
 
+    /// <summary>
+    /// 手动尝试停止能力
+    /// </summary>
+    public void TryEndActivate()
+    {
+        EndActivate();
+    }
+
     //结束能力
     public virtual void EndActivate()
     {

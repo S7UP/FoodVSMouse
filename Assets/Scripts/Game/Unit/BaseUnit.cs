@@ -48,14 +48,14 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     protected bool mAttackFlag; // 作用于一次攻击能否打出来的flag
     public int mHeight; //+ 高度
     public bool isFrozenState; // 是否在冻结状态
-    public bool isDeathState; // 是否在死亡状态
-    public bool isDisableSkill; // 是否禁用主动技能
+    public bool isDeathState{ get; set; } // 是否在死亡状态
+    public bool isDisableSkill { get { return NumericBox.IsDisableSkill.Value; } } // 是否禁用主动技能
 
-    //public HealthPoint CurrentHealth { get; private set; } = new HealthPoint();
     public CombatNumericBox NumericBox { get; private set; } = new CombatNumericBox(); // 存储单位当前属性的盒子
     public ActionPointManager actionPointManager { get; set; } = new ActionPointManager(); // 行动点管理器
     public SkillAbilityManager skillAbilityManager { get; set; } = new SkillAbilityManager(); // 技能管理器
     public StatusAbilityManager statusAbilityManager { get; set; } = new StatusAbilityManager(); // 时效状态（BUFF）管理器
+    public RenderManager renderManager { get; set; } = new RenderManager(); // 与渲染有关的管理器
 
     public string mName; // 当前单位的种类名称
     public int mType; // 当前单位的种类（如不同的卡，不同的老鼠）
@@ -111,7 +111,6 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         mHeight = 0; //+ 高度
         isDeathState = true;
         isFrozenState = false;
-        isDisableSkill = false;
 
         mName = null; // 当前单位的种类名称
         mType = 0; // 当前单位的种类（如不同的卡，不同的老鼠）
@@ -124,11 +123,16 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         actionPointManager.Initialize();
         skillAbilityManager.Initialize();
         statusAbilityManager.Initialize();
+        renderManager.Initialize();
     }
 
     // 切换动作状态
     public void SetActionState(IBaseActionState state)
     {
+        // 若当前状态为死亡状态，则不能通过此方法再切换成别的状态
+        if (mCurrentActionState is DieState)
+            return;
+
         if(state is FrozenState)
         {
             Debug.Log("Enter FrozenState!");
@@ -192,6 +196,8 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
 
         // 进入死亡动画状态
         isDeathState = true;
+        // 清除BUFF效果
+        statusAbilityManager.TryEndAllStatusAbility();
         SetActionState(new DieState(this));
     }
 
@@ -220,6 +226,9 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         // 几个管理器初始化
         NumericBox.Initialize();
         actionPointManager.Initialize();
+        skillAbilityManager.Initialize();
+        statusAbilityManager.Initialize();
+        renderManager.Initialize();
         // 种类
         mType = attr.type;
         mShape = attr.shape;
@@ -487,6 +496,42 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public void RemoveStatusAbility(StatusAbility statusAbility)
     {
         statusAbilityManager.RemoveStatusAbility(statusAbility);
+    }
+
+    /// <summary>
+    /// 添加禁用技能效果（沉默）
+    /// </summary>
+    /// <returns></returns>
+    public BoolModifier AddDisAbleSkillModifier()
+    {
+        return NumericBox.AddDisAbleSkillModifier();
+    }
+
+    /// <summary>
+    /// 添加免疫禁用技能效果（沉默免疫）
+    /// </summary>
+    /// <returns></returns>
+    public BoolModifier AddImmuneDisAbleSkillModifier()
+    {
+        return NumericBox.AddImmuneDisAbleSkillModifier();
+    }
+
+    /// <summary>
+    /// 移除禁用技能效果（沉默）
+    /// </summary>
+    /// <returns></returns>
+    public void RemoveDisAbleSkillModifier(BoolModifier boolModifier)
+    {
+        NumericBox.RemoveDisAbleSkillModifier(boolModifier);
+    }
+
+    /// <summary>
+    /// 移除免疫禁用技能效果（沉默免疫）
+    /// </summary>
+    /// <returns></returns>
+    public void RemoveImmuneDisAbleSkillModifier(BoolModifier boolModifier)
+    {
+        NumericBox.RemoveImmuneDisAbleSkillModifier(boolModifier);
     }
 
     /// <summary>

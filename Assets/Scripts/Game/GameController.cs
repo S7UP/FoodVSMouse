@@ -384,18 +384,18 @@ public class GameController : MonoBehaviour
         mFrameNum ++; // 先更新游戏帧，以保证Update里面与协程接收到的帧是相同的
 
         // test
-        //if(mFrameNum == 840)
-        //{
-        //    Debug.Log("全屏冰冻测试");
-        //    foreach (var item in GetEachEnemy())
-        //    {
-        //        item.AddStatusAbility(new FrozenStatusAbility(item, 240));
-        //    }
-        //    foreach (var item in GetEachAlly())
-        //    {
-        //        item.AddStatusAbility(new FrozenStatusAbility(item, 240));
-        //    }
-        //}
+        if (mFrameNum == 840)
+        {
+            Debug.Log("全屏冰冻测试");
+            foreach (var item in GetEachEnemy())
+            {
+                item.AddStatusAbility(new FrozenStatusAbility(item, 600));
+            }
+            //foreach (var item in GetEachAlly())
+            //{
+            //    item.AddStatusAbility(new FrozenStatusAbility(item, 240));
+            //}
+        }
 
         // 各种组件的Update()
         foreach (IGameControllerMember member in MMemberList)
