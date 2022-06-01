@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+
 using UnityEngine;
 
 public class BaseGrid : MonoBehaviour, IGameControllerMember
@@ -10,6 +12,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     public List<BaseGridState> mOtherGridStateList; // 其它地形状态表（大多是临时的）
 
     protected List<FoodUnit> mFoodUnitList; // 位于格子上的美食单位表
+    protected List<MouseUnit> mMouseUnitList; //　位于格子上的老鼠单位表
 
 
     //格子索引
@@ -25,6 +28,9 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     {
         gridIndex = new GridIndex();
         mFoodUnitList = new List<FoodUnit>();
+        mMouseUnitList = new List<MouseUnit>();
+        mMainGridState = new BaseGridState(this);
+        mOtherGridStateList = new List<BaseGridState>();
     }
 
     /// <summary>
@@ -42,30 +48,51 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     // 地形状态操作
     public void ChangeMainGridState(BaseGridState state)
     {
-
+        if (mMainGridState != null)
+        {
+            mMainGridState.OnExit();
+        }
+        mMainGridState = state;
+        state.OnEnter();
     }
 
     public void AddGridState(BaseGridState state)
     {
-
+        mOtherGridStateList.Add(state);
+        state.OnEnter();
     }
 
-    public void RemoveGridState(int index)
+    public void RemoveGridState(BaseGridState state)
     {
+        mOtherGridStateList.Remove(state);
+        state.OnExit();
+    }
 
+
+    public void OnUnitEnter(BaseUnit unit)
+    {
+        mMainGridState.OnUnitEnter(unit);
+        foreach (var item in mOtherGridStateList)
+        {
+            item.OnUnitEnter(unit);
+        }
+    }
+
+    public void OnUnitExit(BaseUnit unit)
+    {
+        mMainGridState.OnUnitExit(unit);
+        foreach (var item in mOtherGridStateList)
+        {
+            item.OnUnitExit(unit);
+        }
     }
 
     // 把一个单位的坐标设置在格子上，第二个参数为单位向量，表明生成点位于该格子的哪个边，比如填 pos = Vector2.right，则代表这个单位的坐标会设为该格子的右边上
     public void SetUnitPosition(BaseUnit unit, Vector2 pos)
     {
-        unit.SetPosition(MapManager.GetGridLocalPosition(gridIndex.xIndex, gridIndex.yIndex) + new Vector3(pos.x* MapManager.gridWidth, pos.y*MapManager.gridHeight)/2);
+        //unit.SetPosition(MapManager.GetGridLocalPosition(gridIndex.xIndex, gridIndex.yIndex) + new Vector3(pos.x* MapManager.gridWidth, pos.y*MapManager.gridHeight)/2);
+        unit.transform.position = MapManager.GetGridLocalPosition(gridIndex.xIndex, gridIndex.yIndex) + new Vector3(pos.x * MapManager.gridWidth, pos.y * MapManager.gridHeight) / 2;
     }
-
-    private void OnMouseDown()
-    {
-
-    }
-
 
     // 鼠标悬停时标记
     private void OnMouseOver()
@@ -110,11 +137,74 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         return mFoodUnitList;
     }
 
+    /// <summary>
+    /// 获取本格上的所有老鼠
+    /// </summary>
+    public virtual List<MouseUnit> GetMouseUnitList()
+    {
+        return mMouseUnitList;
+    }
 
     // 退出时取消标记
     private void OnMouseExit()
     {
         GameController.Instance.overGrid = null;
+    }
+
+    /// <summary>
+    /// 碰撞事件
+    /// </summary>
+    /// <param name="collision"></param>
+    public void OnCollision(Collider2D collision)
+    {
+        if (collision.tag.Equals("Food"))
+        {
+            FoodUnit unit = collision.GetComponent<FoodUnit>();
+            if (!unit.isDeathState && unit.GetRowIndex()==gridIndex.yIndex && !mFoodUnitList.Contains(unit))
+            {
+                Debug.Log("Insert Food Unit!");
+                mFoodUnitList.Add(unit);
+                OnUnitEnter(unit);
+            }
+        }else if (collision.tag.Equals("Mouse"))
+        {
+            MouseUnit unit = collision.GetComponent<MouseUnit>();
+            if (!unit.isDeathState && unit.GetRowIndex() == gridIndex.yIndex && !mMouseUnitList.Contains(unit))
+            {
+                //Debug.Log("Insert Mouse Unit!");
+                mMouseUnitList.Add(unit);
+                OnUnitEnter(unit);
+            }
+        }
+    }
+
+    // rigibody相关
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        OnCollision(collision);
+    }
+
+    private void OnTriggerStay2D(Collider2D collision)
+    {
+        OnCollision(collision);
+    }
+
+    private void OnTriggerExit2D(Collider2D collision)
+    {
+        if (collision.tag.Equals("Food"))
+        {
+            Debug.Log("Remove Food Unit!");
+            FoodUnit unit = collision.GetComponent<FoodUnit>();
+            mFoodUnitList.Remove(unit);
+            OnUnitExit(unit);
+        }
+        else if (collision.tag.Equals("Mouse"))
+        {
+            //Debug.Log("Remove Mouse Unit!");
+            MouseUnit unit = collision.GetComponent<MouseUnit>();
+            mMouseUnitList.Remove(unit);
+            OnUnitExit(unit);
+        }
     }
 
     public void MInit()
@@ -124,7 +214,34 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
 
     public void MUpdate()
     {
-        
+        // 检查单位存活
+        List<FoodUnit> f_List = new List<FoodUnit>();
+        foreach (var item in mFoodUnitList)
+        {
+            if (item.isDeathState)
+                f_List.Add(item);
+        }
+        foreach (var item in f_List)
+        {
+            mFoodUnitList.Remove(item);
+        }
+
+        List<MouseUnit> m_List = new List<MouseUnit>();
+        foreach (var item in mMouseUnitList)
+        {
+            if (item.isDeathState)
+                m_List.Add(item);
+        }
+        foreach (var item in m_List)
+        {
+            mMouseUnitList.Remove(item);
+        }
+
+        mMainGridState.OnUpdate();
+        foreach (var item in mOtherGridStateList)
+        {
+            item.OnUpdate();
+        }
     }
 
     public void MPause()

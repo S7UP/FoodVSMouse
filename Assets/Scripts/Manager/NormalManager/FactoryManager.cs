@@ -8,7 +8,7 @@ public class FactoryManager
     public AudioClipFactory audioClipFactory;
     public SpriteFactory spriteFactory;
     public RuntimeAnimatorControllerFactory runtimeAnimatorControllerFactory;
-
+    public MaterialFactory materialFactory;
     public FactoryManager()
     {
         factoryDict.Add(FactoryType.UIPanelFactory, new UIPanelFactory());
@@ -17,5 +17,6 @@ public class FactoryManager
         audioClipFactory = new AudioClipFactory();
         spriteFactory = new SpriteFactory();
         runtimeAnimatorControllerFactory = new RuntimeAnimatorControllerFactory();
+        materialFactory = new MaterialFactory();
     }
 }

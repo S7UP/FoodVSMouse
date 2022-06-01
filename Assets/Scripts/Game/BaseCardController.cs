@@ -23,12 +23,19 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
         isSelectGrid = false;
 
         // 初始化卡槽信息，需要外部读取赋值，现拟赋值
+        List<int[]> inList = new List<int[]>();
+        inList.Add(new int[] { 4, 1, 12 });
+        inList.Add(new int[] { 6, 2, 12 });
+        inList.Add(new int[]{ 7, 2, 12 });
+        inList.Add(new int[]{ 8, 2, 12 });
+        inList.Add(new int[] { 11, 0, 12 });
+
         mCardBuilderList = new List<BaseCardBuilder>();
-        for (int i = 0; i < 1; i++)
+        for (int i = 0; i < inList.Count; i++)
         {
             // 产生卡片建造器Object实例的同时取得其对应脚本，与UI层作关联
             BaseCardBuilder cardBuilder = GameManager.Instance.GetGameObjectResource(FactoryType.UIFactory, "CardBuilder").GetComponent<BaseCardBuilder>();
-            cardBuilder.MInit();
+            cardBuilder.MInit(inList[i][0], inList[i][1], inList[i][2]);
             mCardBuilderList.Add(cardBuilder);
         }
     }

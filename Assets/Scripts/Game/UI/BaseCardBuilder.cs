@@ -20,7 +20,23 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
         public int cardIndex; // 当前卡槽所持有卡的编号
     }
 
+    // 需要本地存储的变量
+    [System.Serializable]
+    public struct Attribute
+    {
+        public string name; // 卡槽的具体名称
+        public int type; // 单位属于的分类
+        public int shape; // 单位在当前分类的变种编号
+
+        public double cost; // 消耗
+        public double baseCD; // 基础cd
+        public List<double> costList; // 消耗表（随星级）
+        public List<double> CDList; // cd表（随星级）
+    }
+
     public CardBuilderInfo cardBuilderInfo;
+
+    public Attribute attr;
 
     private GameController mGameController;
 
@@ -31,6 +47,7 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
     public GameObject mImg_CDMask;
     public GameObject mImg_CDMask2;
     public GameObject mTex_CDLeft;
+    public GameObject mImg_Rank;
 
     // 卡片实体产品
     public FoodUnit mProduct;
@@ -41,6 +58,7 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
 
     public int mType; // 当前卡片的编号（如不同的卡）
     public int mShape; // 当前卡片的外观模式（如0、1、2转）
+    public int mLevel; // 当前卡片的星级
 
 
     protected int mBaseCD; // 基础CD
@@ -50,16 +68,42 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
 
     public void MInit()
     {
-        // 以下只是拟赋值，实际实现请读取本地Json文件数据
 
+    }
+
+    public void MInit(int type, int shape, int level)
+    {
+        // 从Json读取相关数据
+        attr = JsonManager.Load<Attribute>("CardBuilder/" + type + "/" + shape + "");
         // 卡片种类与转职情况
-        mType = 7;
-        mShape = 2;
-
+        mType = type;
+        mShape = shape;
+        mLevel = level;
+        // 星级显示
+        mImg_Rank.GetComponent<Image>().sprite = GameManager.Instance.GetSprite("UI/Rank2/"+level);
         // 费用
+        double cost;
+        if(attr.costList!=null && attr.costList.Count > 0)
+        {
+            if (level < 0)
+            {
+                cost = attr.costList[0];
+            }else if(level >= attr.costList.Count)
+            {
+                cost = attr.costList[attr.costList.Count-1];
+            }
+            else
+            {
+                cost = attr.costList[level];
+            }
+        }
+        else
+        {
+            cost = attr.cost;
+        }
         if (!mBaseCostDict.ContainsKey("Fire"))
         {
-            mBaseCostDict.Add("Fire", 50);
+            mBaseCostDict.Add("Fire", (float)cost);
         }
         if (!mCostDict.ContainsKey("Fire"))
         {
@@ -67,13 +111,33 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
         }
 
         // CD
-        mBaseCD = 7 * ConfigManager.fps;
+        double cd;
+        if (attr.CDList != null && attr.CDList.Count > 0)
+        {
+            if (level < 0)
+            {
+                cd = attr.CDList[0];
+            }
+            else if (level >= attr.CDList.Count)
+            {
+                cd = attr.CDList[attr.CDList.Count - 1];
+            }
+            else
+            {
+                cd = attr.CDList[level];
+            }
+        }
+        else
+        {
+            cd = attr.baseCD;
+        }
+        mBaseCD = Mathf.FloorToInt((float)cd * ConfigManager.fps);
         mCD = mBaseCD;
         mCDLeft = 0;
         isDisable = false; // 禁用标志
 
         // 卡片图片显示
-        mImg_Card.GetComponent<Image>().sprite = GameManager.Instance.GetSprite("Food/"+mType+"/"+mShape+"/0");
+        mImg_Card.GetComponent<Image>().sprite = GameManager.Instance.GetSprite("Food/"+mType+"/"+mShape+"/display");
         // 费用
         mTex_FireCost.GetComponent<Text>().text = mCostDict["Fire"].ToString();
     }
@@ -89,8 +153,9 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
         mImg_CDMask = transform.Find("Img_CDMask").gameObject;
         mImg_CDMask2 = transform.Find("Img_CDMask2").gameObject;
         mTex_CDLeft = transform.Find("Tex_CDLeft").gameObject;
+        mImg_Rank = transform.Find("Img_Rank").gameObject;
         cardBuilderInfo = new CardBuilderInfo();
-
+        
 
 
         // 获取游戏场景面板
@@ -254,5 +319,25 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
         mImg_CDMask.transform.localScale = new Vector3(mImg_CDMask.transform.localScale.x, (float)mCDLeft / mCD, mImg_CDMask.transform.localScale.y);
         // 费用是否够用的遮罩
         mImg_CostMask.SetActive(!IsCostEnough());
+    }
+
+
+    public static void SaveNewCardBuilderInfo()
+    {
+        Attribute attr = new Attribute()
+        {
+            name = "终结者酒架", // 卡槽的具体名称
+            type = 7, // 单位属于的分类
+            shape = 2, // 单位在当前分类的变种编号
+
+            cost = 325, // 基础消耗
+            baseCD = 7, // 基础cd
+            costList = new List<double>(), // 消耗表（随星级）
+            CDList = new List<double>() // cd表（随星级）
+        };
+
+        Debug.Log("开始存档美食卡槽信息！");
+        JsonManager.Save(attr, "CardBuilder/" + attr.type + "/" + attr.shape + "");
+        Debug.Log("美食卡槽信息存档完成！");
     }
 }

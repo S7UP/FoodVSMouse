@@ -36,6 +36,7 @@ public class GameManager : MonoBehaviour
         abilityManager = AbilityManager.GetSingleton();
 
         uiManager = new UIManager();
+        //EnterEditorScene();
         EnterComBatScene();
     }
 
@@ -100,6 +101,16 @@ public class GameManager : MonoBehaviour
     {
         GameFactory f = (GameFactory)factoryManager.factoryDict[FactoryType.GameFactory];
         f.PushItemFromBuffer();
+    }
+
+    /// <summary>
+    /// ªÒ»°≤ƒ÷ 
+    /// </summary>
+    /// <param name="resourcePath"></param>
+    /// <returns></returns>
+    public Material GetMaterial(string resourcePath)
+    {
+        return factoryManager.materialFactory.GetMaterial(resourcePath);
     }
 
     // Start is called before the first frame update

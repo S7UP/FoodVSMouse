@@ -26,7 +26,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8116370559506349391}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2.81, y: 1.62, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 8116370559772073300}
@@ -72,22 +72,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f06798e6510a4d4eb693cba67f85ba9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mBaseHp: 0
-  mMaxHp: 0
+  mUnitType: 0
   mCurrentHp: 0
-  mBaseAttack: 0
-  mCurrentAttack: 0
-  mBaseAttackSpeed: 0
-  mCurrentAttackSpeed: 0
-  mAttackCD: 0
-  mAttackCDLeft: 0
+  mCurrentTotalShieldValue: 0
   mHeight: 0
-  isDeathState: 0
+  isFrozenState: 0
   mName: 
   mType: 0
   mShape: 0
   currentStateTimer: 0
   mFoodType: 0
+  mLevel: 0
   isUseSingleGrid: 0
 --- !u!1 &8116370559772073301
 GameObject:

@@ -88,7 +88,7 @@ public class FlyMouse : MouseUnit
             return;
         }
         // 动画播放完一次后，转为移动状态
-        if (AnimatorManager.GetCurrentFrame(animator) == AnimatorManager.GetTotalFrame(animator)) // 动画播放完毕后调用AfterDeath()
+        if (AnimatorManager.GetCurrentFrame(animator) == AnimatorManager.GetTotalFrame(animator)) 
         {
             SetActionState(new MoveState(this));
         }

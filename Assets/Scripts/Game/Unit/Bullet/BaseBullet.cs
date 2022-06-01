@@ -2,8 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 
+using UnityEditor.U2D.Path;
+
 using UnityEngine;
 
+using static UnityEngine.GraphicsBuffer;
 using static UnityEngine.UI.CanvasScaler;
 
 public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
@@ -14,6 +17,7 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     // 引用
     public Animator animator;
     public CircleCollider2D mCircleCollider2D;
+    private SpriteRenderer spriteRenderer;
 
     // 自身属性
     public float mVelocity;
@@ -21,15 +25,17 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     public float mHeight;
     public float mDamage;
     public bool isDeathState;
+    public BulletStyle style;
+    // 外界给的标签
+    public Dictionary<string, int> TagDict = new Dictionary<string, int>();
 
     public IBaseActionState mCurrentActionState; //+ 当前动作状态
 
     public virtual void Awake()
     {
-        // 先暂时用三线的
         animator = transform.GetChild(0).GetComponent<Animator>();
         mCircleCollider2D = GetComponent<CircleCollider2D>();
-        // animator.runtimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Food/7/bullet");
+        spriteRenderer = transform.Find("SpriteGo").GetComponent<SpriteRenderer>();
     }
 
     // 子弹对目标造成伤害，TakeDamage的调用时机是敌对单位碰到了这个子弹，然后过来调用这个子弹的伤害逻辑
@@ -72,13 +78,53 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
         mRotate = Vector2.right;
         mDamage = 10;
         isDeathState = false;
+        TagDict.Clear();
         SetCollision(true);
         SetActionState(new BulletFlyState(this));
+    }
+
+    /// <summary>
+    /// 仅改变子弹外观（Ani)并且不改变样式(style)
+    /// </summary>
+    /// <param name="style"></param>
+    public void ChangeAnimatorWithoutChangeStyle(BulletStyle target_style)
+    {
+        animator.runtimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Bullet/" + ((int)target_style) + "/0");
+    }
+
+    public Vector2 GetRotate()
+    {
+        return mRotate;
+    }
+
+    /// <summary>
+    /// 改变方向
+    /// </summary>
+    /// <param name="v"></param>
+    public void SetRotate(Vector2 v)
+    {
+        mRotate = v;
+        transform.right = v;
+    }
+
+    public float GetDamage()
+    {
+        return mDamage;
     }
 
     public void SetDamage(float dmg)
     {
         mDamage = dmg;
+    }
+
+    public float GetVelocity()
+    {
+        return mVelocity;
+    }
+
+    public void SetVelocity(float v)
+    {
+        mVelocity = v;
     }
 
     public virtual void MPause()
@@ -98,7 +144,7 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
         // 子弹若出屏了请自删
         if (!IsInView())
         {
-            GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, "Bullet/Pre_Bullet", gameObject);
+            GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, "Bullet/"+((int)style), gameObject);
         }
     }
 
@@ -177,7 +223,47 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
 
     public virtual void OnHitStateExit()
     {
-        GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, "Bullet/Pre_Bullet", gameObject);
+        GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, "Bullet/"+((int)style), gameObject);
+    }
+
+    /// <summary>
+    /// 设置渲染层级
+    /// </summary>
+    /// <param name="arrayIndex"></param>
+    public virtual void UpdateRenderLayer(int arrayIndex)
+    {
+        spriteRenderer.sortingOrder = LayerManager.CalculateSortingLayer(LayerManager.UnitType.Bullet, GetRowIndex(), 0, arrayIndex);
+    }
+
+    /// <summary>
+    /// 获取某个标签对应的数值
+    /// </summary>
+    /// <returns></returns>
+    public int GetTagCount(string tagName)
+    {
+        if (TagDict.ContainsKey(tagName))
+            return TagDict[tagName];
+        return 0;
+    }
+
+    public void AddTag(string tagName)
+    {
+        AddTagCount(tagName, 1);
+    }
+
+    public void RemoveTag(string tagName)
+    {
+        TagDict.Remove(tagName);
+    }
+
+    public void AddTagCount(string tagName, int count)
+    {
+        if (TagDict.ContainsKey(tagName))
+            TagDict[tagName] += count;
+        else
+        {
+            TagDict.Add(tagName, count);
+        }
     }
 }
 

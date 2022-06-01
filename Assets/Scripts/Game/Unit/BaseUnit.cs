@@ -57,6 +57,8 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public StatusAbilityManager statusAbilityManager { get; set; } = new StatusAbilityManager(); // 时效状态（BUFF）管理器
     public RenderManager renderManager { get; set; } = new RenderManager(); // 与渲染有关的管理器
 
+    public HitBox hitBox = new HitBox();
+
     public string mName; // 当前单位的种类名称
     public int mType; // 当前单位的种类（如不同的卡，不同的老鼠）
     public int mShape; // 当前种类单位的外观（同一张卡的0、1、2转，老鼠的0、1、2转或者其他变种）
@@ -124,6 +126,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         skillAbilityManager.Initialize();
         statusAbilityManager.Initialize();
         renderManager.Initialize();
+        hitBox.Initialize();
     }
 
     // 切换动作状态
@@ -208,13 +211,49 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     }
 
     // 还愣着干什么，人没了救不了了
+    public void DeathEvent()
+    {
+        // 我死了也要化身为腻鬼！！
+        // override
+        AfterDeath();
+        // 然后安心去世吧
+        GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, mPreFabPath, this.gameObject);
+    }
+
     public virtual void AfterDeath()
     {
         // 我死了也要化身为腻鬼！！
         // override
         // 然后安心去世吧
+    }
 
-        GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, mPreFabPath, this.gameObject);
+
+    /// <summary>
+    /// 灰烬效果之前
+    /// </summary>
+    public virtual void BeforeBurn()
+    {
+        // 进入死亡动画状态
+        isDeathState = true;
+        // 清除BUFF效果
+        statusAbilityManager.TryEndAllStatusAbility();
+        SetActionState(new BurnState(this));
+    }
+
+    /// <summary>
+    /// 进入灰烬状态后立即触发的事件
+    /// </summary>
+    public virtual void OnBurnStateEnter()
+    {
+
+    }
+    /// <summary>
+    /// 在灰烬状态下持续做的事（化灰）
+    /// </summary>
+    /// <param name="_Threshold"></param>
+    public virtual void DuringBurn(float _Threshold)
+    {
+
     }
 
     /// <summary>
@@ -229,6 +268,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         skillAbilityManager.Initialize();
         statusAbilityManager.Initialize();
         renderManager.Initialize();
+        hitBox.Initialize();
         // 种类
         mType = attr.type;
         mShape = attr.shape;
@@ -269,6 +309,8 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
             currentStateTimer += 1;
         // 单位动作状态由状态机决定（如移动、攻击、待机、冻结、死亡）
         mCurrentActionState.OnUpdate();
+        // 受击进度盒子更新
+        hitBox.Update();
     }
 
     /// <summary>
@@ -379,6 +421,22 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     }
 
     /// <summary>
+    /// 执行死亡操作
+    /// </summary>
+    public void ExecuteDeath()
+    {
+        BeforeDeath();
+    }
+
+    /// <summary>
+    /// 执行灰烬操作
+    /// </summary>
+    public void ExecuteBurn()
+    {
+        BeforeBurn();
+    }
+
+    /// <summary>
     /// 受到伤害时结算伤害
     /// </summary>
     /// <param name="dmg"></param>
@@ -392,7 +450,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         mCurrentHp -= dmg*(1-mCurrentDefense);
         if (mCurrentHp <= 0)
         {
-            BeforeDeath();
+            ExecuteDeath();
         }
     }
 
@@ -408,7 +466,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         mCurrentHp -= dmg * (1 - mCurrentDefense);
         if (mCurrentHp <= 0)
         {
-            BeforeDeath();
+            ExecuteDeath();
         }
     }
 
@@ -497,6 +555,27 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     {
         statusAbilityManager.RemoveStatusAbility(statusAbility);
     }
+
+    public void AddUniqueStatusAbility(string statusName, StatusAbility statusAbility)
+    {
+        statusAbilityManager.AddUniqueStatusAbility(statusName, statusAbility);
+    }
+
+    public void RemoveUniqueStatusAbility(string statusName)
+    {
+        statusAbilityManager.RemoveUniqueStatusAbility(statusName);
+    }
+
+    public void AddNoCountUniqueStatusAbility(string statusName, StatusAbility statusAbility)
+    {
+        statusAbilityManager.AddNoCountUniqueStatusAbility(statusName, statusAbility);
+    }
+
+    public void RemoveNoCountUniqueStatusAbility(string statusName)
+    {
+        statusAbilityManager.RemoveNoCountUniqueStatusAbility(statusName);
+    }
+
 
     /// <summary>
     /// 添加禁用技能效果（沉默）
@@ -643,7 +722,6 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     {
         
     }
-
     public virtual void OnIdleStateInterrupt()
     {
     }
@@ -700,6 +778,18 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
 
     }
 
+    /// <summary>
+    /// 启用冰冻减速效果
+    /// </summary>
+    public virtual void SetFrozeSlowEffectEnable(bool enable)
+    {
 
+    }
+
+    public void SetMaxHpAndCurrentHp(float hp)
+    {
+        NumericBox.Hp.SetBase(hp);
+        mCurrentHp = NumericBox.Hp.Value;
+    }
     // 继续
 }

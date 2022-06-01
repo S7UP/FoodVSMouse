@@ -47,10 +47,8 @@ MonoBehaviour:
   gridIndex:
     xIndex: 0
     yIndex: 0
-  mMainGridState: {fileID: 0}
-  mOtherGridStateList: []
-  canBuild: 0
-  mUnitList: []
+    canBuild: 0
+  mMouseUnitList: []
 --- !u!61 &8307051622854580524
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -61,7 +59,7 @@ BoxCollider2D:
   m_Enabled: 1
   m_Density: 1
   m_Material: {fileID: 0}
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_UsedByEffector: 0
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0}

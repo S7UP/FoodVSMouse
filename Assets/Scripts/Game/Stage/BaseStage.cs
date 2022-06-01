@@ -158,7 +158,8 @@ public class BaseStage
     /// </summary>
     public void DemoLoad()
     {
-        mStageInfo = Load("test¹Ø¿¨2");
+        //mStageInfo = Load("test¹Ø¿¨2");
+        mStageInfo = Load("singleMouseText");
     }
 
     public static StageInfo Load(string path)

@@ -50,6 +50,7 @@ public class FoodUnit : BaseUnit
         mGrid = null; // 卡片所在的格子（单格卡)
         mGridList = null; // 卡片所在的格子（多格卡）
         isUseSingleGrid = false; // 是否只占一格
+        spriteRenderer1.material = null;
     }
 
     // 每次对象被创建时要做的初始化工作
@@ -67,6 +68,9 @@ public class FoodUnit : BaseUnit
         SetActionState(new IdleState(this));
 
         SetLevel(6);
+
+        spriteRenderer2.enabled = true; // 激活星级动画
+        AnimatorContinue(); // 恢复播放动画
     }
 
     public override void SetUnitType()
@@ -77,8 +81,16 @@ public class FoodUnit : BaseUnit
     public void SetLevel(int level)
     {
         mLevel = level;
-        NumericBox.Attack.SetBase((float)(attr.baseAttrbute.baseAttack + attr.valueList[mLevel]));
+        UpdateAttributeByLevel();
         rankAnimator.Play(mLevel.ToString()); // 先播放星级的图标动画
+    }
+
+    /// <summary>
+    /// 根据等级表和等级来更新对应数据
+    /// </summary>
+    public virtual void UpdateAttributeByLevel()
+    {
+
     }
 
     /// <summary>
@@ -175,6 +187,13 @@ public class FoodUnit : BaseUnit
 
     }
 
+    /// <summary>
+    /// 死亡期间
+    /// </summary>
+    public override void DuringDeath()
+    {
+        DeathEvent();
+    }
 
     /// <summary>
     /// 获取卡片所在的格子
@@ -254,8 +273,27 @@ public class FoodUnit : BaseUnit
 
     public override void OnDieStateEnter()
     {
-        // 对于美食来说没有死亡动画的话，直接回收对象就行，在游戏里的体现就是直接消失
-        GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, mPreFabPath, this.gameObject);
+        // 对于美食来说没有死亡动画的话，直接回收对象就行，在游戏里的体现就是直接消失，回收对象的事在duringDeath第一帧去做
+    }
+
+    public override void OnBurnStateEnter()
+    {
+        // 装上烧毁材质
+        spriteRenderer1.material = GameManager.Instance.GetMaterial("Dissolve2");
+        // 屏蔽星级特效
+        spriteRenderer2.enabled = false;
+        // 禁止播放动画
+        AnimatorStop();
+    }
+
+    public override void DuringBurn(float _Threshold)
+    {
+        spriteRenderer1.material.SetFloat("_Threshold", _Threshold);
+        // 超过1就可以回收了
+        if (_Threshold >= 1.0)
+        {
+            DeathEvent();
+        }
     }
 
     /// <summary>
@@ -298,7 +336,7 @@ public class FoodUnit : BaseUnit
     }
 
     /// <summary>
-    /// 设置在同种类敌人的渲染层级
+    /// 设置渲染层级
     /// </summary>
     /// <param name="arrayIndex"></param>
     public override void UpdateRenderLayer(int arrayIndex)

@@ -10,7 +10,7 @@ public class StatusAbility : AbilityEntity
     public StatusAbilityManager statusAbilityManager { get; set; }
     private bool isDisableEffect { get; set; } // 是否禁用此BUFF产生的效果（不影响持续时间的流逝）
     public bool canActiveInDeathState; // 在死亡状态下能否继续触发
-    public FloatNumeric totalTime = new FloatNumeric(); // 总持续时间
+    public FloatNumeric totalTime = new FloatNumeric(); // 总持续时间（若为-1则代表该buff非时效性）
     public float leftTime; // 当前剩余时间
 
     public StatusAbility()
@@ -18,19 +18,35 @@ public class StatusAbility : AbilityEntity
 
     }
 
+    // 非持续时间性buff
+    public StatusAbility(BaseUnit pmaster) : base(pmaster)
+    {
+        totalTime.SetBase(-1);
+        leftTime = totalTime.Value;
+    }
+
+    // 持续时间性buff
     public StatusAbility(BaseUnit pmaster, float time) : base(pmaster)
     {
         totalTime.SetBase(time);
         leftTime = totalTime.Value;
     }
 
+    /// <summary>
+    /// 只有isDisableEffect发生变化时才会生效，否则无效
+    /// </summary>
+    /// <param name="isEnable"></param>
     public void SetEffectEnable(bool isEnable)
     {
-        isDisableEffect = !isEnable;
-        if (isEnable)
-            OnEnableEffect();
-        else
-            OnDisableEffect();
+        if(isDisableEffect == isEnable)
+        {
+            isDisableEffect = !isEnable;
+            if (isEnable)
+                OnEnableEffect();
+            else
+                OnDisableEffect();
+        }
+   
     }
 
     /// <summary>
@@ -101,6 +117,14 @@ public class StatusAbility : AbilityEntity
 
     }
 
+    /// <summary>
+    /// 用于唯一性状态，当状态存在时再被施加同一状态时，调用施加状态的这个方法
+    /// </summary>
+    public virtual void OnCover()
+    {
+
+    }
+
     // 以下为继承并实现父类的方法，行使主要逻辑！
     /// <summary>
     /// 启用该效果
@@ -111,7 +135,6 @@ public class StatusAbility : AbilityEntity
         if (!IsActiveInDeath())
             return;
         BeforeEffect();
-        SetEffectEnable(true);
     }
 
     /// <summary>
@@ -123,7 +146,7 @@ public class StatusAbility : AbilityEntity
         if (!IsActiveInDeath())
             return;
 
-        if(leftTime <= 0 || IsMeetingEndCondition())
+        if(leftTime == 0 || IsMeetingEndCondition())
         {
             EndActivate();
             return;
@@ -133,7 +156,8 @@ public class StatusAbility : AbilityEntity
             OnEffecting();
         else
             OnNotEffecting();
-        leftTime -= 1;
+        if(leftTime>0)
+            leftTime -= 1;
     }
 
     /// <summary>
@@ -164,5 +188,13 @@ public class StatusAbility : AbilityEntity
     public override void ApplyAbilityEffect(BaseUnit targetEntity)
     {
         //应用能力效果
+    }
+
+    /// <summary>
+    /// 清除持续时间
+    /// </summary>
+    public void ClearLeftTime()
+    {
+        leftTime = 0;
     }
 }

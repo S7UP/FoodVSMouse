@@ -35,4 +35,9 @@ public class RenderManager
     {
         spriteRendererManagerDict.Add(sprName, new SpriteRendererManager(spriteRenderer));
     }
+
+    public SpriteRendererManager GetSpriteRender(string sprName)
+    {
+        return spriteRendererManagerDict[sprName];
+    }
 }

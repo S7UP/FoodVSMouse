@@ -1,6 +1,9 @@
+using Newtonsoft.Json.Linq;
+
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Timeline;
 
 /// <summary>
 /// 战斗数值匣子，在这里管理所有角色战斗数值的存储、变更、刷新等
@@ -24,7 +27,10 @@ public class CombatNumericBox
     // 禁用主动技能决定器
     public BoolNumeric IsDisableSkill = new BoolNumeric();
 
-
+    // 其他自定义属性
+    public Dictionary<string, IntNumeric> IntDict = new Dictionary<string, IntNumeric>();
+    public Dictionary<string, FloatNumeric> FloatDict = new Dictionary<string, FloatNumeric>();
+    public Dictionary<string, BoolNumeric> BoolDict = new Dictionary<string, BoolNumeric>();
 
     public void Initialize()
     {
@@ -36,6 +42,10 @@ public class CombatNumericBox
         MoveSpeed.SetBase(0);
         Range.SetBase(0);
         Shield.SetBase(0);
+
+        IntDict.Clear();
+        FloatDict.Clear();
+        BoolDict.Clear();
     }
 
     /// <summary>
@@ -125,5 +135,74 @@ public class CombatNumericBox
     public void RemoveImmuneDisAbleSkillModifier(BoolModifier boolModifier)
     {
         IsDisableSkill.RemoveImmuneModifier(boolModifier);
+    }
+
+    public bool GetBoolNumericValue(string key)
+    {
+        if (BoolDict.ContainsKey(key))
+        {
+            return BoolDict[key].Value;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// 添加决定生效布尔修饰器
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="value"></param>
+    public void AddDecideModifierToBoolDict(string key, BoolModifier boolModifier)
+    {
+        if (!BoolDict.ContainsKey(key))
+        {
+            BoolDict.Add(key, new BoolNumeric());
+        }
+        BoolDict[key].AddDecideModifier(boolModifier);
+    }
+
+    /// <summary>
+    /// 添加免疫生效布尔修饰器
+    /// </summary>
+    public void AddImmuneModifierToBoolDict(string key, BoolModifier boolModifier)
+    {
+        if (!BoolDict.ContainsKey(key))
+        {
+            BoolDict.Add(key, new BoolNumeric());
+        }
+        BoolDict[key].AddImmuneModifier(boolModifier);
+    }
+
+    /// <summary>
+    /// 移除决定生效布尔修饰器
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="value"></param>
+    public void RemoveDecideModifierToBoolDict(string key, BoolModifier boolModifier)
+    {
+        if (BoolDict.ContainsKey(key))
+        {
+            BoolDict[key].RemoveDecideModifier(boolModifier);
+            if (BoolDict[key].DecideCollector.Modifiers.Count <= 0 && BoolDict[key].ImmuneCollector.Modifiers.Count <= 0)
+            {
+                BoolDict.Remove(key);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 移除免疫生效布尔修饰器
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="value"></param>
+    public void RemoveImmuneModifierToBoolDict(string key, BoolModifier boolModifier)
+    {
+        if (!BoolDict.ContainsKey(key))
+        {
+            BoolDict[key].RemoveImmuneModifier(boolModifier);
+            if (BoolDict[key].DecideCollector.Modifiers.Count <= 0 && BoolDict[key].ImmuneCollector.Modifiers.Count <= 0)
+            {
+                BoolDict.Remove(key);
+            }
+        }
     }
 }

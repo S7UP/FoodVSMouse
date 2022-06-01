@@ -16,5 +16,8 @@ public class Test
         //GeneralAttackSkillAbility atk = new GeneralAttackSkillAbility(food);
         //atk.Init("普通攻击", 0.0f, 57.0f, 1.0f, SkillAbility.Type.GeneralAttack, false);
         //atk.SaveInfo();
+
+        // 添加美食卡槽信息
+        //BaseCardBuilder.SaveNewCardBuilderInfo();
     }
 }

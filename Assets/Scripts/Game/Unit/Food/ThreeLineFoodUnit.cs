@@ -1,13 +1,23 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+/// <summary>
+/// 三线酒架具体实现
+/// </summary>
 public class ThreeLineFoodUnit : FoodUnit
 {
     public override void MInit()
     {
         base.MInit();
         SetLevel(12);
+    }
+
+    /// <summary>
+    /// 根据等级表和等级来更新对应数据
+    /// </summary>
+    public override void UpdateAttributeByLevel()
+    {
+        NumericBox.Attack.SetBase((float)(attr.baseAttrbute.baseAttack + attr.valueList[mLevel]));
     }
 
     /// <summary>
@@ -102,7 +112,7 @@ public class ThreeLineFoodUnit : FoodUnit
         {
             for (int j = 0; j < 2; j++)
             {
-                GameController.Instance.CreateBullet(this, transform.position + Vector3.right * 0.5f * j + Vector3.up * 0.7f * i).SetDamage(mCurrentAttack);
+                GameController.Instance.CreateBullet(this, transform.position + Vector3.right * 0.5f * j + Vector3.up * 0.7f * i, Vector2.right, BulletStyle.Wine).SetDamage(mCurrentAttack);
             }
         }
     }

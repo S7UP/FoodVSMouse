@@ -1,0 +1,2 @@
+造成伤害：new DamageAction(CombatAction.ActionType.CauseDamage, creator, target, mCurrentAttack).ApplyAction();
+为单为施加buff：unit.AddStatusAbility(new FrozenStatusAbility(unit, 600));

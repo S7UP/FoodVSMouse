@@ -17,7 +17,7 @@ public class BaseCostController : MonoBehaviour, IBaseCostController, IGameContr
     public void MInit()
     {
         mCostDict = new Dictionary<string, float>();
-        mCostDict.Add("Fire", 50.0f); // 基础的火苗系统
+        mCostDict.Add("Fire", 9999.0f); // 基础的火苗系统
         mImg_FireDisplayer = transform.Find("Img_FireDisplayer").gameObject;
         mFireText = mImg_FireDisplayer.transform.Find("Tex_Fire").GetComponent<Text>();
 

@@ -97,7 +97,7 @@ MonoBehaviour:
   mCurrentHp: 0
   mCurrentTotalShieldValue: 0
   mHeight: 0
-  isDeathState: 0
+  isFrozenState: 0
   mName: 
   mType: 0
   mShape: 0
@@ -155,7 +155,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: d8acf4df6312cd54ab08e9ec3b83a5bb, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

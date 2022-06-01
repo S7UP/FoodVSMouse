@@ -6,7 +6,7 @@ using UnityEngine;
 /// </summary>
 public class ColorCollecter
 {
-    public Color TotalValue = new Color(1.0f, 1.0f, 1.0f);
+    public Color TotalValue = new Color(0f, 0f, 0f);
     public List<Color> ColorList = new List<Color>();
 
     public void AddColor(Color color)
@@ -23,13 +23,13 @@ public class ColorCollecter
 
 
     /// <summary>
-    /// 计算出这些颜色叠加出来的效果色，目前默认只取最后添加进来的颜色
+    /// 计算出这些颜色叠加出来的效果色
     /// </summary>
     public void Update()
     {
         if(ColorList.Count <= 0)
         {
-            TotalValue = new Color(1.0f, 1.0f, 1.0f);
+            TotalValue = new Color(0f, 0f, 0f);
         }
         else
         {

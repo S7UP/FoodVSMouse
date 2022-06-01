@@ -10,11 +10,13 @@ public class LayerManager
     public enum UnitType
     {
         Ally,
-        Enemy
+        Enemy,
+        Bullet
     }
 
     public const int BaseAllyUnitLayer = 1250; // 友军基础权值
-    public const int BaseEnemyUnitLayer = 3750; // 敌人基础权值
+    public const int BaseEnemyUnitLayer = 2500; // 敌人基础权值
+    public const int BaseBulletLayer = 3750; // 子弹权值
     public const int BaseRowLayer = 5000; // 行权重
     public const int TypeLayer = 50; // 种类权重的单位
 
@@ -35,6 +37,9 @@ public class LayerManager
         }else if(unitType == UnitType.Enemy)
         {
             layer += BaseEnemyUnitLayer;
+        }else if(unitType == UnitType.Bullet)
+        {
+            layer += BaseBulletLayer;
         }
         layer += yIndex * BaseRowLayer;
         typeAndShapeValue = Mathf.Max(Mathf.Min(-25, typeAndShapeValue),24); // 取值范围为(-25, 24)
