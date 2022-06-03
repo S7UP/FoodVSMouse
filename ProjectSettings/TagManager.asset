@@ -7,6 +7,8 @@ TagManager:
   - Food
   - Mouse
   - Bullet
+  - BombAreaEffect
+  - Grid
   layers:
   - Default
   - TransparentFX
@@ -55,6 +57,9 @@ TagManager:
     locked: 0
   - name: Unit
     uniqueID: 481756845
+    locked: 0
+  - name: Effect
+    uniqueID: 3267488997
     locked: 0
   - name: UI
     uniqueID: 1293379449

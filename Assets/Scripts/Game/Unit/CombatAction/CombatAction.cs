@@ -19,6 +19,7 @@ public class CombatAction
         GiveCure,    // 回复
         AssignEffect,// 提供效果
         GiveShield,  // 提供护盾
+        BurnDamage   // 灰烬伤害
     }
 
     public CombatAction(ActionType actionType, BaseUnit creator, BaseUnit target)

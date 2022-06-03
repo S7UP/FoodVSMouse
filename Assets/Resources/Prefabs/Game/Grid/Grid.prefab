@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 8307051622854580524}
   m_Layer: 9
   m_Name: Grid
-  m_TagString: Untagged
+  m_TagString: Grid
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -48,7 +48,6 @@ MonoBehaviour:
     xIndex: 0
     yIndex: 0
     canBuild: 0
-  mMouseUnitList: []
 --- !u!61 &8307051622854580524
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -73,5 +72,5 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 0.5858, y: 0.5858}
+  m_Size: {x: 0.65, y: 0.7}
   m_EdgeRadius: 0

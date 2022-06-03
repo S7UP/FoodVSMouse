@@ -29,6 +29,10 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
         inList.Add(new int[]{ 7, 2, 12 });
         inList.Add(new int[]{ 8, 2, 12 });
         inList.Add(new int[] { 11, 0, 12 });
+        inList.Add(new int[] { 15, 0, 12 });
+        inList.Add(new int[] { 16, 0, 12 });
+        inList.Add(new int[] { 17, 0, 12 });
+        inList.Add(new int[] { 18, 0, 12 });
 
         mCardBuilderList = new List<BaseCardBuilder>();
         for (int i = 0; i < inList.Count; i++)

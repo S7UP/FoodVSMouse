@@ -10,6 +10,17 @@ using static BaseCardBuilder;
 /// </summary>
 public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerMember
 {
+    // 美食原生种类-美食在格子上的分类映射表
+    // 下面没说的都是Default类的
+    public static Dictionary<FoodNameTypeMap, FoodInGridType> FoodType_FoodInGridTypeMap = new Dictionary<FoodNameTypeMap, FoodInGridType>()
+    {
+        {FoodNameTypeMap.CoffeePowder, FoodInGridType.NoAttach }, // 咖啡粉
+        {FoodNameTypeMap.IceCream, FoodInGridType.NoAttach }, // 冰淇淋
+        {FoodNameTypeMap.WoodenDisk, FoodInGridType.WaterVehicle }, // 木盘子
+        {FoodNameTypeMap.CottonCandy, FoodInGridType.FloatVehicel }, // 棉花糖
+        {FoodNameTypeMap.MelonShield, FoodInGridType.Shield }, // 瓜皮
+    };
+
     /// <summary>
     /// 存储至存档的信息
     /// </summary>
@@ -222,8 +233,14 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
     /// <returns></returns>
     public virtual bool CanConstructe()
     {
+        BaseGrid baseGrid = GameController.Instance.GetOverGrid();
+        // 当前只有，有没有选中格子
+        if (baseGrid != null)
+        {
+            return !baseGrid.IsContainTag(GetFoodInGridType()); // 查看是否含有此格子分类的卡片，若没有则允许建造，否则不行
+        }
         // TODO 读取对应格子，是否有其他卡片，能否嵌套种植，以及对应地形能否种植等
-        return (GameController.Instance.GetOverGrid() != null); // 当前只有，有没有选中格子
+        return false; 
     }
 
     /// <summary>
@@ -245,6 +262,7 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
             mGameController.SetFoodAttribute(JsonManager.Load<FoodUnit.Attribute>("Food/" + mType + "/" + mShape + "")); // 在自动MInit（）之前需要先获取初始化信息
             mProduct.MInit();
             overGrid.SetFoodUnitInGrid(mProduct); // 将卡片初始化并与种下的格子绑定
+            overGrid.AddFoodUnit(GetFoodInGridType(), mProduct);
             GameController.Instance.AddFoodUnit(mProduct, overGrid.gridIndex.yIndex); // 将这个实体添加到战场上
         }
         else
@@ -339,5 +357,27 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
         Debug.Log("开始存档美食卡槽信息！");
         JsonManager.Save(attr, "CardBuilder/" + attr.type + "/" + attr.shape + "");
         Debug.Log("美食卡槽信息存档完成！");
+    }
+
+    /// <summary>
+    /// 获取美食在格子上的分类
+    /// </summary>
+    /// <returns></returns>
+    public static FoodInGridType GetFoodInGridType(int type)
+    {
+        if (FoodType_FoodInGridTypeMap.ContainsKey((FoodNameTypeMap)type))
+        {
+            return FoodType_FoodInGridTypeMap[(FoodNameTypeMap)type];
+        }
+        return FoodInGridType.Default;
+    }
+
+    /// <summary>
+    /// 获取美食在格子上的分类
+    /// </summary>
+    /// <returns></returns>
+    public FoodInGridType GetFoodInGridType()
+    {
+        return GetFoodInGridType(mType);
     }
 }

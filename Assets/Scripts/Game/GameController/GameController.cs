@@ -27,6 +27,7 @@ public class GameController : MonoBehaviour
 
     // 由编辑器给定的引用
     public GameObject gridListGo; // 用于存放地图格子的对象
+    public Camera mCamera;
 
     // 引用
     private GameObject[] enemyListGo; // 用于存放敌对单位的父对象
@@ -37,11 +38,13 @@ public class GameController : MonoBehaviour
     public BaseCardController mCardController; //+ 卡片建造器
     public BaseSkillController mSkillController; //+ 技能控制器
     public BaseProgressController mProgressController; //+ 游戏进度控制器
-    public BaseGrid[,] mGridList; //+ 格子表
+    public BaseGridController mGridController; // 格子控制器
+    //public BaseGrid[,] mGridList; //+ 格子表
     public List<BaseUnit>[] mEnemyList; //+ 存活的敌方单位表
     public List<BaseUnit>[] mAllyList; // 存活的友方单位表
     public List<BaseBullet> mBulletList; // 存活的子弹表
-    public List<AbilityExecution> abilityExecutionList; // 存活的能力执行体（非对象）
+    public List<AreaEffectExecution> areaEffectExecutionList; // 存活的能力执行体（对象）
+    public List<BaseEffect> baseEffectList; // 存活的特效表
     //BaseRule[] mRuleList; //+ 规则表
     //KeyBoardSetting mKeyBoardSetting; //+ 键位控制接口
     //Recorder mRecorder; //+ 用户操作记录者
@@ -88,6 +91,20 @@ public class GameController : MonoBehaviour
         MMemberList.Add(mCardController);
         mProgressController = panel.transform.Find("ProgressControllerUI").GetComponent<BaseProgressController>();
         MMemberList.Add(mProgressController);
+        mGridController = new BaseGridController(gridListGo.transform);
+        // 生成场地格子
+        //mGridList = new BaseGrid[MapMaker.yRow, MapMaker.xColumn];
+        //for (int i = 0; i < MapMaker.yRow; i++)
+        //{
+        //    for (int j = 0; j < MapMaker.xColumn; j++)
+        //    {
+        //        mGridList[i, j] = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Grid/Grid").GetComponent<BaseGrid>();
+        //        mGridList[i, j].transform.SetParent(gridListGo.transform);
+        //        mGridList[i, j].InitGrid(j, i);
+        //        mGridList[i, j].MInit();
+        //    }
+        //}
+        MMemberList.Add(mGridController);
 
 
         _instance = this;
@@ -114,20 +131,8 @@ public class GameController : MonoBehaviour
         mBulletList = new List<BaseBullet>();
         isPause = false;
 
-        // 生成场地格子
-        mGridList = new BaseGrid[MapMaker.yRow, MapMaker.xColumn];
-        for (int i = 0; i < MapMaker.yRow; i++)
-        {
-            for (int j = 0; j < MapMaker.xColumn; j++)
-            {
-                mGridList[i, j] = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Grid/Grid").GetComponent<BaseGrid>();
-                mGridList[i, j].transform.SetParent(gridListGo.transform);
-                mGridList[i, j].InitGrid(j, i);
-                mGridList[i, j].MInit();
-            }
-        }
-
-        abilityExecutionList = new List<AbilityExecution>();
+        areaEffectExecutionList = new List<AreaEffectExecution>();
+        baseEffectList = new List<BaseEffect>();
 
         // stage test
         mCurrentStage = new BaseStage();
@@ -228,7 +233,8 @@ public class GameController : MonoBehaviour
         MouseUnit mouse = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Mouse/"+enemyInfo.type).GetComponent<MouseUnit>();
         mouse.transform.SetParent(enemyListGo[yIndex].transform);
         mouse.MInit();
-        mGridList[yIndex, xIndex].SetMouseUnitInGrid(mouse, Vector2.right);
+        //mGridList[yIndex, xIndex].SetMouseUnitInGrid(mouse, Vector2.right);
+        mGridController.GetGrid(xIndex, yIndex).SetMouseUnitInGrid(mouse, Vector2.right);
         mouse.UpdateRenderLayer(mEnemyList[yIndex].Count);
         mEnemyList[yIndex].Add(mouse);
         return mouse;
@@ -259,10 +265,18 @@ public class GameController : MonoBehaviour
         return bullet;
     }
 
-    // 产生其他单位
-    public void CreateOtherUnit()
+    // 把范围效果加入战场
+    public void AddAreaEffectExecution(AreaEffectExecution areaEffectExecution)
     {
+        areaEffectExecutionList.Add(areaEffectExecution);
+    }
 
+    /// <summary>
+    /// 添加特效
+    /// </summary>
+    public void AddEffect(BaseEffect baseEffect)
+    {
+        baseEffectList.Add(baseEffect);
     }
 
     /// <summary>
@@ -368,36 +382,46 @@ public class GameController : MonoBehaviour
         mFrameNum ++; // 先更新游戏帧，以保证Update里面与协程接收到的帧是相同的
 
         // test
-        if(mFrameNum == 600)
-        {
-            foreach (var item in GetEnemyList())
-            {
-                foreach (var enemy in item)
-                {
-                    enemy.ExecuteBurn();
-                }
-            }
-        }
+        //if(mFrameNum == 600)
+        //{
+        //    foreach (var item in GetEnemyList())
+        //    {
+        //        foreach (var enemy in item)
+        //        {
+        //            enemy.ExecuteBurn();
+        //        }
+        //    }
+        //}
 
         // 各种组件的Update()
         foreach (IGameControllerMember member in MMemberList)
         {
             member.MUpdate();
         }
-        // 各大能力执行体更新
-        foreach (var item in abilityExecutionList)
+
+        for (int i = 0; i < areaEffectExecutionList.Count; i++)
         {
-            item.Update();
+            AreaEffectExecution e = areaEffectExecutionList[i];
+            if (e.IsValid())
+            {
+                e.MUpdate();
+            }
+            else
+            {
+                i--;
+                areaEffectExecutionList.Remove(e);
+            }
         }
 
         // 所有格子帧逻辑
-        for (int i = 0; i < MapMaker.yRow; i++)
-        {
-            for (int j = 0; j < MapMaker.xColumn; j++)
-            {
-                mGridList[i, j].MUpdate();
-            }
-        }
+        //for (int i = 0; i < MapMaker.yRow; i++)
+        //{
+        //    for (int j = 0; j < MapMaker.xColumn; j++)
+        //    {
+        //        //mGridList[i, j].MUpdate();
+        //        mGridController.GetGridList()[i, j].MUpdate();
+        //    }
+        //}
         // 敌人帧逻辑
         foreach (var item in mEnemyList)
         {
@@ -476,6 +500,23 @@ public class GameController : MonoBehaviour
             }
         }
 
+        // 特效帧逻辑
+        {
+            
+            for (int i = 0; i < baseEffectList.Count; i++)
+            {
+                BaseEffect unit = baseEffectList[i];
+                if (unit.isActiveAndEnabled)
+                {
+                    unit.MUpdate();
+                }
+                else
+                {
+                    i--;
+                    baseEffectList.Remove(unit);
+                }
+            }
+        }
 
         // 将缓冲池的游戏对象放回到对象池
         GameManager.Instance.PushGameObjectFromBufferToPool();

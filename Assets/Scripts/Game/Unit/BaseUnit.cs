@@ -66,6 +66,8 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public IBaseActionState mCurrentActionState; //+ 当前动作状态
     public int currentStateTimer = 0; // 当前状态的持续时间（切换状态时会重置）
 
+    
+
     protected string jsonPath
     {
         get
@@ -447,7 +449,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         // 然后计算护盾吸收的伤害
         dmg = Mathf.Max(0, NumericBox.DamageShield(dmg));
         // 最后扣除本体生命值
-        mCurrentHp -= dmg*(1-mCurrentDefense);
+        mCurrentHp -= dmg;
         if (mCurrentHp <= 0)
         {
             ExecuteDeath();
@@ -463,10 +465,25 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         // 先计算抗性减免后的伤害
         dmg = Mathf.Max(0, dmg * (1 - mCurrentDefense));
         // 最后扣除本体生命值
-        mCurrentHp -= dmg * (1 - mCurrentDefense);
+        mCurrentHp -= dmg;
         if (mCurrentHp <= 0)
         {
             ExecuteDeath();
+        }
+    }
+
+    /// <summary>
+    /// 受到灰烬伤害
+    /// </summary>
+    /// <param name="dmg"></param>
+    public virtual void OnBurnDamage(float dmg)
+    {
+        // 灰烬伤害为真实伤害
+        // 扣除本体生命值
+        mCurrentHp -= dmg;
+        if (mCurrentHp <= 0)
+        {
+            ExecuteBurn();
         }
     }
 
@@ -497,6 +514,16 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     {
         var damageAction = combatAction as DamageAction;
         OnDamage(damageAction.DamageValue);
+    }
+
+    /// <summary>
+    /// 接收灰烬伤害
+    /// </summary>
+    /// <param name="combatAction"></param>
+    public void ReceiveBurnDamage(CombatAction combatAction)
+    {
+        var damageAction = combatAction as BurnDamageAction;
+        OnBurnDamage(damageAction.DamageValue);
     }
 
     /// <summary>

@@ -26,4 +26,5 @@ public class StringManager
     // 通用免疫类型
     public const string IgnoreSlowDown = "减速免疫";
     public const string IgnoreStun = "晕眩免疫";
+    public const string IgnoreBombInstantKill = "免疫炸弹的秒杀效果";
 }

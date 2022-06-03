@@ -63,6 +63,9 @@ public enum ActionPointType
     PostCauseDamage,//造成伤害后
     PostReceiveDamage,//承受伤害后
 
+    PreReceiveBurnDamage,//承受灰烬伤害前
+    PostReceiveBurnDamage,//承受灰烬伤害后
+
     PreCauseCure, //输出治疗前
     PreReceiveCure, // 接受治疗前
 

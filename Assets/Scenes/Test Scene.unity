@@ -237,11 +237,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   overGrid: {fileID: 0}
   gridListGo: {fileID: 1389063058}
+  mCamera: {fileID: 1480348202}
   mCostController: {fileID: 0}
   mCardController: {fileID: 0}
   mSkillController: {fileID: 0}
   mProgressController: {fileID: 0}
   mBulletList: []
+  areaEffectExecutionList: []
+  baseEffectList: []
   isPause: 0
   uICanvasGo: {fileID: 0}
 --- !u!4 &1184051958

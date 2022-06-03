@@ -48,6 +48,7 @@ public class GameFactory : BaseFactory
         else
         {
             objectPoolBufferDict.Add(itemName, new Queue<BufferingGameObject>());
+            objectPoolBufferDict[itemName].Enqueue(new BufferingGameObject() { gameObject = item, timeLeft = BufferTime });
         }
     }
 

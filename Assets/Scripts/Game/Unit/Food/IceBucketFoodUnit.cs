@@ -15,7 +15,7 @@ public class IceBucketFoodUnit : FoodUnit
     /// </summary>
     public override void UpdateAttributeByLevel()
     {
-        NumericBox.Attack.SetBase((float)(attr.baseAttrbute.baseAttack + attr.valueList[mLevel]));
+        //NumericBox.Attack.SetBase((float)(attr.baseAttrbute.baseAttack + attr.valueList[mLevel]));
     }
 
     /// <summary>

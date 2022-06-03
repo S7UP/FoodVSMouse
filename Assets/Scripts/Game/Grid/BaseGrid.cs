@@ -14,6 +14,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     protected List<FoodUnit> mFoodUnitList; // 位于格子上的美食单位表
     protected List<MouseUnit> mMouseUnitList; //　位于格子上的老鼠单位表
 
+    protected Dictionary<FoodInGridType, FoodUnit> mFoodUnitdict; // 恒定在此格子上的美食（即确实是种下去的而非临时性的）
 
     //格子索引
     [System.Serializable]
@@ -31,6 +32,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         mMouseUnitList = new List<MouseUnit>();
         mMainGridState = new BaseGridState(this);
         mOtherGridStateList = new List<BaseGridState>();
+        mFoodUnitdict = new Dictionary<FoodInGridType, FoodUnit>();
     }
 
     /// <summary>
@@ -94,12 +96,6 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         unit.transform.position = MapManager.GetGridLocalPosition(gridIndex.xIndex, gridIndex.yIndex) + new Vector3(pos.x * MapManager.gridWidth, pos.y * MapManager.gridHeight) / 2;
     }
 
-    // 鼠标悬停时标记
-    private void OnMouseOver()
-    {
-        // Debug.Log("当前鼠标悬停在格子上：xIndex= " + gridIndex.xIndex + ", yIndex = " + gridIndex.yIndex) ;
-        GameController.Instance.overGrid = this;
-    }
 
     /// <summary>
     /// 将美食单位放置在该格子上
@@ -176,6 +172,51 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
                 OnUnitEnter(unit);
             }
         }
+    }
+
+    /// <summary>
+    /// 检测该格子是否种有某种标签的美食
+    /// </summary>
+    /// <returns></returns>
+    public bool IsContainTag(FoodInGridType foodInGridType)
+    {
+        return mFoodUnitdict.ContainsKey(foodInGridType);
+    }
+
+    /// <summary>
+    /// 将某种标签的美食加入本格（逻辑上判定在本格）
+    /// </summary>
+    public void AddFoodUnit(FoodInGridType foodInGridType, FoodUnit foodUnit)
+    {
+        mFoodUnitdict.Add(foodInGridType, foodUnit);
+    }
+
+    /// <summary>
+    /// 将某种标签的美食移除本格（逻辑上判定本格没有这种标签的美食了）
+    /// </summary>
+    public void RemoveFoodUnit(FoodInGridType foodInGridType)
+    {
+        mFoodUnitdict.Remove(foodInGridType);
+    }
+
+    /// <summary>
+    /// 获取本格中最高攻击优先级的美食
+    /// </summary>
+    public FoodUnit GetHighestAttackPriorityFoodUnit()
+    {
+        if (IsContainTag(FoodInGridType.Shield))
+        {
+            return mFoodUnitdict[FoodInGridType.Shield];
+        }
+        else if (IsContainTag(FoodInGridType.Default))
+        {
+            return mFoodUnitdict[FoodInGridType.Default];
+        }
+        else if (IsContainTag(FoodInGridType.WaterVehicle))
+        {
+            return mFoodUnitdict[FoodInGridType.WaterVehicle];
+        }
+        return null;
     }
 
     // rigibody相关

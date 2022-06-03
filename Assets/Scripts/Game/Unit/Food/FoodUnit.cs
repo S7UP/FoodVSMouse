@@ -23,6 +23,7 @@ public class FoodUnit : BaseUnit
     protected FoodUnit.Attribute attr;
     private SpriteRenderer spriteRenderer1;
     private SpriteRenderer spriteRenderer2;
+    private Material defaultMaterial;
 
     // 其他
     public FoodType mFoodType; // 美食职业划分
@@ -40,6 +41,7 @@ public class FoodUnit : BaseUnit
         rankAnimator = transform.Find("Ani_Rank").gameObject.GetComponent<Animator>();
         spriteRenderer1 = transform.Find("Ani_Food").gameObject.GetComponent<SpriteRenderer>();
         spriteRenderer2 = transform.Find("Ani_Rank").gameObject.GetComponent<SpriteRenderer>();
+        defaultMaterial = spriteRenderer1.material;
     }
 
     // 单位被对象池回收时触发
@@ -50,7 +52,7 @@ public class FoodUnit : BaseUnit
         mGrid = null; // 卡片所在的格子（单格卡)
         mGridList = null; // 卡片所在的格子（多格卡）
         isUseSingleGrid = false; // 是否只占一格
-        spriteRenderer1.material = null;
+        spriteRenderer1.material = defaultMaterial; // 换回来
     }
 
     // 每次对象被创建时要做的初始化工作
@@ -354,4 +356,11 @@ public class FoodUnit : BaseUnit
     {
         animator.speed = 1;
     }
+
+    // 死亡后，将自身信息从对应格子移除，以腾出空间给后续其他同格子分类型卡片使用
+    public override void AfterDeath()
+    {
+        mGrid.RemoveFoodUnit(BaseCardBuilder.GetFoodInGridType(mType));
+    }
+
 }
