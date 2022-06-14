@@ -54,7 +54,7 @@ public class HealMouse:MouseUnit
     private void BeforeSpell()
     {
         // ÇÐ»»ÎªÊ©·¨×´Ì¬
-        SetActionState(new CastState(this));
+        // SetActionState(new CastState(this));
     }
 
     public override void OnCastStateEnter()

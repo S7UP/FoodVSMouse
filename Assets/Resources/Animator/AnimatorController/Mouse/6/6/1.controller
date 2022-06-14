@@ -20,7 +20,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: fb0bbc7770550d949a101b9554a6b738, type: 2}
+  m_Motion: {fileID: 7400000, guid: 180f41bee853211419fda90ae2b8ee83, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -46,7 +46,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: 984608a1899ff7d43acacc79720d30ec, type: 2}
+  m_Motion: {fileID: 7400000, guid: 479df2ed2f11766499673f5b5f280b35, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -94,7 +94,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: 9d4b778a3bad1304fa5e8e0db886f693, type: 2}
+  m_Motion: {fileID: 7400000, guid: f19c03a45a9122b4f930eee2f8fd651e, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -122,8 +122,8 @@ AnimatorStateMachine:
     m_State: {fileID: -4272024583128998764}
     m_Position: {x: 290, y: 290, z: 0}
   - serializedVersion: 1
-    m_State: {fileID: 8305272402603639228}
-    m_Position: {x: 290, y: 380, z: 0}
+    m_State: {fileID: 8497132795781606945}
+    m_Position: {x: 290, y: -70, z: 0}
   m_ChildStateMachines: []
   m_AnyStateTransitions: []
   m_EntryTransitions: []
@@ -154,20 +154,20 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: fb0bbc7770550d949a101b9554a6b738, type: 2}
+  m_Motion: {fileID: 7400000, guid: 180f41bee853211419fda90ae2b8ee83, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
   m_TimeParameter: 
---- !u!1102 &8305272402603639228
+--- !u!1102 &8497132795781606945
 AnimatorState:
   serializedVersion: 6
   m_ObjectHideFlags: 1
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Cast
+  m_Name: Drop
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions: []
@@ -180,7 +180,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: e3fcc1cc0fe6dca4e9de34ba204332de, type: 2}
+  m_Motion: {fileID: 7400000, guid: 268e200f21f7b7b4dab00366793cc985, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 

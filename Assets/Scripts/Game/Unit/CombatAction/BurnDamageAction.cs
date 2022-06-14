@@ -2,14 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BurnDamageAction : CombatAction
+public class BurnDamageAction : DamageAction
 {
-    //伤害数值
-    public float DamageValue { get; set; }
 
-    public BurnDamageAction(ActionType actionType, BaseUnit creator, BaseUnit target, float damageValue) : base(actionType, creator, target)
+    public BurnDamageAction(ActionType actionType, BaseUnit creator, BaseUnit target, float damageValue) : base(actionType, creator, target, damageValue)
     {
-        DamageValue = damageValue;
     }
 
     //前置处理

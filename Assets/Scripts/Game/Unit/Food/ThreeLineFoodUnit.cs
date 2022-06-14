@@ -28,7 +28,7 @@ public class ThreeLineFoodUnit : FoodUnit
     {
         List<BaseUnit>[] list = GameController.Instance.GetEnemyList();
         int start = Mathf.Max(0, GetRowIndex() - 1);
-        int end = Mathf.Min(GetRowIndex() + 1, MapMaker.yRow - 1);
+        int end = Mathf.Min(GetRowIndex() + 1, MapController.yRow - 1);
         for (int i = start; i <= end; i++)
         {
             if (list[i].Count > 0)
@@ -112,7 +112,9 @@ public class ThreeLineFoodUnit : FoodUnit
         {
             for (int j = 0; j < 2; j++)
             {
-                GameController.Instance.CreateBullet(this, transform.position + Vector3.right * 0.5f * j + Vector3.up * 0.7f * i, Vector2.right, BulletStyle.Wine).SetDamage(mCurrentAttack);
+                BaseBullet b = GameController.Instance.CreateBullet(this, transform.position + Vector3.right * 0.5f * j + Vector3.up * 0.7f * i, Vector2.right, BulletStyle.Wine);
+                b.SetDamage(mCurrentAttack);
+                b.SetStandardVelocity(24.0f);
             }
         }
     }

@@ -42,7 +42,7 @@ public class LayerManager
             layer += BaseBulletLayer;
         }
         layer += yIndex * BaseRowLayer;
-        typeAndShapeValue = Mathf.Max(Mathf.Min(-25, typeAndShapeValue),24); // 取值范围为(-25, 24)
+        typeAndShapeValue = Mathf.Min(Mathf.Max(-25, typeAndShapeValue),24); // 取值范围为(-25, 24)
         layer += typeAndShapeValue * TypeLayer;
         layer += arrayIndex;
         return layer;

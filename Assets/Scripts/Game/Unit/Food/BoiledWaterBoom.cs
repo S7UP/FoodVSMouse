@@ -103,7 +103,7 @@ public class BoiledWaterBoom : FoodUnit
         {
             GameObject instance = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "AreaEffect/BombAreaEffect");
             BombAreaEffectExecution bombEffect = instance.GetComponent<BombAreaEffectExecution>();
-            bombEffect.Init(this, 900, GetRowIndex(), 5, 5, 0, 0);
+            bombEffect.Init(this, 900, GetRowIndex(), 5, 5, 0, 0, false, true);
             bombEffect.transform.position = this.GetPosition();
             GameController.Instance.AddAreaEffectExecution(bombEffect);
         }

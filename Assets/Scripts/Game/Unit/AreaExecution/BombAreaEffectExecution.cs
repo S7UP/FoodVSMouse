@@ -14,6 +14,8 @@ public class BombAreaEffectExecution : AreaEffectExecution
     public int colCount; // 受影响列数
     public int rowCount; // 受影响行数
     public BoxCollider2D boxCollider2D;
+    public bool affectFood;
+    public bool affectMouse;
 
     public override void Awake()
     {
@@ -22,7 +24,7 @@ public class BombAreaEffectExecution : AreaEffectExecution
         resourcePath += "BombAreaEffect";
     }
 
-    public void Init(BaseUnit creator, float damage, int currentRowIndex, int colCount, int rowCount, float offsetX, int offsetY)
+    public void Init(BaseUnit creator, float damage, int currentRowIndex, int colCount, int rowCount, float offsetX, int offsetY, bool affectFood, bool affectMouse)
     {
         this.creator = creator;
         this.damage = damage;
@@ -31,6 +33,8 @@ public class BombAreaEffectExecution : AreaEffectExecution
         this.colCount = colCount;
         this.offsetX = offsetX;
         this.offsetY = offsetY;
+        this.affectFood = affectFood;
+        this.affectMouse = affectMouse;
         boxCollider2D.offset = new Vector2(offsetX, offsetY);
         boxCollider2D.size = new Vector2(colCount*1.05f, rowCount);
     }
@@ -44,6 +48,8 @@ public class BombAreaEffectExecution : AreaEffectExecution
         damage = 0;
         currentRowIndex = 0;
         rowCount = 0;
+        affectFood = false;
+        affectMouse = false;
     }
 
     /// <summary>
@@ -57,7 +63,7 @@ public class BombAreaEffectExecution : AreaEffectExecution
             return false;
         int c = (rowCount - 1) / 2;
         int startIndex = Mathf.Max(0, currentRowIndex - c - offsetY);
-        int endIndex = Mathf.Min(MapMaker.yRow-1, currentRowIndex + c - offsetY);
+        int endIndex = Mathf.Min(MapController.yRow-1, currentRowIndex + c - offsetY);
         int index = baseUnit.GetRowIndex();
         for (int i = startIndex; i <= endIndex; i++)
         {
@@ -69,6 +75,8 @@ public class BombAreaEffectExecution : AreaEffectExecution
 
     public override void EventMouse(MouseUnit unit)
     {
+        if (!affectMouse)
+            return;
         // 检测目标是否防止炸弹秒杀效果，如果不防则受到特定的灰烬伤害，否则直接秒杀
         if (unit.NumericBox.GetBoolNumericValue(StringManager.IgnoreBombInstantKill))
         {
@@ -82,6 +90,16 @@ public class BombAreaEffectExecution : AreaEffectExecution
 
     public override void EventFood(FoodUnit unit)
     {
-        // 美食不受影响
+        // 同上
+        if (!affectFood)
+            return;
+        if (unit.NumericBox.GetBoolNumericValue(StringManager.IgnoreBombInstantKill))
+        {
+            new BurnDamageAction(CombatAction.ActionType.CauseDamage, creator, unit, damage).ApplyAction();
+        }
+        else
+        {
+            new BurnDamageAction(CombatAction.ActionType.CauseDamage, creator, unit, float.MaxValue).ApplyAction();
+        }
     }
 }

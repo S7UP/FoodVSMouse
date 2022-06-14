@@ -6,33 +6,46 @@ using UnityEngine;
 
 public class BaseGrid : MonoBehaviour, IGameControllerMember
 {
-    public GridIndex gridIndex;
+    // 道具原生种类-道具在格子上的分类映射表
+    // 下面没说的都是Default类的
+    public static Dictionary<ItemNameTypeMap, ItemInGridType> ItemType_ItemInGridTypeMap = new Dictionary<ItemNameTypeMap, ItemInGridType>()
+    {
+        {ItemNameTypeMap.PigBarrier, ItemInGridType.TimelinessBarrier }, // 飞猪
+    };
+
+    /// <summary>
+    /// 当格子中存在以下Tag时，不允许放卡
+    /// </summary>
+    public static List<ItemInGridType> NoAllowBuildTagList = new List<ItemInGridType>()
+    {
+        ItemInGridType.TimelinessBarrier
+    };
+
 
     public BaseGridState mMainGridState; // 主要地形状态
     public List<BaseGridState> mOtherGridStateList; // 其它地形状态表（大多是临时的）
 
     protected List<FoodUnit> mFoodUnitList; // 位于格子上的美食单位表
     protected List<MouseUnit> mMouseUnitList; //　位于格子上的老鼠单位表
+    protected List<BaseUnit> mItemUnitList; // 位于格子上的道具表
 
     protected Dictionary<FoodInGridType, FoodUnit> mFoodUnitdict; // 恒定在此格子上的美食（即确实是种下去的而非临时性的）
+    protected Dictionary<ItemInGridType, BaseUnit> mItemUnitDict; // 在此格子上的道具
 
-    //格子索引
-    [System.Serializable]
-    public struct GridIndex
-    {
-        public int xIndex;
-        public int yIndex;
-        public bool canBuild;
-    }
+    public bool canBuild;
+    public int currentXIndex { get; private set; }
+    public int currentYIndex { get; private set; }
 
     private void Awake()
     {
-        gridIndex = new GridIndex();
+        canBuild = true;
         mFoodUnitList = new List<FoodUnit>();
         mMouseUnitList = new List<MouseUnit>();
+        mItemUnitList = new List<BaseUnit>();
         mMainGridState = new BaseGridState(this);
         mOtherGridStateList = new List<BaseGridState>();
         mFoodUnitdict = new Dictionary<FoodInGridType, FoodUnit>();
+        mItemUnitDict = new Dictionary<ItemInGridType, BaseUnit>();
     }
 
     /// <summary>
@@ -42,9 +55,25 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     /// <param name="yRow"></param>
     public void InitGrid(int xColumn, int yRow)
     {
-        gridIndex.xIndex = xColumn;
-        gridIndex.yIndex = yRow;
+        currentXIndex = xColumn;
+        currentYIndex = yRow;
         transform.localPosition = MapManager.GetGridLocalPosition(xColumn, yRow);
+    }
+
+    /// <summary>
+    /// 格子本身是否允许放置
+    /// </summary>
+    /// <returns></returns>
+    public virtual bool CanBuildCard()
+    {
+        if (!canBuild)
+            return false;
+        foreach (var tag in NoAllowBuildTagList)
+        {
+            if (IsContainTag(tag))
+                return false;
+        }
+        return true;
     }
 
     // 地形状态操作
@@ -92,8 +121,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     // 把一个单位的坐标设置在格子上，第二个参数为单位向量，表明生成点位于该格子的哪个边，比如填 pos = Vector2.right，则代表这个单位的坐标会设为该格子的右边上
     public void SetUnitPosition(BaseUnit unit, Vector2 pos)
     {
-        //unit.SetPosition(MapManager.GetGridLocalPosition(gridIndex.xIndex, gridIndex.yIndex) + new Vector3(pos.x* MapManager.gridWidth, pos.y*MapManager.gridHeight)/2);
-        unit.transform.position = MapManager.GetGridLocalPosition(gridIndex.xIndex, gridIndex.yIndex) + new Vector3(pos.x * MapManager.gridWidth, pos.y * MapManager.gridHeight) / 2;
+        unit.transform.position = transform.position + new Vector3(pos.x * MapManager.gridWidth, pos.y * MapManager.gridHeight) / 2;
     }
 
 
@@ -122,7 +150,45 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     /// <param name="pos"></param>
     public void SetMouseUnitInGrid(MouseUnit unit, Vector2 pos)
     {
-        unit.transform.position = MapManager.GetGridLocalPosition(gridIndex.xIndex, gridIndex.yIndex) + new Vector3(pos.x * MapManager.gridWidth, pos.y * MapManager.gridHeight) / 2;
+        unit.transform.position = MapManager.GetGridLocalPosition(currentXIndex, currentYIndex) + new Vector3(pos.x * MapManager.gridWidth, pos.y * MapManager.gridHeight) / 2;
+        //SetUnitPosition(unit, Vector2.zero);
+    }
+
+    /// <summary>
+    /// 将障碍单位放置在该格子上
+    /// </summary>
+    /// <param name="unit"></param>
+    /// <param name="pos"></param>
+    public void SetBarrierUnitInGrid(BaseUnit unit)
+    {
+        // Tag检测 有重复Tag的话则取消上一个
+        ItemInGridType tag = GetItemInGridType((ItemNameTypeMap)unit.mType);
+        if (IsContainTag(tag))
+        {
+            RemoveBarrierUnit(unit);
+        }
+        SetUnitPosition(unit, Vector2.zero);
+        unit.SetGrid(this);
+        mItemUnitList.Add(unit);
+        mItemUnitDict.Add(tag, unit);
+    }
+
+    /// <summary>
+    /// 本格移除美食引用
+    /// </summary>
+    public void RemoveFoodUnit(FoodUnit food)
+    {
+        mFoodUnitList.Remove(food);
+        mFoodUnitdict.Remove(BaseCardBuilder.GetFoodInGridType(food.mType));
+    }
+
+    /// <summary>
+    /// 本格移除障碍引用
+    /// </summary>
+    public void RemoveBarrierUnit(BaseUnit unit)
+    {
+        mItemUnitList.Remove(unit);
+        mItemUnitDict.Remove(GetItemInGridType((ItemNameTypeMap)unit.mType));
     }
 
     /// <summary>
@@ -156,7 +222,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         if (collision.tag.Equals("Food"))
         {
             FoodUnit unit = collision.GetComponent<FoodUnit>();
-            if (!unit.isDeathState && unit.GetRowIndex()==gridIndex.yIndex && !mFoodUnitList.Contains(unit))
+            if (!unit.isDeathState && unit.GetRowIndex()==currentYIndex && !mFoodUnitList.Contains(unit))
             {
                 Debug.Log("Insert Food Unit!");
                 mFoodUnitList.Add(unit);
@@ -165,7 +231,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         }else if (collision.tag.Equals("Mouse"))
         {
             MouseUnit unit = collision.GetComponent<MouseUnit>();
-            if (!unit.isDeathState && unit.GetRowIndex() == gridIndex.yIndex && !mMouseUnitList.Contains(unit))
+            if (!unit.isDeathState && unit.GetRowIndex() == currentYIndex && !mMouseUnitList.Contains(unit))
             {
                 //Debug.Log("Insert Mouse Unit!");
                 mMouseUnitList.Add(unit);
@@ -183,20 +249,22 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         return mFoodUnitdict.ContainsKey(foodInGridType);
     }
 
+    public bool IsContainTag(ItemInGridType itemInGridType)
+    {
+        return mItemUnitDict.ContainsKey(itemInGridType);
+    }
+
     /// <summary>
     /// 将某种标签的美食加入本格（逻辑上判定在本格）
     /// </summary>
-    public void AddFoodUnit(FoodInGridType foodInGridType, FoodUnit foodUnit)
+    public void AddFoodUnitTag(FoodInGridType foodInGridType, FoodUnit foodUnit)
     {
         mFoodUnitdict.Add(foodInGridType, foodUnit);
     }
 
-    /// <summary>
-    /// 将某种标签的美食移除本格（逻辑上判定本格没有这种标签的美食了）
-    /// </summary>
-    public void RemoveFoodUnit(FoodInGridType foodInGridType)
+    public void AddItemUnitTag(ItemInGridType itemInGridType, BaseUnit baseUnit)
     {
-        mFoodUnitdict.Remove(foodInGridType);
+        mItemUnitDict.Add(itemInGridType, baseUnit);
     }
 
     /// <summary>
@@ -217,6 +285,28 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
             return mFoodUnitdict[FoodInGridType.WaterVehicle];
         }
         return null;
+    }
+
+    /// <summary>
+    /// 获取本格中所有可被攻击的美食列表
+    /// </summary>
+    /// <returns></returns>
+    public List<FoodUnit> GetAttackableFoodUnitList()
+    {
+        List<FoodUnit> list = new List<FoodUnit>();
+        if (IsContainTag(FoodInGridType.Shield))
+        {
+            list.Add(mFoodUnitdict[FoodInGridType.Shield]);
+        }
+        if (IsContainTag(FoodInGridType.Default))
+        {
+            list.Add(mFoodUnitdict[FoodInGridType.Default]);
+        }
+        if (IsContainTag(FoodInGridType.WaterVehicle))
+        {
+            list.Add(mFoodUnitdict[FoodInGridType.WaterVehicle]);
+        }
+        return list;
     }
 
     // rigibody相关
@@ -248,6 +338,24 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         }
     }
 
+    /// <summary>
+    /// 获取当前单位所在行下标
+    /// </summary>
+    /// <returns></returns>
+    public virtual int GetRowIndex()
+    {
+        return currentYIndex;
+    }
+
+    /// <summary>
+    /// 获取当前单位所在列下标
+    /// </summary>
+    /// <returns></returns>
+    public virtual int GetColumnIndex()
+    {
+        return currentXIndex;
+    }
+
     public void MInit()
     {
         
@@ -255,12 +363,29 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
 
     public void MUpdate()
     {
+        int lastXIndex = currentXIndex;
+        int lastYIndex = currentYIndex;
+        currentXIndex = MapManager.GetXIndex(transform.position.x);
+        currentYIndex = MapManager.GetYIndex(transform.position.y);
+        // 当格子的判定坐标发生改变
+        if(lastYIndex != currentYIndex)
+        {
+            foreach (var unit in GetFoodUnitList())
+            {
+                // 换行
+                GameController.Instance.ChangeAllyRow(lastYIndex, currentYIndex, unit);
+            }
+            
+        }
+
         // 检查单位存活
         List<FoodUnit> f_List = new List<FoodUnit>();
         foreach (var item in mFoodUnitList)
         {
             if (item.isDeathState)
                 f_List.Add(item);
+            else // 同步位置
+                SetUnitPosition(item, Vector2.zero);
         }
         foreach (var item in f_List)
         {
@@ -298,5 +423,16 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     public void MDestory()
     {
         throw new System.NotImplementedException();
+    }
+
+    /// <summary>
+    /// 获取道具在格子上的分类
+    /// </summary>
+    /// <returns></returns>
+    public ItemInGridType GetItemInGridType(ItemNameTypeMap itemNameTypeMap)
+    {
+        if(ItemType_ItemInGridTypeMap.ContainsKey(itemNameTypeMap))
+            return ItemType_ItemInGridTypeMap[itemNameTypeMap];
+        return ItemInGridType.Default;
     }
 }

@@ -128,7 +128,7 @@ public class EditorPanel : BasePanel
 
 
         // test
-        LoadStage("test¹Ø¿¨2");
+        LoadStage("singleMouseText");
     }
 
     // Start is called before the first frame update

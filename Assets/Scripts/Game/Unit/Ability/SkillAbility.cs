@@ -19,6 +19,8 @@ public abstract class SkillAbility : AbilityEntity
     public bool isExclusive = true; // 是否排他
     public bool canActiveInDeathState; // 在死亡状态下能否触发
     public bool enableEnergyRegeneration = true; // 是否启动能量回复
+    public bool noClearEnergyWhenStart = true; // 在技能开始时不清空能量
+    public bool noClearEnergyWhenEnd = false; // 在技能结束时不清空能量
 
     public enum Type
     {
@@ -38,6 +40,7 @@ public abstract class SkillAbility : AbilityEntity
         public SkillAbility.Type skillType;
         public bool isExclusive;
         public bool canActiveInDeathState;
+        public int priority;
     }
 
     public SkillAbility()
@@ -52,7 +55,7 @@ public abstract class SkillAbility : AbilityEntity
 
     public SkillAbility(BaseUnit pmaster, SkillAbilityInfo info): base(pmaster)
     {
-        Init(info.name, info.needEnergy, info.startEnergy, info.energyRegeneration, info.skillType, info.canActiveInDeathState);
+        Init(info.name, info.needEnergy, info.startEnergy, info.energyRegeneration, info.skillType, info.canActiveInDeathState, info.priority);
     }
 
     /// <summary>
@@ -65,7 +68,7 @@ public abstract class SkillAbility : AbilityEntity
     public void Load(UnitType unitType, int type, int shape, int index)
     {
         SkillAbilityInfo info = AbilityManager.Instance.AbilityDict[unitType][type][shape][index];
-        Init(info.name, info.needEnergy, info.startEnergy, info.energyRegeneration, info.skillType, info.canActiveInDeathState);
+        Init(info.name, info.needEnergy, info.startEnergy, info.energyRegeneration, info.skillType, info.canActiveInDeathState, info.priority);
     }
 
     /// <summary>
@@ -76,7 +79,7 @@ public abstract class SkillAbility : AbilityEntity
     /// <param name="start"></param>
     /// <param name="regeneration"></param>
     /// <param name="type"></param>
-    public void Init(string name, float need, float start, float regeneration, SkillAbility.Type type, bool canActiveInDeathState)
+    public void Init(string name, float need, float start, float regeneration, SkillAbility.Type type, bool canActiveInDeathState, int priority)
     {
         this.name = name;
         needEnergy.SetBase(need);
@@ -85,6 +88,7 @@ public abstract class SkillAbility : AbilityEntity
         currentEnergy = startEnergy.Value;
         skillType = type;
         this.canActiveInDeathState = canActiveInDeathState;
+        this.priority = priority;
     }
 
     /// <summary>
@@ -93,6 +97,31 @@ public abstract class SkillAbility : AbilityEntity
     public void ResetCurrentEnergy()
     {
         currentEnergy = startEnergy.Value;
+    }
+
+    /// <summary>
+    /// 清空能量值
+    /// </summary>
+    public void ClearCurrentEnergy()
+    {
+        currentEnergy = 0;
+    }
+
+    /// <summary>
+    /// 将能量值加满
+    /// </summary>
+    public void FullCurrentEnergy()
+    {
+        currentEnergy = needEnergy.Value + 1;
+    }
+
+    /// <summary>
+    /// 判断能量是否满了
+    /// </summary>
+    /// <returns></returns>
+    public bool IsEnergyEnough()
+    {
+        return currentEnergy >= needEnergy.Value;
     }
 
     public override void Init()
@@ -163,13 +192,9 @@ public abstract class SkillAbility : AbilityEntity
         if (!IsActiveInDeath())
             return;
         isSpelling = true;
-        currentEnergy = 0; // 清零
-        // 排它设置
-        if (isExclusive && skillAbilityManager !=null)
-        {
-            skillAbilityManager.SetExclusiveLock(true);
-        }
         BeforeSpell();
+        if (!noClearEnergyWhenStart)
+            ClearCurrentEnergy();
     }
 
     /// <summary>
@@ -192,11 +217,8 @@ public abstract class SkillAbility : AbilityEntity
     public override void EndActivate()
     {
         isSpelling = false;
-        // 排它设置
-        if (isExclusive && skillAbilityManager != null)
-        {
-            skillAbilityManager.SetExclusiveLock(false);
-        }
+        if(!noClearEnergyWhenEnd)
+            ClearCurrentEnergy(); // 清空能量槽
         AfterSpell();
     }
 
@@ -213,7 +235,7 @@ public abstract class SkillAbility : AbilityEntity
     /// </summary>
     public override bool CanActive()
     {
-        return (IsActiveInDeath() && !isSpelling && currentEnergy >= needEnergy.Value && IsMeetSkillCondition());
+        return (IsActiveInDeath() && !isSpelling && IsEnergyEnough() && IsMeetSkillCondition());
     }
 
     /// <summary>

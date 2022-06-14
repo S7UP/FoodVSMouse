@@ -6,7 +6,11 @@ using UnityEngine;
 /// </summary>
 public enum BulletStyle
 {
-    Wine,
-    Water,
-    Fire
+    Wine = 0,
+    Water = 1,
+    Fire = 2,
+    IceBomb = 3,
+    Bomb = 4,
+    FlyBomb = 5,
+    CatapultMouseBullet = 6,
 }

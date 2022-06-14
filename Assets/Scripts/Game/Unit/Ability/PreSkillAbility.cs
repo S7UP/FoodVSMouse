@@ -38,8 +38,9 @@ public class PreSkillAbility : SkillAbility
 
     public override void BeforeSpell()
     {
-        targetSkillAbility.enableEnergyRegeneration = true;
-        if(beforeSpell!=null)
+        // targetSkillAbility.enableEnergyRegeneration = true;
+        targetSkillAbility.FullCurrentEnergy(); // 能量填充值满，使之可以被施放
+        if (beforeSpell!=null)
             beforeSpell();
     }
 

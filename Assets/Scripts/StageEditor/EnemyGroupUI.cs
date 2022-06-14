@@ -22,6 +22,7 @@ public class EnemyGroupUI : MonoBehaviour
     private Dropdown Dro_Number;
     private Button Btn_Del;
     private Button Btn_EnemyType;
+    private RectTransform rectTransform;
 
     private void Awake()
     {
@@ -38,6 +39,7 @@ public class EnemyGroupUI : MonoBehaviour
         Tex_Shape = transform.Find("Img_Mouse").Find("Emp_Info").Find("Tex_Shape").GetComponent<Text>();
         Dro_StartIndex = transform.Find("Img_Mouse").Find("Emp_Info").Find("Emp_StartIndex").Find("Dropdown").GetComponent<Dropdown>();
         Dro_Number = transform.Find("Img_Mouse").Find("Emp_Info").Find("Emp_Number").Find("Dropdown").GetComponent<Dropdown>();
+        rectTransform = transform.GetComponent<RectTransform>();
         // 下拉框初始化
         Dro_StartIndex.ClearOptions();
         Dro_Number.ClearOptions();
@@ -129,8 +131,12 @@ public class EnemyGroupUI : MonoBehaviour
     {
         mBaseEnemyGroup.mEnemyInfo = enemyInfo;
         // 修改贴图
-        Img_Mouse.sprite = GameManager.Instance.GetSprite("Mouse/"+enemyInfo.type+"/"+enemyInfo.shape+"/0");
+        Img_Mouse.sprite = GameManager.Instance.GetSprite("Mouse/"+enemyInfo.type+"/"+enemyInfo.shape+"/display");
         Img_Mouse.SetNativeSize();
+        // 设置rect
+        float w = Img_Mouse.GetComponent<RectTransform>().rect.width + Emp_MaskList.GetComponent<RectTransform>().rect.width;
+        rectTransform.localPosition = new Vector3(w/2, rectTransform.localPosition.y, rectTransform.localPosition.z);
+        rectTransform.sizeDelta = new Vector2(w, rectTransform.sizeDelta.y);
     }
 
 

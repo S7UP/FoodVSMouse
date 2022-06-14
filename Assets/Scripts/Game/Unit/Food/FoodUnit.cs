@@ -23,11 +23,13 @@ public class FoodUnit : BaseUnit
     protected FoodUnit.Attribute attr;
     private SpriteRenderer spriteRenderer1;
     private SpriteRenderer spriteRenderer2;
-    private Material defaultMaterial;
+    public Material defaultMaterial;
+    public Collider2D mCollider2D;
 
     // 其他
     public FoodType mFoodType; // 美食职业划分
     public int mLevel; //星级
+    public int typeAndShapeToLayer = 0; // 种类与变种对图层的加权等级
 
     private BaseGrid mGrid; // 卡片所在的格子（单格卡)
     private List<BaseGrid> mGridList; // 卡片所在的格子（多格卡）
@@ -41,14 +43,15 @@ public class FoodUnit : BaseUnit
         rankAnimator = transform.Find("Ani_Rank").gameObject.GetComponent<Animator>();
         spriteRenderer1 = transform.Find("Ani_Food").gameObject.GetComponent<SpriteRenderer>();
         spriteRenderer2 = transform.Find("Ani_Rank").gameObject.GetComponent<SpriteRenderer>();
-        defaultMaterial = spriteRenderer1.material;
+        mCollider2D = transform.GetComponent<Collider2D>();
+        defaultMaterial = spriteRenderer1.material;  // 装上正常的受击材质
+        AnimatorContinue(); // 恢复动画
     }
 
     // 单位被对象池回收时触发
     public override void OnDisable()
     {
         base.OnDisable();
-        mFoodType = 0; // 美食职业划分
         mGrid = null; // 卡片所在的格子（单格卡)
         mGridList = null; // 卡片所在的格子（多格卡）
         isUseSingleGrid = false; // 是否只占一格
@@ -70,7 +73,8 @@ public class FoodUnit : BaseUnit
         SetActionState(new IdleState(this));
 
         SetLevel(6);
-
+        // 受伤闪白
+        AddActionPointListener(ActionPointType.PostReceiveDamage, FlashWhenHited);
         spriteRenderer2.enabled = true; // 激活星级动画
         AnimatorContinue(); // 恢复播放动画
     }
@@ -106,6 +110,19 @@ public class FoodUnit : BaseUnit
             {
                 skillAbilityManager.AddSkillAbility(new GeneralAttackSkillAbility(this, item));
             }
+        }
+    }
+
+        /// <summary>
+    /// 当被攻击时闪白
+    /// </summary>
+    /// <param name="action"></param>
+    public void FlashWhenHited(CombatAction action)
+    {
+        // 当存在攻击来源时
+        if (action.Creator != null)
+        {
+            hitBox.OnHit();
         }
     }
 
@@ -201,12 +218,12 @@ public class FoodUnit : BaseUnit
     /// 获取卡片所在的格子
     /// </summary>
     /// <returns></returns>
-    public BaseGrid GetGrid()
+    public override BaseGrid GetGrid()
     {
         return mGrid;
     }
 
-    public void SetGrid(BaseGrid grid)
+    public override void SetGrid(BaseGrid grid)
     {
         mGrid = grid;
     }
@@ -343,8 +360,17 @@ public class FoodUnit : BaseUnit
     /// <param name="arrayIndex"></param>
     public override void UpdateRenderLayer(int arrayIndex)
     {
-        spriteRenderer1.sortingOrder = LayerManager.CalculateSortingLayer(LayerManager.UnitType.Ally, GetRowIndex(), 0, 2*arrayIndex);
-        spriteRenderer2.sortingOrder = LayerManager.CalculateSortingLayer(LayerManager.UnitType.Ally, GetRowIndex(), 0, 2*arrayIndex+1);
+        spriteRenderer1.sortingOrder = LayerManager.CalculateSortingLayer(LayerManager.UnitType.Ally, GetRowIndex(), typeAndShapeToLayer, 2*arrayIndex);
+        spriteRenderer2.sortingOrder = LayerManager.CalculateSortingLayer(LayerManager.UnitType.Ally, GetRowIndex(), typeAndShapeToLayer, 2*arrayIndex+1);
+        UpdateSpecialRenderLayer();
+    }
+
+    /// <summary>
+    /// 由子类实现，更新子类特殊组件的层数
+    /// </summary>
+    public virtual void UpdateSpecialRenderLayer()
+    {
+
     }
 
     public override void AnimatorStop()
@@ -360,7 +386,92 @@ public class FoodUnit : BaseUnit
     // 死亡后，将自身信息从对应格子移除，以腾出空间给后续其他同格子分类型卡片使用
     public override void AfterDeath()
     {
-        mGrid.RemoveFoodUnit(BaseCardBuilder.GetFoodInGridType(mType));
+        RemoveFromGrid();
     }
 
+    public override void MUpdate()
+    {
+        base.MUpdate();
+        // 更新受击闪烁状态
+        if (hitBox.GetPercent() > 0)
+        {
+            spriteRenderer1.material.SetFloat("_FlashRate", 0.5f * hitBox.GetPercent());
+        }
+    }
+
+    /// <summary>
+    /// 启用冰冻减速效果
+    /// </summary>
+    /// <param name="enable"></param>
+    public override void SetFrozeSlowEffectEnable(bool enable)
+    {
+        if (enable)
+        {
+            spriteRenderer1.material.SetFloat("_IsSlow", 1);
+        }
+        else
+        {
+            spriteRenderer1.material.SetFloat("_IsSlow", 0);
+        }
+    }
+
+    /// <summary>
+    /// 将自身移除出格子
+    /// </summary>
+    public virtual void RemoveFromGrid()
+    {
+        mGrid.RemoveFoodUnit(this);
+    }
+
+    /// <summary>
+    /// 启动判定
+    /// </summary>
+    public override void OpenCollision()
+    {
+        mCollider2D.enabled = true;
+    }
+
+    /// <summary>
+    /// 关闭判定
+    /// </summary>
+    public override void CloseCollision()
+    {
+        mCollider2D.enabled = false;
+    }
+
+    /// <summary>
+    /// 设置透明度
+    /// </summary>
+    public override void SetAlpha(float a)
+    {
+        spriteRenderer1.material.SetFloat("_Alpha", a);
+    }
+
+    /// <summary>
+    /// 获取行下标
+    /// </summary>
+    /// <returns></returns>
+    public override int GetRowIndex()
+    {
+        // 依附于格子则返回对应格子的下标
+        if (GetGrid()!=null)
+        {
+            return GetGrid().GetRowIndex();
+        }
+        return base.GetRowIndex();
+    }
+
+    /// <summary>
+    /// 获取行下标
+    /// </summary>
+    /// <returns></returns>
+    public override int GetColumnIndex()
+    {
+        // 依附于格子则返回对应格子的下标
+        if (GetGrid() != null)
+        {
+            return GetGrid().GetColumnIndex();
+        }
+        return base.GetColumnIndex();
+    }
 }

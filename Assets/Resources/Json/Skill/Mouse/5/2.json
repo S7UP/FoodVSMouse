@@ -1,3 +1,3 @@
-[{"name":"普通攻击","needEnergy":60.0,"startEnergy":60.0,"energyRegeneration":1.0,"skillType":0,"isExclusive":true,"canActiveInDeathState":false},
-{"name":"预演奏Ⅲ","needEnergy":1800.0,"startEnergy":1800.0,"energyRegeneration":1.0,"skillType":1,"isExclusive":true,"canActiveInDeathState":false},
-{"name":"演奏Ⅲ","needEnergy":240.0,"startEnergy":0.0,"energyRegeneration":1.0,"skillType":1,"isExclusive":true,"canActiveInDeathState":false}]
+[{"name":"普通攻击","needEnergy":30.0,"startEnergy":30.0,"energyRegeneration":1.0,"skillType":0,"isExclusive":false,"canActiveInDeathState":false,"priority":0},
+{"name":"预演奏Ⅲ","needEnergy":1800.0,"startEnergy":1800.0,"energyRegeneration":1.0,"skillType":1,"isExclusive":true,"canActiveInDeathState":false,"priority":1},
+{"name":"演奏Ⅲ","needEnergy":240.0,"startEnergy":0.0,"energyRegeneration":-1.0,"skillType":1,"isExclusive":true,"canActiveInDeathState":false,"priority":1}]

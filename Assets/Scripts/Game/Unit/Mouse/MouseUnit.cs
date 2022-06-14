@@ -20,14 +20,15 @@ public class MouseUnit : BaseUnit
 
     // Awake里Find一次的组件
     public Rigidbody2D rigibody2D;
+    public Collider2D mCollider2D;
     private SpriteRenderer spriteRenderer;
     protected Animator animator;
 
     // 其他属性
-
     protected List<double> mHertRateList; // 切换贴图时的受伤比率（高->低)
     public int mHertIndex; // 受伤贴图阶段
-    
+    public Vector2 moveRotate; // 移动方向
+
 
     // 索敌相关
     protected bool isBlock { get; set; } // 是否被阻挡
@@ -39,7 +40,7 @@ public class MouseUnit : BaseUnit
     public override void MInit()
     {
         base.MInit();
-        
+
         // 从Json中读取的属性以及相关的初始化
         MouseUnit.Attribute attr = GameController.Instance.GetMouseAttribute();
         mHertRateList = new List<double>();
@@ -48,6 +49,7 @@ public class MouseUnit : BaseUnit
             mHertRateList.Add(item);
         }
         mHertIndex = 0;
+        moveRotate = Vector2.left;
 
         // 初始为移动状态
         SetActionState(new MoveState(this));
@@ -59,6 +61,8 @@ public class MouseUnit : BaseUnit
         // 在受到伤害结算之后，更新受伤贴图状态
         AddActionPointListener(ActionPointType.PostReceiveDamage, delegate { UpdateHertMap(); });
         AddActionPointListener(ActionPointType.PostReceiveDamage, FlashWhenHited);
+        AddActionPointListener(ActionPointType.PostReceiveReboundDamage, delegate { UpdateHertMap(); });
+        AddActionPointListener(ActionPointType.PostReceiveReboundDamage, FlashWhenHited);
         // 在接收治疗结算之后，更新受伤贴图状态
         AddActionPointListener(ActionPointType.PostReceiveCure, delegate { UpdateHertMap(); });
         // 装上正常的受击材质
@@ -81,6 +85,7 @@ public class MouseUnit : BaseUnit
         rigibody2D = gameObject.GetComponent<Rigidbody2D>();
         animator = gameObject.transform.Find("Ani_Mouse").gameObject.GetComponent<Animator>();
         spriteRenderer = gameObject.transform.Find("Ani_Mouse").gameObject.GetComponent<SpriteRenderer>();
+        mCollider2D = gameObject.GetComponent<Collider2D>();
     }
 
     /// <summary>
@@ -211,7 +216,7 @@ public class MouseUnit : BaseUnit
     /// </summary>
     protected virtual void UpdateBlockState()
     {
-        if (mBlockUnit.IsAlive())
+        if (mBlockUnit!=null && mBlockUnit.IsAlive())
             isBlock = true;
         else
             isBlock = false;
@@ -254,7 +259,7 @@ public class MouseUnit : BaseUnit
     public override void OnMoveState()
     {
         // 移动更新
-        SetPosition((Vector2)GetPosition() + Vector2.left * mCurrentMoveSpeed * 0.003f);
+        SetPosition((Vector2)GetPosition() + moveRotate * mCurrentMoveSpeed);
     }
 
     public override void OnAttackState()
@@ -270,7 +275,7 @@ public class MouseUnit : BaseUnit
     {
         return (unit is FoodUnit && GetRowIndex() == unit.GetRowIndex() && mHeight == unit.mHeight);
     }
-    
+
     /// <summary>
     /// 老鼠单位默认被处在同行的子弹击中
     /// </summary>
@@ -293,19 +298,19 @@ public class MouseUnit : BaseUnit
         // 是否要切换控制器的flag
         bool flag = false;
         // 恢复到上一个受伤贴图检测
-        while(mHertIndex > 0 && GetHeathPercent() > mHertRateList[mHertIndex - 1])
+        while (mHertIndex > 0 && GetHeathPercent() > mHertRateList[mHertIndex - 1])
         {
-            mHertIndex --;
+            mHertIndex--;
             flag = true;
         }
         // 下一个受伤贴图的检测
-        while(mHertIndex < mHertRateList.Count && GetHeathPercent() <= mHertRateList[mHertIndex])
+        while (mHertIndex < mHertRateList.Count && GetHeathPercent() <= mHertRateList[mHertIndex])
         {
-            mHertIndex ++;
+            mHertIndex++;
             flag = true;
         }
         // 有切换通知时才切换
-        if(flag)
+        if (flag)
             UpdateRuntimeAnimatorController();
     }
 
@@ -332,9 +337,6 @@ public class MouseUnit : BaseUnit
         // 当存在攻击来源时
         if (action.Creator != null)
         {
-            //SpriteRendererManager srm = renderManager.GetSpriteRender("mainSprite");
-            //srm.spriteRenderer.material.SetInt("BeAttack",1);
-            //spriteRenderer.material.SetFloat("_FlashRate", 1);
             hitBox.OnHit();
         }
     }
@@ -364,6 +366,16 @@ public class MouseUnit : BaseUnit
     }
 
     /// <summary>
+    /// 取消接触友方单位
+    /// </summary>
+    /// <param name="unit"></param>
+    public void SetNoCollideAllyUnit()
+    {
+        isBlock = false;
+        mBlockUnit = null;
+    }
+
+    /// <summary>
     /// 碰撞事件
     /// </summary>
     /// <param name="collision"></param>
@@ -375,13 +387,15 @@ public class MouseUnit : BaseUnit
             return;
         }
 
-        if (collision.tag.Equals("Food"))
+        if (!isBlock && collision.tag.Equals("Food"))
         {
             // 检测到美食单位碰撞了！
             FoodUnit food = collision.GetComponent<FoodUnit>();
-            if (UnitManager.CanBlock(this, food)) // 检测双方能否互相阻挡
+            // 检测本格美食最高受击优先级美食
+            FoodUnit targetFood = food.GetGrid().GetHighestAttackPriorityFoodUnit();
+            if (UnitManager.CanBlock(this, targetFood)) // 检测双方能否互相阻挡
             {
-                OnCollideFoodUnit(food);
+                OnCollideFoodUnit(targetFood);
             }
         }
         else if (collision.tag.Equals("Bullet"))
@@ -395,15 +409,27 @@ public class MouseUnit : BaseUnit
         }
     }
 
-    // rigibody相关
-    private void OnTriggerEnter2D(Collider2D collision)
+    public virtual void OnTriggerEnter2D(Collider2D collision)
     {
         OnCollision(collision);
     }
 
-    private void OnTriggerStay2D(Collider2D collision)
+    public virtual void OnTriggerStay2D(Collider2D collision)
     {
         OnCollision(collision);
+    }
+
+    public virtual void OnTriggerExit2D(Collider2D collision)
+    {
+        if (collision.tag.Equals("Food"))
+        {
+            // 检测到美食单位碰撞了！
+            FoodUnit food = collision.GetComponent<FoodUnit>();
+            if (mBlockUnit == food)
+            {
+                SetNoCollideAllyUnit();
+            }
+        }
     }
 
     public override void MUpdate()
@@ -416,6 +442,25 @@ public class MouseUnit : BaseUnit
         {
             spriteRenderer.material.SetFloat("_FlashRate", 0.5f * hitBox.GetPercent());
         }
+    }
+
+    /// <summary>
+    /// 根据攻击速度来更新攻击动画的速度
+    /// </summary>
+    private void UpdateAttackAnimationSpeed()
+    {
+        float time = AnimatorManager.GetClipTime(animator, "Attack"); // 1倍情况下，一次攻击的默认时间 秒
+        float interval = 1 / NumericBox.AttackSpeed.Value; // 攻击间隔  秒
+        float rate = Mathf.Max(1, time / interval);
+        AnimatorManager.SetClipSpeed(animator, "Attack", rate);
+    }
+
+    /// <summary>
+    /// 恢复动画播放速度
+    /// </summary>
+    private void ResumeAnimationSpeed()
+    {
+        AnimatorManager.SetClipSpeed(animator, "Attack", 1.0f);
     }
 
     /// <summary>
@@ -433,12 +478,32 @@ public class MouseUnit : BaseUnit
 
     public override void OnAttackStateEnter()
     {
+        // 每次攻击时，最好根据攻速来计算一下播放速度，然后改变播放速度
+        UpdateAttackAnimationSpeed();
         animator.Play("Attack");
     }
 
     public override void OnDieStateEnter()
     {
         animator.Play("Die");
+    }
+
+    public override void OnAttackStateContinue()
+    {
+        // 每次攻击时，最好根据攻速来计算一下播放速度，然后改变播放速度
+        UpdateAttackAnimationSpeed();
+    }
+
+    public override void OnAttackStateExit()
+    {
+        // 恢复播放速度
+        ResumeAnimationSpeed();
+    }
+
+    public override void OnAttackStateInterrupt()
+    {
+        // 恢复播放速度
+        ResumeAnimationSpeed();
     }
 
     public override void DuringDeath()
@@ -451,7 +516,7 @@ public class MouseUnit : BaseUnit
         // 获取Die的动作信息，使得回收时机与动画显示尽可能同步
         int currentFrame = AnimatorManager.GetCurrentFrame(animator);
         int totalFrame = AnimatorManager.GetTotalFrame(animator);
-        if (currentFrame>totalFrame && currentFrame%totalFrame == 1) // 动画播放完毕后调用DeathEvent()
+        if (currentFrame > totalFrame && currentFrame % totalFrame == 1) // 动画播放完毕后调用DeathEvent()
         {
             DeathEvent();
         }
@@ -475,15 +540,6 @@ public class MouseUnit : BaseUnit
         }
     }
 
-    /// <summary>
-    /// 是否存活
-    /// </summary>
-    /// <returns></returns>
-    public override bool IsAlive()
-    {
-        return (!isDeathState && base.IsAlive());
-    }
-
 
     public static void SaveNewMouseInfo()
     {
@@ -503,7 +559,7 @@ public class MouseUnit : BaseUnit
                 baseMoveSpeed = 1.0,
                 baseHeight = 0, // 基础高度
             },
-            hertRateList = new double[] {  }
+            hertRateList = new double[] { }
         };
 
         Debug.Log("开始存档老鼠信息！");
@@ -544,5 +600,38 @@ public class MouseUnit : BaseUnit
         {
             spriteRenderer.material.SetFloat("_IsSlow", 0);
         }
+    }
+
+
+    /// <summary>
+    /// 启动判定
+    /// </summary>
+    public override void OpenCollision()
+    {
+        mCollider2D.enabled = true;
+    }
+
+    /// <summary>
+    /// 关闭判定
+    /// </summary>
+    public override void CloseCollision()
+    {
+        mCollider2D.enabled = false;
+    }
+
+    /// <summary>
+    /// 设置透明度
+    /// </summary>
+    public override void SetAlpha(float a)
+    {
+        spriteRenderer.material.SetFloat("_Alpha", a);
+    }
+
+    /// <summary>
+    /// 设置移动方向
+    /// </summary>
+    public void SetMoveRoate(Vector2 v2)
+    {
+        moveRotate = v2;
     }
 }

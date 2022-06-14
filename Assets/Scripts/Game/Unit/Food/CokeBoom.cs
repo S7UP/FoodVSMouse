@@ -102,7 +102,7 @@ public class CokeBoom : FoodUnit
         // 原地产生一个爆炸效果
         GameObject instance = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "AreaEffect/BombAreaEffect");
         BombAreaEffectExecution bombEffect = instance.GetComponent<BombAreaEffectExecution>();
-        bombEffect.Init(this, 900, GetRowIndex(), 4, 3, -0.5f, 0);
+        bombEffect.Init(this, 900, GetRowIndex(), 4, 3, -0.5f, 0, false, true);
         bombEffect.transform.position = this.GetPosition();
         GameController.Instance.AddAreaEffectExecution(bombEffect);
     }

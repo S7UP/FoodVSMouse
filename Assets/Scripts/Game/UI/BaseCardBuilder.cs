@@ -234,10 +234,11 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
     public virtual bool CanConstructe()
     {
         BaseGrid baseGrid = GameController.Instance.GetOverGrid();
-        // 当前只有，有没有选中格子
         if (baseGrid != null)
         {
-            return !baseGrid.IsContainTag(GetFoodInGridType()); // 查看是否含有此格子分类的卡片，若没有则允许建造，否则不行
+            // 先检查格子状态能否允许造卡
+            // 然后再查看是否含有此格子分类的卡片，若没有则允许建造，否则不行
+            return (baseGrid.CanBuildCard() && !baseGrid.IsContainTag(GetFoodInGridType())); 
         }
         // TODO 读取对应格子，是否有其他卡片，能否嵌套种植，以及对应地形能否种植等
         return false; 
@@ -262,8 +263,8 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
             mGameController.SetFoodAttribute(JsonManager.Load<FoodUnit.Attribute>("Food/" + mType + "/" + mShape + "")); // 在自动MInit（）之前需要先获取初始化信息
             mProduct.MInit();
             overGrid.SetFoodUnitInGrid(mProduct); // 将卡片初始化并与种下的格子绑定
-            overGrid.AddFoodUnit(GetFoodInGridType(), mProduct);
-            GameController.Instance.AddFoodUnit(mProduct, overGrid.gridIndex.yIndex); // 将这个实体添加到战场上
+            overGrid.AddFoodUnitTag(GetFoodInGridType(), mProduct);
+            GameController.Instance.AddFoodUnit(mProduct, overGrid.currentYIndex); // 将这个实体添加到战场上
         }
         else
         {

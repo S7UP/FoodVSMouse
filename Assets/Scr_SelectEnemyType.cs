@@ -253,7 +253,7 @@ public class Scr_SelectEnemyType : MonoBehaviour
                 typeList.Add(new SelectEnemyInfo()
                 {
                     attr = attr.baseAttrbute,
-                    sprite = GameManager.Instance.GetSprite("Mouse/" + attr.baseAttrbute.type + "/" + attr.baseAttrbute.shape + "/0")
+                    sprite = GameManager.Instance.GetSprite("Mouse/" + attr.baseAttrbute.type + "/" + attr.baseAttrbute.shape + "/icon")
                 });
             }
             List<SelectEnemyInfo> oneShapeList = new List<SelectEnemyInfo>();
@@ -275,7 +275,7 @@ public class Scr_SelectEnemyType : MonoBehaviour
                         oneShapeList.Add(new SelectEnemyInfo()
                         {
                             attr = attr.baseAttrbute,
-                            sprite = GameManager.Instance.GetSprite("Mouse/" + attr.baseAttrbute.type + "/" + attr.baseAttrbute.shape + "/0")
+                            sprite = GameManager.Instance.GetSprite("Mouse/" + attr.baseAttrbute.type + "/" + attr.baseAttrbute.shape + "/icon")
                         });
                     }
                 }

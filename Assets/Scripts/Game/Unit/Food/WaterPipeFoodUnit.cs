@@ -126,12 +126,16 @@ public class WaterPipeFoodUnit : FoodUnit
         // Ç°¹¥»÷
         if (currentAttackCount < maxFrontAttackCount)
         {
-            GameController.Instance.CreateBullet(this, transform.position + Vector3.right * 0.25f + Vector3.up*0.1f, Vector2.right, BulletStyle.Water).SetDamage(mCurrentAttack);
+            BaseBullet b = GameController.Instance.CreateBullet(this, transform.position + Vector3.right * 0.25f + Vector3.up*0.1f, Vector2.right, BulletStyle.Water);
+            b.SetDamage(mCurrentAttack);
+            b.SetStandardVelocity(24.0f);
         }
         // ºó¹¥»÷
         if(currentAttackCount < maxBackAttackCount)
         {
-            GameController.Instance.CreateBullet(this, transform.position + Vector3.left * 0.25f, Vector2.left, BulletStyle.Water).SetDamage(mCurrentAttack);
+            BaseBullet b = GameController.Instance.CreateBullet(this, transform.position + Vector3.left * 0.25f, Vector2.left, BulletStyle.Water);
+            b.SetDamage(mCurrentAttack);
+            b.SetStandardVelocity(24.0f);
         }
     }
 }

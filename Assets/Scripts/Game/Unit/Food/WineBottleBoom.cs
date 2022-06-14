@@ -111,7 +111,7 @@ public class WineBottleBoom : FoodUnit
         {
             GameObject instance = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "AreaEffect/BombAreaEffect");
             BombAreaEffectExecution bombEffect = instance.GetComponent<BombAreaEffectExecution>();
-            bombEffect.Init(this, 900, GetRowIndex(), int.MaxValue, 1, 0, 0);
+            bombEffect.Init(this, 900, GetRowIndex(), int.MaxValue, 1, 0, 0, false, true);
             bombEffect.transform.position = this.GetPosition();
             GameController.Instance.AddAreaEffectExecution(bombEffect);
         }

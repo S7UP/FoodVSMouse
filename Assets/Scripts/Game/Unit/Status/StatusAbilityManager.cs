@@ -111,6 +111,11 @@ public sealed class StatusAbilityManager
         }
     }
 
+    /// <summary>
+    /// 通过key来获取不计数的唯一性状态实体
+    /// </summary>
+    /// <param name="statusName"></param>
+    /// <returns></returns>
     public StatusAbility GetNoCountUniqueStatus(string statusName)
     {
         if (!noCountUniqueStatusAbilityDict.ContainsKey(statusName))
@@ -146,7 +151,7 @@ public sealed class StatusAbilityManager
 
 
     /// <summary>
-    /// 直接从表中移除不计数的唯一性BUFF
+    /// 直接从表中移除不计数的唯一性BUFF（是从表中移除，并不执行结束方法）
     /// </summary>
     /// <param name="statusName"></param>
     public void RemoveNoCountUniqueStatusAbility(string statusName)
@@ -155,6 +160,16 @@ public sealed class StatusAbilityManager
         {
             noCountUniqueStatusAbilityDict.Remove(statusName);
         }
+    }
+
+    /// <summary>
+    /// 手动结束不计数的唯一性BUFF（会执行其结束的方法）
+    /// </summary>
+    public void EndNoCountUniqueStatusAbility(string statusName)
+    {
+        StatusAbility s = GetNoCountUniqueStatus(statusName);
+        if(s!=null)
+            s.EndActivate();
     }
 
     public void TryActivateStatusAbility(int index)

@@ -9,6 +9,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Profiling;
 
+using static BaseEnemyGroup;
 using static UnityEditor.PlayerSettings;
 using static UnityEngine.Networking.UnityWebRequest;
 using static UnityEngine.UI.CanvasScaler;
@@ -32,19 +33,21 @@ public class GameController : MonoBehaviour
     // 引用
     private GameObject[] enemyListGo; // 用于存放敌对单位的父对象
     private GameObject[] allyListGo; // 用于存放友方单位的父对象
+    private GameObject[] itemListGo; // 用于存放地图物品单位的父对象
 
     public BaseStage mCurrentStage; //+ 当前关卡
     public BaseCostController mCostController; //+ 费用控制器
     public BaseCardController mCardController; //+ 卡片建造器
     public BaseSkillController mSkillController; //+ 技能控制器
     public BaseProgressController mProgressController; //+ 游戏进度控制器
-    public BaseGridController mGridController; // 格子控制器
-    //public BaseGrid[,] mGridList; //+ 格子表
+    public MapController mMapController; // 格子控制器
     public List<BaseUnit>[] mEnemyList; //+ 存活的敌方单位表
     public List<BaseUnit>[] mAllyList; // 存活的友方单位表
+    public List<BaseUnit>[] mItemList; // 存活的道具单位表
     public List<BaseBullet> mBulletList; // 存活的子弹表
     public List<AreaEffectExecution> areaEffectExecutionList; // 存活的能力执行体（对象）
     public List<BaseEffect> baseEffectList; // 存活的特效表
+    public List<Tasker> taskerList; // 存活的任务执行器表
     //BaseRule[] mRuleList; //+ 规则表
     //KeyBoardSetting mKeyBoardSetting; //+ 键位控制接口
     //Recorder mRecorder; //+ 用户操作记录者
@@ -91,20 +94,8 @@ public class GameController : MonoBehaviour
         MMemberList.Add(mCardController);
         mProgressController = panel.transform.Find("ProgressControllerUI").GetComponent<BaseProgressController>();
         MMemberList.Add(mProgressController);
-        mGridController = new BaseGridController(gridListGo.transform);
-        // 生成场地格子
-        //mGridList = new BaseGrid[MapMaker.yRow, MapMaker.xColumn];
-        //for (int i = 0; i < MapMaker.yRow; i++)
-        //{
-        //    for (int j = 0; j < MapMaker.xColumn; j++)
-        //    {
-        //        mGridList[i, j] = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Grid/Grid").GetComponent<BaseGrid>();
-        //        mGridList[i, j].transform.SetParent(gridListGo.transform);
-        //        mGridList[i, j].InitGrid(j, i);
-        //        mGridList[i, j].MInit();
-        //    }
-        //}
-        MMemberList.Add(mGridController);
+        mMapController = GameObject.Find("MapController").GetComponent<MapController>();
+        MMemberList.Add(mMapController);
 
 
         _instance = this;
@@ -128,11 +119,24 @@ public class GameController : MonoBehaviour
             allyListGo[i] = go;
             go.transform.SetParent(GameObject.Find("AllyList").transform);
         }
+
+        mItemList = new List<BaseUnit>[7];
+        itemListGo = new GameObject[mItemList.Length];
+        for (int i = 0; i < mItemList.Length; i++)
+        {
+            mItemList[i] = new List<BaseUnit>();
+            GameObject go = new GameObject("i");
+            itemListGo[i] = go;
+            go.transform.SetParent(GameObject.Find("ItemList").transform);
+        }
+
         mBulletList = new List<BaseBullet>();
+
         isPause = false;
 
         areaEffectExecutionList = new List<AreaEffectExecution>();
         baseEffectList = new List<BaseEffect>();
+        taskerList = new List<Tasker>();
 
         // stage test
         mCurrentStage = new BaseStage();
@@ -159,6 +163,14 @@ public class GameController : MonoBehaviour
     {
         mouseAttribute = attr;
         baseAttribute = mouseAttribute.baseAttrbute;
+    }
+
+    /// <summary>
+    /// 同上，不过是设置障碍的
+    /// </summary>
+    public void SetBarrierAttribute(BaseUnit.Attribute attr)
+    {
+        baseAttribute = attr;
     }
 
     /// <summary>
@@ -233,8 +245,8 @@ public class GameController : MonoBehaviour
         MouseUnit mouse = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Mouse/"+enemyInfo.type).GetComponent<MouseUnit>();
         mouse.transform.SetParent(enemyListGo[yIndex].transform);
         mouse.MInit();
-        //mGridList[yIndex, xIndex].SetMouseUnitInGrid(mouse, Vector2.right);
-        mGridController.GetGrid(xIndex, yIndex).SetMouseUnitInGrid(mouse, Vector2.right);
+        //mMapController.GetGrid(xIndex, yIndex).SetMouseUnitInGrid(mouse, Vector2.right);
+        mouse.transform.position = MapManager.GetGridLocalPosition(xIndex, yIndex) + new Vector3(Vector2.right.x * MapManager.gridWidth, Vector2.right.y * MapManager.gridHeight) / 2;
         mouse.UpdateRenderLayer(mEnemyList[yIndex].Count);
         mEnemyList[yIndex].Add(mouse);
         return mouse;
@@ -247,9 +259,17 @@ public class GameController : MonoBehaviour
     /// <returns></returns>
     public MouseUnit CreateMouseUnit(int yIndex, BaseEnemyGroup.EnemyInfo enemyInfo)
     {
-        return CreateMouseUnit(MapMaker.xColumn - 1, yIndex, enemyInfo);
+        return CreateMouseUnit(MapController.xColumn - 1, yIndex, enemyInfo);
     }
 
+    /// <summary>
+    /// 产生子弹单位
+    /// </summary>
+    /// <param name="master"></param>
+    /// <param name="position"></param>
+    /// <param name="rotate"></param>
+    /// <param name="style"></param>
+    /// <returns></returns>
     public BaseBullet CreateBullet(BaseUnit master, Vector3 position, Vector2 rotate, BulletStyle style)
     {
         GameObject instance = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Bullet/"+((int)style));
@@ -265,6 +285,34 @@ public class GameController : MonoBehaviour
         return bullet;
     }
 
+    /// <summary>
+    /// 产生障碍单位
+    /// </summary>
+    /// <returns></returns>
+    public BaseBarrier CreateBarrier(int xIndex, int yIndex, int type, int shape)
+    {
+        SetBarrierAttribute(JsonManager.Load<BaseUnit.Attribute>("Item/Barrier/" + type + "/" + shape + "")); // 准备先持有要创建实例的初始化信息
+        BaseBarrier barrier = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Item/Barrier/" + type).GetComponent<BaseBarrier>();
+        barrier.MInit();
+        AddBarrier(barrier, xIndex, yIndex);
+        return barrier;
+    }
+
+    /// <summary>
+    /// 把一个障碍添加至战场
+    /// </summary>
+    /// <param name="food"></param>
+    /// <param name="yIndex"></param>
+    /// <returns></returns>
+    public BaseBarrier AddBarrier(BaseBarrier barrier, int xIndex, int yIndex)
+    {
+        barrier.transform.SetParent(itemListGo[yIndex].transform);
+        mItemList[yIndex].Add(barrier);
+        mMapController.GetGrid(xIndex, yIndex).SetBarrierUnitInGrid(barrier);
+        barrier.UpdateRenderLayer(mItemList[yIndex].Count);
+        return barrier;
+    }
+
     // 把范围效果加入战场
     public void AddAreaEffectExecution(AreaEffectExecution areaEffectExecution)
     {
@@ -277,6 +325,20 @@ public class GameController : MonoBehaviour
     public void AddEffect(BaseEffect baseEffect)
     {
         baseEffectList.Add(baseEffect);
+    }
+
+    /// <summary>
+    /// 添加一个任务执行器
+    /// </summary>
+    /// <param name="UpdateAction"></param>
+    /// <param name="EndCondition"></param>
+    /// <returns></returns>
+    public Tasker AddTasker(Action InitAction, Action UpdateAction, Func<bool> EndCondition, Action EndEvent)
+    {
+        Tasker tasker = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Tasker/Tasker").GetComponent<Tasker>();
+        tasker.StartTask(InitAction, UpdateAction, EndCondition, EndEvent);
+        taskerList.Add(tasker);
+        return tasker;
     }
 
     /// <summary>
@@ -355,6 +417,18 @@ public class GameController : MonoBehaviour
     }
 
     /// <summary>
+    /// 更换友军行数
+    /// </summary>
+    public void ChangeAllyRow(int oldIndex, int newIndex, BaseUnit unit)
+    {
+        GetSpecificRowAllyList(oldIndex).Remove(unit);
+        GetSpecificRowAllyList(newIndex).Add(unit);
+        unit.transform.SetParent(allyListGo[newIndex].transform);
+        unit.UpdateRenderLayer(GetSpecificRowAllyList(newIndex).Count);
+    }
+
+
+    /// <summary>
     /// 获取全部的友军
     /// </summary>
     /// <returns></returns>
@@ -382,15 +456,10 @@ public class GameController : MonoBehaviour
         mFrameNum ++; // 先更新游戏帧，以保证Update里面与协程接收到的帧是相同的
 
         // test
-        //if(mFrameNum == 600)
+        //if (mFrameNum == 120)
         //{
-        //    foreach (var item in GetEnemyList())
-        //    {
-        //        foreach (var enemy in item)
-        //        {
-        //            enemy.ExecuteBurn();
-        //        }
-        //    }
+        //    InvincibilityBarrier b = CreateBarrier(4, 0, 0, 0) as InvincibilityBarrier;
+        //    b.SetLeftTime(600);
         //}
 
         // 各种组件的Update()
@@ -413,15 +482,7 @@ public class GameController : MonoBehaviour
             }
         }
 
-        // 所有格子帧逻辑
-        //for (int i = 0; i < MapMaker.yRow; i++)
-        //{
-        //    for (int j = 0; j < MapMaker.xColumn; j++)
-        //    {
-        //        //mGridList[i, j].MUpdate();
-        //        mGridController.GetGridList()[i, j].MUpdate();
-        //    }
-        //}
+
         // 敌人帧逻辑
         foreach (var item in mEnemyList)
         {
@@ -500,6 +561,32 @@ public class GameController : MonoBehaviour
             }
         }
 
+        // 道具帧逻辑
+        foreach (var item in mItemList)
+        {
+            bool flag = false;
+            for (int i = 0; i < item.Count; i++)
+            {
+                BaseUnit unit = item[i];
+                if (unit.IsValid())
+                {
+                    unit.MUpdate();
+                }
+                else
+                {
+                    i--;
+                    item.Remove(unit);
+                    flag = true;
+                }
+            }
+            if (flag)
+                for (int i = 0; i < item.Count; i++)
+                {
+                    BaseUnit unit = item[i];
+                    unit.UpdateRenderLayer(i);
+                }
+        }
+
         // 特效帧逻辑
         {
             
@@ -514,6 +601,23 @@ public class GameController : MonoBehaviour
                 {
                     i--;
                     baseEffectList.Remove(unit);
+                }
+            }
+        }
+
+        // 任务执行器逻辑
+        {
+            for (int i = 0; i < taskerList.Count; i++)
+            {
+                Tasker tasker = taskerList[i];
+                if (tasker.isActiveAndEnabled)
+                {
+                    tasker.MUpdate();
+                }
+                else
+                {
+                    i--;
+                    taskerList.Remove(tasker);
                 }
             }
         }

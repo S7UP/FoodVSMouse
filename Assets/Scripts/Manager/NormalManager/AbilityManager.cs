@@ -160,7 +160,7 @@ public class AbilityManager
                 // ÷ª∂¡»°JSON
                 if (name.EndsWith(".json"))
                 {
-                    Debug.Log("Name = " + name);
+                    //Debug.Log("Name = " + name);
                     int shapeIndex = int.Parse(name.Replace(".json", ""));
                     //int c2 = shapeIndex - shapeList.Count + 1;
                     //for (int j = 0; j < c2; j++)

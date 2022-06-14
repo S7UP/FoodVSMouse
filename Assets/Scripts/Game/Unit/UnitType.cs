@@ -6,5 +6,6 @@ public enum UnitType
 {
     Default = -1,
     Food = 0,
-    Mouse = 1
+    Mouse = 1,
+    Barrier = 2,
 }

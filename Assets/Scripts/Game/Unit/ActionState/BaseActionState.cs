@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 public interface IBaseActionState
@@ -20,6 +21,11 @@ public class BaseActionState: IBaseActionState
 {
     // 持有的Unit引用
     protected BaseUnit mBaseUnit;
+    private Action EnterAction;
+    private Action UpdateAction;
+    private Action ExitAction;
+    private Action InterruptAction;
+    private Action ContinueAction;
 
     public BaseActionState(BaseUnit baseUnit)
     {
@@ -29,28 +35,59 @@ public class BaseActionState: IBaseActionState
     // 当进入时
     public virtual void OnEnter()
     {
-
+        if (EnterAction != null)
+            EnterAction();
     }
 
     // 当退出时
     public virtual void OnExit()
     {
-
+        if (ExitAction != null)
+            ExitAction();
     }
 
     // 实现动作状态
     public virtual void OnUpdate()
     {
-
+        if (UpdateAction != null)
+            UpdateAction();
     }
 
     public virtual void OnInterrupt()
     {
-        
+        if (InterruptAction != null)
+            InterruptAction();
     }
 
     public virtual void OnContinue()
     {
-        
+        if (ContinueAction != null)
+            ContinueAction();
+    }
+
+
+    public void SetEnterAction(Action action)
+    {
+        EnterAction = action;
+    }
+
+    public void SetExitAction(Action action)
+    {
+        ExitAction = action;
+    }
+
+    public void SetUpdateAction(Action action)
+    {
+        UpdateAction = action;
+    }
+
+    public void SetInterruptAction(Action action)
+    {
+        InterruptAction = action;
+    }
+
+    public void SetContinueAction(Action action)
+    {
+        ContinueAction = action;
     }
 }

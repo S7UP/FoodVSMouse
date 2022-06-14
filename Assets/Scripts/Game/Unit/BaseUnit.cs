@@ -76,6 +76,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
             {
                 case UnitType.Food: return "Food/";
                 case UnitType.Mouse: return "Mouse/";
+                case UnitType.Barrier: return "Item/Barrier/";
                 default: return null;
             }
         }
@@ -89,6 +90,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
             {
                 case UnitType.Food:return "Food/" + mType;
                 case UnitType.Mouse:return "Mouse/" + mType;
+                case UnitType.Barrier: return "Item/Barrier/" + mType;
                 default:return null;
             }
         }
@@ -108,7 +110,6 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public virtual void OnDisable()
     {
         // 管理的变量
-        mUnitType = UnitType.Default;
         mCurrentHp = 0; //+ 当前生命值
         attackPercent = 0; // 攻击动画播放进度到attackPercent以上时允许出真正的攻击
         mAttackFlag = false; // 作用于一次攻击能否打出来的flag
@@ -117,8 +118,6 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         isFrozenState = false;
 
         mName = null; // 当前单位的种类名称
-        mType = 0; // 当前单位的种类（如不同的卡，不同的老鼠）
-        mShape = 0; // 当前种类单位的外观（同一张卡的0、1、2转，老鼠的0、1、2转或者其他变种）
 
         mCurrentActionState = null; //+ 当前动作状态
         currentStateTimer = 0; // 当前状态的持续时间（切换状态时会重置）
@@ -129,6 +128,8 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         statusAbilityManager.Initialize();
         renderManager.Initialize();
         hitBox.Initialize();
+
+        CloseCollision();
     }
 
     // 切换动作状态
@@ -264,6 +265,14 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public virtual void MInit()
     {
         BaseUnit.Attribute attr = GameController.Instance.GetBaseAttribute();
+        if (jsonPath == null)
+        {
+            attr = new BaseUnit.Attribute();
+        }
+        else
+        {
+            attr = GameController.Instance.GetBaseAttribute();
+        }
         // 几个管理器初始化
         NumericBox.Initialize();
         actionPointManager.Initialize();
@@ -282,7 +291,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         NumericBox.Attack.SetBase((float)attr.baseAttack);
         // 攻击速度与攻击间隔
         NumericBox.AttackSpeed.SetBase((float)attr.baseAttackSpeed);
-        NumericBox.MoveSpeed.SetBase((float)attr.baseMoveSpeed);
+        NumericBox.MoveSpeed.SetBase(TransManager.TranToVelocity((float)attr.baseMoveSpeed));
         NumericBox.Defense.SetBase((float)attr.baseDefense);
         attackPercent = (float)attr.attackPercent; // 攻击动画播放进度到attackPercent以上时允许出真正的攻击
         mAttackFlag = true; // 作用于一次攻击能否打出来的flag
@@ -297,6 +306,10 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         SetActionPointManager();
         // 读取技能信息
         LoadSkillAbility();
+        // 启用判定
+        OpenCollision();
+        // 透明度默认先写到1
+        SetAlpha(1.0f);
     }
 
     public virtual void MUpdate()
@@ -360,7 +373,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     /// <returns></returns>
     public virtual bool IsAlive()
     {
-        return IsValid();
+        return !isDeathState;
     }
 
     /// <summary>
@@ -423,7 +436,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     }
 
     /// <summary>
-    /// 执行死亡操作
+    /// 执行死亡操作（需要走BeforeDeath()、DuringDeath()、AfterDeath()的流程）
     /// </summary>
     public void ExecuteDeath()
     {
@@ -444,6 +457,10 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     /// <param name="dmg"></param>
     public virtual void OnDamage(float dmg)
     {
+        // 如果目标含有无敌标签，则直接跳过伤害判定
+        if (NumericBox.GetBoolNumericValue(StringManager.Invincibility))
+            return;
+
         // 先计算抗性减免后的伤害
         dmg = Mathf.Max(0, dmg * (1 - mCurrentDefense));
         // 然后计算护盾吸收的伤害
@@ -462,6 +479,10 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     /// <param name="dmg"></param>
     public virtual void OnDamgeIgnoreShield(float dmg)
     {
+        // 如果目标含有无敌标签，则直接跳过伤害判定
+        if (NumericBox.GetBoolNumericValue(StringManager.Invincibility))
+            return;
+
         // 先计算抗性减免后的伤害
         dmg = Mathf.Max(0, dmg * (1 - mCurrentDefense));
         // 最后扣除本体生命值
@@ -478,6 +499,10 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     /// <param name="dmg"></param>
     public virtual void OnBurnDamage(float dmg)
     {
+        // 如果目标含有无敌标签，则直接跳过伤害判定
+        if (NumericBox.GetBoolNumericValue(StringManager.Invincibility))
+            return;
+
         // 灰烬伤害为真实伤害
         // 扣除本体生命值
         mCurrentHp -= dmg;
@@ -813,10 +838,47 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
 
     }
 
+    public virtual BaseGrid GetGrid()
+    {
+        return null;
+    }
+
+    /// <summary>
+    /// 把自身安放在格子上，由子类实现
+    /// </summary>
+    public virtual void SetGrid(BaseGrid grid)
+    {
+
+    }
+
     public void SetMaxHpAndCurrentHp(float hp)
     {
         NumericBox.Hp.SetBase(hp);
         mCurrentHp = NumericBox.Hp.Value;
+    }
+
+    /// <summary>
+    /// 启动判定
+    /// </summary>
+    public virtual void OpenCollision()
+    {
+        
+    }
+
+    /// <summary>
+    /// 关闭判定
+    /// </summary>
+    public virtual void CloseCollision()
+    {
+
+    }
+
+    /// <summary>
+    /// 设置透明度
+    /// </summary>
+    public virtual void SetAlpha(float a)
+    {
+
     }
     // 继续
 }

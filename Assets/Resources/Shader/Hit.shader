@@ -7,6 +7,7 @@ Shader "ChangeColor/Hit"
         [Toggle]_IsSlow("is slow", Range(0 , 1)) = 0
         _Color("add color", Color) = (1,1,1,1)
         _FlashRate("_FlashRate",Range(0 , 0.5)) = 0
+        _Alpha("alpha", Range(0 , 1.0)) = 1
     }
     SubShader
     {
@@ -44,6 +45,7 @@ Shader "ChangeColor/Hit"
             fixed _IsSlow;
             fixed4 _ColorSlow;
             fixed _FlashRate;//对外参数表示是否被攻击了
+            fixed _Alpha;
 
             v2f vert(appdata v)
             {
@@ -67,15 +69,14 @@ Shader "ChangeColor/Hit"
                     {
                         //tex = tex + _Color*_FlashRate;
                         // 颜色减淡（闪白）
-                        tex = tex + (tex * _Color * _FlashRate) / (1 - _Color * _FlashRate);
-                        //tex = _Color + (_Color * tex) / (1 - tex);
+                        tex.rgb = tex.rgb + (tex.rgb * _Color.rgb * _FlashRate) / (1 - _Color.rgb * _FlashRate);
                     }
                 }
+                tex.a = tex.a*_Alpha;
                 return tex;
             }
             ENDCG
         }
     }
     FallBack "Diffuse"
-    CustomEditor "EditorName"
 }

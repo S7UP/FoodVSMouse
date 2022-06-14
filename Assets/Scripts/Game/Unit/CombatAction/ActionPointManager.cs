@@ -20,6 +20,7 @@ public sealed class ActionPointManager
         ActionPoints.Add(ActionPointType.PostReceiveCure, new ActionPoint());
         ActionPoints.Add(ActionPointType.PostCauseDamage, new ActionPoint());
         ActionPoints.Add(ActionPointType.PostReceiveDamage, new ActionPoint());
+        ActionPoints.Add(ActionPointType.PostReceiveReboundDamage, new ActionPoint());
 
         ActionPoints.Add(ActionPointType.PreCauseCure, new ActionPoint());
         ActionPoints.Add(ActionPointType.PreCauseDamage, new ActionPoint());
@@ -65,6 +66,9 @@ public enum ActionPointType
 
     PreReceiveBurnDamage,//承受灰烬伤害前
     PostReceiveBurnDamage,//承受灰烬伤害后
+
+    PreReceiveReboundDamage,//承受反弹伤害前
+    PostReceiveReboundDamage,//承受反弹伤害后
 
     PreCauseCure, //输出治疗前
     PreReceiveCure, // 接受治疗前

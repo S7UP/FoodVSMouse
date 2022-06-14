@@ -11,6 +11,8 @@ public class GeneralAttackSkillAbility : SkillAbility
         // 默认平A间隔按照单位的攻速属性来
         if (pmaster.mBaseAttackSpeed > 0)
             needEnergy.SetBase(ConfigManager.fps / pmaster.mBaseAttackSpeed);
+        noClearEnergyWhenStart = false;
+        noClearEnergyWhenEnd = true;
     }
 
     public GeneralAttackSkillAbility(BaseUnit pmaster, SkillAbilityInfo info) :base(pmaster, info)
@@ -18,6 +20,8 @@ public class GeneralAttackSkillAbility : SkillAbility
         // 默认平A间隔按照单位的攻速属性来，否则按照info里的来
         if(pmaster.mBaseAttackSpeed > 0)
             needEnergy.SetBase(ConfigManager.fps / pmaster.mBaseAttackSpeed);
+        noClearEnergyWhenStart = false;
+        noClearEnergyWhenEnd = true;
     }
 
     /// <summary>

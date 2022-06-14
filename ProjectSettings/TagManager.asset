@@ -9,6 +9,8 @@ TagManager:
   - Bullet
   - BombAreaEffect
   - Grid
+  - Barrier
+  - EnemyBullet
   layers:
   - Default
   - TransparentFX
@@ -45,6 +47,9 @@ TagManager:
   m_SortingLayers:
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: Grid
+    uniqueID: 3111201523
     locked: 0
   - name: Food
     uniqueID: 2056711865

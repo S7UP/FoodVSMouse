@@ -41,7 +41,16 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     // 子弹对目标造成伤害，TakeDamage的调用时机是敌对单位碰到了这个子弹，然后过来调用这个子弹的伤害逻辑
     public virtual void TakeDamage(BaseUnit baseUnit)
     {
-        new DamageAction(CombatAction.ActionType.CauseDamage, mMasterBaseUnit, baseUnit, mDamage).ApplyAction();
+        if (baseUnit != null)
+            new DamageAction(CombatAction.ActionType.CauseDamage, mMasterBaseUnit, baseUnit, mDamage).ApplyAction();
+        KillThis();
+    }
+
+    /// <summary>
+    /// 子弹自爆
+    /// </summary>
+    public virtual void KillThis()
+    {
         SetActionState(new BulletHitState(this));
     }
 
@@ -74,9 +83,10 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     /// </summary>
     public virtual void MInit()
     {
-        mVelocity = 1.0f;
-        mRotate = Vector2.right;
-        mDamage = 10;
+        mVelocity = 0.0f;
+        mRotate = Vector2.zero;
+        mDamage = 0;
+        mHeight = 0;
         isDeathState = false;
         TagDict.Clear();
         SetCollision(true);
@@ -122,9 +132,21 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
         return mVelocity;
     }
 
+    /// <summary>
+    /// 直接设置移动速度值（比较抽象，推荐使用SetStandardVelocity())方法
+    /// </summary>
+    /// <param name="v"></param>
     public void SetVelocity(float v)
     {
         mVelocity = v;
+    }
+
+    /// <summary>
+    /// 设置标准的移动速度，1单位标准移动速度为 6秒内走完1格 的速度
+    /// </summary>
+    public void SetStandardVelocity(float standardVelocity)
+    {
+        mVelocity = TransManager.TranToVelocity(standardVelocity);
     }
 
     public virtual void MPause()
@@ -195,7 +217,7 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
 
     public virtual void OnFlyState()
     {
-        transform.position += (Vector3)mRotate * mVelocity * 0.05f;
+        transform.position += (Vector3)mRotate * mVelocity;
     }
 
     public virtual void OnFlyStateExit()
@@ -264,6 +286,45 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
         {
             TagDict.Add(tagName, count);
         }
+    }
+
+    /// <summary>
+    /// 启动判定
+    /// </summary>
+    public virtual void OpenCollision()
+    {
+        mCircleCollider2D.enabled = true;
+    }
+
+    /// <summary>
+    /// 关闭判定
+    /// </summary>
+    public virtual void CloseCollision()
+    {
+        mCircleCollider2D.enabled = false;
+    }
+
+    /// <summary>
+    /// 设置透明度
+    /// </summary>
+    public virtual void SetAlpha(float a)
+    {
+        spriteRenderer.color = new UnityEngine.Color(spriteRenderer.color.r, spriteRenderer.color.g, spriteRenderer.color.b, a);
+    }
+
+    public virtual void OnTriggerEnter2D(Collider2D collision)
+    {
+
+    }
+
+    public virtual void OnTriggerStay2D(Collider2D collision)
+    {
+
+    }
+
+    public virtual void OnTriggerExit2D(Collider2D collision)
+    {
+
     }
 }
 
