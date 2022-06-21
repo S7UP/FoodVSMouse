@@ -263,7 +263,6 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
             mGameController.SetFoodAttribute(JsonManager.Load<FoodUnit.Attribute>("Food/" + mType + "/" + mShape + "")); // 在自动MInit（）之前需要先获取初始化信息
             mProduct.MInit();
             overGrid.SetFoodUnitInGrid(mProduct); // 将卡片初始化并与种下的格子绑定
-            overGrid.AddFoodUnitTag(GetFoodInGridType(), mProduct);
             GameController.Instance.AddFoodUnit(mProduct, overGrid.currentYIndex); // 将这个实体添加到战场上
         }
         else

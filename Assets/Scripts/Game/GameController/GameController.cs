@@ -82,7 +82,7 @@ public class GameController : MonoBehaviour
 
     private void Awake()
     {
-        uICanvasGo = GameObject.Find("UICanvas");
+        uICanvasGo = GameObject.Find("Canvas");
 
         MMemberList = new List<IGameControllerMember>();
         // 获取当前场景的UIPanel
@@ -286,31 +286,29 @@ public class GameController : MonoBehaviour
     }
 
     /// <summary>
-    /// 产生障碍单位
+    /// 产生道具单位
     /// </summary>
     /// <returns></returns>
-    public BaseBarrier CreateBarrier(int xIndex, int yIndex, int type, int shape)
+    public BaseUnit CreateItem(int xIndex, int yIndex, int type, int shape)
     {
-        SetBarrierAttribute(JsonManager.Load<BaseUnit.Attribute>("Item/Barrier/" + type + "/" + shape + "")); // 准备先持有要创建实例的初始化信息
-        BaseBarrier barrier = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Item/Barrier/" + type).GetComponent<BaseBarrier>();
-        barrier.MInit();
-        AddBarrier(barrier, xIndex, yIndex);
-        return barrier;
+        SetBarrierAttribute(JsonManager.Load<BaseUnit.Attribute>("Item/" + type + "/" + shape + "")); // 准备先持有要创建实例的初始化信息
+        BaseUnit item = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Item/" + type + "/"+shape).GetComponent<BaseUnit>();
+        item.MInit();
+        AddItem(item, xIndex, yIndex);
+        return item;
     }
 
     /// <summary>
-    /// 把一个障碍添加至战场
+    /// 把一个道具添加至战场
     /// </summary>
-    /// <param name="food"></param>
-    /// <param name="yIndex"></param>
     /// <returns></returns>
-    public BaseBarrier AddBarrier(BaseBarrier barrier, int xIndex, int yIndex)
+    public BaseUnit AddItem(BaseUnit item, int xIndex, int yIndex)
     {
-        barrier.transform.SetParent(itemListGo[yIndex].transform);
-        mItemList[yIndex].Add(barrier);
-        mMapController.GetGrid(xIndex, yIndex).SetBarrierUnitInGrid(barrier);
-        barrier.UpdateRenderLayer(mItemList[yIndex].Count);
-        return barrier;
+        item.transform.SetParent(itemListGo[yIndex].transform);
+        mItemList[yIndex].Add(item);
+        mMapController.GetGrid(xIndex, yIndex).SetItemUnitInGrid(item);
+        item.UpdateRenderLayer(mItemList[yIndex].Count);
+        return item;
     }
 
     // 把范围效果加入战场
@@ -337,6 +335,14 @@ public class GameController : MonoBehaviour
     {
         Tasker tasker = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Tasker/Tasker").GetComponent<Tasker>();
         tasker.StartTask(InitAction, UpdateAction, EndCondition, EndEvent);
+        taskerList.Add(tasker);
+        return tasker;
+    }
+
+    public Tasker AddTasker(PresetTasker presetTasker)
+    {
+        Tasker tasker = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Tasker/Tasker").GetComponent<Tasker>();
+        tasker.StartTask(presetTasker);
         taskerList.Add(tasker);
         return tasker;
     }
@@ -443,6 +449,27 @@ public class GameController : MonoBehaviour
             }
         }
         return list;
+    }
+
+    /// <summary>
+    /// 增加火苗
+    /// </summary>
+    public void AddFireResource(float add)
+    {
+        mCostController.AddCost("Fire", add);
+    }
+
+    /// <summary>
+    /// 添加资源变化修饰
+    /// </summary>
+    public void AddCostResourceModifier(string name, FloatModifier floatModifier)
+    {
+        mCostController.AddModifier(name, floatModifier);
+    }
+
+    public void RemoveCostResourceModifier(string name, FloatModifier floatModifier)
+    {
+        mCostController.RemoveModifier(name, floatModifier);
     }
 
     public NumberManager GetNumberManager()

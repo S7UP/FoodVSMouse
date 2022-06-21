@@ -23,6 +23,7 @@ public class MouseUnit : BaseUnit
     public Collider2D mCollider2D;
     private SpriteRenderer spriteRenderer;
     protected Animator animator;
+    public Transform spriteTrans;
 
     // 其他属性
     protected List<double> mHertRateList; // 切换贴图时的受伤比率（高->低)
@@ -86,6 +87,7 @@ public class MouseUnit : BaseUnit
         animator = gameObject.transform.Find("Ani_Mouse").gameObject.GetComponent<Animator>();
         spriteRenderer = gameObject.transform.Find("Ani_Mouse").gameObject.GetComponent<SpriteRenderer>();
         mCollider2D = gameObject.GetComponent<Collider2D>();
+        spriteTrans = transform.Find("Ani_Mouse");
     }
 
     /// <summary>
@@ -197,7 +199,7 @@ public class MouseUnit : BaseUnit
     /// 判断是有有效的攻击目标
     /// </summary>
     /// <returns></returns>
-    protected virtual bool IsHasTarget()
+    public virtual bool IsHasTarget()
     {
         return (isBlock && mBlockUnit.IsAlive());
     }
@@ -206,7 +208,7 @@ public class MouseUnit : BaseUnit
     /// 获取当前攻击目标，上述判断一并使用
     /// </summary>
     /// <returns></returns>
-    protected virtual BaseUnit GetCurrentTarget()
+    public virtual BaseUnit GetCurrentTarget()
     {
         return mBlockUnit;
     }
@@ -226,7 +228,7 @@ public class MouseUnit : BaseUnit
     /// 给予群攻型敌人一种可以选择多个目标的接口
     /// </summary>
     /// <returns></returns>
-    protected virtual List<BaseUnit> GetCurrentTargetList()
+    public virtual List<BaseUnit> GetCurrentTargetList()
     {
         return null;
     }
@@ -259,7 +261,7 @@ public class MouseUnit : BaseUnit
     public override void OnMoveState()
     {
         // 移动更新
-        SetPosition((Vector2)GetPosition() + moveRotate * mCurrentMoveSpeed);
+        SetPosition((Vector2)GetPosition() + moveRotate * GetMoveSpeed());
     }
 
     public override void OnAttackState()
@@ -633,5 +635,13 @@ public class MouseUnit : BaseUnit
     public void SetMoveRoate(Vector2 v2)
     {
         moveRotate = v2;
+    }
+
+    /// <summary>
+    /// 设置贴图对象坐标
+    /// </summary>
+    public override void SetSpriteLocalPosition(Vector2 vector2)
+    {
+        spriteTrans.localPosition = vector2;
     }
 }

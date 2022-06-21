@@ -10,6 +10,7 @@ public class Tasker : MonoBehaviour
     public Action UpdateAciton;
     public Func<bool> EndCondition;
     public Action EndEvent;
+    public List<Action> OtherEndListener = new List<Action>();
 
     /// <summary>
     /// 分配好任务内容就可以开始了
@@ -23,9 +24,22 @@ public class Tasker : MonoBehaviour
     }
 
     /// <summary>
+    /// 通过一个预设任务直接分配
+    /// </summary>
+    /// <param name="presetTasker"></param>
+    public void StartTask(PresetTasker presetTasker)
+    {
+        if(presetTasker.InitAction!=null)
+            presetTasker.InitAction();
+        this.UpdateAciton = presetTasker.UpdateAciton;
+        this.EndCondition = presetTasker.EndCondition;
+        this.EndEvent = presetTasker.EndEvent;
+    }
+
+    /// <summary>
     /// 每帧要做的事
     /// </summary>
-    public void MUpdate()
+    public virtual void MUpdate()
     {
         // 判断结束条件
         if (EndCondition == null || EndCondition())
@@ -40,10 +54,20 @@ public class Tasker : MonoBehaviour
         
     }
 
-    public void EndTasker()
+    public virtual void EndTasker()
     {
         if (EndEvent != null)
             EndEvent();
+        foreach (var item in OtherEndListener)
+        {
+            item();
+        }
+        OtherEndListener.Clear();
         GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, "Tasker/Tasker", this.gameObject);
+    }
+
+    public void AddOtherEndEvent(Action action)
+    {
+        OtherEndListener.Add(action);
     }
 }

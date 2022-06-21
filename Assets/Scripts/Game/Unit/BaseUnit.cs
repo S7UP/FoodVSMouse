@@ -76,7 +76,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
             {
                 case UnitType.Food: return "Food/";
                 case UnitType.Mouse: return "Mouse/";
-                case UnitType.Barrier: return "Item/Barrier/";
+                case UnitType.Item: return "Item/";
                 default: return null;
             }
         }
@@ -90,7 +90,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
             {
                 case UnitType.Food:return "Food/" + mType;
                 case UnitType.Mouse:return "Mouse/" + mType;
-                case UnitType.Barrier: return "Item/Barrier/" + mType;
+                case UnitType.Item: return "Item/" + mType;
                 default:return null;
             }
         }
@@ -877,6 +877,27 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     /// 设置透明度
     /// </summary>
     public virtual void SetAlpha(float a)
+    {
+
+    }
+
+    /// <summary>
+    /// 获取当前移动速度
+    /// </summary>
+    /// <returns></returns>
+    public virtual float GetMoveSpeed()
+    {
+        // 被冰冻则返回0移速
+        if (NumericBox.GetBoolNumericValue(StringManager.Frozen))
+            return 0;
+        // 否则返回默认移速
+        return mCurrentMoveSpeed;
+    }
+
+    /// <summary>
+    /// 设置贴图对象坐标
+    /// </summary>
+    public virtual void SetSpriteLocalPosition(Vector2 vector2)
     {
 
     }

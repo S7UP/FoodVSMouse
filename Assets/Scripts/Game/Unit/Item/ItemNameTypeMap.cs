@@ -7,4 +7,5 @@ using UnityEngine;
 public enum ItemNameTypeMap
 {
     PigBarrier = 0, // ·ÉĞĞÂ·ÕÏÊóĞ¡Öí 
+    Spring = 1, // µ¯»É
 }

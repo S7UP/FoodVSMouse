@@ -24,6 +24,9 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
 
         // 初始化卡槽信息，需要外部读取赋值，现拟赋值
         List<int[]> inList = new List<int[]>();
+        inList.Add(new int[] { 0, 2, 12 });
+        inList.Add(new int[] { 1, 2, 12 });
+        inList.Add(new int[] { 2, 2, 12 });
         inList.Add(new int[] { 4, 1, 12 });
         inList.Add(new int[] { 6, 2, 12 });
         inList.Add(new int[]{ 7, 2, 12 });

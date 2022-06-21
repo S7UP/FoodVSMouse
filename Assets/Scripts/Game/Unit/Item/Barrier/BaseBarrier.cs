@@ -8,16 +8,18 @@ public class BaseBarrier : BaseUnit
 {
     private BaseGrid mGrid;
     public SpriteRenderer spriteRenderer;
+    public Transform spriteTrans;
 
     public override void Awake()
     {
         base.Awake();
         spriteRenderer = transform.Find("Ani_Barrier").GetComponent<SpriteRenderer>();
+        spriteTrans = transform.Find("Ani_Barrier");
     }
 
     public override void SetUnitType()
     {
-        mUnitType = UnitType.Barrier;
+        mUnitType = UnitType.Item;
     }
 
     /// <summary>
@@ -77,7 +79,7 @@ public class BaseBarrier : BaseUnit
     /// </summary>
     public virtual void RemoveFromGrid()
     {
-        mGrid.RemoveBarrierUnit(this);
+        mGrid.RemoveItemUnit(this);
     }
 
     // 死亡后，将自身信息从对应格子移除
@@ -93,5 +95,13 @@ public class BaseBarrier : BaseUnit
     public override void UpdateRenderLayer(int arrayIndex)
     {
         spriteRenderer.sortingOrder = LayerManager.CalculateSortingLayer(LayerManager.UnitType.Enemy, GetRowIndex(), -1, arrayIndex);
+    }
+
+    /// <summary>
+    /// 设置贴图对象坐标
+    /// </summary>
+    public override void SetSpriteLocalPosition(Vector2 vector2)
+    {
+        spriteTrans.localPosition = vector2;
     }
 }

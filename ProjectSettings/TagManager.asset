@@ -11,6 +11,7 @@ TagManager:
   - Grid
   - Barrier
   - EnemyBullet
+  - Ladder
   layers:
   - Default
   - TransparentFX

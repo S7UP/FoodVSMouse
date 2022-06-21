@@ -27,6 +27,16 @@ public class AnimatorManager
     }
 
     /// <summary>
+    /// 获取当前播放片段名
+    /// </summary>
+    /// <param name="animator"></param>
+    /// <returns></returns>
+    public static string GetCurrentClipName(Animator animator)
+    {
+        return animator.GetCurrentAnimatorClipInfo(0)[0].clip.name;
+    }
+
+    /// <summary>
     /// 计算一个Animator当前动画Clip的总帧数
     /// </summary>
     /// <returns></returns>

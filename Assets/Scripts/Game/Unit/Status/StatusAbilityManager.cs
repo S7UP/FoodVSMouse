@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
-
+using System;
 using UnityEngine;
 
 /// <summary>
@@ -34,13 +34,22 @@ public sealed class StatusAbilityManager
     // 不计数的唯一性buff
     public Dictionary<string, StatusAbility> noCountUniqueStatusAbilityDict = new Dictionary<string, StatusAbility>();
 
+
+    public Dictionary<string, Action> BeforeAddStatusAbilityEventDict = new Dictionary<string, Action>(); // 在施加某个特定状态前的事件
+    public Dictionary<string, Action> AfterAddStatusAbilityEventDict = new Dictionary<string, Action>(); // 在施加某个特定状态后的事件
+    public Dictionary<string, Action> BeforeRemoveStatusAbilityEventDict = new Dictionary<string, Action>(); // 在移除某个特定状态前的事件
+    public Dictionary<string, Action> AfterRemoveStatusAbilityEventDict = new Dictionary<string, Action>(); // 在移除某个特定状态后的事件
+
     public void Initialize()
     {
         statusAbilityList.Clear();
         removeList.Clear();
         noCountUniqueStatusAbilityDict.Clear();
+        BeforeAddStatusAbilityEventDict.Clear();
+        AfterAddStatusAbilityEventDict.Clear();
+        BeforeRemoveStatusAbilityEventDict.Clear();
+        AfterRemoveStatusAbilityEventDict.Clear();
     }
-
 
     /// <summary>
     /// 当BUFF加入时，就意味着激活了
@@ -56,7 +65,6 @@ public sealed class StatusAbilityManager
     public void RemoveStatusAbility(StatusAbility statusAbility)
     {
         removeList.Add(statusAbility);
-        //statusAbilityList.Remove(statusAbility);
     }
 
     public StatusAbility GetUniqueStatus(string statusName) 
@@ -75,6 +83,9 @@ public sealed class StatusAbilityManager
     /// <param name="statusAbility"></param>
     public void AddUniqueStatusAbility(string statusName, StatusAbility statusAbility)
     {
+        if (BeforeAddStatusAbilityEventDict.ContainsKey(statusName))
+            BeforeAddStatusAbilityEventDict[statusName]();
+
         if (!uniqueStatusAbilityDict.ContainsKey(statusName))
         {
             // 如果第一次施加此效果
@@ -87,7 +98,9 @@ public sealed class StatusAbilityManager
         }
         // 其他情况下层数+1，该干啥干啥
         uniqueStatusAbilityDict[statusName].AddCount();
-        //Debug.Log("statusName="+ statusName+", count="+ uniqueStatusAbilityDict[statusName].count);
+
+        if (AfterAddStatusAbilityEventDict.ContainsKey(statusName))
+            AfterAddStatusAbilityEventDict[statusName]();
     }
 
     /// <summary>
@@ -96,6 +109,9 @@ public sealed class StatusAbilityManager
     /// <param name="statusName"></param>
     public void RemoveUniqueStatusAbility(string statusName)
     {
+        if (BeforeRemoveStatusAbilityEventDict.ContainsKey(statusName))
+            BeforeRemoveStatusAbilityEventDict[statusName]();
+
         if (uniqueStatusAbilityDict.ContainsKey(statusName))
         {
             // 层数-1
@@ -109,6 +125,9 @@ public sealed class StatusAbilityManager
                 uniqueStatusAbilityDict.Remove(statusName);
             }
         }
+
+        if (AfterRemoveStatusAbilityEventDict.ContainsKey(statusName))
+            AfterRemoveStatusAbilityEventDict[statusName]();
     }
 
     /// <summary>
@@ -132,6 +151,9 @@ public sealed class StatusAbilityManager
     /// <param name="statusAbility"></param>
     public void AddNoCountUniqueStatusAbility(string statusName, StatusAbility statusAbility)
     {
+        if (BeforeAddStatusAbilityEventDict.ContainsKey(statusName))
+            BeforeAddStatusAbilityEventDict[statusName]();
+
         if (!noCountUniqueStatusAbilityDict.ContainsKey(statusName))
         {
             // 如果第一次施加此效果
@@ -147,6 +169,9 @@ public sealed class StatusAbilityManager
             // 否则执行其覆盖方法
             statusAbility.OnCover();
         }
+
+        if (AfterAddStatusAbilityEventDict.ContainsKey(statusName))
+            AfterAddStatusAbilityEventDict[statusName]();
     }
 
 
@@ -156,10 +181,16 @@ public sealed class StatusAbilityManager
     /// <param name="statusName"></param>
     public void RemoveNoCountUniqueStatusAbility(string statusName)
     {
+        if (BeforeRemoveStatusAbilityEventDict.ContainsKey(statusName))
+            BeforeRemoveStatusAbilityEventDict[statusName]();
+
         if (noCountUniqueStatusAbilityDict.ContainsKey(statusName))
         {
             noCountUniqueStatusAbilityDict.Remove(statusName);
         }
+
+        if (AfterRemoveStatusAbilityEventDict.ContainsKey(statusName))
+            AfterRemoveStatusAbilityEventDict[statusName]();
     }
 
     /// <summary>
@@ -167,9 +198,15 @@ public sealed class StatusAbilityManager
     /// </summary>
     public void EndNoCountUniqueStatusAbility(string statusName)
     {
+        if (BeforeRemoveStatusAbilityEventDict.ContainsKey(statusName))
+            BeforeRemoveStatusAbilityEventDict[statusName]();
+
         StatusAbility s = GetNoCountUniqueStatus(statusName);
         if(s!=null)
             s.EndActivate();
+
+        if (AfterRemoveStatusAbilityEventDict.ContainsKey(statusName))
+            AfterRemoveStatusAbilityEventDict[statusName]();
     }
 
     public void TryActivateStatusAbility(int index)
@@ -225,5 +262,83 @@ public sealed class StatusAbilityManager
             statusAbilityList.Remove(item);
         }
         removeList.Clear();
+    }
+
+    /// <summary>
+    /// 添加在施加某个特定状态前的事件
+    /// </summary>
+    /// <param name="statusName"></param>
+    /// <param name="action"></param>
+    public void AddBeforeAddStatusAbilityEvent(string statusName, Action action)
+    {
+        BeforeAddStatusAbilityEventDict.Add(statusName, action);
+    }
+
+    /// <summary>
+    /// 移除在施加某个特定状态前的事件
+    /// </summary>
+    /// <param name="statusName"></param>
+    public void RemoveBeforeAddStatusAbilityEvent(string statusName)
+    {
+        BeforeAddStatusAbilityEventDict.Remove(statusName);
+    }
+
+    /// <summary>
+    /// 添加在施加某个特定状态后的事件
+    /// </summary>
+    /// <param name="statusName"></param>
+    /// <param name="action"></param>
+    public void AddAfterAddStatusAbilityEvent(string statusName, Action action)
+    {
+        AfterAddStatusAbilityEventDict.Add(statusName, action);
+    }
+
+    /// <summary>
+    /// 移除在施加某个特定状态后的事件
+    /// </summary>
+    /// <param name="statusName"></param>
+    public void RemoveAfterAddStatusAbilityEvent(string statusName)
+    {
+        AfterAddStatusAbilityEventDict.Remove(statusName);
+    }
+
+    ///////
+
+    /// <summary>
+    /// 添加在移除某个特定状态前的事件
+    /// </summary>
+    /// <param name="statusName"></param>
+    /// <param name="action"></param>
+    public void AddBeforeRemoveStatusAbilityEvent(string statusName, Action action)
+    {
+        BeforeRemoveStatusAbilityEventDict.Add(statusName, action);
+    }
+
+    /// <summary>
+    /// 移除在移除某个特定状态前的事件
+    /// </summary>
+    /// <param name="statusName"></param>
+    public void RemoveBeforeRemoveStatusAbilityEvent(string statusName)
+    {
+        BeforeRemoveStatusAbilityEventDict.Remove(statusName);
+    }
+
+    /// <summary>
+    /// 添加在移除某个特定状态后的事件
+    /// </summary>
+    /// <param name="statusName"></param>
+    /// <param name="action"></param>
+    public void AddAfterRemoveStatusAbilityEvent(string statusName, Action action)
+    {
+        AfterRemoveStatusAbilityEventDict.Add(statusName, action);
+    }
+
+    /// <summary>
+    /// 移除在移除某个特定状态后的事件
+    /// </summary>
+    /// <param name="statusName"></param>
+    public void RemoveAfterRemoveStatusAbilityEvent(string statusName)
+    {
+        AfterRemoveStatusAbilityEventDict.Remove(statusName);
     }
 }

@@ -30,6 +30,7 @@ public class ParabolaBullet : BaseBullet
     {
         base.MInit();
         currentTimer = 0;
+        CloseCollision();
     }
 
     // 注：在此处，mVelocity变为水平速度
@@ -66,9 +67,13 @@ public class ParabolaBullet : BaseBullet
     public override void OnFlyState()
     {
         // 超时则自爆
-        if(currentTimer >= totalTimer)
+        if(currentTimer > totalTimer)
         {
             TakeDamage(null);
+        }
+        else if(currentTimer >= totalTimer - 2)
+        {
+            OpenCollision();
         }
         velocityVertical -= g;
         Vector2 vx = Vector2.Lerp(firstPosition, targetPosition, (float)currentTimer/totalTimer);

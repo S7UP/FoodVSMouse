@@ -6,12 +6,18 @@ public class FlyMouse : MouseUnit
 {
     private bool isDrop; // 是否被击落
     private int dropColumn; // 降落列
+    private FloatModifier floatModifier = new FloatModifier(100);
 
     public override void MInit()
     {
         base.MInit();
         isDrop = false;
         dropColumn = 0; // 降落列默认为0，即左一列
+        // 飞行状态下获取100%移速加成
+        NumericBox.MoveSpeed.AddPctAddModifier(floatModifier);
+        // 6号是机械举旗鼠，免疫炸弹直接秒杀效果
+        if (mShape == 6)
+            NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, new BoolModifier(true));
     }
 
     public override void MUpdate()
@@ -43,6 +49,8 @@ public class FlyMouse : MouseUnit
             UpdateHertMap(); // 通过强制改变HertRateList然后强制更新，转变阶段
             // 设为转场状态，该状态下的具体实下如下几个方法
             SetActionState(new TransitionState(this));
+            // 取消飞行状态移除移速加成
+            NumericBox.MoveSpeed.RemovePctAddModifier(floatModifier);
         }
     }
 

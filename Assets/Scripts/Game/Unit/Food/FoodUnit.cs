@@ -25,6 +25,7 @@ public class FoodUnit : BaseUnit
     private SpriteRenderer spriteRenderer2;
     public Material defaultMaterial;
     public Collider2D mCollider2D;
+    public Transform spriteTrans;
 
     // 其他
     public FoodType mFoodType; // 美食职业划分
@@ -39,6 +40,7 @@ public class FoodUnit : BaseUnit
     public override void Awake()
     {
         base.Awake();
+        spriteTrans = transform.Find("Ani_Food");
         animator = transform.Find("Ani_Food").gameObject.GetComponent<Animator>();
         rankAnimator = transform.Find("Ani_Rank").gameObject.GetComponent<Animator>();
         spriteRenderer1 = transform.Find("Ani_Food").gameObject.GetComponent<SpriteRenderer>();
@@ -473,5 +475,13 @@ public class FoodUnit : BaseUnit
             return GetGrid().GetColumnIndex();
         }
         return base.GetColumnIndex();
+    }
+
+    /// <summary>
+    /// 设置贴图对象坐标
+    /// </summary>
+    public override void SetSpriteLocalPosition(Vector2 vector2)
+    {
+        spriteTrans.localPosition = vector2;
     }
 }

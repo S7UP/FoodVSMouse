@@ -32,4 +32,6 @@ public enum MouseNameTypeMap
     NinjaRetinueMouse = 23, // 忍者随从类
     PandaRetinueMouse = 24, // 熊猫随从类
     ParatrooperMouse = 25, // 伞兵类
+    SnailMouse = 26, // 蜗牛车
+    NonMainstreamMouse = 27, // 非主流
 }

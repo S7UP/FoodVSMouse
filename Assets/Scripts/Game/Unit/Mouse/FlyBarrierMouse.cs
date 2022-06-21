@@ -66,7 +66,7 @@ public class FlyBarrierMouse : MouseUnit
             mHertRateList[0] = double.MaxValue;
             UpdateHertMap(); // 通过强制改变HertRateList然后强制更新，转变阶段
             // 掉落障碍
-            InvincibilityBarrier b = GameController.Instance.CreateBarrier(GetColumnIndex(), GetRowIndex(), 0, 0) as InvincibilityBarrier;
+            InvincibilityBarrier b = GameController.Instance.CreateItem(GetColumnIndex(), GetRowIndex(), (int)ItemInGridType.TimelinessBarrier, 0) as InvincibilityBarrier;
             b.SetLeftTime(900); // 15s
             // 移除障碍处美食
             foreach (var item in b.GetGrid().GetAttackableFoodUnitList())
