@@ -6,20 +6,15 @@ using static System.Collections.Specialized.BitVector32;
 /// <summary>
 /// 基础梯子&&弹簧类道具
 /// </summary>
-public class BaseLadder : BaseUnit
+public class BaseLadder : BaseItem
 {
-    private Transform spriteTrans; 
-    public SpriteRenderer spriteRenderer;
 
-    private BaseGrid mGrid;
     private float moveDistance; // 传送距离
     private Action<GridAction> DefaultAfterRemoveFoodUnitActionPoint;
 
     public override void Awake()
     {
         base.Awake();
-        spriteTrans = transform.Find("Ani_Ladder");
-        spriteRenderer = spriteTrans.GetComponent<SpriteRenderer>();
         DefaultAfterRemoveFoodUnitActionPoint = (GridAction gridAction) => OnMasterGridAfterRemoveFood(gridAction);
     }
 
@@ -27,12 +22,6 @@ public class BaseLadder : BaseUnit
     {
         base.MInit();
         moveDistance = 0;
-        mGrid = null;
-    }
-
-    public override void SetUnitType()
-    {
-        mUnitType = UnitType.Item;
     }
 
     /// <summary>
@@ -50,7 +39,7 @@ public class BaseLadder : BaseUnit
         {
             // 把老鼠送走
             MouseUnit m = collision.GetComponent<MouseUnit>();
-            if (m.GetRowIndex() != GetRowIndex())
+            if (m.GetRowIndex() != GetRowIndex() || m.GetHeight() != GetHeight())
                 return;
             // 添加一个弹起的动任务
             Tasker t = GameController.Instance.AddTasker(new ParabolaMovePresetTasker(m, 24.0f, 1.2f, m.transform.position, m.transform.position + (Vector3)m.moveRotate * moveDistance, false));
@@ -88,26 +77,10 @@ public class BaseLadder : BaseUnit
     /// <summary>
     /// 将自身移除出格子
     /// </summary>
-    public virtual void RemoveFromGrid()
+    public override void RemoveFromGrid()
     {
         mGrid.RemoveItemUnit(this);
-    }
-
-    // 死亡后，将自身信息从对应格子移除，同时移除事件
-    public override void AfterDeath()
-    {
-        RemoveFromGrid();
-        if (mGrid != null)
-            mGrid.gridActionPointManager.RemoveListener(GridActionPointType.AfterRemoveFoodUnit, DefaultAfterRemoveFoodUnitActionPoint);
-    }
-
-    /// <summary>
-    /// 设置在同种类敌人的渲染层级
-    /// </summary>
-    /// <param name="arrayIndex"></param>
-    public override void UpdateRenderLayer(int arrayIndex)
-    {
-        spriteRenderer.sortingOrder = LayerManager.CalculateSortingLayer(LayerManager.UnitType.Enemy, GetRowIndex(), -1, arrayIndex);
+        mGrid.gridActionPointManager.RemoveListener(GridActionPointType.AfterRemoveFoodUnit, DefaultAfterRemoveFoodUnitActionPoint);
     }
 
     /// <summary>
@@ -117,14 +90,6 @@ public class BaseLadder : BaseUnit
     public void SetMoveDistance(float d)
     {
         moveDistance = d;
-    }
-
-    /// <summary>
-    /// 设置图像显示与判定中心偏移量
-    /// </summary>
-    public override void SetSpriteLocalPosition(Vector2 vector2)
-    {
-        spriteTrans.localPosition = vector2;
     }
 
     /// <summary>

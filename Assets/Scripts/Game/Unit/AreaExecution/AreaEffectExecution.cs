@@ -13,6 +13,10 @@ public class AreaEffectExecution : MonoBehaviour
     public List<FoodUnit> foodUnitList = new List<FoodUnit>();
     public List<MouseUnit> mouseUnitList = new List<MouseUnit>();
     public bool isAlive = true;
+    public bool isAffectFood;
+    public bool isAffectMouse;
+    public bool isIgnoreHeight; // 是否无视高度
+    public float affectHeight; // 目标受影响的高度
 
     public virtual void Awake()
     {
@@ -20,20 +24,16 @@ public class AreaEffectExecution : MonoBehaviour
         resourcePath = "AreaEffect/";
     }
 
-    private void OnDisable()
-    {
-        fixCount = 0;
-        foodUnitList.Clear();
-        mouseUnitList.Clear();
-        isAlive = false;
-    }
-
-    private void OnEnable()
+    public virtual void OnEnable()
     {
         fixCount = 0;
         foodUnitList.Clear();
         mouseUnitList.Clear();
         isAlive = true;
+        isAffectFood = false;
+        isAffectMouse = false;
+        isIgnoreHeight = true; // 默认情况下无视高度
+        affectHeight = 0;
     }
 
     public void OnCollision(Collider2D collision)
@@ -42,21 +42,19 @@ public class AreaEffectExecution : MonoBehaviour
         if (fixCount > 1)
             return;
 
-        if (collision.tag.Equals("Food"))
+        if (isAffectFood && collision.tag.Equals("Food"))
         {
             FoodUnit food = collision.GetComponent<FoodUnit>();
-            if (IsMeetingCondition(food))
+            if (IsMeetingCondition(food) && (isIgnoreHeight || food.GetHeight()==affectHeight))
             {
                 foodUnitList.Add(food);
-                //EventFood(food);
             }
-        }else if (collision.tag.Equals("Mouse"))
+        }else if (isAffectMouse && collision.tag.Equals("Mouse"))
         {
             MouseUnit mouse = collision.GetComponent<MouseUnit>();
-            if (IsMeetingCondition(mouse))
+            if (IsMeetingCondition(mouse) && (isIgnoreHeight || mouse.GetHeight() == affectHeight))
             {
                 mouseUnitList.Add(mouse);
-                //EventMouse(mouse);
             }
         }
     }
@@ -68,7 +66,7 @@ public class AreaEffectExecution : MonoBehaviour
     }
 
     /// <summary>
-    /// 是否满足爆炸事件条件
+    /// 是否满足事件条件
     /// </summary>
     /// <param name="baseUnit"></param>
     /// <returns></returns>
@@ -78,7 +76,7 @@ public class AreaEffectExecution : MonoBehaviour
     }
 
     /// <summary>
-    /// 美食单位被炸后的事件
+    /// 美食单位的事件
     /// </summary>
     public virtual void EventFood(FoodUnit unit)
     {
@@ -86,7 +84,7 @@ public class AreaEffectExecution : MonoBehaviour
     }
 
     /// <summary>
-    /// 老鼠单位被炸后的事件
+    /// 老鼠单位的事件
     /// </summary>
     public virtual void EventMouse(MouseUnit unit)
     {
@@ -96,6 +94,15 @@ public class AreaEffectExecution : MonoBehaviour
     public bool IsValid()
     {
         return isAlive && isActiveAndEnabled;
+    }
+
+    /// <summary>
+    /// 设置能影响的目标高度
+    /// </summary>
+    public void SetAffectHeight(float height)
+    {
+        this.affectHeight = height;
+        this.isIgnoreHeight = false;
     }
 
     // Start is called before the first frame update

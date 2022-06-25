@@ -54,6 +54,7 @@ public class BaseStage
     public List<BaseRound> mRoundList;
     public BaseRound mCurrentRound;
     public int mCurrentRoundIndex;
+    private List<int> apartRowOffsetList; // 当前分路组对应行偏移量
 
     /// <summary>
     /// 关卡开始
@@ -65,6 +66,13 @@ public class BaseStage
         Debug.Log("开始出怪了！现在是第" + GameController.Instance.GetCurrentStageFrame() + "帧");
         for (int i = 0; i < mRoundList.Count; i++)
         {
+            if (mStageInfo.defaultMode.Equals(StageMode.HalfRandom))
+            {
+                for (int j = 0; j < mStageInfo.apartList.Count; j++)
+                {
+                    apartRowOffsetList[j] = Random.Range(0, mStageInfo.apartList[j].Count); // 注意，生成整形时不包括最大值
+                }
+            }
             yield return GameController.Instance.StartCoroutine(mRoundList[i].Execute());
         }
         Debug.Log("出怪完毕！");
@@ -158,8 +166,7 @@ public class BaseStage
     /// </summary>
     public void DemoLoad()
     {
-        //mStageInfo = Load("test关卡2");
-        mStageInfo = Load("singleMouseText");
+        mStageInfo = Load(Test.TestStageName);
     }
 
     public static StageInfo Load(string path)
@@ -188,6 +195,13 @@ public class BaseStage
         else
         {
             Debug.LogWarning("无法找到当前关卡的RoundInfo信息！");
+        }
+
+        // 行偏移量初始化
+        apartRowOffsetList = new List<int>();
+        for (int i = 0; i < mStageInfo.apartList.Count; i++)
+        {
+            apartRowOffsetList.Add(0);
         }
     }
 
@@ -223,5 +237,15 @@ public class BaseStage
     public virtual bool LossCondition()
     {
         return false;
+    }
+
+    /// <summary>
+    /// 获取特定分路组当前的行偏移量
+    /// </summary>
+    /// <param name="apartIndex"></param>
+    /// <returns></returns>
+    public int GetApartRowOffsetByIndex(int apartIndex)
+    {
+        return apartRowOffsetList[apartIndex];
     }
 }

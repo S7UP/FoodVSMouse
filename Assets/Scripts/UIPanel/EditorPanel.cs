@@ -128,7 +128,7 @@ public class EditorPanel : BasePanel
 
 
         // test
-        LoadStage("singleMouseText");
+        LoadStage(Test.TestStageName);
     }
 
     // Start is called before the first frame update
@@ -252,7 +252,7 @@ public class EditorPanel : BasePanel
 
 
         // 更新上面板
-        string text = "当前索引：";
+        string text = "";
         if (roundInfoStack.Count <= 0)
         {
             text += "--";
@@ -261,9 +261,10 @@ public class EditorPanel : BasePanel
         {
             foreach (var item in roundInfoStack)
             {
-                text += "/" + item.name;
+                text = "/" + item.name + text;
             }
         }
+        text = "当前索引：" + text;
         roundNavigationText.text = text;
     }
 

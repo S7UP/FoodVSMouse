@@ -112,10 +112,10 @@ public class FlySelfDestructMouse : MouseUnit
         BaseGrid grid = GameController.Instance.mMapController.GetGrid(GetColumnIndex(), GetRowIndex());
         if (grid != null)
         {
-            FoodUnit foodUnit = grid.GetHighestAttackPriorityFoodUnit();
-            if (foodUnit != null)
+            BaseUnit unit = grid.GetHighestAttackPriorityUnit();
+            if (unit != null)
             {
-                new BurnDamageAction(CombatAction.ActionType.CauseDamage, this, foodUnit, float.MaxValue).ApplyAction();
+                new BurnDamageAction(CombatAction.ActionType.CauseDamage, this, unit, float.MaxValue).ApplyAction();
             }
         }
     }

@@ -45,9 +45,18 @@ public class FlyBarrierMouse : MouseUnit
             return false;
         int index = GetColumnIndex();
         // 当在可掉落障碍范围内，且当前格子下有可攻击目标时，掉落障碍
-        if(index > minDropBarrierColumn && index <= maxDropBarrierColumn && 
-            GameController.Instance.mMapController.GetGrid(GetColumnIndex(), GetRowIndex()).GetHighestAttackPriorityFoodUnit() != null || index == minDropBarrierColumn)
+        if(index > minDropBarrierColumn && index <= maxDropBarrierColumn)
         {
+            BaseGrid g = GameController.Instance.mMapController.GetGrid(GetColumnIndex(), GetRowIndex());
+            if((g!=null && g.GetHighestAttackPriorityUnit() != null))
+            {
+                return true;
+            }
+            return false;
+        }
+        else if(index == minDropBarrierColumn)
+        {
+            // 达到最远距离强制掉猪
             return true;
         }
         return false;
@@ -69,11 +78,14 @@ public class FlyBarrierMouse : MouseUnit
             InvincibilityBarrier b = GameController.Instance.CreateItem(GetColumnIndex(), GetRowIndex(), (int)ItemInGridType.TimelinessBarrier, 0) as InvincibilityBarrier;
             b.SetLeftTime(900); // 15s
             // 移除障碍处美食
-            foreach (var item in b.GetGrid().GetAttackableFoodUnitList())
+            if (b.GetGrid() != null)
             {
-                if (!item.NumericBox.GetBoolNumericValue(StringManager.Invincibility))
+                foreach (var item in b.GetGrid().GetAttackableFoodUnitList())
                 {
-                    item.DeathEvent();
+                    if (!item.NumericBox.GetBoolNumericValue(StringManager.Invincibility) && !item.tag.Equals("Character"))
+                    {
+                        item.ExecuteDeath();
+                    }
                 }
             }
         }
@@ -110,6 +122,7 @@ public class FlyBarrierMouse : MouseUnit
         if (!isDrop)
         {
             isDrop = true;
+            mHertRateList[0] = double.MaxValue;
             mHertRateList[1] = double.MaxValue;
             UpdateHertMap(); // 通过强制改变HertRateList然后强制更新，转变阶段
             NumericBox.MoveSpeed.RemoveFinalPctAddModifier(speedRateModifier); // 恢复正常走路速度

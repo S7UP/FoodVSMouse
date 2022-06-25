@@ -12,6 +12,7 @@ TagManager:
   - Barrier
   - EnemyBullet
   - Ladder
+  - Character
   layers:
   - Default
   - TransparentFX

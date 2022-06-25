@@ -157,4 +157,9 @@ public class BaseCostController : MonoBehaviour, IBaseCostController, IGameContr
     {
         throw new System.NotImplementedException();
     }
+
+    public void MPauseUpdate()
+    {
+        
+    }
 }

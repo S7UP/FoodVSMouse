@@ -13,4 +13,6 @@ public enum BulletStyle
     Bomb = 4,
     FlyBomb = 5,
     CatapultMouseBullet = 6,
+    IceEgg = 7,
+    Honey = 8,
 }

@@ -61,7 +61,7 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
         mSelcetCardBuilderIndex = selectBuilderIndex;
         isSelectCard = true;
         // 通知UI进入建造模式了，这一步执行后鼠标悬停处将显示卡片建造模型
-        mGameNormalPanel.EnterConstructMode();
+        mGameNormalPanel.EnterCardConstructMode();
     }
 
     /// <summary>
@@ -72,7 +72,7 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
         mSelcetCardBuilderIndex = -1;
         isSelectCard = false;
         // 通知UI要结束建造模式了，这一步执行隐藏卡片建造模型（失活处理）
-        mGameNormalPanel.ExitConstructMode();
+        mGameNormalPanel.ExitCardConstructMode();
     }
 
     /// <summary>
@@ -153,5 +153,10 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
                 CancelSelectCard();
             }
         }
+    }
+
+    public void MPauseUpdate()
+    {
+        
     }
 }

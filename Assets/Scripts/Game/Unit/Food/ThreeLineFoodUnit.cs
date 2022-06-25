@@ -112,9 +112,13 @@ public class ThreeLineFoodUnit : FoodUnit
         {
             for (int j = 0; j < 2; j++)
             {
-                BaseBullet b = GameController.Instance.CreateBullet(this, transform.position + Vector3.right * 0.5f * j + Vector3.up * 0.7f * i, Vector2.right, BulletStyle.Wine);
+                BaseBullet b = GameController.Instance.CreateBullet(this, transform.position, Vector2.right, BulletStyle.Wine);
                 b.SetDamage(mCurrentAttack);
                 b.SetStandardVelocity(24.0f);
+                // 添加一个纵向位移的任务
+                GameController.Instance.AddTasker(new StraightMovePresetTasker(b, MapManager.gridHeight / 30, 0, Vector3.up * i, MapManager.gridHeight));
+                // 横向位移
+                GameController.Instance.AddTasker(new StraightMovePresetTasker(b, MapManager.gridWidth / 30 * j, 0, Vector3.right, 60));
             }
         }
     }

@@ -65,4 +65,9 @@ public class GridGroup : MonoBehaviour, IGameControllerMember
     {
         throw new System.NotImplementedException();
     }
+
+    public void MPauseUpdate()
+    {
+        
+    }
 }

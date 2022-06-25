@@ -7,6 +7,14 @@ using UnityEngine.UI;
 /// </summary>
 public class CardModel : MonoBehaviour
 {
+    public enum DisplayMode
+    {
+        SetCharacter = 0,
+        SetCard = 1,
+        RemoveCard = 2,
+    }
+
+    private DisplayMode displayMode; // 显示模式
     private GameObject mImg_CardModel; // 跟随鼠标的卡片模型
     private GameObject mImg_Virtual; // 卡片预建造虚像
 
@@ -16,6 +24,22 @@ public class CardModel : MonoBehaviour
         mImg_Virtual = transform.Find("Img_Virtual").gameObject;
     }
 
+    public void ShowCardModel(DisplayMode displayMode)
+    {
+        this.displayMode = displayMode;
+        gameObject.SetActive(true);
+    }
+
+    public void HideCardModel()
+    {
+        gameObject.SetActive(false);
+    }
+
+    public DisplayMode GetDisplayMode()
+    {
+        return displayMode;
+    }
+
     /// <summary>
     /// 每当被激活时，应当是选卡成功了，因此要把自身的图标置为被选卡片建造器的图标
     /// </summary>
@@ -23,10 +47,27 @@ public class CardModel : MonoBehaviour
     {
         UpdatePosition();
         // 获取卡片建造器上显示卡片的图标
-        Image img = GameController.Instance.mCardController.GetSelectCardBuilder().mImg_Card.GetComponent<Image>();
+        Sprite sprite = null;
+        switch (displayMode)
+        {
+            case DisplayMode.SetCharacter:
+                sprite = GameController.Instance.mCharacterController.mCurrentCharacter.GetSpriteRender().GetComponent<SpriteRenderer>().sprite;
+                UpdateSize(Vector3.one);
+                break;
+            case DisplayMode.SetCard:
+                sprite = GameController.Instance.mCardController.GetSelectCardBuilder().mImg_Card.GetComponent<Image>().sprite;
+                UpdateSize(Vector3.one/2);
+                break;
+            case DisplayMode.RemoveCard:
+                break;
+            default:
+                break;
+        }
         // 设置图标
-        mImg_CardModel.GetComponent<Image>().sprite = img.sprite;
-        mImg_Virtual.GetComponent<Image>().sprite = img.sprite;
+        mImg_CardModel.GetComponent<Image>().sprite = sprite;
+        mImg_Virtual.GetComponent<Image>().sprite = sprite;
+        mImg_CardModel.GetComponent<Image>().SetNativeSize();
+        mImg_Virtual.GetComponent<Image>().SetNativeSize();
     }
 
     private void OnDisable()
@@ -58,11 +99,17 @@ public class CardModel : MonoBehaviour
         if(overGrid != null)
         {
             mImg_Virtual.SetActive(true);
-            mImg_Virtual.transform.position = overGrid.transform.position;
+            mImg_Virtual.transform.position = overGrid.GetUnitInPosition(Vector2.zero);
         }
         else
         {
             mImg_Virtual.SetActive(false);
         }
+    }
+
+    private void UpdateSize(Vector3 scale)
+    {
+        mImg_CardModel.transform.localScale = scale;
+        mImg_Virtual.transform.localScale = scale;
     }
 }

@@ -251,9 +251,9 @@ public abstract class SkillAbility : AbilityEntity
     /// 检测能否在死亡时使用
     /// </summary>
     /// <returns></returns>
-    private bool IsActiveInDeath()
+    public virtual bool IsActiveInDeath()
     {
-        return master.IsAlive() || canActiveInDeathState;
+        return (master.IsAlive()) || canActiveInDeathState;
     }
 
     public static bool operator >(SkillAbility a, SkillAbility b)

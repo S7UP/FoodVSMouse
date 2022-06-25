@@ -130,6 +130,24 @@ public class MapController : MonoBehaviour, IGameControllerMember
         }
     }
 
+    /// <summary>
+    /// 暂停时依旧允许选取格子
+    /// </summary>
+    public void MPauseUpdate()
+    {
+        // 格子管理
+        Ray r = GameController.Instance.mCamera.ScreenPointToRay(Input.mousePosition);
+        RaycastHit2D hit = Physics2D.Raycast(new Vector2(r.origin.x, r.origin.y), Vector2.zero, Mathf.Infinity, mask);
+
+        if (hit.collider != null)
+        {
+            if (hit.collider.tag == "Grid")
+            {
+                GameController.Instance.overGrid = hit.collider.GetComponent<BaseGrid>();
+            }
+        }
+    }
+
     public void MPause()
     {
         throw new System.NotImplementedException();

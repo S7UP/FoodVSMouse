@@ -15,7 +15,6 @@ public sealed class SkillAbilityManager
     public void Initialize()
     {
         skillAbilityList.Clear();
-        // AddSkillAbility(new GeneralAttackSkillAbility()); // 可以默认每个单位都有普通攻击能力
     }
 
     /// <summary>

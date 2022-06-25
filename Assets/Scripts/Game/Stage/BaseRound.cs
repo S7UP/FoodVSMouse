@@ -48,7 +48,7 @@ public class BaseRound
     public IEnumerator Execute()
     {
         // 先执行自己的刷怪组的内容
-        Debug.Log("当前轮开始刷怪");
+        Debug.Log("当前轮为："+mRoundInfo.name+"，开始刷怪！");
         for (int i = 0; i < mRoundInfo.baseEnemyGroupList.Count; i++)
         {
             // 获取当前组

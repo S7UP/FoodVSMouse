@@ -9,4 +9,5 @@ public enum ItemInGridType
     Default = -1, // 默认
     TimelinessBarrier = 0, // 时效性障碍物
     Ladder = 1, // 梯子类型
+    ShiftZone = 2, // 变速带
 }

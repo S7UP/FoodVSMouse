@@ -47,6 +47,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     protected float attackPercent; // 攻击动画播放进度到attackPercent以上时允许出真正的攻击
     protected bool mAttackFlag; // 作用于一次攻击能否打出来的flag
     public int mHeight; //+ 高度
+    public Vector2 moveRotate; // 移动方向
     public bool isFrozenState; // 是否在冻结状态
     public bool isDeathState{ get; set; } // 是否在死亡状态
     public bool isDisableSkill { get { return NumericBox.IsDisableSkill.Value; } } // 是否禁用主动技能
@@ -77,6 +78,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
                 case UnitType.Food: return "Food/";
                 case UnitType.Mouse: return "Mouse/";
                 case UnitType.Item: return "Item/";
+                case UnitType.Character: return "Character/";
                 default: return null;
             }
         }
@@ -91,6 +93,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
                 case UnitType.Food:return "Food/" + mType;
                 case UnitType.Mouse:return "Mouse/" + mType;
                 case UnitType.Item: return "Item/" + mType;
+                case UnitType.Character: return "Character/0";
                 default:return null;
             }
         }
@@ -141,7 +144,6 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
 
         if(state is FrozenState)
         {
-            Debug.Log("Enter FrozenState!");
             if (mCurrentActionState != null)
                 mCurrentActionState.OnInterrupt();
             mCurrentActionState = state;
@@ -900,6 +902,20 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public virtual void SetSpriteLocalPosition(Vector2 vector2)
     {
 
+    }
+
+    /// <summary>
+    /// 获取高度
+    /// </summary>
+    /// <returns></returns>
+    public virtual float GetHeight()
+    {
+        return mHeight;
+    }
+
+    public virtual void MPauseUpdate()
+    {
+        
     }
     // 继续
 }

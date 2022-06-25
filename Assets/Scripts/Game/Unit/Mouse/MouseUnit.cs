@@ -28,7 +28,7 @@ public class MouseUnit : BaseUnit
     // 其他属性
     protected List<double> mHertRateList; // 切换贴图时的受伤比率（高->低)
     public int mHertIndex; // 受伤贴图阶段
-    public Vector2 moveRotate; // 移动方向
+    
 
 
     // 索敌相关
@@ -270,12 +270,12 @@ public class MouseUnit : BaseUnit
     }
 
     /// <summary>
-    /// 老鼠单位默认都是处在同行且同高度时被美食阻挡
+    /// 老鼠单位默认都是处在同行且同高度时被美食或者人物单位阻挡
     /// 提示，特殊类型老鼠可以重写这个方法而强制设为不可阻挡，如幽灵鼠
     /// </summary>
     public override bool CanBlock(BaseUnit unit)
     {
-        return (unit is FoodUnit && GetRowIndex() == unit.GetRowIndex() && mHeight == unit.mHeight);
+        return ((unit is FoodUnit || unit is CharacterUnit) && GetRowIndex() == unit.GetRowIndex() && mHeight == unit.mHeight);
     }
 
     /// <summary>
@@ -359,15 +359,6 @@ public class MouseUnit : BaseUnit
     }
 
     /// <summary>
-    /// 当确定碰撞到美食单位
-    /// </summary>
-    public virtual void OnCollideFoodUnit(FoodUnit unit)
-    {
-        isBlock = true;
-        mBlockUnit = unit;
-    }
-
-    /// <summary>
     /// 取消接触友方单位
     /// </summary>
     /// <param name="unit"></param>
@@ -389,25 +380,40 @@ public class MouseUnit : BaseUnit
             return;
         }
 
-        if (!isBlock && collision.tag.Equals("Food"))
+        if (collision.tag.Equals("Food") || collision.tag.Equals("Character"))
         {
-            // 检测到美食单位碰撞了！
-            FoodUnit food = collision.GetComponent<FoodUnit>();
-            // 检测本格美食最高受击优先级美食
-            FoodUnit targetFood = food.GetGrid().GetHighestAttackPriorityFoodUnit();
-            if (UnitManager.CanBlock(this, targetFood)) // 检测双方能否互相阻挡
-            {
-                OnCollideFoodUnit(targetFood);
-            }
+            // 检测到友方单位碰撞了！
+            OnAllyCollision(collision.GetComponent<BaseUnit>());
         }
         else if (collision.tag.Equals("Bullet"))
         {
             // 检测到子弹单位碰撞了
-            BaseBullet bullet = collision.GetComponent<BaseBullet>();
-            if (UnitManager.CanBulletHit(this, bullet)) // 检测双方能否互相击中
-            {
-                bullet.TakeDamage(this);
-            }
+            OnBulletCollision(collision.GetComponent<BaseBullet>());
+        }
+    }
+
+    /// <summary>
+    /// 当与友方单位（美食、人物）发生刚体碰撞判定时
+    /// </summary>
+    public virtual void OnAllyCollision(BaseUnit unit)
+    {
+        // 检测本格美食最高受击优先级单位
+        BaseUnit target = unit.GetGrid().GetHighestAttackPriorityUnit();
+        if (!isBlock && UnitManager.CanBlock(this, target)) // 检测双方能否互相阻挡
+        {
+            isBlock = true;
+            mBlockUnit = target;
+        }
+    }
+
+    /// <summary>
+    /// 当与子弹单位发生刚体碰撞判定时
+    /// </summary>
+    public virtual void OnBulletCollision(BaseBullet bullet)
+    {
+        if (UnitManager.CanBulletHit(this, bullet)) // 检测双方能否互相击中
+        {
+            bullet.TakeDamage(this);
         }
     }
 
@@ -423,11 +429,10 @@ public class MouseUnit : BaseUnit
 
     public virtual void OnTriggerExit2D(Collider2D collision)
     {
-        if (collision.tag.Equals("Food"))
+        if (collision.tag.Equals("Food") || collision.tag.Equals("Character"))
         {
-            // 检测到美食单位碰撞了！
-            FoodUnit food = collision.GetComponent<FoodUnit>();
-            if (mBlockUnit == food)
+            BaseUnit unit = collision.GetComponent<BaseUnit>();
+            if (mBlockUnit == unit)
             {
                 SetNoCollideAllyUnit();
             }

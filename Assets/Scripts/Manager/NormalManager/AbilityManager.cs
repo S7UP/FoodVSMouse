@@ -36,6 +36,7 @@ public class AbilityManager
         AbilityDict = new Dictionary<UnitType, List<List<List<SkillAbility.SkillAbilityInfo>>>>();
         AbilityDict.Add(UnitType.Food, new List<List<List<SkillAbility.SkillAbilityInfo>>>());
         AbilityDict.Add(UnitType.Mouse, new List<List<List<SkillAbility.SkillAbilityInfo>>>());
+        AbilityDict.Add(UnitType.Weapons, new List<List<List<SkillAbility.SkillAbilityInfo>>>());
         LoadAll();
     }
 
@@ -125,6 +126,7 @@ public class AbilityManager
     {
         Load(UnitType.Food);
         Load(UnitType.Mouse);
+        Load(UnitType.Weapons);
     }
 
     private void Load(UnitType unitType)
@@ -142,6 +144,9 @@ public class AbilityManager
             case UnitType.Mouse:
                 unitTypeStr += "Mouse";
                 break;
+            case UnitType.Weapons:
+                unitTypeStr += "Weapons";
+                break;
             default:
                 break;
         }
@@ -152,7 +157,6 @@ public class AbilityManager
         {
             int typeIndex = int.Parse(typeFile.Name.Replace(typeFile.Extension, "")); // 去后缀
             // 进入这层子文件夹读取
-            // List<List<SkillAbility.SkillAbilityInfo>> shapeList = GetSkillAbilityInfoShapeList(unitType, typeIndex);
             FileInfo[] shapeFiles = new DirectoryInfo(path + "/" + typeIndex).GetFiles("*");
             foreach (var f in shapeFiles)
             {
@@ -160,13 +164,7 @@ public class AbilityManager
                 // 只读取JSON
                 if (name.EndsWith(".json"))
                 {
-                    //Debug.Log("Name = " + name);
                     int shapeIndex = int.Parse(name.Replace(".json", ""));
-                    //int c2 = shapeIndex - shapeList.Count + 1;
-                    //for (int j = 0; j < c2; j++)
-                    //{
-                    //    shapeList.Add(new List<SkillAbility.SkillAbilityInfo>());
-                    //}
                     List<SkillAbility.SkillAbilityInfo> infoList = JsonManager.Load<List<SkillAbility.SkillAbilityInfo>>("Skill/" + unitTypeStr + "/" + typeIndex + "/" + shapeIndex);
                     List<SkillAbility.SkillAbilityInfo> list = GetSkillAbilityInfoList(unitType, typeIndex, shapeIndex);
                     foreach (var item in infoList)

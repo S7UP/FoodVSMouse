@@ -97,6 +97,7 @@ public class BaseProgressController : MonoBehaviour, IBaseProgressController, IG
         totalTimer = 5 * 60 * 60; // 5∑÷÷”
         if (!isTimeLimit)
             Emp_LeftTimerTrans.gameObject.SetActive(false);
+        currentTimerLeft = totalTimer - GameController.Instance.GetCurrentStageFrame();
         UpdateTimerDisplayer();
     }
 
@@ -206,5 +207,8 @@ public class BaseProgressController : MonoBehaviour, IBaseProgressController, IG
         throw new System.NotImplementedException();
     }
 
-
+    public void MPauseUpdate()
+    {
+        
+    }
 }

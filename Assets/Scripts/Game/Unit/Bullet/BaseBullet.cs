@@ -326,6 +326,11 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     {
 
     }
+
+    public virtual void MPauseUpdate()
+    {
+        
+    }
 }
 
 

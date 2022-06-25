@@ -16,7 +16,7 @@ public class IceBombBullet : ParabolaBullet
         // 原地产生一个爆炸效果
         GameObject instance = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "AreaEffect/IceAreaEffect");
         IceAreaEffectExecution iceEffect = instance.GetComponent<IceAreaEffectExecution>();
-        iceEffect.Init(this.mMasterBaseUnit, 600, GetRowIndex(), 3, 3, -0.5f, 0); // 第二个参数为持续时间（帧）
+        iceEffect.Init(this.mMasterBaseUnit, 600, GetRowIndex(), 3, 3, -0.5f, 0, true, false); // 第二个参数为持续时间（帧）
         if (baseUnit != null && baseUnit.IsValid())
         {
             // 如果单位存在，则在单位位置爆炸

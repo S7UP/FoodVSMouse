@@ -97,6 +97,7 @@ MonoBehaviour:
   mCurrentHp: 0
   mCurrentTotalShieldValue: 0
   mHeight: 0
+  moveRotate: {x: 0, y: 0}
   isFrozenState: 0
   mName: 
   mType: 0
@@ -104,8 +105,8 @@ MonoBehaviour:
   currentStateTimer: 0
   rigibody2D: {fileID: 0}
   mCollider2D: {fileID: 0}
+  spriteTrans: {fileID: 0}
   mHertIndex: 0
-  moveRotate: {x: 0, y: 0}
 --- !u!1 &7911401160402135796
 GameObject:
   m_ObjectHideFlags: 0
@@ -133,7 +134,7 @@ Transform:
   m_GameObject: {fileID: 7911401160402135796}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 6560605702601517123}
   m_RootOrder: 0
@@ -178,7 +179,7 @@ SpriteRenderer:
   m_SortingLayerID: 481756845
   m_SortingLayer: 5
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: f554e7c847e5af647b8c9145eb186f3f, type: 3}
+  m_Sprite: {fileID: 21300000, guid: ef491679f03a4ef47820d1c3a57c3f61, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -199,7 +200,7 @@ Animator:
   m_GameObject: {fileID: 7911401160402135796}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 8731fa2aed4c317498e58cdc49b8810f, type: 2}
+  m_Controller: {fileID: 9100000, guid: c523313c51596af4c848961e447370b6, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0

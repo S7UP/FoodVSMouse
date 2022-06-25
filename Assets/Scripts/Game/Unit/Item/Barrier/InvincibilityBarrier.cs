@@ -11,7 +11,6 @@ public class InvincibilityBarrier :　BaseBarrier
     public override void MInit()
     {
         base.MInit();
-        mType = (int)ItemNameTypeMap.PigBarrier;
         // 添加无敌的标签
         NumericBox.AddDecideModifierToBoolDict(StringManager.Invincibility, new BoolModifier(true));
     }

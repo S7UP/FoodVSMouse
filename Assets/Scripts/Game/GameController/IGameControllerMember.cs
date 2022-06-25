@@ -10,6 +10,8 @@ public interface IGameControllerMember
     public void MUpdate();
     //暂停时的方法
     public void MPause();
+    // 暂停期间帧更新
+    public void MPauseUpdate();
     //恢复时的方法
     public void MResume();
     //销毁时的方法

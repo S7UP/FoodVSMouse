@@ -151,6 +151,8 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
         mImg_Card.GetComponent<Image>().sprite = GameManager.Instance.GetSprite("Food/"+mType+"/"+mShape+"/display");
         // 费用
         mTex_FireCost.GetComponent<Text>().text = mCostDict["Fire"].ToString();
+
+        UpdateDisplayer();
     }
 
     public void Awake()
@@ -238,7 +240,7 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
         {
             // 先检查格子状态能否允许造卡
             // 然后再查看是否含有此格子分类的卡片，若没有则允许建造，否则不行
-            return (baseGrid.CanBuildCard() && !baseGrid.IsContainTag(GetFoodInGridType())); 
+            return (baseGrid.CanBuildCard(GetFoodInGridType()) && !baseGrid.IsContainTag(GetFoodInGridType())); 
         }
         // TODO 读取对应格子，是否有其他卡片，能否嵌套种植，以及对应地形能否种植等
         return false; 
@@ -320,6 +322,11 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
         }
 
         mCDLeft = Mathf.Max(mCDLeft - 1, 0);
+        UpdateDisplayer();
+    }
+
+    private void UpdateDisplayer()
+    {
         // 控制UI层的CD字符显示
         if (mCDLeft > 0)
         {
@@ -379,5 +386,10 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
     public FoodInGridType GetFoodInGridType()
     {
         return GetFoodInGridType(mType);
+    }
+
+    public void MPauseUpdate()
+    {
+        
     }
 }

@@ -95,12 +95,14 @@ public class BaseEnemyGroup
     /// <summary>
     /// 根据当前关卡的对应分路组来确定实际出怪行数表
     /// </summary>
+    /// <param name="rowOffset">行偏移量，主要影响刷怪起始行</param>
+    /// <returns></returns>    
     public RealEnemyList TransFormToRealEnemyGroup()
     {
         List<int> rowIndexList = new List<int>();
         List<List<int>> stageApartList = GameController.Instance.mCurrentStage.GetApartList();
         // 安全性检测
-        if(stageApartList==null || stageApartList.Count<= mApartIndex)
+        if (stageApartList==null || stageApartList.Count<= mApartIndex)
         {
             Debug.LogWarning("当前组下标超过关卡最大组下标，越界了！因此当前组不执行刷怪！");
             return BaseEnemyGroup.RealEnemyNullList; // 返回一个空的
@@ -108,7 +110,7 @@ public class BaseEnemyGroup
         // 从所在关卡分路组中获取行映射表
         List<int> rowMap = stageApartList[mApartIndex];
         // 保证起始下标在行映射表范围之内
-        int startIndex = mStartIndex % rowMap.Count;
+        int startIndex = (mStartIndex+ GameController.Instance.mCurrentStage.GetApartRowOffsetByIndex(mApartIndex)) % rowMap.Count;
         // 从起始下标起算至起初下标+mCount结束,开始填表
         for (int i = 0; i < mCount; i++)
         {

@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+using static UnityEngine.GraphicsBuffer;
+
 /// <summary>
 /// 抛物线移动式的子弹
 /// </summary>
@@ -32,6 +34,7 @@ public class ParabolaBullet : BaseBullet
         currentTimer = 0;
         CloseCollision();
     }
+
 
     // 注：在此处，mVelocity变为水平速度
     /// <summary>
@@ -71,7 +74,7 @@ public class ParabolaBullet : BaseBullet
         {
             TakeDamage(null);
         }
-        else if(currentTimer >= totalTimer - 2)
+        else if(currentTimer >= totalTimer - 4)
         {
             OpenCollision();
         }
@@ -104,27 +107,28 @@ public class ParabolaBullet : BaseBullet
     /// <param name="collision"></param>
     public void OnCollsion(Collider2D collision)
     {
-        if (collision.tag.Equals("Food"))
-        {
-            if (canAttackFood)
-            {
-                FoodUnit u = collision.GetComponent<FoodUnit>();
-                if (u.GetRowIndex() == currentRow)
-                {
-                    TakeDamage(u);
-                }
-            }
-        }else if (collision.tag.Equals("Mouse"))
-        {
-            if (canAttackMouse)
-            {
-                MouseUnit u = collision.GetComponent<MouseUnit>();
-                if (u.GetRowIndex() == currentRow)
-                {
-                    TakeDamage(u);
-                }
-            }
-        }
+        //if (collision.tag.Equals("Food"))
+        //{
+        //    if (canAttackFood)
+        //    {
+        //        FoodUnit u = collision.GetComponent<FoodUnit>();
+        //        if (u.GetRowIndex() == currentRow)
+        //        {
+        //            TakeDamage(u);
+        //        }
+        //    }
+        //}else if (collision.tag.Equals("Mouse"))
+        //{
+        //    if (canAttackMouse)
+        //    {
+        //        MouseUnit u = collision.GetComponent<MouseUnit>();
+        //        if (u.GetRowIndex() == currentRow)
+        //        {
+        //            TakeDamage(u);
+        //        }
+        //    }
+        //}
+
     }
 
     public override void OnTriggerEnter2D(Collider2D collision)

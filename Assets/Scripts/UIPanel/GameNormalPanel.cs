@@ -46,19 +46,35 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
     }
 
     /// <summary>
+    /// 进入角色放置模式
+    /// </summary>
+    public void EnterCharacterConstructMode()
+    {
+        mCardModel.ShowCardModel(CardModel.DisplayMode.SetCharacter);
+    }
+
+    /// <summary>
+    /// 离开角色放置模式
+    /// </summary>
+    public void ExitCharacterConstructMode()
+    {
+        mCardModel.HideCardModel();
+    }
+
+    /// <summary>
     /// 进入卡片放置模式，由某个卡片建造器被成功选取时触发
     /// </summary>
-    public void EnterConstructMode()
+    public void EnterCardConstructMode()
     {
-        mCardModel.gameObject.SetActive(true);
+        mCardModel.ShowCardModel(CardModel.DisplayMode.SetCard);
     }
 
     /// <summary>
     /// 离开卡片放置模式，卡片建造成功或者取消建造时触发
     /// </summary>
-    public void ExitConstructMode()
+    public void ExitCardConstructMode()
     {
-        mCardModel.gameObject.SetActive(false);
+        mCardModel.HideCardModel();
     }
 
     public void InitPanel()

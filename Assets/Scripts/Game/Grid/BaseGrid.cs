@@ -7,14 +7,6 @@ using UnityEngine;
 
 public class BaseGrid : MonoBehaviour, IGameControllerMember
 {
-    // 道具原生种类-道具在格子上的分类映射表
-    // 下面没说的都是Default类的
-    //public static Dictionary<ItemNameTypeMap, ItemInGridType> ItemType_ItemInGridTypeMap = new Dictionary<ItemNameTypeMap, ItemInGridType>()
-    //{
-    //    {ItemNameTypeMap.PigBarrier, ItemInGridType.TimelinessBarrier }, // 飞猪
-    //    {ItemNameTypeMap.Spring, ItemInGridType.Ladder }, // 弹簧
-    //};
-
     /// <summary>
     /// 当格子中存在以下Tag时，不允许放卡
     /// </summary>
@@ -26,13 +18,11 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
 
     public BaseGridState mMainGridState; // 主要地形状态
     public List<BaseGridState> mOtherGridStateList; // 其它地形状态表（大多是临时的）
-
-    //protected List<FoodUnit> mFoodUnitList; // 位于格子上的美食单位表
     protected List<MouseUnit> mMouseUnitList; //　位于格子上的老鼠单位表
-    //protected List<BaseUnit> mItemUnitList; // 位于格子上的道具表
 
     protected Dictionary<FoodInGridType, FoodUnit> mFoodUnitdict; // 恒定在此格子上的美食（即确实是种下去的而非临时性的）
     protected Dictionary<ItemInGridType, BaseUnit> mItemUnitDict; // 在此格子上的道具
+    protected CharacterUnit characterUnit; // 所持有的人物单位（如果有）
 
     public bool canBuild;
     public int currentXIndex { get; private set; }
@@ -43,9 +33,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     private void Awake()
     {
         canBuild = true;
-        //mFoodUnitList = new List<FoodUnit>();
         mMouseUnitList = new List<MouseUnit>();
-        //mItemUnitList = new List<BaseUnit>();
         mMainGridState = new BaseGridState(this);
         mOtherGridStateList = new List<BaseGridState>();
         mFoodUnitdict = new Dictionary<FoodInGridType, FoodUnit>();
@@ -71,7 +59,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     /// 格子本身是否允许放置
     /// </summary>
     /// <returns></returns>
-    public virtual bool CanBuildCard()
+    public virtual bool CanBuildCard(FoodInGridType foodInGridType)
     {
         if (!canBuild)
             return false;
@@ -125,10 +113,20 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         }
     }
 
+    /// <summary>
+    /// 获取一个单位应该在格子上的位置
+    /// </summary>
+    /// <param name="pos"></param>
+    /// <returns></returns>
+    public Vector3 GetUnitInPosition(Vector2 pos)
+    {
+        return transform.position + new Vector3(pos.x * MapManager.gridWidth, pos.y * MapManager.gridHeight) / 2;
+    }
+
     // 把一个单位的坐标设置在格子上，第二个参数为单位向量，表明生成点位于该格子的哪个边，比如填 pos = Vector2.right，则代表这个单位的坐标会设为该格子的右边上
     public void SetUnitPosition(BaseUnit unit, Vector2 pos)
     {
-        unit.transform.position = transform.position + new Vector3(pos.x * MapManager.gridWidth, pos.y * MapManager.gridHeight) / 2;
+        unit.transform.position = GetUnitInPosition(pos);
     }
 
 
@@ -179,6 +177,15 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         AddItemUnit(unit);
     }
 
+    /// <summary>
+    /// 将角色单位放置在该格子上
+    /// </summary>
+    public void SetCharacterUnitInGrid(CharacterUnit c)
+    {
+        c.SetGrid(this);
+        SetUnitPosition(c, Vector2.zero); // 坐标也要同步至自身正中心
+        AddCharacterUnit(c);
+    }
 
     /// <summary>
     /// 添加美食
@@ -230,7 +237,6 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     public void AddItemUnit(BaseUnit unit)
     {
         gridActionPointManager.TriggerActionPoint(GridActionPointType.BeforeRemoveItemUnit, new GridAction(unit, this));
-        //mItemUnitList.Add(unit);
         mItemUnitDict.Add((ItemInGridType)unit.mType, unit);
         gridActionPointManager.TriggerActionPoint(GridActionPointType.AfterRemoveItemUnit, new GridAction(unit, this));
     }
@@ -241,9 +247,26 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     public void RemoveItemUnit(BaseUnit unit)
     {
         gridActionPointManager.TriggerActionPoint(GridActionPointType.BeforeRemoveItemUnit, new GridAction(unit, this));
-        //mItemUnitList.Remove(unit);
         mItemUnitDict.Remove((ItemInGridType)unit.mType);
         gridActionPointManager.TriggerActionPoint(GridActionPointType.AfterRemoveItemUnit, new GridAction(unit, this));
+    }
+
+    /// <summary>
+    /// 添加角色在该格子上
+    /// </summary>
+    public void AddCharacterUnit(CharacterUnit c)
+    {
+        characterUnit = c;
+    }
+
+    /// <summary>
+    /// 移除角色在本格上的引用
+    /// </summary>
+    public CharacterUnit RemoveCharacterUnit()
+    {
+        CharacterUnit c = characterUnit;
+        characterUnit = null;
+        return c;
     }
 
     /// <summary>
@@ -305,9 +328,9 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     }
 
     /// <summary>
-    /// 获取本格中最高攻击优先级的美食
+    /// 获取本格中最高攻击优先级的单位
     /// </summary>
-    public FoodUnit GetHighestAttackPriorityFoodUnit()
+    public BaseUnit GetHighestAttackPriorityUnit()
     {
         if (IsContainTag(FoodInGridType.Shield))
         {
@@ -316,6 +339,9 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         else if (IsContainTag(FoodInGridType.Default))
         {
             return mFoodUnitdict[FoodInGridType.Default];
+        }else if (characterUnit != null)
+        {
+            return characterUnit;
         }
         else if (IsContainTag(FoodInGridType.WaterVehicle))
         {
@@ -407,6 +433,10 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
             
         }
 
+        // 同步角色位置
+        if (characterUnit != null)
+            SetUnitPosition(characterUnit, Vector2.zero);
+
         // 检查单位存活
         List<FoodInGridType> f_List = new List<FoodInGridType>();
         foreach (var item in mFoodUnitdict)
@@ -474,14 +504,8 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         throw new System.NotImplementedException();
     }
 
-    /// <summary>
-    /// 获取道具在格子上的分类
-    /// </summary>
-    /// <returns></returns>
-    //public ItemInGridType GetItemInGridType(ItemNameTypeMap itemNameTypeMap)
-    //{
-    //    if(ItemType_ItemInGridTypeMap.ContainsKey(itemNameTypeMap))
-    //        return ItemType_ItemInGridTypeMap[itemNameTypeMap];
-    //    return ItemInGridType.Default;
-    //}
+    public virtual void MPauseUpdate()
+    {
+        
+    }
 }

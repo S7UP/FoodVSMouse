@@ -35,15 +35,16 @@ public class GameController : MonoBehaviour
     private GameObject[] allyListGo; // 用于存放友方单位的父对象
     private GameObject[] itemListGo; // 用于存放地图物品单位的父对象
 
-    public BaseStage mCurrentStage; //+ 当前关卡
-    public BaseCostController mCostController; //+ 费用控制器
-    public BaseCardController mCardController; //+ 卡片建造器
-    public BaseSkillController mSkillController; //+ 技能控制器
-    public BaseProgressController mProgressController; //+ 游戏进度控制器
+    public BaseStage mCurrentStage; // 当前关卡
+    public BaseCostController mCostController; // 费用控制器
+    public BaseCardController mCardController; // 卡片建造器
+    public BaseSkillController mSkillController; // 技能控制器
+    public BaseProgressController mProgressController; // 游戏进度控制器
     public MapController mMapController; // 格子控制器
-    public List<BaseUnit>[] mEnemyList; //+ 存活的敌方单位表
+    public List<BaseUnit>[] mEnemyList; // 存活的敌方单位表
     public List<BaseUnit>[] mAllyList; // 存活的友方单位表
     public List<BaseUnit>[] mItemList; // 存活的道具单位表
+    public CharacterController mCharacterController; // 当前角色控制器
     public List<BaseBullet> mBulletList; // 存活的子弹表
     public List<AreaEffectExecution> areaEffectExecutionList; // 存活的能力执行体（对象）
     public List<BaseEffect> baseEffectList; // 存活的特效表
@@ -68,16 +69,16 @@ public class GameController : MonoBehaviour
 
     }
 
-    //+ 暂停的方法
+    // 暂停的方法
     public void Pause()
     {
-
+        isPause = true;
     }
 
-    //+ 解除暂停的方法
+    // 解除暂停的方法
     public void Resume()
     {
-
+        isPause = false;
     }
 
     private void Awake()
@@ -147,6 +148,10 @@ public class GameController : MonoBehaviour
         // 加载数值管理器
         numberManager = new NumberManager();
 
+        // 角色控制器
+        mCharacterController = new CharacterController();
+        MMemberList.Add(mCharacterController);
+
         Test.OnGameControllerAwake();
     }
 
@@ -166,9 +171,17 @@ public class GameController : MonoBehaviour
     }
 
     /// <summary>
-    /// 同上，不过是设置障碍的
+    /// 同上，不过是设置道具的
     /// </summary>
-    public void SetBarrierAttribute(BaseUnit.Attribute attr)
+    public void SetItemAttribute(BaseUnit.Attribute attr)
+    {
+        baseAttribute = attr;
+    }
+
+    /// <summary>
+    /// 同上，不过是设置角色的
+    /// </summary>
+    public void SetCharacterAttribute(BaseUnit.Attribute attr)
     {
         baseAttribute = attr;
     }
@@ -286,12 +299,12 @@ public class GameController : MonoBehaviour
     }
 
     /// <summary>
-    /// 产生道具单位
+    /// 产生道具单位（依附于格子）
     /// </summary>
     /// <returns></returns>
     public BaseUnit CreateItem(int xIndex, int yIndex, int type, int shape)
     {
-        SetBarrierAttribute(JsonManager.Load<BaseUnit.Attribute>("Item/" + type + "/" + shape + "")); // 准备先持有要创建实例的初始化信息
+        SetItemAttribute(JsonManager.Load<BaseUnit.Attribute>("Item/" + type + "/" + shape + "")); // 准备先持有要创建实例的初始化信息
         BaseUnit item = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Item/" + type + "/"+shape).GetComponent<BaseUnit>();
         item.MInit();
         AddItem(item, xIndex, yIndex);
@@ -299,16 +312,82 @@ public class GameController : MonoBehaviour
     }
 
     /// <summary>
-    /// 把一个道具添加至战场
+    /// 产生道具单位（不依附于格子）
+    /// </summary>
+    /// <param name="position"></param>
+    /// <param name="type"></param>
+    /// <param name="shape"></param>
+    /// <returns></returns>
+    public BaseUnit CreateItem(Vector2 position, int type, int shape)
+    {
+        SetItemAttribute(JsonManager.Load<BaseUnit.Attribute>("Item/" + type + "/" + shape + "")); // 准备先持有要创建实例的初始化信息
+        BaseUnit item = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Item/" + type + "/" + shape).GetComponent<BaseUnit>();
+        item.MInit();
+        item.transform.position = position;
+        AddItem(item);
+        return item;
+    }
+
+    /// <summary>
+    /// 把一个道具添加至战场（依附于格子）
     /// </summary>
     /// <returns></returns>
     public BaseUnit AddItem(BaseUnit item, int xIndex, int yIndex)
     {
         item.transform.SetParent(itemListGo[yIndex].transform);
         mItemList[yIndex].Add(item);
-        mMapController.GetGrid(xIndex, yIndex).SetItemUnitInGrid(item);
+        BaseGrid g = mMapController.GetGrid(xIndex, yIndex);
+        if (g != null)
+        {
+            g.SetItemUnitInGrid(item);
+            item.UpdateRenderLayer(mItemList[yIndex].Count);
+        }
+        else
+        {
+            // 如果依附于格子的物品找不到对应格子，则直接消亡
+            item.transform.position = MapManager.GetGridLocalPosition(xIndex, yIndex);
+            item.ExecuteDeath();
+        }
+        return item;
+    }
+
+    /// <summary>
+    /// 把一个道具添加至战场（不依附于格子）
+    /// </summary>
+    /// <returns></returns>
+    public BaseUnit AddItem(BaseUnit item)
+    {
+        int yIndex = item.GetRowIndex();
+        item.transform.SetParent(itemListGo[yIndex].transform);
+        mItemList[yIndex].Add(item);
         item.UpdateRenderLayer(mItemList[yIndex].Count);
         return item;
+    }
+
+    /// <summary>
+    /// 产生角色单位（依附于格子）
+    /// </summary>
+    /// <returns></returns>
+    public CharacterUnit CreateCharacter(int type, int shape)
+    {
+        SetItemAttribute(JsonManager.Load<BaseUnit.Attribute>("Character/" + type + "/" + shape + "")); // 准备先持有要创建实例的初始化信息
+        CharacterUnit c = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Character/" + type + "/" + shape).GetComponent<CharacterUnit>();
+        c.MInit();
+        //AddCharacter(c, xIndex, yIndex);
+        return c;
+    }
+
+    /// <summary>
+    /// 把一个角色添加至战场（依附于格子）
+    /// </summary>
+    /// <returns></returns>
+    public CharacterUnit AddCharacter(CharacterUnit c, int xIndex, int yIndex)
+    {
+        c.transform.SetParent(itemListGo[yIndex].transform);
+        mAllyList[yIndex].Add(c);
+        mMapController.GetGrid(xIndex, yIndex).SetCharacterUnitInGrid(c);
+        c.UpdateRenderLayer(mItemList[yIndex].Count);
+        return c;
     }
 
     // 把范围效果加入战场
@@ -355,6 +434,8 @@ public class GameController : MonoBehaviour
     {
         for (int i = 0; i < time; i++)
         {
+            if (isPause)
+                i--;
             yield return null;
         }
     }
@@ -480,14 +561,18 @@ public class GameController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        mFrameNum ++; // 先更新游戏帧，以保证Update里面与协程接收到的帧是相同的
+        
+        if (isPause)
+        {
+            foreach (IGameControllerMember member in MMemberList)
+            {
+                member.MPauseUpdate();
+            }
+            return;
+        }
+            
 
-        // test
-        //if (mFrameNum == 120)
-        //{
-        //    InvincibilityBarrier b = CreateBarrier(4, 0, 0, 0) as InvincibilityBarrier;
-        //    b.SetLeftTime(600);
-        //}
+        mFrameNum ++; // 先更新游戏帧，以保证Update里面与协程接收到的帧是相同的
 
         // 各种组件的Update()
         foreach (IGameControllerMember member in MMemberList)

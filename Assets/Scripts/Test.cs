@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class Test
 {
+    public static string TestStageName = "singleMouseText";
+
     public static void OnGameControllerAwake()
     {
         Debug.Log("OnGameControllerAwake()");

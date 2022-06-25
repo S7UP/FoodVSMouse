@@ -57,11 +57,11 @@ public class AerialBombardmentMouse : MouseUnit
 
         if(collision.tag.Equals("Food"))
         {
-            // 检测到美食单位碰撞了！
-            FoodUnit food = collision.GetComponent<FoodUnit>();
-            // 检测本格美食最高受击优先级美食
-            FoodUnit targetFood = food.GetGrid().GetHighestAttackPriorityFoodUnit();
-            if (targetFood != null)
+            // 检测到单位碰撞了！
+            BaseUnit unit = collision.GetComponent<BaseUnit>();
+            // 检测本格美食最高受击优先级单位
+            BaseUnit target = unit.GetGrid().GetHighestAttackPriorityUnit();
+            if (target != null)
             {
                 // 标记技能发现目标了，可以执行投弹操作
                 flyThrowBombSkillAbility.SetSkillConditionEnable();
