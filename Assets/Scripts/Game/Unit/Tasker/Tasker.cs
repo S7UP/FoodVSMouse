@@ -1,6 +1,6 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
+
 using UnityEngine;
 /// <summary>
 /// 任务挂载器，用于执行任务
@@ -63,6 +63,11 @@ public class Tasker : MonoBehaviour
             item();
         }
         OtherEndListener.Clear();
+        ExecuteRecycle();
+    }
+
+    public virtual void ExecuteRecycle()
+    {
         GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, "Tasker/Tasker", this.gameObject);
     }
 

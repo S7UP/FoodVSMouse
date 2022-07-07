@@ -1,6 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 /// <summary>
 /// 忍者鼠整顿技能
 /// </summary>

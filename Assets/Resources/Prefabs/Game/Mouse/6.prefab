@@ -93,7 +93,7 @@ Animator:
   m_GameObject: {fileID: 851600089855585200}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 989934952d3882545a6acabfef9f6ac2, type: 2}
+  m_Controller: {fileID: 9100000, guid: 44f63fd434c995e4696f12922bb16ae2, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -199,6 +199,7 @@ MonoBehaviour:
   mCurrentHp: 0
   mCurrentTotalShieldValue: 0
   mHeight: 0
+  moveRotate: {x: 0, y: 0}
   isFrozenState: 0
   mName: 
   mType: 0
@@ -208,4 +209,5 @@ MonoBehaviour:
   mCollider2D: {fileID: 0}
   spriteTrans: {fileID: 0}
   mHertIndex: 0
-  moveRotate: {x: 0, y: 0}
+  currentXIndex: 0
+  currentYIndex: 0

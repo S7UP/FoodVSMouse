@@ -1,5 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
+
 using UnityEngine;
 /// <summary>
 /// ÒÆ¶¯°æ¿é
@@ -91,7 +91,10 @@ public class MovementGridGroup : GridGroup
             endPosition = positionList[currentPositionListIndex].targetPosition;
             currentTime = 0;
         }
+    }
 
-        
+    public override void ExecuteRecycle()
+    {
+        GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, "Grid/MovementGridGroup", this.gameObject);
     }
 }

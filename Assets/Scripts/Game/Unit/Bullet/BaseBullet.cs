@@ -1,13 +1,6 @@
-using System.Collections;
 using System.Collections.Generic;
-using System.Drawing;
-
-using UnityEditor.U2D.Path;
 
 using UnityEngine;
-
-using static UnityEngine.GraphicsBuffer;
-using static UnityEngine.UI.CanvasScaler;
 
 public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
 {
@@ -30,6 +23,8 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     public Dictionary<string, int> TagDict = new Dictionary<string, int>();
 
     public IBaseActionState mCurrentActionState; //+ 当前动作状态
+
+    public AnimatorController animatorController = new AnimatorController(); // 动画播放控制器
 
     public virtual void Awake()
     {
@@ -83,6 +78,8 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     /// </summary>
     public virtual void MInit()
     {
+        animatorController.Initialize();
+        animatorController.ChangeAnimator(animator);
         mVelocity = 0.0f;
         mRotate = Vector2.zero;
         mDamage = 0;
@@ -151,12 +148,12 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
 
     public virtual void MPause()
     {
-        throw new System.NotImplementedException();
+        animatorController.Pause();
     }
 
     public virtual void MResume()
     {
-        throw new System.NotImplementedException();
+        animatorController.Resume();
     }
 
     public virtual void MUpdate()
@@ -166,8 +163,16 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
         // 子弹若出屏了请自删
         if (!IsInView())
         {
-            GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, "Bullet/"+((int)style), gameObject);
+            ExecuteRecycle();
         }
+    }
+
+    /// <summary>
+    /// 执行回收
+    /// </summary>
+    public virtual void ExecuteRecycle()
+    {
+        GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, "Bullet/" + ((int)style), gameObject);
     }
 
     /// <summary>
@@ -212,7 +217,7 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
 
     public virtual void OnFlyStateEnter()
     {
-        animator.Play("Fly");
+        animatorController.Play("Fly", true);
     }
 
     public virtual void OnFlyState()
@@ -227,7 +232,7 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
 
     public virtual void OnHitStateEnter()
     {
-        animator.Play("Hit");
+        animatorController.Play("Hit");
         SetCollision(false);
         isDeathState = true;
     }
@@ -245,7 +250,8 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
 
     public virtual void OnHitStateExit()
     {
-        GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, "Bullet/"+((int)style), gameObject);
+        ExecuteRecycle();
+        //GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, "Bullet/"+((int)style), gameObject);
     }
 
     /// <summary>

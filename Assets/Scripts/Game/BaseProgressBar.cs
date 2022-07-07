@@ -1,17 +1,12 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class BaseProgressBar : MonoBehaviour, IBaseProgressBar
 {
-    public virtual void Hide()
-    {
-        throw new System.NotImplementedException();
-    }
+    public float currentProgress; // 当前进度
 
     public virtual bool IsFinish()
     {
-        throw new System.NotImplementedException();
+        return false;
     }
 
     public virtual void PInit()
@@ -20,10 +15,16 @@ public class BaseProgressBar : MonoBehaviour, IBaseProgressBar
 
     public virtual void PUpdate()
     {
+
+    }
+
+    public virtual void Hide()
+    {
+
     }
 
     public virtual void Show()
     {
-        throw new System.NotImplementedException();
+
     }
 }

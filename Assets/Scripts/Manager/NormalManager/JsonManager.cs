@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using Newtonsoft.Json;
@@ -11,17 +9,19 @@ public class JsonManager
 {
     public static void Save<T>(T obj, string path)
     {
-        string filePath = Application.dataPath + "/Resources/Json/" + path + ".json";
+        //string filePath = Application.dataPath + "/Resources/Json/" + path + ".json";
+        string filePath = Application.streamingAssetsPath + "/Json/" + path + ".json";
         string saveJsonStr = JsonConvert.SerializeObject(obj);
         StreamWriter sw = new StreamWriter(filePath);
         sw.Write(saveJsonStr);
         sw.Close();
     }
 
-    // 读取关卡文件解析JSON转化为LevelInfo对象
+    // 读取JSON文件解析为对象
     public static T Load<T>(string path)
     {
-        string filepath = Application.dataPath + "/Resources/Json/" + path + ".json";
+        //string filepath = Application.dataPath + "/Resources/Json/" + path + ".json";
+        string filepath = Application.streamingAssetsPath + "/Json/" + path + ".json";
         if (File.Exists(filepath))
         {
             StreamReader sr = new StreamReader(filepath);

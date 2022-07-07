@@ -1,5 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
+
 using UnityEngine;
 using UnityEngine.UI;
 /// <summary>
@@ -7,16 +7,7 @@ using UnityEngine.UI;
 /// </summary>
 public class BaseProgressController : MonoBehaviour, IBaseProgressController, IGameControllerMember
 {
-    public List<BaseProgressBar> mProgressBarList; // 内含各种进度条的集合
-    public RoundProgressBar mRoundProgressBar; // 轮数进度条引用
-    public BossHpBar mBossHpBar;
-
-    private GameObject Emp_BossHpBar;
-    private GameObject Emp_RoundProgressBar;
-    // 时间相关
-    private bool isTimeLimit; // 关卡是否有时间限制
-    private int totalTimer; // 总时间
-    public int currentTimerLeft { get; private set; }
+    // 引用
     private Transform Emp_LeftTimerTrans;
     private Transform HourTrans;
     private Image HourOne;
@@ -36,10 +27,21 @@ public class BaseProgressController : MonoBehaviour, IBaseProgressController, IG
     private Sprite[] greenNumberList;
     private Sprite[] redNumberList;
     private List<Image> Img_TimerList;
+    private GameObject Emp_BossHpBar;
+    private GameObject Emp_RoundProgressBar;
+
+    // 管理变量
+    public List<BaseProgressBar> mProgressBarList = new List<BaseProgressBar>(); // 内含各种进度条的集合
+    public RoundProgressBar mRoundProgressBar; // 轮数进度条引用
+    public BossHpBar mBossHpBar;
+    // 时间相关
+    private bool isTimeLimit; // 关卡是否有时间限制
+    private int totalTimer; // 总时间
+    public int currentTimerLeft { get; private set; }
+
 
     private void Awake()
     {
-        mProgressBarList = new List<BaseProgressBar>();
         Emp_BossHpBar = transform.Find("Emp_BossHpBar").gameObject;
         Emp_RoundProgressBar = transform.Find("Emp_RoundProgressBar").gameObject;
         Emp_LeftTimerTrans = transform.Find("Emp_LeftTimer");
@@ -98,6 +100,7 @@ public class BaseProgressController : MonoBehaviour, IBaseProgressController, IG
         if (!isTimeLimit)
             Emp_LeftTimerTrans.gameObject.SetActive(false);
         currentTimerLeft = totalTimer - GameController.Instance.GetCurrentStageFrame();
+
         UpdateTimerDisplayer();
     }
 
@@ -199,12 +202,12 @@ public class BaseProgressController : MonoBehaviour, IBaseProgressController, IG
 
     public void MPause()
     {
-        throw new System.NotImplementedException();
+        
     }
 
     public void MResume()
     {
-        throw new System.NotImplementedException();
+        
     }
 
     public void MPauseUpdate()

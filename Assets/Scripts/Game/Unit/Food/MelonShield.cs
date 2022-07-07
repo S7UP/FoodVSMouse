@@ -1,7 +1,4 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using UnityEditor;
 
 using UnityEngine;
 /// <summary>
@@ -33,12 +30,12 @@ public class MelonShield : FoodUnit
     public override void MInit()
     {
         base.MInit();
-        SetLevel(12);
 
         // 在受到伤害结算之后，更新受伤贴图状态
         AddActionPointListener(ActionPointType.PostReceiveDamage, delegate { UpdateHertMap(); });
-        // 在受到伤害结算之前计算反伤
-        AddActionPointListener(ActionPointType.PreReceiveDamage, ReBoundDamage);
+        // 一转后在受到伤害结算之前计算反伤
+        if(mShape>0)
+            AddActionPointListener(ActionPointType.PreReceiveDamage, ReBoundDamage);
         // 在接收治疗结算之后，更新受伤贴图状态
         AddActionPointListener(ActionPointType.PostReceiveCure, delegate { UpdateHertMap(); });
         Spr_Inside.sprite = GameManager.Instance.GetSprite("Food/" + mType + "/inside/" + mHertIndex);
@@ -61,7 +58,7 @@ public class MelonShield : FoodUnit
     
     public override void OnIdleStateEnter()
     {
-        animator.Play("Idle"+ mHertIndex);
+        animatorController.Play("Idle"+ mHertIndex);
     }
 
     /// <summary>
@@ -90,7 +87,7 @@ public class MelonShield : FoodUnit
         // 有切换通知时才切换
         if (flag)
         {
-            animator.Play("Idle" + mHertIndex);
+            animatorController.Play("Idle" + mHertIndex);
             Spr_Inside.sprite = GameManager.Instance.GetSprite("Food/" + mType + "/inside/" + mHertIndex);
         }
     }

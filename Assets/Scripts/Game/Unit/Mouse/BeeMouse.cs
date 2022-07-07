@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 
 using UnityEngine;
@@ -45,13 +44,13 @@ public class BeeMouse : MouseUnit
         {
             isUseRangedAttack = false;
             // 被阻挡时使用高频电钻攻击
-            animator.Play("Attack0");
+            animatorController.Play("Attack0", true);
         }
         else
         {
             isUseRangedAttack = true;
             // 不被阻挡时使用远程攻击
-            animator.Play("Attack1");
+            animatorController.Play("Attack1");
         }
     }
 
@@ -151,13 +150,13 @@ public class BeeMouse : MouseUnit
     public override void AfterGeneralAttack()
     {
         mAttackFlag = true;
+        UpdateBlockState(); // 更新阻挡状态
         // 如果是以近战攻击结尾的，则立即恢复满技力，这样马上能出下一发远程攻击
         if (!isUseRangedAttack)
         {
             generalAttackSkillAbility.FullCurrentEnergy();
         }
         SetActionState(new MoveState(this));
-        UpdateBlockState(); // 更新阻挡状态
     }
 
     /// <summary>

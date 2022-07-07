@@ -1,11 +1,6 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UIElements;
 
-using static System.Collections.Specialized.BitVector32;
-using static UnityEngine.UI.CanvasScaler;
+using UnityEngine;
 
 public class MouseUnit : BaseUnit
 {
@@ -14,13 +9,12 @@ public class MouseUnit : BaseUnit
     new public struct Attribute
     {
         public BaseUnit.Attribute baseAttrbute;
-        // public double baseMoveSpeed;
         public double[] hertRateList;
     }
 
     // Awake里Find一次的组件
     public Rigidbody2D rigibody2D;
-    public Collider2D mCollider2D;
+    public BoxCollider2D mBoxCollider2D;
     private SpriteRenderer spriteRenderer;
     protected Animator animator;
     public Transform spriteTrans;
@@ -28,7 +22,9 @@ public class MouseUnit : BaseUnit
     // 其他属性
     protected List<double> mHertRateList; // 切换贴图时的受伤比率（高->低)
     public int mHertIndex; // 受伤贴图阶段
-    
+    public int currentXIndex; // 当前地标X下标
+    public int currentYIndex; // 当前地标Y下标
+    public bool isBoss; // 是否是BOSS单位
 
 
     // 索敌相关
@@ -42,6 +38,8 @@ public class MouseUnit : BaseUnit
     {
         base.MInit();
 
+        // 动画控制器绑定animator
+        animatorController.ChangeAnimator(animator);
         // 从Json中读取的属性以及相关的初始化
         MouseUnit.Attribute attr = GameController.Instance.GetMouseAttribute();
         mHertRateList = new List<double>();
@@ -50,14 +48,15 @@ public class MouseUnit : BaseUnit
             mHertRateList.Add(item);
         }
         mHertIndex = 0;
+        currentXIndex = 0;
+        currentYIndex = 0;
         moveRotate = Vector2.left;
+        isBoss = false;
 
         // 初始为移动状态
         SetActionState(new MoveState(this));
-        // 更新贴图
-        UpdateRuntimeAnimatorController();
 
-        renderManager.AddSpriteRenderer("mainSprite", spriteRenderer);
+
         // 添加几个行动点响应事件
         // 在受到伤害结算之后，更新受伤贴图状态
         AddActionPointListener(ActionPointType.PostReceiveDamage, delegate { UpdateHertMap(); });
@@ -68,12 +67,22 @@ public class MouseUnit : BaseUnit
         AddActionPointListener(ActionPointType.PostReceiveCure, delegate { UpdateHertMap(); });
         // 装上正常的受击材质
         spriteRenderer.material = GameManager.Instance.GetMaterial("Hit");
-        AnimatorContinue(); // 恢复动画
+        UpdateRuntimeAnimatorController(); // 更新贴图
+
     }
 
     public override void SetUnitType()
     {
         mUnitType = UnitType.Mouse;
+    }
+
+    /// <summary>
+    /// 设置判定参数
+    /// </summary>
+    public override void SetCollider2DParam()
+    {
+        mBoxCollider2D.offset = new Vector2(0, 0);
+        mBoxCollider2D.size = new Vector2(0.49f*MapManager.gridWidth, 0.49f*MapManager.gridHeight);
     }
 
     /// <summary>
@@ -86,7 +95,7 @@ public class MouseUnit : BaseUnit
         rigibody2D = gameObject.GetComponent<Rigidbody2D>();
         animator = gameObject.transform.Find("Ani_Mouse").gameObject.GetComponent<Animator>();
         spriteRenderer = gameObject.transform.Find("Ani_Mouse").gameObject.GetComponent<SpriteRenderer>();
-        mCollider2D = gameObject.GetComponent<Collider2D>();
+        mBoxCollider2D = gameObject.GetComponent<BoxCollider2D>();
         spriteTrans = transform.Find("Ani_Mouse");
     }
 
@@ -187,12 +196,12 @@ public class MouseUnit : BaseUnit
     public override void AfterGeneralAttack()
     {
         mAttackFlag = true;
+        UpdateBlockState(); // 更新阻挡状态
         // 如果有可以攻击的目标，则停下来等待下一次攻击，否则前进
         if (IsHasTarget())
             SetActionState(new IdleState(this));
         else
             SetActionState(new MoveState(this));
-        UpdateBlockState(); // 更新阻挡状态
     }
 
     /// <summary>
@@ -218,10 +227,10 @@ public class MouseUnit : BaseUnit
     /// </summary>
     protected virtual void UpdateBlockState()
     {
-        if (mBlockUnit!=null && mBlockUnit.IsAlive())
+        if (mBlockUnit != null && mBlockUnit.IsAlive())
             isBlock = true;
         else
-            isBlock = false;
+            SetNoCollideAllyUnit();
     }
 
     /// <summary>
@@ -255,7 +264,7 @@ public class MouseUnit : BaseUnit
     // 以下为 IBaseStateImplementor 接口的方法实现
     public override void OnIdleState()
     {
-
+        UpdateBlockState();
     }
 
     public override void OnMoveState()
@@ -291,7 +300,7 @@ public class MouseUnit : BaseUnit
     /// <summary>
     /// 当受伤或者被治疗时，更新单位贴图状态
     /// </summary>
-    protected void UpdateHertMap()
+    protected virtual void UpdateHertMap()
     {
         // 要是死了的话就免了吧
         if (isDeathState)
@@ -320,13 +329,16 @@ public class MouseUnit : BaseUnit
     /// 自动更新贴图
     /// </summary>
     /// <param name="collision"></param>
-    public void UpdateRuntimeAnimatorController()
+    public virtual void UpdateRuntimeAnimatorController()
     {
-        string name = animator.GetCurrentAnimatorClipInfo(0)[0].clip.name;
-        float time = AnimatorManager.GetNormalizedTime(animator);
+        AnimatorStateRecorder a = animatorController.GetCurrentAnimatorStateRecorder(); // 获取当前在播放的动画
         animator.runtimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Mouse/" + mType + "/" + mShape + "/" + mHertIndex);
+        animatorController.ChangeAnimator(animator);
         // 保持当前动画播放
-        animator.Play(name, -1, time);
+        if (a != null)
+        {
+            animatorController.Play(a.aniName, a.isCycle, a.GetNormalizedTime());
+        }
         OnUpdateRuntimeAnimatorController();
     }
 
@@ -442,8 +454,16 @@ public class MouseUnit : BaseUnit
     public override void MUpdate()
     {
         base.MUpdate();
-        // 更新贴图控制器状态
-        // UpdateHertMap();
+        int lastXIndex = currentXIndex;
+        int lastYIndex = currentYIndex;
+        currentXIndex = MapManager.GetXIndex(transform.position.x);
+        currentYIndex = MapManager.GetYIndex(transform.position.y);
+        // 当格子的判定坐标发生改变
+        if (lastYIndex != currentYIndex)
+        {
+            // 换行
+            GameController.Instance.ChangeEnemyRow(lastYIndex, this);
+        }
         // 更新受击闪烁状态
         if (hitBox.GetPercent() > 0)
         {
@@ -456,10 +476,11 @@ public class MouseUnit : BaseUnit
     /// </summary>
     private void UpdateAttackAnimationSpeed()
     {
-        float time = AnimatorManager.GetClipTime(animator, "Attack"); // 1倍情况下，一次攻击的默认时间 秒
-        float interval = 1 / NumericBox.AttackSpeed.Value; // 攻击间隔  秒
-        float rate = Mathf.Max(1, time / interval);
-        AnimatorManager.SetClipSpeed(animator, "Attack", rate);
+        AnimatorStateRecorder a = animatorController.GetAnimatorStateRecorder("Attack");
+        float time = a.aniTime; // 一倍速下一次攻击动画的播放时间（帧）
+        float interval = 1 / NumericBox.AttackSpeed.Value * 60;  // 攻击间隔（帧）
+        float speed = Mathf.Max(1, time / interval); // 计算动画实际播放速度
+        animatorController.SetSpeed("Attack", speed);
     }
 
     /// <summary>
@@ -475,24 +496,24 @@ public class MouseUnit : BaseUnit
     /// </summary>
     public override void OnIdleStateEnter()
     {
-        animator.Play("Idle");
+        animatorController.Play("Idle", true);
     }
 
     public override void OnMoveStateEnter()
     {
-        animator.Play("Move");
+        animatorController.Play("Move", true);
     }
 
     public override void OnAttackStateEnter()
     {
         // 每次攻击时，最好根据攻速来计算一下播放速度，然后改变播放速度
         UpdateAttackAnimationSpeed();
-        animator.Play("Attack");
+        animatorController.Play("Attack");
     }
 
     public override void OnDieStateEnter()
     {
-        animator.Play("Die");
+        animatorController.Play("Die");
     }
 
     public override void OnAttackStateContinue()
@@ -504,13 +525,13 @@ public class MouseUnit : BaseUnit
     public override void OnAttackStateExit()
     {
         // 恢复播放速度
-        ResumeAnimationSpeed();
+        // ResumeAnimationSpeed();
     }
 
     public override void OnAttackStateInterrupt()
     {
         // 恢复播放速度
-        ResumeAnimationSpeed();
+        // ResumeAnimationSpeed();
     }
 
     public override void DuringDeath()
@@ -521,20 +542,20 @@ public class MouseUnit : BaseUnit
             return;
         }
         // 获取Die的动作信息，使得回收时机与动画显示尽可能同步
-        int currentFrame = AnimatorManager.GetCurrentFrame(animator);
-        int totalFrame = AnimatorManager.GetTotalFrame(animator);
-        if (currentFrame > totalFrame && currentFrame % totalFrame == 1) // 动画播放完毕后调用DeathEvent()
+        if(animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
         {
             DeathEvent();
         }
     }
+
+    private BoolModifier boolModifier = new BoolModifier(true);
 
     public override void OnBurnStateEnter()
     {
         // 装上烧毁材质
         spriteRenderer.material = GameManager.Instance.GetMaterial("Dissolve2");
         // 禁止播放动画
-        AnimatorStop();
+        PauseCurrentAnimatorState(boolModifier);
     }
 
     public override void DuringBurn(float _Threshold)
@@ -543,6 +564,7 @@ public class MouseUnit : BaseUnit
         // 超过1就可以回收了
         if (_Threshold >= 1.0)
         {
+            ResumeCurrentAnimatorState(boolModifier);
             DeathEvent();
         }
     }
@@ -580,17 +602,7 @@ public class MouseUnit : BaseUnit
     /// <param name="arrayIndex"></param>
     public override void UpdateRenderLayer(int arrayIndex)
     {
-        spriteRenderer.sortingOrder = LayerManager.CalculateSortingLayer(LayerManager.UnitType.Enemy, GetRowIndex(), 0, arrayIndex);
-    }
-
-    public override void AnimatorStop()
-    {
-        animator.speed = 0;
-    }
-
-    public override void AnimatorContinue()
-    {
-        animator.speed = 1;
+        spriteRenderer.sortingOrder = LayerManager.CalculateSortingLayer(LayerManager.UnitType.Enemy, GetRowIndex(), typeAndShapeValue, arrayIndex);
     }
 
     /// <summary>
@@ -615,7 +627,7 @@ public class MouseUnit : BaseUnit
     /// </summary>
     public override void OpenCollision()
     {
-        mCollider2D.enabled = true;
+        mBoxCollider2D.enabled = true;
     }
 
     /// <summary>
@@ -623,7 +635,7 @@ public class MouseUnit : BaseUnit
     /// </summary>
     public override void CloseCollision()
     {
-        mCollider2D.enabled = false;
+        mBoxCollider2D.enabled = false;
     }
 
     /// <summary>
@@ -648,5 +660,33 @@ public class MouseUnit : BaseUnit
     public override void SetSpriteLocalPosition(Vector2 vector2)
     {
         spriteTrans.localPosition = vector2;
+    }
+
+    public override int GetColumnIndex()
+    {
+        return currentXIndex;
+    }
+
+    public override int GetRowIndex()
+    {
+        return currentYIndex;
+    }
+
+    /// <summary>
+    /// 可否被选择为目标
+    /// </summary>
+    /// <returns></returns>
+    public override bool CanBeSelectedAsTarget()
+    {
+        return mBoxCollider2D.enabled;
+    }
+
+    /// <summary>
+    /// 目标是否定是BOSS单位
+    /// </summary>
+    /// <returns></returns>
+    public bool IsBoss()
+    {
+        return isBoss;
     }
 }

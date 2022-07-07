@@ -1,6 +1,4 @@
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 /// <summary>
 /// 魔镜鼠
 /// </summary>
@@ -63,7 +61,7 @@ public class MagicMirrorMouse : MouseUnit
     public override void OnCastStateEnter()
     {
         isFirstAttack = false; // 进入技能第一次攻击恢复满技力的效果失效
-        animator.Play("PreCast");
+        animatorController.Play("PreCast");
     }
 
     public override void OnCastState()
@@ -77,7 +75,7 @@ public class MagicMirrorMouse : MouseUnit
             if (stealFireEnergySkillAbiliby.IsEndCasting())
             {
                 castState = 2;
-                animator.Play("PostCast");
+                animatorController.Play("PostCast");
                 currentStateTimer = 0;
                 stealFireEnergySkillAbiliby.EndCasting();
             }
@@ -88,7 +86,7 @@ public class MagicMirrorMouse : MouseUnit
             {
                 // 前摇结束
                 stealFireEnergySkillAbiliby.StartCasting(); // 开始施术
-                animator.Play("Cast");
+                animatorController.Play("Cast", true);
                 currentStateTimer = 0;
                 castState = 1;
             }else if(castState == 2)

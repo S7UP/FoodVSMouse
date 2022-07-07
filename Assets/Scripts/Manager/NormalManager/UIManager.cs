@@ -1,5 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
+
 using UnityEngine;
 //负责管理UI的管理者
 public class UIManager
@@ -13,9 +13,7 @@ public class UIManager
         mGameManager = GameManager.Instance;
         currentScenePanelDict = new Dictionary<string, GameObject>();
         mUIFacade = new UIFacade(this);
-        //mUIFacade.currentSceneState = new StartLoadSceneState(mUIFacade);
-        //mUIFacade.currentSceneState = new GameNormalSceneState(mUIFacade);
-        //mUIFacade.currentSceneState = new EditorSceneState(mUIFacade);
+        //mUIFacade.ChangeSceneState(new BaseSceneState(mUIFacade));
     }
 
     // 将UIPanel放回工厂
@@ -29,10 +27,9 @@ public class UIManager
     {
         foreach (var item in currentScenePanelDict)
         {
-            // Debug.Log(item.Value.name);
+            Debug.Log(item.Value.name);
             PushUIPanel(item.Value.name.Substring(0, item.Value.name.Length - 7), item.Value);
         }
-
         currentScenePanelDict.Clear();
     }
 

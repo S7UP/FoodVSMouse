@@ -97,6 +97,7 @@ MonoBehaviour:
   mCurrentHp: 0
   mCurrentTotalShieldValue: 0
   mHeight: 0
+  moveRotate: {x: 0, y: 0}
   isFrozenState: 0
   mName: 
   mType: 0
@@ -104,8 +105,10 @@ MonoBehaviour:
   currentStateTimer: 0
   rigibody2D: {fileID: 0}
   mCollider2D: {fileID: 0}
+  spriteTrans: {fileID: 0}
   mHertIndex: 0
-  moveRotate: {x: 0, y: 0}
+  currentXIndex: 0
+  currentYIndex: 0
 --- !u!1 &7911401160402135796
 GameObject:
   m_ObjectHideFlags: 0
@@ -199,7 +202,7 @@ Animator:
   m_GameObject: {fileID: 7911401160402135796}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 76c867829084a274c9296167494669b5, type: 2}
+  m_Controller: {fileID: 9100000, guid: 2a5463bf578ab7e448a67953ea20c843, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0

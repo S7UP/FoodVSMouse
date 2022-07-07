@@ -1,7 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
 public class BulletHitState : BaseBulletActionState
 {
     private bool isFirstFrame; // 是否为切换时的第一帧 

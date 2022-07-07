@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 856692935310889654}
   m_Layer: 7
   m_Name: 0
-  m_TagString: Ladder
+  m_TagString: AreaEffectItem
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -70,13 +70,17 @@ MonoBehaviour:
   mCurrentHp: 0
   mCurrentTotalShieldValue: 0
   mHeight: 0
+  moveRotate: {x: 0, y: 0}
   isFrozenState: 0
   mName: 
   mType: 0
   mShape: 0
+  typeAndShapeValue: 0
   currentStateTimer: 0
   mGrid: {fileID: 0}
   spriteRenderer: {fileID: 0}
+  animator: {fileID: 0}
+  mBoxCollider2D: {fileID: 0}
 --- !u!1 &7911401160402135796
 GameObject:
   m_ObjectHideFlags: 0
@@ -196,7 +200,7 @@ BoxCollider2D:
   m_Offset: {x: 0, y: 0}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.775, y: 0.2}
+    pivot: {x: 0.775, y: 0.25}
     oldSize: {x: 2.17, y: 1.37}
     newSize: {x: 2.09, y: 2.08}
     adaptiveTilingThreshold: 0.5

@@ -1,18 +1,8 @@
-using LitJson;
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 
 using UnityEngine;
-using UnityEngine.Profiling;
-
-using static BaseEnemyGroup;
-using static UnityEditor.PlayerSettings;
-using static UnityEngine.Networking.UnityWebRequest;
-using static UnityEngine.UI.CanvasScaler;
 
 public class GameController : MonoBehaviour
 {
@@ -33,17 +23,19 @@ public class GameController : MonoBehaviour
     // 引用
     private GameObject[] enemyListGo; // 用于存放敌对单位的父对象
     private GameObject[] allyListGo; // 用于存放友方单位的父对象
-    private GameObject[] itemListGo; // 用于存放地图物品单位的父对象
+    private Transform effectListTrans; // 用于存放特效的
 
     public BaseStage mCurrentStage; // 当前关卡
     public BaseCostController mCostController; // 费用控制器
     public BaseCardController mCardController; // 卡片建造器
-    public BaseSkillController mSkillController; // 技能控制器
+    //public BaseSkillController mSkillController; // 技能控制器
     public BaseProgressController mProgressController; // 游戏进度控制器
     public MapController mMapController; // 格子控制器
+    public ItemController mItemController; // 道具控制器
     public List<BaseUnit>[] mEnemyList; // 存活的敌方单位表
+    public Dictionary<BaseUnit, int> mEnemyChangeRowDict; // 敌人换行字典，int值为原行数，新行数可以读取key当前行数
     public List<BaseUnit>[] mAllyList; // 存活的友方单位表
-    public List<BaseUnit>[] mItemList; // 存活的道具单位表
+    
     public CharacterController mCharacterController; // 当前角色控制器
     public List<BaseBullet> mBulletList; // 存活的子弹表
     public List<AreaEffectExecution> areaEffectExecutionList; // 存活的能力执行体（对象）
@@ -52,7 +44,7 @@ public class GameController : MonoBehaviour
     //BaseRule[] mRuleList; //+ 规则表
     //KeyBoardSetting mKeyBoardSetting; //+ 键位控制接口
     //Recorder mRecorder; //+ 用户操作记录者
-    public NumberManager numberManager;
+    //public NumberManager numberManager;
 
     private int mFrameNum; //+ 当前游戏帧
     public bool isPause;
@@ -60,8 +52,8 @@ public class GameController : MonoBehaviour
     // 所有需要放到GameController管理Init、Update的东西
     protected List<IGameControllerMember> MMemberList;
 
-    // 场景内引用
-    public GameObject uICanvasGo;
+    private IEnumerator mCurrentWaitIEnumerator; // 当前等待协程
+    private Coroutine mCoroutine;
 
     // 定义私有构造函数，使外界不能创建该类实例
     private GameController()
@@ -73,21 +65,87 @@ public class GameController : MonoBehaviour
     public void Pause()
     {
         isPause = true;
+        // 友方单位暂停
+        foreach (var item in mAllyList)
+        {
+            for (int i = 0; i < item.Count; i++)
+            {
+                item[i].MPause();
+            }
+        }
+        // 敌方单位暂停
+        foreach (var item in mEnemyList)
+        {
+            for (int i = 0; i < item.Count; i++)
+            {
+                item[i].MPause();
+            }
+        }
+        // 子弹暂停
+        foreach (var item in mBulletList)
+        {
+            item.MPause();
+        }
+        // 特效暂停
+        foreach (var item in baseEffectList)
+        {
+            item.MPause();
+        }
+        // 各组件暂停事件
+        foreach (var item in MMemberList)
+        {
+            item.MPause();
+        }
     }
 
     // 解除暂停的方法
     public void Resume()
     {
         isPause = false;
+        // 友方单位解除暂停
+        foreach (var item in mAllyList)
+        {
+            for (int i = 0; i < item.Count; i++)
+            {
+                item[i].MResume();
+            }
+        }
+        // 敌方单位解除暂停
+        foreach (var item in mEnemyList)
+        {
+            for (int i = 0; i < item.Count; i++)
+            {
+                item[i].MResume();
+            }
+        }
+        // 特效解除暂停
+        foreach (var item in baseEffectList)
+        {
+            item.MResume();
+        }
+        // 子弹解除暂停
+        foreach (var item in mBulletList)
+        {
+            item.MResume();
+        }
+        // 各组件解除暂停
+        foreach (var item in MMemberList)
+        {
+            item.MResume();
+        }
     }
 
     private void Awake()
     {
-        uICanvasGo = GameObject.Find("Canvas");
+        Debug.Log("GameController Awake!");
+        _instance = this;
+
+        //AbilityManager.Instance.LoadAll();
 
         MMemberList = new List<IGameControllerMember>();
         // 获取当前场景的UIPanel
         GameNormalPanel panel = (GameNormalPanel)GameManager.Instance.uiManager.mUIFacade.currentScenePanelDict[StringManager.GameNormalPanel];
+        panel.InitInGameController();
         // 从UIPanel中获取各种控制器脚本
         mCostController = panel.transform.Find("CostControllerUI").GetComponent<BaseCostController>();
         MMemberList.Add(mCostController);
@@ -97,11 +155,13 @@ public class GameController : MonoBehaviour
         MMemberList.Add(mProgressController);
         mMapController = GameObject.Find("MapController").GetComponent<MapController>();
         MMemberList.Add(mMapController);
+        mItemController = GameObject.Find("ItemController").GetComponent<ItemController>();
+        MMemberList.Add(mItemController);
+        // 获取引用
+        effectListTrans = GameObject.Find("EffectList").transform;
 
-
-        _instance = this;
-        mFrameNum = 0;
-        mEnemyList = new List<BaseUnit>[7];
+        // 敌方表相关
+        mEnemyList = new List<BaseUnit>[MapController.yRow];
         enemyListGo = new GameObject[mEnemyList.Length];
         for (int i = 0; i < mEnemyList.Length; i++)
         {
@@ -110,8 +170,9 @@ public class GameController : MonoBehaviour
             enemyListGo[i] = go;
             go.transform.SetParent(GameObject.Find("EnemyList").transform);
         }
-
-        mAllyList = new List<BaseUnit>[7];
+        mEnemyChangeRowDict = new Dictionary<BaseUnit, int>();
+        // 友方表相关
+        mAllyList = new List<BaseUnit>[MapController.yRow];
         allyListGo = new GameObject[mAllyList.Length];
         for (int i = 0; i < mAllyList.Length; i++)
         {
@@ -120,39 +181,82 @@ public class GameController : MonoBehaviour
             allyListGo[i] = go;
             go.transform.SetParent(GameObject.Find("AllyList").transform);
         }
-
-        mItemList = new List<BaseUnit>[7];
-        itemListGo = new GameObject[mItemList.Length];
-        for (int i = 0; i < mItemList.Length; i++)
-        {
-            mItemList[i] = new List<BaseUnit>();
-            GameObject go = new GameObject("i");
-            itemListGo[i] = go;
-            go.transform.SetParent(GameObject.Find("ItemList").transform);
-        }
-
+        // 子弹表相关
         mBulletList = new List<BaseBullet>();
-
-        isPause = false;
-
+        // 范围效果表相关
         areaEffectExecutionList = new List<AreaEffectExecution>();
+        // 特效表相关
         baseEffectList = new List<BaseEffect>();
+        // 任务执行者表相关
         taskerList = new List<Tasker>();
 
-        // stage test
-        mCurrentStage = new BaseStage();
-        //mCurrentStage.Save();
-        mCurrentStage.DemoLoad();
-        mCurrentStage.Init();
-
         // 加载数值管理器
-        numberManager = new NumberManager();
+        //numberManager = new NumberManager();
 
         // 角色控制器
         mCharacterController = new CharacterController();
         MMemberList.Add(mCharacterController);
 
         Test.OnGameControllerAwake();
+    }
+
+    /// <summary>
+    /// 变量初始化
+    /// </summary>
+    public void Init()
+    {
+        //StopAllCoroutines(); // 停用全部协程
+
+        // 当前关卡对象创建
+        if (mCurrentStage != null)
+            Destroy(mCurrentStage);
+        mCurrentStage = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Stage/Stage").GetComponent<BaseStage>();
+        // mCurrentStage.Save();
+        mCurrentStage.DemoLoad();
+        mCurrentStage.Init();
+
+        // 自身变量初始化
+        mFrameNum = 0;
+        isPause = false;
+        mCurrentWaitIEnumerator = null;
+
+        // 回收场上所有对象 && 自身表引用初始化
+        ClearAllEnemy();
+        ClearAllAlly();
+        ClearAllBullet();
+        ClearAllAreaEffectExecution();
+        ClearAllEffect();
+        ClearAllTasker();
+        mCharacterController.RecycleCurrentCharacter(); // 回收角色对象
+        mItemController.RecycleAll(); // 回收所有道具对象
+        mMapController.RecycleAllGridAndGroup(); // 回收所有格子与格子组对象
+        // 清空游戏对象工厂的所有对象（清空的是上一步回收的东西）
+        GameManager.Instance.ClearGameObjectFactory(FactoryType.GameFactory);
+
+        // 自身携带控制器初始化（要写到初始化的最后，不建议后面再加其他初始化）
+        foreach (IGameControllerMember member in MMemberList)
+        {
+            member.MInit();
+        }
+    }
+
+    /// <summary>
+    /// 重开本场游戏
+    /// </summary>
+    public void Restart()
+    {
+        // 自身属性初始化
+        Init();
+        // 关卡的刷怪逻辑使用协程
+        //StartCoroutine(mCurrentStage.Start());
+        //StopAllCoroutines();
+        mCurrentStage.StartStage();
+    }
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        Restart();
     }
 
     /// <summary>
@@ -223,19 +327,6 @@ public class GameController : MonoBehaviour
         return overGrid;
     }
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        // 
-        foreach (IGameControllerMember member in MMemberList)
-        {
-            member.MInit();
-        }
-
-        // 关卡的刷怪逻辑使用协程
-        StartCoroutine(mCurrentStage.Start());
-    }
-
     // 添加一个美食单位至战场中（管理）
     public FoodUnit AddFoodUnit(FoodUnit food, int yIndex)
     {
@@ -258,8 +349,9 @@ public class GameController : MonoBehaviour
         MouseUnit mouse = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Mouse/"+enemyInfo.type).GetComponent<MouseUnit>();
         mouse.transform.SetParent(enemyListGo[yIndex].transform);
         mouse.MInit();
-        //mMapController.GetGrid(xIndex, yIndex).SetMouseUnitInGrid(mouse, Vector2.right);
         mouse.transform.position = MapManager.GetGridLocalPosition(xIndex, yIndex) + new Vector3(Vector2.right.x * MapManager.gridWidth, Vector2.right.y * MapManager.gridHeight) / 2;
+        mouse.currentXIndex = xIndex;
+        mouse.currentYIndex = yIndex;
         mouse.UpdateRenderLayer(mEnemyList[yIndex].Count);
         mEnemyList[yIndex].Add(mouse);
         return mouse;
@@ -334,13 +426,17 @@ public class GameController : MonoBehaviour
     /// <returns></returns>
     public BaseUnit AddItem(BaseUnit item, int xIndex, int yIndex)
     {
-        item.transform.SetParent(itemListGo[yIndex].transform);
-        mItemList[yIndex].Add(item);
+        item.transform.SetParent(allyListGo[yIndex].transform);
+        //mItemList[yIndex].Add(item);
+        mItemController.GetSpecificRowItemList(yIndex).Add(item);
         BaseGrid g = mMapController.GetGrid(xIndex, yIndex);
         if (g != null)
         {
-            g.SetItemUnitInGrid(item);
-            item.UpdateRenderLayer(mItemList[yIndex].Count);
+            // 设置新的道具在格上的同时，要把同样tag的旧道具强制消亡（如果有）
+            BaseUnit old = g.SetItemUnitInGrid(item);
+            if (old != null)
+                old.ExecuteDeath();
+            item.UpdateRenderLayer(mItemController.GetSpecificRowItemList(yIndex).Count);
         }
         else
         {
@@ -358,9 +454,9 @@ public class GameController : MonoBehaviour
     public BaseUnit AddItem(BaseUnit item)
     {
         int yIndex = item.GetRowIndex();
-        item.transform.SetParent(itemListGo[yIndex].transform);
-        mItemList[yIndex].Add(item);
-        item.UpdateRenderLayer(mItemList[yIndex].Count);
+        mItemController.SetItemRowParent(item, yIndex);
+        mItemController.GetSpecificRowItemList(yIndex).Add(item);
+        item.UpdateRenderLayer(mItemController.GetSpecificRowItemList(yIndex).Count);
         return item;
     }
 
@@ -373,7 +469,6 @@ public class GameController : MonoBehaviour
         SetItemAttribute(JsonManager.Load<BaseUnit.Attribute>("Character/" + type + "/" + shape + "")); // 准备先持有要创建实例的初始化信息
         CharacterUnit c = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Character/" + type + "/" + shape).GetComponent<CharacterUnit>();
         c.MInit();
-        //AddCharacter(c, xIndex, yIndex);
         return c;
     }
 
@@ -383,10 +478,10 @@ public class GameController : MonoBehaviour
     /// <returns></returns>
     public CharacterUnit AddCharacter(CharacterUnit c, int xIndex, int yIndex)
     {
-        c.transform.SetParent(itemListGo[yIndex].transform);
+        c.transform.SetParent(allyListGo[yIndex].transform);
         mAllyList[yIndex].Add(c);
         mMapController.GetGrid(xIndex, yIndex).SetCharacterUnitInGrid(c);
-        c.UpdateRenderLayer(mItemList[yIndex].Count);
+        c.UpdateRenderLayer(mItemController.GetSpecificRowItemList(yIndex).Count);
         return c;
     }
 
@@ -397,11 +492,20 @@ public class GameController : MonoBehaviour
     }
 
     /// <summary>
-    /// 添加特效
+    /// 添加特效，默认父转换为effectListTrans
     /// </summary>
     public void AddEffect(BaseEffect baseEffect)
     {
         baseEffectList.Add(baseEffect);
+        SetEffectDefaultParentTrans(baseEffect);
+    }
+
+    /// <summary>
+    /// 设置特效位于默认的父变换
+    /// </summary>
+    public void SetEffectDefaultParentTrans(BaseEffect baseEffect)
+    {
+        baseEffect.transform.SetParent(effectListTrans);
     }
 
     /// <summary>
@@ -428,6 +532,17 @@ public class GameController : MonoBehaviour
 
     /// <summary>
     /// 在GameController协程中，产生一个等待若干帧的指令
+    /// </summary>
+    /// <param name="time"></param>
+    public Coroutine Wait(int time)
+    {
+        //mCurrentWaitIEnumerator = WaitForIEnumerator(time);
+        //return StartCoroutine(mCurrentWaitIEnumerator);
+        return mCurrentStage.StartCoroutine(mCurrentStage.WaitForIEnumerator(time));
+    }
+
+    /// <summary>
+    /// 在GameController协程中，产生一个等待若干帧的IEnumerator
     /// </summary>
     /// <returns></returns>
     public IEnumerator WaitForIEnumerator(int time)
@@ -482,6 +597,17 @@ public class GameController : MonoBehaviour
             }
         }
         return list;
+    }
+
+    /// <summary>
+    /// 更换敌人所在行
+    /// </summary>
+    /// <param name="oldIndex"></param>
+    /// <param name="newIndex"></param>
+    /// <param name="unit"></param>
+    public void ChangeEnemyRow(int oldIndex, BaseUnit unit)
+    {
+        mEnemyChangeRowDict.Add(unit, oldIndex);
     }
 
     /// <summary>
@@ -545,23 +671,101 @@ public class GameController : MonoBehaviour
     /// </summary>
     public void AddCostResourceModifier(string name, FloatModifier floatModifier)
     {
-        mCostController.AddModifier(name, floatModifier);
+        mCostController.AddCostResourceModifier(name, floatModifier);
     }
 
     public void RemoveCostResourceModifier(string name, FloatModifier floatModifier)
     {
-        mCostController.RemoveModifier(name, floatModifier);
+        mCostController.RemoveCostResourceModifier(name, floatModifier);
     }
 
-    public NumberManager GetNumberManager()
+    /// <summary>
+    /// 清理所有敌人
+    /// </summary>
+    public void ClearAllEnemy()
     {
-        return numberManager;
+        for (int i = 0; i < mEnemyList.Length; i++)
+        {
+            foreach (var item in mEnemyList[i])
+            {
+                item.ExcuteRecycle();
+            }
+            mEnemyList[i].Clear();
+        }
+        mEnemyChangeRowDict.Clear();
     }
+
+    /// <summary>
+    /// 清理所有友方
+    /// </summary>
+    public void ClearAllAlly()
+    {
+        for (int i = 0; i < mAllyList.Length; i++)
+        {
+            foreach (var item in mAllyList[i])
+            {
+                item.ExcuteRecycle();
+            }
+            mAllyList[i].Clear();
+        }
+    }
+
+    /// <summary>
+    /// 清理所有子弹
+    /// </summary>
+    public void ClearAllBullet()
+    {
+        foreach (var item in mBulletList)
+        {
+            item.ExecuteRecycle();
+        }
+        mBulletList.Clear();
+    }
+
+    /// <summary>
+    /// 清理所有范围效果
+    /// </summary>
+    public void ClearAllAreaEffectExecution()
+    {
+        foreach (var item in areaEffectExecutionList)
+        {
+            item.ExecuteRecycle();
+        }
+        areaEffectExecutionList.Clear();
+    }
+
+    /// <summary>
+    /// 清理所有特效
+    /// </summary>
+    public void ClearAllEffect()
+    {
+        foreach (var item in baseEffectList)
+        {
+            item.Recycle();
+        }
+        baseEffectList.Clear();
+    }
+
+    /// <summary>
+    /// 清理所有任务执行器
+    /// </summary>
+    public void ClearAllTasker()
+    {
+        foreach (var item in taskerList)
+        {
+            item.ExecuteRecycle();
+        }
+        taskerList.Clear();
+    }
+
+    //public NumberManager GetNumberManager()
+    //{
+    //    return numberManager;
+    //}
 
     // Update is called once per frame
     void Update()
     {
-        
         if (isPause)
         {
             foreach (IGameControllerMember member in MMemberList)
@@ -573,6 +777,15 @@ public class GameController : MonoBehaviour
             
 
         mFrameNum ++; // 先更新游戏帧，以保证Update里面与协程接收到的帧是相同的
+        
+        // mCurrentStage.Update();
+
+        // test
+        if (Input.GetKeyDown(KeyCode.Alpha1))
+        {
+            GameNormalPanel gameNormalPanel = (GameNormalPanel)GameManager.Instance.uiManager.mUIFacade.currentScenePanelDict[StringManager.GameNormalPanel];
+            gameNormalPanel.OnShovelSlotTrigger();
+        }
 
         // 各种组件的Update()
         foreach (IGameControllerMember member in MMemberList)
@@ -580,6 +793,7 @@ public class GameController : MonoBehaviour
             member.MUpdate();
         }
 
+        // 范围效果帧逻辑
         for (int i = 0; i < areaEffectExecutionList.Count; i++)
         {
             AreaEffectExecution e = areaEffectExecutionList[i];
@@ -613,13 +827,23 @@ public class GameController : MonoBehaviour
                     flag = true;
                 }
             }
-            if(flag)
+            if (flag)
                 for (int i = 0; i < item.Count; i++)
                 {
                     BaseUnit unit = item[i];
                     unit.UpdateRenderLayer(i);
                 }
         }
+        // 敌人换行
+        foreach (var item in mEnemyChangeRowDict)
+        {
+            BaseUnit unit = item.Key;
+            GetSpecificRowEnemyList(item.Value).Remove(unit);
+            GetSpecificRowEnemyList(unit.GetRowIndex()).Add(unit);
+            unit.transform.SetParent(enemyListGo[unit.GetRowIndex()].transform);
+            unit.UpdateRenderLayer(GetSpecificRowEnemyList(unit.GetRowIndex()).Count);
+        }
+        mEnemyChangeRowDict.Clear();
         // 友方帧逻辑
         foreach (var item in mAllyList)
         {
@@ -671,32 +895,6 @@ public class GameController : MonoBehaviour
                     unit.UpdateRenderLayer(i);
                 }
             }
-        }
-
-        // 道具帧逻辑
-        foreach (var item in mItemList)
-        {
-            bool flag = false;
-            for (int i = 0; i < item.Count; i++)
-            {
-                BaseUnit unit = item[i];
-                if (unit.IsValid())
-                {
-                    unit.MUpdate();
-                }
-                else
-                {
-                    i--;
-                    item.Remove(unit);
-                    flag = true;
-                }
-            }
-            if (flag)
-                for (int i = 0; i < item.Count; i++)
-                {
-                    BaseUnit unit = item[i];
-                    unit.UpdateRenderLayer(i);
-                }
         }
 
         // 特效帧逻辑

@@ -13,6 +13,7 @@ TagManager:
   - EnemyBullet
   - Ladder
   - Character
+  - AreaEffectItem
   layers:
   - Default
   - TransparentFX
@@ -24,8 +25,8 @@ TagManager:
   - Enemy
   - Bullet
   - Grid
-  - 
-  - 
+  - ItemCollideEnemy
+  - ItemCollideAlly
   - 
   - 
   - 

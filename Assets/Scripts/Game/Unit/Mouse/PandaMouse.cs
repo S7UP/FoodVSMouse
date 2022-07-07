@@ -1,8 +1,6 @@
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
-using static UnityEditor.Progress;
+using UnityEngine;
 /// <summary>
 /// 熊猫类
 /// </summary>
@@ -160,30 +158,16 @@ public class PandaMouse : MouseUnit
         return animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 1.0f; // 攻击动画播放完整一次后视为技能结束
     }
 
-    /// <summary>
-    /// 退出普通攻击后要做的事
-    /// </summary>
-    public override void AfterGeneralAttack()
-    {
-        mAttackFlag = true;
-        // 如果有可以攻击的目标，则停下来等待下一次攻击，否则前进
-        if (IsHasTarget())
-            SetActionState(new IdleState(this));
-        else
-            SetActionState(new MoveState(this));
-        UpdateBlockState(); // 更新阻挡状态
-    }
-
 
     public override void OnIdleStateEnter()
     {
         if (throwLittleMouseSkillAbility.isThrow)
         {
-            animator.Play("Idle1");
+            animatorController.Play("Idle1", true);
         }
         else
         {
-            animator.Play("Idle0");
+            animatorController.Play("Idle0", true);
         }
         
     }
@@ -192,11 +176,11 @@ public class PandaMouse : MouseUnit
     {
         if (throwLittleMouseSkillAbility.isThrow)
         {
-            animator.Play("Move1");
+            animatorController.Play("Move1", true);
         }
         else
         {
-            animator.Play("Move0");
+            animatorController.Play("Move0", true);
         }
     }
 
@@ -204,16 +188,16 @@ public class PandaMouse : MouseUnit
     {
         if (throwLittleMouseSkillAbility.isThrow)
         {
-            animator.Play("Attack1");
+            animatorController.Play("Attack1");
         }
         else
         {
-            animator.Play("Attack0");
+            animatorController.Play("Attack0");
         }
     }
 
     public override void OnCastStateEnter()
     {
-        animator.Play("Cast");
+        animatorController.Play("Cast");
     }
 }

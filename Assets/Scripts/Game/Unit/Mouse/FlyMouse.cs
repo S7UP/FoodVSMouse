@@ -1,7 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
 public class FlyMouse : MouseUnit
 {
     private bool isDrop; // 是否被击落
@@ -51,6 +47,12 @@ public class FlyMouse : MouseUnit
             SetActionState(new TransitionState(this));
             // 取消飞行状态移除移速加成
             NumericBox.MoveSpeed.RemovePctAddModifier(floatModifier);
+            // 如果是位于最后一列降落的，则直接触发猫猫
+            if(GetColumnIndex() <= 0)
+            {
+                BaseCat cat = GameController.Instance.mItemController.GetSpecificRowCat(GetRowIndex());
+                cat.OnTriggerEvent(); // 这个方法里已经包括了是否触发的判定，不用担心反复触发的问题
+            }
         }
     }
 
@@ -86,7 +88,7 @@ public class FlyMouse : MouseUnit
     /// </summary>
     public override void OnTransitionStateEnter()
     {
-        animator.Play("Drop");
+        animatorController.Play("Drop");
     }
 
     public override void OnTransitionState()

@@ -1,6 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 /// <summary>
 /// »Ã’ﬂ ÛÀÊ¥”
 /// </summary>
@@ -12,12 +9,12 @@ public class NinjaRetinueMouse : MouseUnit
     /// </summary>
     public void PlayRectifyClip()
     {
-        animator.Play("Rectify");
+        animatorController.Play("Rectify");
     }
 
     public override void OnTransitionStateEnter()
     {
-        animator.Play("Appear");
+        animatorController.Play("Appear");
         CloseCollision();
     }
 

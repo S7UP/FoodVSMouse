@@ -1,5 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
+
 using UnityEngine;
 // 精灵资源工厂
 public class SpriteFactory : IBaseResourceFactory<Sprite>

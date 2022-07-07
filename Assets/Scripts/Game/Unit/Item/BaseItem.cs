@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class BaseItem : BaseUnit
@@ -8,17 +6,21 @@ public class BaseItem : BaseUnit
     public BaseGrid mGrid;
     public SpriteRenderer spriteRenderer;
     public Animator animator;
+    public BoxCollider2D mBoxCollider2D;
 
     public override void Awake()
     {
         base.Awake();
         spriteRenderer = transform.Find("SpriteGo").GetComponent<SpriteRenderer>();
         animator = transform.Find("SpriteGo").GetComponent<Animator>();
+        mBoxCollider2D = transform.GetComponent<BoxCollider2D>();
     }
 
     public override void MInit()
     {
         base.MInit();
+        // 动画控制器绑定animator
+        animatorController.ChangeAnimator(animator);
         mGrid = null;
 
     }
@@ -72,5 +74,36 @@ public class BaseItem : BaseUnit
     public override void SetSpriteLocalPosition(Vector2 vector2)
     {
         spriteRenderer.transform.localPosition = vector2;
+    }
+
+    public override void OnDieStateEnter()
+    {
+        animatorController.Play("Die");
+    }
+
+    /// <summary>
+    /// 死亡动画
+    /// </summary>
+    public override void DuringDeath()
+    {
+        // 切换时的第一帧直接不执行update()，因为下述的info.normalizedTime的值还停留在上一个状态，逻辑会出问题！
+        if (currentStateTimer <= 0)
+        {
+            return;
+        }
+
+        if (AnimatorManager.GetNormalizedTime(animator)>1.0) // 动画播放完毕后调用DeathEvent()
+        {
+            DeathEvent();
+        }
+    }
+
+    /// <summary>
+    /// 可否被选择为目标
+    /// </summary>
+    /// <returns></returns>
+    public override bool CanBeSelectedAsTarget()
+    {
+        return mBoxCollider2D.enabled;
     }
 }

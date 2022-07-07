@@ -1,7 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
 /// <summary>
 /// 状态效果能力，挂在单位上执行特定的持续能力效果（BUFF类型）
 /// </summary>

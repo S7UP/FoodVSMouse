@@ -1,5 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
+
 using UnityEngine;
 
 /// <summary>
@@ -12,9 +12,11 @@ public class AreaEffectExecution : MonoBehaviour
     private int fixCount = 0;
     public List<FoodUnit> foodUnitList = new List<FoodUnit>();
     public List<MouseUnit> mouseUnitList = new List<MouseUnit>();
+    public List<CharacterUnit> charcaterList = new List<CharacterUnit>();
     public bool isAlive = true;
     public bool isAffectFood;
     public bool isAffectMouse;
+    public bool isAffectCharacter;
     public bool isIgnoreHeight; // 是否无视高度
     public float affectHeight; // 目标受影响的高度
 
@@ -32,6 +34,7 @@ public class AreaEffectExecution : MonoBehaviour
         isAlive = true;
         isAffectFood = false;
         isAffectMouse = false;
+        isAffectCharacter = false;
         isIgnoreHeight = true; // 默认情况下无视高度
         affectHeight = 0;
     }
@@ -55,6 +58,13 @@ public class AreaEffectExecution : MonoBehaviour
             if (IsMeetingCondition(mouse) && (isIgnoreHeight || mouse.GetHeight() == affectHeight))
             {
                 mouseUnitList.Add(mouse);
+            }
+        }else if (isAffectCharacter && collision.tag.Equals("Character"))
+        {
+            CharacterUnit c = collision.GetComponent<CharacterUnit>();
+            if (IsMeetingCondition(c) && (isIgnoreHeight || c.GetHeight() == affectHeight))
+            {
+                charcaterList.Add(c);
             }
         }
     }
@@ -87,6 +97,15 @@ public class AreaEffectExecution : MonoBehaviour
     /// 老鼠单位的事件
     /// </summary>
     public virtual void EventMouse(MouseUnit unit)
+    {
+
+    }
+
+    /// <summary>
+    /// 人物单位事件
+    /// </summary>
+    /// <param name="unit"></param>
+    public virtual void EventCharacter(CharacterUnit unit)
     {
 
     }
@@ -132,8 +151,20 @@ public class AreaEffectExecution : MonoBehaviour
             {
                 EventMouse(item);
             }
+            foreach (var item in charcaterList)
+            {
+                EventCharacter(item);
+            }
             isAlive = false;
-            GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, resourcePath, this.gameObject);
+            ExecuteRecycle();
         }
+    }
+
+    /// <summary>
+    /// 执行回收
+    /// </summary>
+    public void ExecuteRecycle()
+    {
+        GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, resourcePath, this.gameObject);
     }
 }

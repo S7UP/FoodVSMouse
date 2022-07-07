@@ -1,8 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-
-using static UnityEditor.Experimental.GraphView.GraphView;
 /// <summary>
 /// 角色单位
 /// </summary>
@@ -12,7 +8,7 @@ public class CharacterUnit : BaseUnit
     protected Animator animator;
     private SpriteRenderer spriteRenderer;
     public Material defaultMaterial;
-    public Collider2D mCollider2D;
+    public BoxCollider2D mBoxCollider2D;
     public Transform spriteTrans;
 
     // 其它组件
@@ -31,9 +27,8 @@ public class CharacterUnit : BaseUnit
         spriteTrans = transform.Find("SpriteGo");
         animator = spriteTrans.gameObject.GetComponent<Animator>();
         spriteRenderer = spriteTrans.gameObject.GetComponent<SpriteRenderer>();
-        mCollider2D = transform.GetComponent<Collider2D>();
+        mBoxCollider2D = transform.GetComponent<BoxCollider2D>();
         defaultMaterial = spriteRenderer.material;  // 装上正常的受击材质
-        AnimatorContinue(); // 恢复动画
     }
 
     // 单位被对象池回收时触发
@@ -49,9 +44,10 @@ public class CharacterUnit : BaseUnit
     {
         base.MInit();
         animator.runtimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Character/" + mType + "/" + mShape);
+        // 动画控制器绑定animator
+        animatorController.ChangeAnimator(animator);
         // 受伤闪白
         AddActionPointListener(ActionPointType.PostReceiveDamage, FlashWhenHited);
-        AnimatorContinue(); // 恢复播放动画
         SetActionState(new IdleState(this));
         // 移除原本的武器引用（如果有
         if (weapons != null)
@@ -66,6 +62,15 @@ public class CharacterUnit : BaseUnit
     public override void SetUnitType()
     {
         mUnitType = UnitType.Character;
+    }
+
+    /// <summary>
+    /// 设置判定参数
+    /// </summary>
+    public override void SetCollider2DParam()
+    {
+        mBoxCollider2D.offset = new Vector2(0, 0);
+        mBoxCollider2D.size = new Vector2(0.49f * MapManager.gridWidth, 0.49f * MapManager.gridHeight);
     }
 
     /// <summary>
@@ -231,14 +236,14 @@ public class CharacterUnit : BaseUnit
     /// </summary>
     public override void OnIdleStateEnter()
     {
-        animator.Play("Idle");
+        animatorController.Play("Idle", true);
     }
 
     public override void OnAttackStateEnter()
     {
         // 每次攻击时，最好根据攻速来计算一下播放速度，然后改变播放速度
         UpdateAttackAnimationSpeed();
-        animator.Play("Attack");
+        animatorController.Play("Attack");
     }
 
     public override void OnAttackStateExit()
@@ -261,7 +266,7 @@ public class CharacterUnit : BaseUnit
     public override void OnBurnStateEnter()
     {
         // 禁止播放动画
-        AnimatorStop();
+        // PauseCurrentAnimatorState(new BoolModifier(true));
     }
 
     public override void DuringBurn(float _Threshold)
@@ -274,10 +279,15 @@ public class CharacterUnit : BaseUnit
     /// </summary>
     private void UpdateAttackAnimationSpeed()
     {
-        float time = AnimatorManager.GetClipTime(animator, "Attack"); // 1倍情况下，一次攻击的默认时间 秒
-        float interval = 1 / NumericBox.AttackSpeed.Value; // 攻击间隔  秒
-        float rate = Mathf.Max(1, time / interval);
-        AnimatorManager.SetClipSpeed(animator, "Attack", rate);
+        //float time = AnimatorManager.GetClipTime(animator, "Attack"); // 1倍情况下，一次攻击的默认时间 秒
+        //float interval = 1 / NumericBox.AttackSpeed.Value; // 攻击间隔  秒
+        //float rate = Mathf.Max(1, time / interval);
+        //AnimatorManager.SetClipSpeed(animator, "Attack", rate);
+        AnimatorStateRecorder a = animatorController.GetAnimatorStateRecorder("Attack");
+        float time = a.aniTime; // 一倍速下一次攻击动画的播放时间（帧）
+        float interval = 1 / NumericBox.AttackSpeed.Value*60;  // 攻击间隔（帧）
+        float speed = Mathf.Max(1, time / interval); // 计算动画实际播放速度
+        animatorController.SetSpeed("Attack", speed);
     }
 
     /// <summary>
@@ -301,16 +311,6 @@ public class CharacterUnit : BaseUnit
 
     }
 
-    public override void AnimatorStop()
-    {
-        animator.speed = 0;
-    }
-
-    public override void AnimatorContinue()
-    {
-        animator.speed = 1;
-    }
-
     // 死亡后，将自身信息从对应格子移除，以腾出空间给后续其他同格子分类型卡片使用
     public override void AfterDeath()
     {
@@ -320,6 +320,8 @@ public class CharacterUnit : BaseUnit
             weapons.DeathEvent();
             weapons = null;
         }
+        // 更新角色管理器的信息
+
     }
 
     public override void MUpdate()
@@ -366,7 +368,7 @@ public class CharacterUnit : BaseUnit
     /// </summary>
     public override void OpenCollision()
     {
-        mCollider2D.enabled = true;
+        mBoxCollider2D.enabled = true;
     }
 
     /// <summary>
@@ -374,7 +376,7 @@ public class CharacterUnit : BaseUnit
     /// </summary>
     public override void CloseCollision()
     {
-        mCollider2D.enabled = false;
+        mBoxCollider2D.enabled = false;
     }
 
     /// <summary>
@@ -427,5 +429,28 @@ public class CharacterUnit : BaseUnit
     public SpriteRenderer GetSpriteRender()
     {
         return spriteRenderer;
+    }
+
+    /// <summary>
+    /// 可否被选择为目标
+    /// </summary>
+    /// <returns></returns>
+    public override bool CanBeSelectedAsTarget()
+    {
+        return mBoxCollider2D.enabled;
+    }
+
+    public override void MPause()
+    {
+        base.MPause();
+        // 暂停武器动作
+        weapons.MPause();
+    }
+
+    public override void MResume()
+    {
+        base.MResume();
+        // 取消暂停武器动作
+        weapons.MResume();
     }
 }

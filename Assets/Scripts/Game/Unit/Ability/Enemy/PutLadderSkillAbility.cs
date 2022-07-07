@@ -1,6 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 using System;
 /// <summary>
 /// °²·Åµ¯»É
@@ -43,12 +40,7 @@ public class PutLadderSkillAbility : SkillAbility
     /// </summary>
     public override void OnSpelling()
     {
-        //if (canTriggerEvent)
-        //{
-        //    canTriggerEvent = false;
-        //    if (PutEvent != null)
-        //        PutEvent();
-        //}
+
     }
 
     /// <summary>
@@ -69,8 +61,6 @@ public class PutLadderSkillAbility : SkillAbility
 
     public override void AfterSpell()
     {
-        //if (PutEvent != null)
-        //    PutEvent();
         SetSkilled();
         canEndSkill = false;
         canSkill = false;

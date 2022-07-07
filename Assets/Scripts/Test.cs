@@ -1,10 +1,8 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Test
 {
-    public static string TestStageName = "singleMouseText";
+    public static string TestStageName = "151"; // "singleMouseText"
 
     public static void OnGameControllerAwake()
     {

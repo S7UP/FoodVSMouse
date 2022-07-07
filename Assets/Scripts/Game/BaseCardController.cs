@@ -1,50 +1,69 @@
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
+using UnityEngine;
+/// <summary>
+/// 卡片建造控制器
+/// </summary>
 public class BaseCardController : MonoBehaviour, IBaseCardController, IGameControllerMember
 {
-    private GameController mGameController;
     private GameNormalPanel mGameNormalPanel;
-    public List<BaseCardBuilder> mCardBuilderList; // 所携带的卡片的建造器表
+    public List<BaseCardBuilder> mCardBuilderList = new List<BaseCardBuilder>(); // 所携带的卡片的建造器表
 
-    public int mSelcetCardBuilderIndex; // 当前被选中的建造器的下标
+    public BaseCardBuilder mSelectedCardBuilder;
     public BaseGrid mSelectGrid; // 当前被选中的格子
 
     public bool isSelectCard;
+    public bool isSelectShovel; // 是否选择铲子
     public bool isSelectGrid;
 
+    /// <summary>
+    /// 初始化方法
+    /// </summary>
     public void MInit()
     {
-        mGameController = GameController.Instance;
+        // 变量初始化
         mGameNormalPanel = (GameNormalPanel)GameManager.Instance.uiManager.mUIFacade.currentScenePanelDict[StringManager.GameNormalPanel];
-        mSelcetCardBuilderIndex = -1;
+        mGameNormalPanel.ClearAllSlot(); // 清空卡槽
+        mSelectedCardBuilder = null;
         isSelectCard = false;
         isSelectGrid = false;
+        mCardBuilderList.Clear();
+        
+
+
+        CancelSelectCard();
+        CancelSelectShovel();
 
         // 初始化卡槽信息，需要外部读取赋值，现拟赋值
         List<int[]> inList = new List<int[]>();
-        inList.Add(new int[] { 0, 2, 12 });
-        inList.Add(new int[] { 1, 2, 12 });
-        inList.Add(new int[] { 2, 2, 12 });
-        inList.Add(new int[] { 4, 1, 12 });
-        inList.Add(new int[] { 6, 2, 12 });
-        inList.Add(new int[]{ 7, 2, 12 });
-        inList.Add(new int[]{ 8, 2, 12 });
-        inList.Add(new int[] { 11, 0, 12 });
-        inList.Add(new int[] { 12, 1, 12 });
-        inList.Add(new int[] { 15, 0, 12 });
-        inList.Add(new int[] { 16, 0, 12 });
-        inList.Add(new int[] { 17, 0, 12 });
-        inList.Add(new int[] { 18, 0, 12 });
+        inList.Add(new int[] { ((int)FoodNameTypeMap.CoffeePowder), 0, 16});
+        inList.Add(new int[] { 0, 2, 16 });
+        inList.Add(new int[] { 1, 2, 16 });
+        inList.Add(new int[] { 2, 1, 16 });
+        inList.Add(new int[] { 4, 1, 16 });
+        inList.Add(new int[] { ((int)FoodNameTypeMap.IceCream), 1, 10 });
+        inList.Add(new int[] { 6, 2, 16 });
+        inList.Add(new int[]{ 7, 2, 16 });
+        inList.Add(new int[]{ 8, 2, 16 });
+        inList.Add(new int[] { 11, 0, 16 });
+        inList.Add(new int[] { 12, 1, 16 });
+        inList.Add(new int[] { 15, 0, 16 });
+        inList.Add(new int[] { 16, 0, 16 });
+        inList.Add(new int[] { 17, 0, 16 });
+        inList.Add(new int[] { 18, 0, 16 });
 
-        mCardBuilderList = new List<BaseCardBuilder>();
+        CardBuilderManager m = new CardBuilderManager();
         for (int i = 0; i < inList.Count; i++)
         {
             // 产生卡片建造器Object实例的同时取得其对应脚本，与UI层作关联
-            BaseCardBuilder cardBuilder = GameManager.Instance.GetGameObjectResource(FactoryType.UIFactory, "CardBuilder").GetComponent<BaseCardBuilder>();
-            cardBuilder.MInit(inList[i][0], inList[i][1], inList[i][2]);
-            mCardBuilderList.Add(cardBuilder);
+            BaseCardBuilder cardBuilder = BaseCardBuilder.GetResource();
+            cardBuilder.MInit(); // 初始化数据
+            cardBuilder.Load(inList[i][0], inList[i][1], inList[i][2]); // 读取对应信息
+            m.SetDefaultActionListener(cardBuilder); // 设置默认监听
+            if (mGameNormalPanel.AddCardSlot(cardBuilder))  // 将对象添加到卡槽UI里，负责显示，如果添加成功则执行以下，否则回收目标对象！
+                mCardBuilderList.Add(cardBuilder); // 负责更新数据
+            else
+                cardBuilder.Recycle();
         }
     }
 
@@ -58,7 +77,22 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
     /// </summary>
     public void SelectCard(int selectBuilderIndex)
     {
-        mSelcetCardBuilderIndex = selectBuilderIndex;
+        // 取消当前铲子选择
+        CancelSelectShovel();
+        BaseCardBuilder old = mSelectedCardBuilder; // 上一个建造器
+        BaseCardBuilder new_builder = mCardBuilderList[selectBuilderIndex]; // 下一个建造器
+        // 如果是同一个建造器，则取消放卡
+        if (old == new_builder)
+        {
+            CancelSelectCard();
+            return;
+        }
+        // 执行上一个建造器退出选择事件
+        if(old!=null)
+            old.TriggerOnSelectedExitEvent(new_builder);
+        mSelectedCardBuilder = new_builder;
+        // 执行下一个建造器的进入事件
+        mSelectedCardBuilder.TriggerOnSelectedEnterEvent(old); 
         isSelectCard = true;
         // 通知UI进入建造模式了，这一步执行后鼠标悬停处将显示卡片建造模型
         mGameNormalPanel.EnterCardConstructMode();
@@ -69,10 +103,32 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
     /// </summary>
     public void CancelSelectCard()
     {
-        mSelcetCardBuilderIndex = -1;
+        if(mSelectedCardBuilder!=null)
+            mSelectedCardBuilder.TriggerOnSelectedExitEvent(null); // 执行上一个建造器的结束事件
+        mSelectedCardBuilder = null;
         isSelectCard = false;
         // 通知UI要结束建造模式了，这一步执行隐藏卡片建造模型（失活处理）
         mGameNormalPanel.ExitCardConstructMode();
+    }
+
+    /// <summary>
+    /// 选择铲子
+    /// </summary>
+    public void SelectShovel()
+    {
+        // 取消当前卡片选择
+        CancelSelectCard();
+        isSelectShovel = true;
+        mGameNormalPanel.EnterCardRemoveMode();
+    }
+
+    /// <summary>
+    /// 取消选择铲子
+    /// </summary>
+    public void CancelSelectShovel()
+    {
+        isSelectShovel = false;
+        mGameNormalPanel.ExitCardRemoveMode();
     }
 
     /// <summary>
@@ -81,7 +137,7 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
     /// <returns></returns>
     public BaseCardBuilder GetSelectCardBuilder()
     {
-        return mCardBuilderList[mSelcetCardBuilderIndex];
+        return mSelectedCardBuilder;
     }
 
     /// <summary>
@@ -92,10 +148,12 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
         BaseCardBuilder cardBuilder = GetSelectCardBuilder();
         if (cardBuilder.CanConstructe())
         {
+            cardBuilder.TriggerBeforeBuildAction();
             cardBuilder.Constructe(); // 产生实体
             cardBuilder.InitInstance(); // 初始化实体信息
             // 扣钱！
             cardBuilder.Cost();
+            cardBuilder.TriggerAfterBuildAction();
             return true;
         }
         else
@@ -105,6 +163,40 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
         }
     }
 
+    /// <summary>
+    /// 进行卡片移除，移除顺序默认按照被攻击顺序移除
+    /// </summary>
+    public bool Destructe()
+    {
+        BaseGrid g = GameController.Instance.GetOverGrid();
+        if (g != null)
+        {
+            BaseUnit target = g.GetHighestAttackPriorityUnit();
+            if (target is FoodUnit)
+            {
+                // 添加一个移除特效
+                BaseEffect e = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Effect/ShovelEffect").GetComponent<BaseEffect>();
+                e.transform.position = g.transform.position;
+                GameController.Instance.AddEffect(e);
+                target.BeforeDeath();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// 移除当前全部卡槽
+    /// </summary>
+    public void RemoveAllSlot()
+    {
+        foreach (var cardBuilder in mCardBuilderList)
+        {
+            cardBuilder.Recycle();
+        }
+        mCardBuilderList.Clear();
+    }
+
     public void MDestory()
     {
         throw new System.NotImplementedException();
@@ -112,12 +204,12 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
 
     public void MPause()
     {
-        throw new System.NotImplementedException();
+        
     }
 
     public void MResume()
     {
-        throw new System.NotImplementedException();
+        
     }
 
     /// <summary>
@@ -131,9 +223,9 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
             cardBuilder.MUpdate();
         }
 
-        // 在选取卡片状态时，每帧都要判断鼠标的按下情况
         if (isSelectCard)
         {
+            // 在选取卡片状态时，每帧都要判断鼠标的按下情况
             if (Input.GetMouseButtonDown(0)) // 左键尝试放卡
             {
                 // TODO 读取当前卡片和格子信息，综合判断能否放下去，放下去后进行后续处理然后退出放卡模式
@@ -151,6 +243,27 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
             else if(Input.GetMouseButtonDown(1)){ // 右键直接取消
                 Debug.Log("您取消了放卡");
                 CancelSelectCard();
+            }
+        }else if (isSelectShovel)
+        {
+            // 在使用铲子状态时，每帧都要判断鼠标的按下情况
+            if (Input.GetMouseButtonDown(0)) // 左键尝试放卡
+            {
+                if (Destructe()) // 执行一次移除操作
+                {
+                    Debug.Log("您移除了卡");
+                }
+                else
+                {
+                    Debug.Log("移除失败，请选择合适位置放卡！");
+                }
+                CancelSelectShovel();
+            }
+            else if (Input.GetMouseButtonDown(1))
+            { 
+                // 右键直接取消
+                Debug.Log("您取消了移除卡");
+                CancelSelectShovel();
             }
         }
     }

@@ -1,6 +1,4 @@
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 //工厂管理，负责管理各种类型的工厂以及对象池
 public class FactoryManager
 {

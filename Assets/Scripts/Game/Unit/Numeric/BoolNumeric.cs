@@ -1,7 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
 public class BoolNumeric
 {
     // ×îÖÕÊýÖµ
@@ -20,7 +16,7 @@ public class BoolNumeric
     {
         DecideCollector.Modifiers.Clear();
         ImmuneCollector.Modifiers.Clear();
-        Value = false;
+        Update();
     }
 
     public void AddDecideModifier(BoolModifier modifier)

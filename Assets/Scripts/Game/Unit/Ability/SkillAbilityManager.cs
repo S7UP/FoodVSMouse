@@ -1,8 +1,4 @@
-using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
-
-using UnityEngine;
 
 /// <summary>
 /// 主动技能管理器（附加在单位上的），让每个单位都可以拥有技能的东西
@@ -73,6 +69,20 @@ public sealed class SkillAbilityManager
             {
                 item.TryActivateAbility();
                 return;
+            }
+        }
+    }
+
+    /// <summary>
+    /// 尝试结束所有正在施放的技能（一般用于目标死亡时）
+    /// </summary>
+    public void TryEndAllSpellingSkillAbility()
+    {
+        foreach (var item in skillAbilityList)
+        {
+            if (item.isSpelling)
+            {
+                item.EndActivate();
             }
         }
     }

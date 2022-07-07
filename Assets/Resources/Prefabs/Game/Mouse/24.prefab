@@ -107,6 +107,8 @@ MonoBehaviour:
   mCollider2D: {fileID: 0}
   spriteTrans: {fileID: 0}
   mHertIndex: 0
+  currentXIndex: 0
+  currentYIndex: 0
 --- !u!1 &7911401160402135796
 GameObject:
   m_ObjectHideFlags: 0
@@ -200,7 +202,7 @@ Animator:
   m_GameObject: {fileID: 7911401160402135796}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: c523313c51596af4c848961e447370b6, type: 2}
+  m_Controller: {fileID: 9100000, guid: b9819081e8bfd3946b47653efc1d239e, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0

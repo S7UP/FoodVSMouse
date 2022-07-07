@@ -1,5 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
+
 using UnityEngine;
 
 public class AerialBombardmentMouse : MouseUnit
@@ -64,7 +64,7 @@ public class AerialBombardmentMouse : MouseUnit
             if (target != null)
             {
                 // 标记技能发现目标了，可以执行投弹操作
-                flyThrowBombSkillAbility.SetSkillConditionEnable();
+                flyThrowBombSkillAbility.SetSkillConditionEnable(target.transform.position.x);
             }
         }
     }
@@ -130,7 +130,7 @@ public class AerialBombardmentMouse : MouseUnit
 
     public override void OnCastStateEnter()
     {
-        animator.Play("Cast");
+        animatorController.Play("Cast");
     }
 
     public override void OnCastState()
@@ -151,7 +151,7 @@ public class AerialBombardmentMouse : MouseUnit
     /// </summary>
     public override void OnTransitionStateEnter()
     {
-        animator.Play("Drop");
+        animatorController.Play("Drop");
     }
 
     public override void OnTransitionState()
@@ -170,6 +170,5 @@ public class AerialBombardmentMouse : MouseUnit
     public override void OnTransitionStateExit()
     {
         mHeight = 0; // 高度降低为地面高度
-        //animator.Play("Move");
     }
 }

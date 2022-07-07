@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class DamageAreaEffectExecution : RetangleAreaEffectExecution
@@ -35,31 +33,37 @@ public class DamageAreaEffectExecution : RetangleAreaEffectExecution
 
     public override void EventMouse(MouseUnit unit)
     {
-        if (isAffectMouse)
+        if (actionType == CombatAction.ActionType.ReboundDamage)
         {
-            if (actionType == CombatAction.ActionType.ReboundDamage)
-            {
-                new ReboundDamageAction(actionType, creator, unit, damage).ApplyAction();
-            }
-            else
-            {
-                new DamageAction(actionType, creator, unit, damage).ApplyAction();
-            }
+            new ReboundDamageAction(actionType, creator, unit, damage).ApplyAction();
+        }
+        else
+        {
+            new DamageAction(actionType, creator, unit, damage).ApplyAction();
         }
     }
 
     public override void EventFood(FoodUnit unit)
     {
-        if (isAffectFood)
+        if (actionType == CombatAction.ActionType.ReboundDamage)
         {
-            if (actionType == CombatAction.ActionType.ReboundDamage)
-            {
-                new ReboundDamageAction(actionType, creator, unit, damage).ApplyAction();
-            }
-            else
-            {
-                new DamageAction(actionType, creator, unit, damage).ApplyAction();
-            }
+            new ReboundDamageAction(actionType, creator, unit, damage).ApplyAction();
+        }
+        else
+        {
+            new DamageAction(actionType, creator, unit, damage).ApplyAction();
+        }
+    }
+
+    public override void EventCharacter(CharacterUnit unit)
+    {
+        if (actionType == CombatAction.ActionType.ReboundDamage)
+        {
+            new ReboundDamageAction(actionType, creator, unit, damage).ApplyAction();
+        }
+        else
+        {
+            new DamageAction(actionType, creator, unit, damage).ApplyAction();
         }
     }
 }

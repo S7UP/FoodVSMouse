@@ -1,7 +1,6 @@
-using System.Collections;
 using System.Collections.Generic;
+
 using UnityEngine;
-using UnityEngine.UI;
 
 public class MapController : MonoBehaviour, IGameControllerMember
 {
@@ -28,19 +27,13 @@ public class MapController : MonoBehaviour, IGameControllerMember
     private float mapWidth; //
     private float mapHeight;
     // 格子
-    [HideInInspector]
     public float gridWidth;
-    [HideInInspector]
     public float gridHeight;
-    // 当前关卡索引
-    [HideInInspector]
-    public int bigLevelID;
-    [HideInInspector]
-    public int levelID;
+
     // 全部的格子对象
-    public List<BaseGrid> mGridList;
+    public List<BaseGrid> mGridList = new List<BaseGrid>();
     // 格子组
-    public List<GridGroup> gridGroupList;
+    public List<GridGroup> gridGroupList = new List<GridGroup>();
 
     // 行列
     public const int yRow = 7;
@@ -92,16 +85,36 @@ public class MapController : MonoBehaviour, IGameControllerMember
     }
 
     /// <summary>
+    /// 回收所有格子对象与格子组对象
+    /// </summary>
+    public void RecycleAllGridAndGroup()
+    {
+        foreach (var item in mGridList)
+        {
+            item.ExecuteRecycle();
+        }
+        mGridList.Clear();
+        foreach (var item in gridGroupList)
+        {
+            item.ExecuteRecycle();
+        }
+        gridGroupList.Clear();
+    }
+
+    /// <summary>
     /// 生成场地格子
     /// </summary>
     public void MInit()
     {
+        mGridList.Clear();
+        gridGroupList.Clear();
+
         CalculateSize();
         // 创建地图格子
         //CreateDefaultGridList();
         CreateTestGridList();
         // 创建格子组
-        CreateTextGridGroupList();
+        CreateTestGridGroupList();
     }
 
     public void MUpdate()
@@ -150,12 +163,12 @@ public class MapController : MonoBehaviour, IGameControllerMember
 
     public void MPause()
     {
-        throw new System.NotImplementedException();
+        
     }
 
     public void MResume()
     {
-        throw new System.NotImplementedException();
+        
     }
 
     public void MDestory()
@@ -168,15 +181,14 @@ public class MapController : MonoBehaviour, IGameControllerMember
     /// </summary>
     public void CreateDefaultGridList()
     {
-        mGridList = new List<BaseGrid>();
         for (int i = 0; i < MapController.yRow; i++)
         {
             for (int j = 0; j < MapController.xColumn; j++)
             {
                 BaseGrid grid = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Grid/Grid").GetComponent<BaseGrid>();
+                grid.MInit();
                 grid.transform.SetParent(masterTrans);
                 grid.InitGrid(j, i);
-                grid.MInit();
                 mGridList.Add(grid);
             }
         }
@@ -187,15 +199,14 @@ public class MapController : MonoBehaviour, IGameControllerMember
     /// </summary>
     public void CreateTestGridList()
     {
-        mGridList = new List<BaseGrid>();
         for (int i = 1; i < 6; i++)
         {
             for (int j = 2; j < 7; j++)
             {
                 BaseGrid grid = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Grid/Grid").GetComponent<BaseGrid>();
+                grid.MInit();
                 grid.transform.SetParent(masterTrans);
                 grid.InitGrid(j, i);
-                grid.MInit();
                 mGridList.Add(grid);
             }
         }
@@ -204,7 +215,7 @@ public class MapController : MonoBehaviour, IGameControllerMember
     /// <summary>
     /// 测试创建格子组
     /// </summary>
-    public void CreateTextGridGroupList()
+    public void CreateTestGridGroupList()
     {
         Vector2[,] v2List = new Vector2[,] 
         {
@@ -229,8 +240,6 @@ public class MapController : MonoBehaviour, IGameControllerMember
             new Vector2(gridWidth/2, -gridHeight),
             new Vector2(-gridWidth, -gridHeight/2)
         };
-
-        gridGroupList = new List<GridGroup>();
 
         for (int i = 0; i < 4; i++)
         {

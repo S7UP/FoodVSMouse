@@ -1,5 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
+
 using UnityEngine;
 /// <summary>
 /// 梯子类
@@ -21,6 +21,7 @@ public class LadderMouse : MouseUnit
         old_P2_HpRate = (float)mHertRateList[1];
         velocityBuffModifier = new FloatModifier(100);
         NumericBox.MoveSpeed.AddPctAddModifier(velocityBuffModifier); // 初始获得100%移速
+
     }
 
     /// <summary>
@@ -56,6 +57,12 @@ public class LadderMouse : MouseUnit
         }
     }
 
+
+    public override void OnMoveStateEnter()
+    {
+        animatorController.Play("Move", true);
+    }
+
     public override void OnAttackStateEnter()
     {
         // 进入攻击状态时检测一下梯子是否放了，
@@ -85,7 +92,7 @@ public class LadderMouse : MouseUnit
     // CastState为放置动作
     public override void OnCastStateEnter()
     {
-        animator.Play("Put");
+        animatorController.Play("Put");
     }
 
     public override void OnCastState()
@@ -96,14 +103,12 @@ public class LadderMouse : MouseUnit
         if (AnimatorManager.GetNormalizedTime(animator) > 1.0)
         {
             putLadderSkillAbility.TriggerEvent(); // 触发实际事件
-            //SetActionState(new MoveState(this));
             putLadderSkillAbility.SetEndSkill();
         }
     }
 
     public override void OnCastStateExit()
     {
-        //putLadderSkillAbility.EndActivate();
         // 若血量高于阶段点2，则强制血量为阶段点2的血量
         mCurrentHp = Mathf.Min(mCurrentHp, mMaxHp * old_P2_HpRate-1);
         putLadderSkillAbility.SetSkilled();
@@ -125,11 +130,12 @@ public class LadderMouse : MouseUnit
         }
         if (mHertIndex > 1)
         {
+            mHertRateList[0] = double.MaxValue;
             mHertRateList[1] = double.MaxValue;
             // 如果是没有放梯子就被打到这个血线以下，那么播放一个梯子脱落的动画同时设置对应技能为已施放（即此后不能再重复释放）
             if (!putLadderSkillAbility.IsSkilled())
             {
-                animator.Play("Drop");
+                animatorController.Play("Drop");
                 putLadderSkillAbility.SetSkilled();
             }
             // 移除移速buff

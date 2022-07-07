@@ -1,6 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 /// <summary>
 /// ÎÞµÐµÄÕÏ°­
 /// </summary>
@@ -36,7 +33,7 @@ public class InvincibilityBarrier :¡¡BaseBarrier
         leftTime--;
         if (leftTime == 0)
         {
-            DeathEvent();
+            ExecuteDeath();
         }
     }
 }

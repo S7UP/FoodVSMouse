@@ -1,40 +1,52 @@
-using System.Collections;
+using Newtonsoft.Json.Linq;
+
 using System.Collections.Generic;
+
 using UnityEngine;
 using UnityEngine.UI;
 
 public class BaseCostController : MonoBehaviour, IBaseCostController, IGameControllerMember
 {
-    protected Dictionary<string, float> mCostDict;
-    protected Dictionary<string, FloatNumeric> mAddCostDict; // 资源系统变化字典
-    protected Dictionary<string, BoolNumeric> mShieldGettingCostDict; // 屏蔽获取资源系统字典
+    // 引用
     protected GameObject mImg_FireDisplayer;
     protected Text mFireText;
     protected Text mAddFireText;
 
+    // 资源字典
+    protected Dictionary<string, float> mCostDict = new Dictionary<string, float>();
+    protected Dictionary<string, FloatNumeric> mAddCostDict = new Dictionary<string, FloatNumeric>(); // 资源系统变化字典
+    protected Dictionary<string, BoolNumeric> mShieldGettingCostDict = new Dictionary<string, BoolNumeric>(); // 屏蔽获取资源系统字典
+
     public void Awake()
     {
-
+        mImg_FireDisplayer = transform.Find("Img_FireDisplayer").gameObject;
+        mFireText = mImg_FireDisplayer.transform.Find("Tex_Fire").GetComponent<Text>();
+        mAddFireText = mImg_FireDisplayer.transform.Find("Tex_AddFire").GetComponent<Text>();
     }
 
     public void MInit()
     {
-        mCostDict = new Dictionary<string, float>();
-        mCostDict.Add("Fire", 3000.0f); // 基础的火苗系统
-        mAddCostDict = new Dictionary<string, FloatNumeric>();
-        mAddCostDict.Add("Fire", new FloatNumeric());
-        mAddCostDict["Fire"].Initialize();
-        mShieldGettingCostDict = new Dictionary<string, BoolNumeric>();
-        mShieldGettingCostDict.Add("Fire", new BoolNumeric());
-        mShieldGettingCostDict["Fire"].Initialize();
+        mCostDict.Clear();
+        mAddCostDict.Clear();
+        mShieldGettingCostDict.Clear();
 
-        mImg_FireDisplayer = transform.Find("Img_FireDisplayer").gameObject;
-        mFireText = mImg_FireDisplayer.transform.Find("Tex_Fire").GetComponent<Text>();
-        mAddFireText = mImg_FireDisplayer.transform.Find("Tex_AddFire").GetComponent<Text>();
+        AddCostType("Fire", 3000.0f);
 
         // 初始化时就要更新一次UI显示
         UpdateCostDisplayer();
         UpdateAddFireDisplayer();
+    }
+
+    /// <summary>
+    /// 添加一种类型的资源
+    /// </summary>
+    public void AddCostType(string costTypeName, float initialValue)
+    {
+        mCostDict.Add(costTypeName, initialValue); // 基础的火苗系统
+        mAddCostDict.Add(costTypeName, new FloatNumeric());
+        mAddCostDict[costTypeName].Initialize();
+        mShieldGettingCostDict.Add(costTypeName, new BoolNumeric());
+        mShieldGettingCostDict[costTypeName].Initialize();
     }
 
     /// <summary>
@@ -91,13 +103,13 @@ public class BaseCostController : MonoBehaviour, IBaseCostController, IGameContr
         }
     }
 
-    public void AddModifier(string name, FloatModifier floatModifier)
+    public void AddCostResourceModifier(string name, FloatModifier floatModifier)
     {
         mAddCostDict[name].AddAddModifier(floatModifier);
         UpdateAddFireDisplayer();
     }
 
-    public void RemoveModifier(string name, FloatModifier floatModifier)
+    public void RemoveCostResourceModifier(string name, FloatModifier floatModifier)
     {
         mAddCostDict[name].RemoveAddModifier(floatModifier);
         UpdateAddFireDisplayer();
@@ -145,12 +157,12 @@ public class BaseCostController : MonoBehaviour, IBaseCostController, IGameContr
 
     public void MPause()
     {
-        throw new System.NotImplementedException();
+        
     }
 
     public void MResume()
     {
-        throw new System.NotImplementedException();
+        
     }
 
     public void MDestory()

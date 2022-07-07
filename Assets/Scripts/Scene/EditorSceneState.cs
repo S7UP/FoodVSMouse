@@ -1,7 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
+using UnityEngine.SceneManagement;
 public class EditorSceneState : BaseSceneState
 {
     public EditorSceneState(UIFacade uiFacade) : base(uiFacade)
@@ -11,6 +8,7 @@ public class EditorSceneState : BaseSceneState
 
     public override void EnterScene()
     {
+        SceneManager.LoadScene("EditorScene");
         mUIFacade.AddPanelToDict(StringManager.EditorPanel);
         base.EnterScene();
     }

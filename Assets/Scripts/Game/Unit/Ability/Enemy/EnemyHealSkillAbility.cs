@@ -1,7 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
 public class EnemyHealSkillAbility : SkillAbility
 {
     public EnemyHealSkillAbility(BaseUnit pmaster) : base(pmaster)
@@ -56,12 +52,15 @@ public class EnemyHealSkillAbility : SkillAbility
         return currentEnergy<=0;
     }
 
-    public override void AfterSpell()
+    public override void OnMeetCloseSpellingCondition()
     {
         // 加血！
         float add = (master as HealMouse).GetHealValue();
         foreach (var unit in GameController.Instance.GetEachEnemy())
         {
+            // 需要目标存活
+            if (!unit.IsAlive())
+                continue;
             // 检测治疗有没有超过上限
             float realAdd = unit.GetRealCureValue(add);
             float leftAdd = realAdd - unit.mMaxHp + unit.mCurrentHp;
@@ -78,9 +77,13 @@ public class EnemyHealSkillAbility : SkillAbility
                 new CureAction(CombatAction.ActionType.GiveCure, master, unit, realAdd).ApplyAction();
                 // Debug.Log("当前目标已损失生命值：" + (unit.mMaxHp - unit.mCurrentHp) + ", 即将回复生命值：" + realAdd);
             }
-                
-
+            // 回复特效添加给单位上
+            EffectManager.AddHealEffectToUnit(unit);
         }
+    }
+
+    public override void AfterSpell()
+    {
         enableEnergyRegeneration = false;
         master.SetActionState(new MoveState(master));
     }

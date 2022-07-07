@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class WineBottleBoom : FoodUnit
@@ -7,7 +5,11 @@ public class WineBottleBoom : FoodUnit
     public override void MInit()
     {
         base.MInit();
-        SetLevel(12);
+        // 获取100%减伤，接近无限的生命值，以及免疫灰烬秒杀效果
+        NumericBox.Defense.SetBase(1);
+        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, new BoolModifier(true));
+        NumericBox.AddDecideModifierToBoolDict(StringManager.Invincibility, new BoolModifier(true));
+        SetMaxHpAndCurrentHp(float.MaxValue);
     }
 
     /// <summary>
@@ -103,7 +105,7 @@ public class WineBottleBoom : FoodUnit
         {
             GameObject instance = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Effect/FireHorizontal");
             BaseEffect effect = instance.GetComponent<BaseEffect>();
-            effect.InIt();
+            effect.MInit();
             effect.transform.position = new Vector3(MapManager.GetColumnX(4), transform.position.y, transform.position.z);
             GameController.Instance.AddEffect(effect);
         }

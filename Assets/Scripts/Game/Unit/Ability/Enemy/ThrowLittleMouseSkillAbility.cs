@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 /// <summary>
 /// 投掷小老鼠
@@ -70,26 +68,15 @@ public class ThrowLittleMouseSkillAbility : SkillAbility
         {
             // 投掷出实体
             canThrowEntity = false;
-            //IceBombBullet iceBullet = GameController.Instance.CreateBullet(master, master.transform.position, Vector2.right, BulletStyle.IceBomb) as IceBombBullet;
-            //iceBullet.SetAttribute(24.0f, true, 1.5f, iceBullet.transform.position, targetPosition, master.GetRowIndex());
-
-            //BombBullet bombBullet = GameController.Instance.CreateBullet(master, master.transform.position, Vector2.right, BulletStyle.Bomb) as BombBullet;
-            //bombBullet.SetAttribute(24.0f, true, 1.5f, bombBullet.transform.position, targetPosition, master.GetRowIndex());
-
             //
             PandaRetinueMouse m = GameController.Instance.CreateMouseUnit(master.GetRowIndex(), new BaseEnemyGroup.EnemyInfo() { type = 24, shape = master.mShape }).GetComponent<PandaRetinueMouse>();
-            //PandaMouse m = GameController.Instance.CreateMouseUnit(master.GetRowIndex(), new BaseEnemyGroup.EnemyInfo() { type = 19, shape = master.mShape }).GetComponent<PandaMouse>();
             m.transform.position = new Vector3(master.transform.position.x, targetPosition.y, master.transform.position.z);
-            //m.transform.position = master.transform.position;
             // 空中滑翔时无判定
+            m.SetActionState(new TransitionState(m));
+            // 添加一个弹起的任务，任务结束后切换为步行状态
+            Tasker t = GameController.Instance.AddTasker(new ParabolaMovePresetTasker(m, 24.0f, 1.2f, m.transform.position, targetPosition, false));
             m.CloseCollision();
-            m.PlayFlyClip();
-            // 使用抛物线移动状态
-            ParabolaMoveState s = new ParabolaMoveState(m, 24.0f, 1.2f, m.transform.position, targetPosition, false);
-            s.SetExitAction(delegate {
-                m.OpenCollision();
-            });
-            m.SetActionState(s);
+            t.AddOtherEndEvent(delegate { m.OpenCollision(); m.SetActionState(new MoveState(m)); });
         }
     }
 

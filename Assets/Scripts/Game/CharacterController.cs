@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -10,10 +8,13 @@ public class CharacterController:IGameControllerMember
     private GameNormalPanel mGameNormalPanel;
     public CharacterUnit mCurrentCharacter; // 当前角色
 
-    public void MInit()
+    public CharacterController()
     {
         mGameNormalPanel = (GameNormalPanel)GameManager.Instance.uiManager.mUIFacade.currentScenePanelDict[StringManager.GameNormalPanel];
+    }
 
+    public void MInit()
+    { 
         // TODO 读取玩家选取的角色，生成角色初始实例，并暂时设置为非活动状态，需要玩家放下后才可以激活
         mCurrentCharacter = GameController.Instance.CreateCharacter(0, 0); // 这里暂时默认用type=0 shape=0 的角色
         mCurrentCharacter.gameObject.SetActive(false);
@@ -24,7 +25,7 @@ public class CharacterController:IGameControllerMember
 
     public void MUpdate()
     {
-        HandleSetCharacter();
+        //HandleSetCharacter();
     }
 
     public void MPauseUpdate()
@@ -86,26 +87,36 @@ public class CharacterController:IGameControllerMember
     /// <returns></returns>
     public void ExecuteSetCharacter()
     {
-        BaseGrid g = GameController.Instance.GetOverGrid();
-        mCurrentCharacter.gameObject.SetActive(true);
-        mCurrentCharacter.MInit();
-        GameController.Instance.AddCharacter(mCurrentCharacter, g.GetColumnIndex(), g.GetRowIndex());
         // 退出角色放置模式
         mGameNormalPanel.ExitCharacterConstructMode();
         // 解除暂停
         GameController.Instance.Resume();
+        BaseGrid g = GameController.Instance.GetOverGrid();
+        mCurrentCharacter.gameObject.SetActive(true);
+        mCurrentCharacter.MInit();
+        GameController.Instance.AddCharacter(mCurrentCharacter, g.GetColumnIndex(), g.GetRowIndex());
     }
 
+    /// <summary>
+    /// 回收当前的角色
+    /// </summary>
+    public void RecycleCurrentCharacter()
+    {
+        if (mCurrentCharacter != null)
+        {
+            mCurrentCharacter.ExcuteRecycle();
+        }
+    }
 
 
     public void MPause()
     {
-        throw new System.NotImplementedException();
+        mCurrentCharacter.MPause();
     }
 
     public void MResume()
     {
-        throw new System.NotImplementedException();
+        mCurrentCharacter.MResume();
     }
 
     public void MDestory()

@@ -1,9 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using TMPro;
-
-using UnityEngine;
-
 /// <summary>
 /// »Ã’ﬂ Û≥Â∑Êººƒ‹
 /// </summary>

@@ -1,13 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 
 using UnityEngine;
 
-using static BaseRound;
-using static BaseStage;
-
-public class BaseStage
+public class BaseStage : MonoBehaviour
 {
     /// <summary>
     /// 关卡模式
@@ -53,19 +49,92 @@ public class BaseStage
     public StageInfo mStageInfo;
     public List<BaseRound> mRoundList;
     public BaseRound mCurrentRound;
+    public int mCurrentRoundTimer;
     public int mCurrentRoundIndex;
     private List<int> apartRowOffsetList; // 当前分路组对应行偏移量
+    //private IEnumerator enumerator;
+    //private Coroutine mCoroutine;
+
+    /// <summary>
+    /// 开始关卡
+    /// </summary>
+    public void StartStage()
+    {
+        //enumerator = Start();
+        //if (mCoroutine != null)
+        //{
+        //    GameController.Instance.StopCoroutine(mCoroutine);
+        //    mCoroutine = null;
+        //}
+        //mCoroutine = GameController.Instance.StartCoroutine(enumerator);
+        //if (GameController.Instance.isPause)
+        //    PauseStage();
+        StartCoroutine(Execute());
+    }
+
+    /// <summary>
+    /// 产生一个等待若干帧的IEnumerator
+    /// </summary>
+    /// <returns></returns>
+    public IEnumerator WaitForIEnumerator(int time)
+    {
+        for (int i = 0; i < time; i++)
+        {
+            if (GameController.Instance.isPause)
+                i--;
+            yield return null;
+        }
+    }
+
+    ///// <summary>
+    ///// 暂停关卡
+    ///// </summary>
+    //public void PauseStage()
+    //{
+    //    if (mCoroutine != null)
+    //    {
+    //        GameController.Instance.StopCoroutine(mCoroutine);
+    //    }
+    //    foreach (var item in mRoundList)
+    //    {
+    //        item.PauseRound();
+    //    }
+    //}
+
+    ///// <summary>
+    ///// 恢复
+    ///// </summary>
+    //public void ResumeStage()
+    //{
+    //    if (mCoroutine != null)
+    //    {
+    //        GameController.Instance.StartCoroutine(enumerator);
+    //    }
+    //    foreach (var item in mRoundList)
+    //    {
+    //        item.ResumeRound();
+    //    }
+    //}
 
     /// <summary>
     /// 关卡开始
     /// </summary>
-    public IEnumerator Start()
+    public IEnumerator Execute()
     {
+        GameController.Instance.mProgressController.mRoundProgressBar.SetTotalRoundCount(mRoundList.Count);
+        GameController.Instance.mProgressController.mRoundProgressBar.UpdateRoundCountUI(0);
+        mCurrentRoundIndex = -1;
+        mCurrentRoundTimer = 0;
         Debug.Log("游戏开始了！现在是第"+GameController.Instance.GetCurrentStageFrame()+"帧");
-        yield return GameController.Instance.StartCoroutine(GameController.Instance.WaitForIEnumerator(mStageInfo.perpareTime));
+        yield return StartCoroutine(WaitForIEnumerator(mStageInfo.perpareTime));
+        //yield return GameController.Instance.Wait(mStageInfo.perpareTime);
         Debug.Log("开始出怪了！现在是第" + GameController.Instance.GetCurrentStageFrame() + "帧");
         for (int i = 0; i < mRoundList.Count; i++)
         {
+            mCurrentRound = mRoundList[i];
+            GameController.Instance.mProgressController.mRoundProgressBar.UpdateRoundCountUI(i + 1);
+            mCurrentRoundTimer = 0;
+            mCurrentRoundIndex = i;
             if (mStageInfo.defaultMode.Equals(StageMode.HalfRandom))
             {
                 for (int j = 0; j < mStageInfo.apartList.Count; j++)
@@ -73,9 +142,11 @@ public class BaseStage
                     apartRowOffsetList[j] = Random.Range(0, mStageInfo.apartList[j].Count); // 注意，生成整形时不包括最大值
                 }
             }
-            yield return GameController.Instance.StartCoroutine(mRoundList[i].Execute());
+            //yield return GameController.Instance.StartCoroutine(mCurrentRound.Execute());
+            yield return StartCoroutine(mCurrentRound.Execute());
         }
         Debug.Log("出怪完毕！");
+        //enumerator = null;
     }
 
     /// <summary>
@@ -179,6 +250,11 @@ public class BaseStage
     /// </summary>
     public virtual void Init()
     {
+        //enumerator = null;
+        //mCoroutine = null;
+        mCurrentRound = null;
+        mCurrentRoundTimer = 0;
+        mCurrentRoundIndex = -1;
         // 通过RoundInfo来创建BaseRound实体
         mRoundList = new List<BaseRound>();
         if (mStageInfo.roundInfoList != null)
@@ -189,8 +265,8 @@ public class BaseStage
                 round.Init(mStageInfo.roundInfoList[i]);
                 mRoundList.Add(round);
             }
-            mCurrentRoundIndex = 0;
-            mCurrentRound = mRoundList[mCurrentRoundIndex];
+            mCurrentRoundIndex = -1;
+            mCurrentRound = null;
         }
         else
         {
@@ -214,6 +290,42 @@ public class BaseStage
         return mCurrentRound;
     }
 
+    /// <summary>
+    /// 获取当前关卡的进度
+    /// </summary>
+    /// <returns></returns>
+    public float GetCurrentProgress()
+    {
+        float per = 1.0f / (GetTotalRoundCount() + 1);
+        if (GetCurrentRoundIndex() == -1)
+        {
+            // 如果为准备轮次
+            return per * Mathf.Min(1.0f, (float)mCurrentRoundTimer / mStageInfo.perpareTime);
+        }
+        else
+        {
+            return (GetCurrentRoundIndex() + 1 + Mathf.Min(1.0f, (float)mCurrentRoundTimer / mStageInfo.roundInfoList[GetCurrentRoundIndex()].GetTotalTimer())) * per;
+        }
+    }
+
+    /// <summary>
+    /// 获取当前轮数下标
+    /// </summary>
+    /// <returns>-1为准备阶段，0为第一轮，以此类推</returns>
+    public int GetCurrentRoundIndex()
+    {
+        return mCurrentRoundIndex;
+    }
+
+    /// <summary>
+    /// 获取总轮数
+    /// </summary>
+    /// <returns></returns>
+    public int GetTotalRoundCount()
+    {
+        return mStageInfo.roundInfoList.Count;
+    }
+
     public string GetName()
     {
         return mStageInfo.name;
@@ -226,7 +338,11 @@ public class BaseStage
 
     public virtual void Update()
     {
-
+        if (GameController.Instance.isPause)
+            return;
+        mCurrentRoundTimer++;
+        // 操作当前轮数进度条的UI
+        GameController.Instance.mProgressController.mRoundProgressBar.SetCurrentProgress(GetCurrentProgress());
     }
 
     public virtual bool WinCondition()

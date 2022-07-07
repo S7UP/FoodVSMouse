@@ -1,10 +1,6 @@
-using System.Collections;
 using System.Collections.Generic;
 
 using UnityEngine;
-using UnityEngine.UIElements;
-
-using static UnityEngine.GraphicsBuffer;
 
 public class FoodUnit : BaseUnit
 {
@@ -24,11 +20,12 @@ public class FoodUnit : BaseUnit
     private SpriteRenderer spriteRenderer1;
     private SpriteRenderer spriteRenderer2;
     public Material defaultMaterial;
-    public Collider2D mCollider2D;
+    public BoxCollider2D mBoxCollider2D;
     public Transform spriteTrans;
 
     // 其他
     public FoodType mFoodType; // 美食职业划分
+    public BaseCardBuilder mBuilder; // 建造自身的建造器
     public int mLevel; //星级
     public int typeAndShapeToLayer = 0; // 种类与变种对图层的加权等级
 
@@ -45,9 +42,8 @@ public class FoodUnit : BaseUnit
         rankAnimator = transform.Find("Ani_Rank").gameObject.GetComponent<Animator>();
         spriteRenderer1 = transform.Find("Ani_Food").gameObject.GetComponent<SpriteRenderer>();
         spriteRenderer2 = transform.Find("Ani_Rank").gameObject.GetComponent<SpriteRenderer>();
-        mCollider2D = transform.GetComponent<Collider2D>();
+        mBoxCollider2D = transform.GetComponent<BoxCollider2D>();
         defaultMaterial = spriteRenderer1.material;  // 装上正常的受击材质
-        AnimatorContinue(); // 恢复动画
     }
 
     // 单位被对象池回收时触发
@@ -64,7 +60,9 @@ public class FoodUnit : BaseUnit
     public override void MInit()
     {
         base.MInit();
-        
+        // 动画控制器绑定animator
+        animatorController.ChangeAnimator(animator);
+        mBuilder = null;
         attr = GameController.Instance.GetFoodAttribute();
         mFoodType = attr.foodType;
 
@@ -78,7 +76,15 @@ public class FoodUnit : BaseUnit
         // 受伤闪白
         AddActionPointListener(ActionPointType.PostReceiveDamage, FlashWhenHited);
         spriteRenderer2.enabled = true; // 激活星级动画
-        AnimatorContinue(); // 恢复播放动画
+    }
+
+    /// <summary>
+    /// 设置判定参数
+    /// </summary>
+    public override void SetCollider2DParam()
+    {
+        mBoxCollider2D.offset = new Vector2(0, 0);
+        mBoxCollider2D.size = new Vector2(0.49f * MapManager.gridWidth, 0.49f * MapManager.gridHeight);
     }
 
     public override void SetUnitType()
@@ -199,7 +205,7 @@ public class FoodUnit : BaseUnit
     // 在待机状态时每帧要做的事
     public override void OnIdleState()
     {
-
+        
     }
 
     // 在攻击状态时每帧要做的事
@@ -269,21 +275,21 @@ public class FoodUnit : BaseUnit
     /// </summary>
     public override void OnIdleStateEnter()
     {
-        animator.Play("Idle");
+        animatorController.Play("Idle", true);
     }
 
     public override void OnAttackStateEnter()
     {
         // 每次攻击时，最好根据攻速来计算一下播放速度，然后改变播放速度
         UpdateAttackAnimationSpeed();
-        animator.Play("Attack");
+        animatorController.Play("Attack", false);
     }
 
-    public override void OnAttackStateExit()
-    {
-        // 攻击结束后播放速度改回来
-        animator.speed = 1;
-    }
+    //public override void OnAttackStateExit()
+    //{
+    //    // 攻击结束后播放速度改回来
+    //    animator.speed = 1;
+    //}
 
     public override void OnAttackStateContinue()
     {
@@ -295,16 +301,22 @@ public class FoodUnit : BaseUnit
     public override void OnDieStateEnter()
     {
         // 对于美食来说没有死亡动画的话，直接回收对象就行，在游戏里的体现就是直接消失，回收对象的事在duringDeath第一帧去做
+
+        // 从当前格子中移除引用
+        RemoveFromGrid();
     }
 
+    private BoolModifier boolModifier = new BoolModifier(true);
     public override void OnBurnStateEnter()
     {
+        // 从当前格子中移除引用
+        RemoveFromGrid();
         // 装上烧毁材质
         spriteRenderer1.material = GameManager.Instance.GetMaterial("Dissolve2");
         // 屏蔽星级特效
         spriteRenderer2.enabled = false;
         // 禁止播放动画
-        AnimatorStop();
+        PauseCurrentAnimatorState(boolModifier);
     }
 
     public override void DuringBurn(float _Threshold)
@@ -313,6 +325,7 @@ public class FoodUnit : BaseUnit
         // 超过1就可以回收了
         if (_Threshold >= 1.0)
         {
+            ResumeCurrentAnimatorState(boolModifier);
             DeathEvent();
         }
     }
@@ -322,10 +335,15 @@ public class FoodUnit : BaseUnit
     /// </summary>
     private void UpdateAttackAnimationSpeed()
     {
-        float time = AnimatorManager.GetClipTime(animator, "Attack"); // 1倍情况下，一次攻击的默认时间 秒
-        float interval = 1/NumericBox.AttackSpeed.Value; // 攻击间隔  秒
-        float rate = Mathf.Max(1, time / interval);
-        AnimatorManager.SetClipSpeed(animator, "Attack", rate);
+        //float time = AnimatorManager.GetClipTime(animator, "Attack"); // 1倍情况下，一次攻击的默认时间 秒
+        //float interval = 1/NumericBox.AttackSpeed.Value; // 攻击间隔  秒
+        //float rate = Mathf.Max(1, time / interval);
+        //AnimatorManager.SetClipSpeed(animator, "Attack", rate);
+        AnimatorStateRecorder a = animatorController.GetAnimatorStateRecorder("Attack");
+        float time = a.aniTime; // 一倍速下一次攻击动画的播放时间（帧）
+        float interval = 1 / NumericBox.AttackSpeed.Value * 60;  // 攻击间隔（帧）
+        float speed = Mathf.Max(1, time / interval); // 计算动画实际播放速度
+        animatorController.SetSpeed("Attack", speed);
     }
 
     public static void SaveNewFoodInfo()
@@ -375,21 +393,6 @@ public class FoodUnit : BaseUnit
 
     }
 
-    public override void AnimatorStop()
-    {
-        animator.speed = 0;
-    }
-
-    public override void AnimatorContinue()
-    {
-        animator.speed = 1;
-    }
-
-    // 死亡后，将自身信息从对应格子移除，以腾出空间给后续其他同格子分类型卡片使用
-    public override void AfterDeath()
-    {
-        RemoveFromGrid();
-    }
 
     public override void MUpdate()
     {
@@ -430,7 +433,7 @@ public class FoodUnit : BaseUnit
     /// </summary>
     public override void OpenCollision()
     {
-        mCollider2D.enabled = true;
+        mBoxCollider2D.enabled = true;
     }
 
     /// <summary>
@@ -438,7 +441,7 @@ public class FoodUnit : BaseUnit
     /// </summary>
     public override void CloseCollision()
     {
-        mCollider2D.enabled = false;
+        mBoxCollider2D.enabled = false;
     }
 
     /// <summary>
@@ -483,5 +486,48 @@ public class FoodUnit : BaseUnit
     public override void SetSpriteLocalPosition(Vector2 vector2)
     {
         spriteTrans.localPosition = vector2;
+    }
+
+    /// <summary>
+    /// 执行该单位回收事件
+    /// </summary>
+    public override void ExcuteRecycle()
+    {
+        // 如果目标有其建造器，则走建造器的销毁流程，否则走默认回收流程
+        if (mBuilder != null)
+            mBuilder.Destructe(this);
+        else
+            base.ExcuteRecycle();
+    }
+
+    /// <summary>
+    /// 获取其建造器
+    /// </summary>
+    public BaseCardBuilder GetCardBuilder()
+    {
+        return mBuilder;
+    }
+
+    /// <summary>
+    /// 可否被选择为目标
+    /// </summary>
+    /// <returns></returns>
+    public override bool CanBeSelectedAsTarget()
+    {
+        return mBoxCollider2D.enabled;
+    }
+
+    public override void MPause()
+    {
+        base.MPause();
+        // 暂停星级动画
+        rankAnimator.speed = 0;
+    }
+
+    public override void MResume()
+    {
+        base.MResume();
+        // 取消暂停武器动作
+        rankAnimator.speed = 1;
     }
 }

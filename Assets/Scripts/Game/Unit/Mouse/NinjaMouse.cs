@@ -1,11 +1,8 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
 using UnityEngine;
-
-using static UnityEditor.PlayerSettings;
 
 /// <summary>
 /// »Ã’ﬂ Û ◊¡Ï
@@ -105,9 +102,9 @@ public class NinjaMouse : MouseUnit
     public override void OnMoveStateEnter()
     {
         if (dashSkillAbility.IsDashed())
-            animator.Play("Move");
+            animatorController.Play("Move", true);
         else
-            animator.Play("Dash");
+            animatorController.Play("Dash", true);
     }
 
     public override void OnMoveState()
@@ -145,7 +142,7 @@ public class NinjaMouse : MouseUnit
 
     public override void OnIdleStateEnter()
     {
-        animator.Play("Idle");
+        animatorController.Play("Idle", true);
     }
 
     public override void OnIdleState()
@@ -171,7 +168,7 @@ public class NinjaMouse : MouseUnit
 
     public override void OnCastStateEnter()
     {
-        animator.Play("Cast");
+        animatorController.Play("Cast");
     }
 
     public override void OnCastState()
@@ -229,7 +226,7 @@ public class NinjaMouse : MouseUnit
     /// </summary>
     public void PlayRectifyClip()
     {
-        animator.Play("Rectify");
+        animatorController.Play("Rectify");
     }
 
     /// <summary>

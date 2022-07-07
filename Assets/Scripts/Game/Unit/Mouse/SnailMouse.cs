@@ -1,6 +1,4 @@
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 /// <summary>
 /// 蜗牛车鼠
 /// </summary>
@@ -9,6 +7,12 @@ public class SnailMouse : MouseUnit
     private GeneralAttackSkillAbility generalAttackSkillAbility;
     private ReleaseMucusSkillAbility releaseMucusSkillAbility;
 
+    public override void MInit()
+    {
+        base.MInit();
+        // 防止炸弹秒杀效果
+        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, new BoolModifier(true));
+    }
 
     /// <summary>
     /// 加载技能，加载普通攻击与技能
@@ -32,7 +36,7 @@ public class SnailMouse : MouseUnit
 
     public override void OnCastStateEnter()
     {
-        animator.Play("Cast");
+        animatorController.Play("Cast");
     }
 
     public override void OnCastState()

@@ -1,5 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
+
 using UnityEngine;
 
 /// <summary>
@@ -79,5 +79,18 @@ public class GameFactory : BaseFactory
         }
     }
 
+
+    public override void Clear()
+    {
+        foreach (var keyValuePair in objectPoolBufferDict)
+        {
+            foreach (var item in keyValuePair.Value)
+            {
+                GameObject.Destroy(item.gameObject);
+            }
+            keyValuePair.Value.Clear();
+        }
+        base.Clear();
+    }
     // test
 }

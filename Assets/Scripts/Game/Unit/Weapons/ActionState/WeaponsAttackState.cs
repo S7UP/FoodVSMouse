@@ -1,7 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
 public class WeaponsAttackState : WeaponsActionState
 {
     public WeaponsAttackState(BaseWeapons baseWeapons) : base(baseWeapons)

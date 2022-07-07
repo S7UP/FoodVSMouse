@@ -1,9 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
-using static BaseEnemyGroup;
+using UnityEngine;
 
 [Serializable]
 public class BaseRound
@@ -17,12 +16,27 @@ public class BaseRound
         public List<BaseEnemyGroup> baseEnemyGroupList; // 组
         public int interval; // 组与组之间的间隔
         public int endTime; // 结尾处等待时间
+
+        /// <summary>
+        /// 获取本轮总持续时间
+        /// </summary>
+        /// <returns></returns>
+        public int GetTotalTimer()
+        {
+            int t = baseEnemyGroupList.Count*interval + endTime;
+            foreach (var item in roundInfoList)
+            {
+                t += item.GetTotalTimer();
+            }
+            return t;
+        }
     }
 
     public RoundInfo mRoundInfo;
     public List<BaseRound> mRoundList;
     public int mCurrentIndex;
     private BaseEnemyGroup mCurrentEnemyGroup; // 当前所在执行的组
+    //private IEnumerator currentEnumerator;
 
     /// <summary>
     /// 根据RoundInfo初始化
@@ -59,26 +73,32 @@ public class BaseRound
             CreateEnemies(realEnemyList);
 
             // 间隔若干帧后刷新下一组
-            yield return GameController.Instance.StartCoroutine(GameController.Instance.WaitForIEnumerator(mRoundInfo.interval));
+            yield return GameController.Instance.mCurrentStage.StartCoroutine(GameController.Instance.mCurrentStage.WaitForIEnumerator(mRoundInfo.interval));
+            //yield return GameController.Instance.Wait(mRoundInfo.interval);
         }
 
-        int waitTime = 0;
-        for (int i = 0; i < mRoundInfo.endTime; i++)
-        {
-            waitTime++;
-            yield return null;
-        }
+        //int waitTime = 0;
+        //for (int i = 0; i < mRoundInfo.endTime; i++)
+        //{
+        //    waitTime++;
+        //    yield return null;
+        //}
+        
 
         // 执行完后执行自身子轮的刷怪组内容
         for (int i = 0; i < mRoundList.Count; i++)
         {
             BaseRound round = mRoundList[i];
-            yield return GameController.Instance.StartCoroutine(round.Execute());
+            //yield return GameController.Instance.StartCoroutine(round.Execute());
+            yield return GameController.Instance.mCurrentStage.StartCoroutine(round.Execute());
         }
-        
+
+        yield return GameController.Instance.mCurrentStage.StartCoroutine(GameController.Instance.mCurrentStage.WaitForIEnumerator(mRoundInfo.endTime));
+
         Debug.Log("本轮刷怪完成！");
 
-        Debug.Log("本轮已结束，waitTime="+waitTime);
+        //Debug.Log("本轮已结束，waitTime="+waitTime);
+        //currentEnumerator = null;
     }
 
     /// <summary>
@@ -134,6 +154,15 @@ public class BaseRound
     public int GetEndTime()
     {
         return mRoundInfo.endTime;
+    }
+
+    /// <summary>
+    /// 获取本轮总持续时间
+    /// </summary>
+    /// <returns></returns>
+    public int GetTotalTimer()
+    {
+        return mRoundInfo.GetTotalTimer();
     }
 
     /// <summary>

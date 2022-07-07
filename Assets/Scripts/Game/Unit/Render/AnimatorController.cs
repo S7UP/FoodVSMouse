@@ -1,122 +1,337 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
-using static UnityEditor.Progress;
+using UnityEngine.UIElements;
 
 /// <summary>
-/// 对某个Animator的控制器，同一时间可能存在很多控制动画变化的任务，但需要控制器根据优先级只执行其中之一
+/// 管理单位动画播放相关信息的东西
 /// </summary>
 public class AnimatorController
 {
-    private static AnimatorControllerTask.Type[] taskTypeList = 
-    { 
-        AnimatorControllerTask.Type.DieClip, 
-        AnimatorControllerTask.Type.FrozenClip, 
-        AnimatorControllerTask.Type.AttackClip, 
-        AnimatorControllerTask.Type.MoveClip, 
-        AnimatorControllerTask.Type.IdleClip
-    };
-    // 当字典的所有集合完全无任务执行时，默认执行该defaultTask
-    public AnimatorControllerTask defaultTask = new AnimatorControllerTask("Idle");
-
     public Animator animator;
-    public Dictionary<AnimatorControllerTask.Type, List<AnimatorControllerTask>> taskListDict = new Dictionary<AnimatorControllerTask.Type, List<AnimatorControllerTask>>(); // 当前待执行的动画集
-    public AnimatorControllerTask currentTask;
+    public Dictionary<string, AnimatorStateRecorder> taskListDict = new Dictionary<string, AnimatorStateRecorder>(); // 当前待执行的动画集
+    public AnimatorStateRecorder currentTask; // 当前任务（当前在播放的动画）
+    private BoolNumeric isPauseBoolNumeric = new BoolNumeric(); // 整体动画是否暂停
+    
+    private BoolModifier gamePauseModifier = new BoolModifier(true); // 游戏暂停的修饰器
+    private bool isUseGamePauseModifier; // 是否使用了游戏暂停的修饰器
 
-    private AnimatorController()
+    public AnimatorController()
     {
 
     }
 
-    public AnimatorController(Animator animator)
+    public void Initialize()
     {
-        this.animator = animator;
-        Initialize();
+        taskListDict.Clear();
+        currentTask = null;
+        isUseGamePauseModifier = false;
+        isPauseBoolNumeric.Initialize();
+        UpdateSpeed();
     }
 
-    private void Initialize()
+    /// <summary>
+    /// 暂停整个控制器
+    /// </summary>
+    public void Pause()
     {
-        foreach (var item in taskTypeList)
+        if (!isUseGamePauseModifier)
         {
-            taskListDict.Add(item, new List<AnimatorControllerTask>());
+            isUseGamePauseModifier = true;
+            isPauseBoolNumeric.AddDecideModifier(gamePauseModifier);
+            UpdateSpeed();
         }
     }
 
     /// <summary>
-    /// 根据优先级确定目前需要播放的动画，触发该方法的时机为添加或者移除任务
-    /// 从分类上，优先级为 死亡 > 冻结 > 攻击 > 移动 > 待机
-    /// 同类型动画中，以最后的优先级最大
+    /// 取消暂停整个控制器
     /// </summary>
-    public void UpdateTheMostImportantTask()
+    public void Resume()
     {
-        foreach (var item in taskTypeList)
+        if (isUseGamePauseModifier)
         {
-            int count = taskListDict[item].Count;
-            if (count > 0)
-            {
-                // 如果发现要播放的动画切换了，则要执行新动画的播放，同时掐掉其他动画的播放
-                AnimatorControllerTask newTask = taskListDict[item][count - 1];
-                if(currentTask==null || newTask != currentTask)
-                {
-                    currentTask = newTask;
-                    foreach (var task in GetEachTask())
-                    {
-                        task.isPlaying = false;
-                    }
-                    currentTask.isPlaying = true;
-                    currentTask.PlayClip();
-                    return;
-                }
-            }
+            isUseGamePauseModifier = false;
+            isPauseBoolNumeric.RemoveDecideModifier(gamePauseModifier);
+            UpdateSpeed();
         }
-        // 安全性校验
-        if (currentTask == null)
+    }
+
+    /// <summary>
+    /// 添加整体暂停的修饰器
+    /// </summary>
+    public void AddPauseModifier(BoolModifier boolModifier)
+    {
+        isPauseBoolNumeric.AddDecideModifier(boolModifier);
+        UpdateSpeed();
+    }
+
+    /// <summary>
+    /// 移除暂停的修饰器
+    /// </summary>
+    public void RemovePauseModifier(BoolModifier boolModifier)
+    {
+        isPauseBoolNumeric.RemoveDecideModifier(boolModifier);
+        UpdateSpeed();
+    }
+
+    /// <summary>
+    /// 暂停某个动画
+    /// </summary>
+    public void Pause(string aniName)
+    {
+        AnimatorStateRecorder a = GetAnimatorStateRecorder(aniName);
+        if (a != null && !a.isPause)
         {
-            defaultTask.PlayClip();
+            a.isPause = true;
+            UpdateSpeed();
         }
+    }
+
+    /// <summary>
+    /// 取消暂停某个动画
+    /// </summary>
+    public void Resume(string aniName)
+    {
+        AnimatorStateRecorder a = GetAnimatorStateRecorder(aniName);
+        if (a != null && a.isPause)
+        {
+            a.isPause = false;
+            UpdateSpeed();
+        }
+    }
+
+    /// <summary>
+    /// 播放某个动画，如果有则播放，否则什么事也不发生
+    /// </summary>
+    /// <param name="aniName"></param>
+    public void Play(string aniName, bool isCycle)
+    {
+        AnimatorStateRecorder a = GetAnimatorStateRecorder(aniName);
+        if (a != null)
+        {
+            FinishCurrentTask();
+            a.isCycle = isCycle;
+            currentTask = a;
+            currentTask.isPlaying = true;
+            Reset(a); // 从头开始播放
+            animator.Play(a.aniName, -1, a.GetNormalizedTime());
+            UpdateSpeed();
+        }
+    }
+
+    /// <summary>
+    /// 播放某个动画，如果有则播放，否则什么事也不发生
+    /// </summary>
+    /// <param name="aniName"></param>
+    public void Play(string aniName, bool isCycle, float normalizedTime)
+    {
+        AnimatorStateRecorder a = GetAnimatorStateRecorder(aniName);
+        if (a != null)
+        {
+            FinishCurrentTask();
+            a.isCycle = isCycle;
+            currentTask = a;
+            currentTask.isPlaying = true;
+            animator.Play(a.aniName, -1, normalizedTime);
+            UpdateSpeed();
+        }
+    }
+
+    /// <summary>
+    /// 播放某个动画，如果有则播放，否则什么事也不发生
+    /// </summary>
+    /// <param name="aniName"></param>
+    public void Play(string aniName)
+    {
+        Play(aniName, false);
+    }
+
+    /// <summary>
+    /// 设置某个动画的当前播放帧
+    /// </summary>
+    /// <param name="aniName"></param>
+    /// <param name="timer"></param>
+    public void SetTimer(string aniName, int timer)
+    {
+        AnimatorStateRecorder a = GetAnimatorStateRecorder(aniName);
+        if (a != null)
+        {
+            a.timer = timer;
+            // 如果动画本身就在播放，则需要重新设置一下
+            if (a.IsPlaying())
+                animator.Play(a.aniName, -1, a.GetNormalizedTime());
+        }
+    }
+
+    /// <summary>
+    /// 设置某个动画的速度
+    /// </summary>
+    /// <param name="aniName"></param>
+    /// <param name="timer"></param>
+    public void SetSpeed(string aniName, float speed)
+    {
+        AnimatorStateRecorder a = GetAnimatorStateRecorder(aniName);
+        if (a != null)
+        {
+            a.speed = speed;
+            UpdateSpeed();
+        }
+    }
+
+    /// <summary>
+    /// 结束当前动画播放
+    /// </summary>
+    public void FinishCurrentTask()
+    {
+        if(currentTask!=null)
+            currentTask.isPlaying = false;
+        currentTask = null;
+        UpdateSpeed(); 
+    }
+
+    /// <summary>
+    /// 当宿主Animator切换时
+    /// </summary>
+    public void ChangeAnimator(Animator animator)
+    {
+        this.animator = animator;
+        taskListDict.Clear();
     }
 
     /// <summary>
     /// 遍历所有动画播放的任务
     /// </summary>
     /// <returns></returns>
-    public List<AnimatorControllerTask> GetEachTask()
+    public List<AnimatorStateRecorder> GetEachTask()
     {
-        List<AnimatorControllerTask> list = new List<AnimatorControllerTask>();
-        foreach (var type in taskTypeList)
+        List<AnimatorStateRecorder> list = new List<AnimatorStateRecorder>();
+        foreach (var item in taskListDict)
         {
-            foreach (var item in taskListDict[type])
-            {
-                list.Add(item);
-            }
+            list.Add(item.Value);
         }
         return list;
     }
 
     public void Update()
     {
-        foreach (var type in taskTypeList)
+        if (currentTask != null)
+            currentTask.Update();
+    }
+
+    /// <summary>
+    /// 获取某个动画状态（如果有）
+    /// </summary>
+    /// <param name="aniName"></param>
+    /// <returns></returns>
+    public AnimatorStateRecorder GetAnimatorStateRecorder(string aniName)
+    {
+        if (taskListDict.ContainsKey(aniName))
         {
-            foreach (var item in taskListDict[type])
-            {
-                item.Update();
-            }
+            return taskListDict[aniName];
         }
+        // 自动读取机制
+        int nameHash1 = Animator.StringToHash(aniName);
+        //Debug.Log("nameHash1=" + nameHash1);
+        if (animator.HasState(0, nameHash1))
+        {
+            // animator.Play(nameHash1);
+            // bool isName = animator.GetCurrentAnimatorStateInfo(0).IsName(aniName);
+            //Debug.Log("isName = " + isName);
+            //Debug.Log("nameHash2 = " + animator.GetCurrentAnimatorStateInfo(0).shortNameHash);
+            AddTask(animator, aniName, false, 0, 1);
+            return taskListDict[aniName];
+        }
+        Debug.Log("当前Animator不存在名为{" + aniName + "}的状态");
+        return null;
     }
 
-    public void AddTask(AnimatorControllerTask.Type taskType, AnimatorControllerTask task)
+    /// <summary>
+    /// 获取当前正在播放的动画
+    /// </summary>
+    /// <param name="aniName"></param>
+    /// <returns></returns>
+    public AnimatorStateRecorder GetCurrentAnimatorStateRecorder()
     {
-        task.animator = animator;
-        taskListDict[taskType].Add(task);
-        UpdateTheMostImportantTask();
+        return currentTask;
     }
 
-    public void RemoveTask(AnimatorControllerTask.Type taskType, AnimatorControllerTask task)
+    /// <summary>
+    /// 是否整体暂停了
+    /// </summary>
+    /// <returns></returns>
+    public bool IsPause()
     {
-        taskListDict[taskType].Remove(task);
-        if (task == currentTask)
-            currentTask = null;
-        UpdateTheMostImportantTask();
+        return isPauseBoolNumeric.Value;
+    }
+
+    /////////////////////////////////////////////////////////////////////////////////以下为私有方法///////////////////////////////////////////
+
+    /// <summary>
+    /// 更新播放速度
+    /// </summary>
+    private void UpdateSpeed()
+    {
+        if (animator == null)
+            return;
+        if (IsPause())
+        {
+            animator.speed = 0;
+            return;
+        }
+        if (currentTask != null)
+        {
+            if (currentTask.isPause)
+                animator.speed = 0;
+            else
+                animator.speed = currentTask.speed;
+            return;
+        }
+        animator.speed = 1;
+    }
+
+    /// <summary>
+    /// 重置播放进度
+    /// </summary>
+    /// <param name="animatorStateRecorder"></param>
+    private void Reset(AnimatorStateRecorder animatorStateRecorder)
+    {
+        animatorStateRecorder.timer = 0;
+    }
+
+    private AnimatorStateRecorder AddTask(Animator animator, string aniName, bool isCycle)
+    {
+        AnimatorStateRecorder t = new AnimatorStateRecorder(this, aniName, isCycle);
+        AddTask(aniName, t);
+        return t;
+    }
+
+    private AnimatorStateRecorder AddTask(Animator animator, string aniName, bool isCycle, float startTimer)
+    {
+        AnimatorStateRecorder t = new AnimatorStateRecorder(this, aniName, isCycle, startTimer);
+        AddTask(aniName, t);
+        return t;
+    }
+
+    private AnimatorStateRecorder AddTask(Animator animator, string aniName, bool isCycle, float startTimer, float speed)
+    {
+        AnimatorStateRecorder t = new AnimatorStateRecorder(this, aniName, isCycle, startTimer, speed);
+        AddTask(aniName, t);
+        return t;
+    }
+
+    private void AddTask(string aniName, AnimatorStateRecorder task)
+    {
+        taskListDict.Add(aniName, task);
+        //UpdateTheMostImportantTask();
+    }
+
+    private void RemoveTask(string aniName)
+    {
+        if (taskListDict.ContainsKey(aniName))
+        {
+            if (taskListDict[aniName] == currentTask)
+                currentTask = null;
+        }
+        taskListDict.Remove(aniName);
+        //UpdateTheMostImportantTask();
     }
 }

@@ -1,5 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
+
 using UnityEngine;
 /// <summary>
 /// ×Ý»ðÊó
@@ -91,11 +91,11 @@ public class ArsonMouse : MouseUnit
     {
         if (throwBombSkillAbility.isThrow)
         {
-            animator.Play("Move1");
+            animatorController.Play("Move1", true);
         }
         else
         {
-            animator.Play("Move0");
+            animatorController.Play("Move0", true);
         }
     }
 
@@ -103,11 +103,11 @@ public class ArsonMouse : MouseUnit
     {
         if (throwBombSkillAbility.IsFinishPreCast())
         {
-            animator.Play("Cast");
+            animatorController.Play("Cast");
         }
         else
         {
-            animator.Play("PreCast");
+            animatorController.Play("PreCast");
         }
     }
 
@@ -158,6 +158,8 @@ public class ArsonMouse : MouseUnit
         {
             foreach (var item in list)
             {
+                if (!item.CanBeSelectedAsTarget())
+                    continue;
                 int temp = item.GetColumnIndex();
                 if (temp < minColumnIndex)
                 {
@@ -182,6 +184,8 @@ public class ArsonMouse : MouseUnit
             {
                 foreach (var item in list)
                 {
+                    if (!item.CanBeSelectedAsTarget())
+                        continue;
                     int temp = item.GetColumnIndex();
                     if (temp < minColumnIndex)
                     {
@@ -199,6 +203,8 @@ public class ArsonMouse : MouseUnit
             {
                 foreach (var item in list)
                 {
+                    if (!item.CanBeSelectedAsTarget())
+                        continue;
                     int temp = item.GetColumnIndex();
                     if (temp < minColumnIndex)
                     {

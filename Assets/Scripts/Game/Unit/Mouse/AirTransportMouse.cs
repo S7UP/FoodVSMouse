@@ -1,6 +1,6 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
+
 using UnityEngine;
 /// <summary>
 /// 空中运输型
@@ -14,6 +14,17 @@ public class AirTransportMouse : MouseUnit
         base.MInit();
         // 防爆
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, new BoolModifier(true));
+        // 图层权重-1
+        typeAndShapeValue = -1;
+    }
+
+    /// <summary>
+    /// 设置判定参数
+    /// </summary>
+    public override void SetCollider2DParam()
+    {
+        mBoxCollider2D.offset = new Vector2(2.04f * MapManager.gridWidth, 0);
+        mBoxCollider2D.size = new Vector2(4.58f * MapManager.gridWidth, 0.49f * MapManager.gridHeight);
     }
 
     /// <summary>
@@ -113,13 +124,13 @@ public class AirTransportMouse : MouseUnit
         int state = airTransportSummonSkillAbility.GetCastState();
         if (state == 0)
         {
-            animator.Play("PreCast");
+            animatorController.Play("PreCast");
         }else if(state == 1)
         {
-            animator.Play("Cast");
+            animatorController.Play("Cast", true);
         }else if(state == 2)
         {
-            animator.Play("PostCast");
+            animatorController.Play("PostCast");
         }
     }
 
@@ -139,6 +150,16 @@ public class AirTransportMouse : MouseUnit
                 else
                     airTransportSummonSkillAbility.SetFinishPostCast();
             }
+        }
+    }
+
+    public override void MUpdate()
+    {
+        base.MUpdate();
+        // 出屏后消失
+        if (GetColumnIndex() > MapController.xColumn + 2)
+        {
+            DeathEvent();
         }
     }
 }

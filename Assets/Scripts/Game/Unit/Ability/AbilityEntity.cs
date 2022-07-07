@@ -1,9 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-using static UnityEngine.EventSystems.EventTrigger;
-
 /// <summary>
 /// 能力实体，存储着某个单位某个能力的数据和状态
 /// </summary>

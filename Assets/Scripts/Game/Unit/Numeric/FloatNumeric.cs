@@ -1,8 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-
-using UnityEngine;
-
 public class FloatNumeric
 {
     // ×îÖÕÊýÖµ
@@ -27,6 +22,11 @@ public class FloatNumeric
     public void Initialize()
     {
         baseValue = add = pctAdd = finalAdd = finalPctAdd = 0;
+        AddCollector.Clear();
+        PctAddCollector.Clear();
+        FinalAddCollector.Clear();
+        FinalPctAddCollector.Clear();
+        Update();
     }
     public float SetBase(float value)
     {

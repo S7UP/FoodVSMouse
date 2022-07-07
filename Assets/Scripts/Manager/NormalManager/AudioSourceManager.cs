@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 //负责控制音乐的播放与停止，以及游戏中各种音效的播放
 public class AudioSourceManager

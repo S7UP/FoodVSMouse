@@ -1,6 +1,4 @@
-using System.Collections;
 using System.Collections.Generic;
-using TMPro;
 
 using UnityEngine;
 /// <summary>
@@ -13,12 +11,12 @@ public class CatapultMouse : MouseUnit
     public override void AfterGeneralAttack()
     {
         mAttackFlag = true;
+        UpdateBlockState(); // 更新阻挡状态
         // 如果有可以攻击的目标，则停下来等待下一次攻击，否则前进
         if (IsHasTarget() || (targetUnit!=null && targetUnit.IsAlive()))
             SetActionState(new IdleState(this));
         else
             SetActionState(new MoveState(this));
-        UpdateBlockState(); // 更新阻挡状态
     }
 
     public override void OnIdleState()
@@ -48,6 +46,8 @@ public class CatapultMouse : MouseUnit
                 float temp_x = transform.position.x;
                 foreach (var item in list)
                 {
+                    if (!item.CanBeSelectedAsTarget())
+                        continue;
                     if (item.transform.position.x < temp_x && item.IsAlive())
                     {
                         temp_x = item.transform.position.x;

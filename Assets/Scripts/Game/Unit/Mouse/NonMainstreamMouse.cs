@@ -1,5 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
+
 using UnityEngine;
 /// <summary>
 /// ·ÇÖ÷Á÷Êó
@@ -82,7 +82,7 @@ public class NonMainstreamMouse : MouseUnit
     public override void OnCastStateEnter()
     {
         currentActionCount++;
-        animator.Play("Dodge"+(currentActionCount%3));
+        animatorController.Play("Dodge"+(currentActionCount%3));
     }
 
     public override void OnCastState()

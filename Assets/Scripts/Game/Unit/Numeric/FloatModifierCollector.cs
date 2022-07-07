@@ -1,7 +1,4 @@
-using System.Collections;
 using System.Collections.Generic;
-
-using UnityEngine;
 
 /// <summary>
 /// 单浮点形修饰器的收集器
@@ -10,6 +7,12 @@ public class FloatModifierCollector
 {
     public float TotalValue { get; private set; }
     public List<FloatModifier> Modifiers { get; } = new List<FloatModifier>();
+
+    public void Clear()
+    {
+        Modifiers.Clear();
+        Update();
+    }
 
     public float AddModifier(FloatModifier modifier)
     {

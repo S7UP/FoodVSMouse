@@ -1,8 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Timeline;
-
 public class WeaponsDieState : WeaponsActionState
 {
     public WeaponsDieState(BaseWeapons baseWeapons) : base(baseWeapons)

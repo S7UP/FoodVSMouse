@@ -1,6 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 /// <summary>
 /// 老鼠名称-种类映射表
 /// </summary>
@@ -34,4 +31,6 @@ public enum MouseNameTypeMap
     ParatrooperMouse = 25, // 伞兵类
     SnailMouse = 26, // 蜗牛车
     NonMainstreamMouse = 27, // 非主流
+    BeeMouse = 28, // 机械蜂箱
+    CanMouse = 29, // 罐头鼠
 }

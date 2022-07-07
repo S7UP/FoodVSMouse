@@ -1,5 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
+
 using UnityEngine;
 using UnityEngine.UI;
 //using DG.Tweening;
@@ -18,7 +18,7 @@ public class UIFacade
     // 其他成员变量
     private GameObject mask;
     private Image maskImage;
-    public Transform canvasTransform;
+    public Canvas uiCanvas; //{ get { return GameObject.Find("Canvas").GetComponent<Canvas>(); } }
     // 场景状态
     public IBaseSceneState currentSceneState;
     public IBaseSceneState lastSceneState;
@@ -30,13 +30,16 @@ public class UIFacade
         mPlayerManager = mGameManager.playerManager;
         mUIManager = uIManager;
         mAudioSourceManager = mGameManager.audioSourceManager;
-        InitMask();
+        // UI的存放窗口
+        uiCanvas = GameObject.Find("Canvas").GetComponent<Canvas>();
+        GameManager.DontDestroyOnLoad(uiCanvas);
+        //InitMask();
     }
 
     // 初始化遮罩
     public void InitMask()
     {
-        canvasTransform = GameObject.Find("Canvas").transform;
+
         // mask = mGameManager.factoryManager.factoryDict[FactoryType.UIFactory].GetItem("Img_Mask");
         // mask = mGameManager.GetGameObjectResource(FactoryType.UIFactory, "Img_Mask");
         // mask = GetGameObjectResource(FactoryType.UIFactory, "Img_Mask");
@@ -50,7 +53,9 @@ public class UIFacade
         lastSceneState = currentSceneState;
         //ShowMask();
         currentSceneState = baseSceneState;
-
+        if (lastSceneState != null)
+            lastSceneState.ExitScene();
+        currentSceneState.EnterScene();
     }
 
     //显示遮罩
@@ -63,11 +68,12 @@ public class UIFacade
     //}
 
     // 离开当前场景
-    private void ExitSceneComplete()
-    {
-        lastSceneState.ExitScene();
-        currentSceneState.EnterScene();
-    }
+    //private void ExitSceneComplete()
+    //{
+    //    if(lastSceneState!=null)
+    //        lastSceneState.ExitScene();
+    //    currentSceneState.EnterScene();
+    //}
 
     // 隐藏遮罩
     //public void HideMask()
@@ -79,10 +85,10 @@ public class UIFacade
     //实例化当前场景所有面板，并存放字典
     public void InitDict()
     {
-        foreach(var item in mUIManager.currentScenePanelDict)
+        foreach (var item in mUIManager.currentScenePanelDict)
         {
             // 要的是值Value,而不是键
-            item.Value.transform.SetParent(canvasTransform);
+            item.Value.transform.SetParent(uiCanvas.transform);
             item.Value.transform.localPosition = Vector3.zero;
             item.Value.transform.localScale = Vector3.one;
             IBasePanel basePanel = item.Value.GetComponent<IBasePanel>();
@@ -111,7 +117,7 @@ public class UIFacade
     public GameObject CreateUIAndSetUIPosition(string uiName)
     {
         GameObject itemGo = GetGameObjectResource(FactoryType.UIFactory, uiName);
-        itemGo.transform.SetParent(canvasTransform);
+        itemGo.transform.SetParent(uiCanvas.transform);
         itemGo.transform.localPosition = Vector3.zero;
         itemGo.transform.localScale = Vector3.one;
         return itemGo;

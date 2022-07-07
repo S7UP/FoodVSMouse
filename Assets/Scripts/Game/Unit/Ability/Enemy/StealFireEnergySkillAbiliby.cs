@@ -1,8 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-
-using UnityEngine;
 /// <summary>
 /// 光能窃取
 /// </summary>
@@ -51,8 +46,6 @@ public class StealFireEnergySkillAbiliby : SkillAbility
             if (currentTime >= totalCastTime)
             {
                 isEndCasting = true;
-                // 结束偷窃
-                GameController.Instance.mCostController.RemoveShieldModifier("Fire", boolModifier);
             }
         }
     }
@@ -78,6 +71,8 @@ public class StealFireEnergySkillAbiliby : SkillAbility
         currentTime = 0;
         isCasting = false;
         isEndCasting = false;
+        // 结束偷窃
+        GameController.Instance.mCostController.RemoveShieldModifier("Fire", boolModifier);
         master.SetActionState(new MoveState(master));
     }
 

@@ -1,7 +1,4 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 
 public class WeaponsFrozenState : WeaponsActionState
 {
@@ -17,7 +14,7 @@ public class WeaponsFrozenState : WeaponsActionState
     {
         master.OnFrozenStateEnter();
         master.isFrozenState = true;
-        master.AnimatorStop(); // 停止动画
+        master.PauseCurrentAnimatorState(); // 停止动画
     }
 
     public override void OnUpdate()
@@ -31,7 +28,7 @@ public class WeaponsFrozenState : WeaponsActionState
     {
         master.OnFrozenStateExit();
         master.isFrozenState = false;
-        master.AnimatorContinue(); // 放开动画
+        master.ResumeCurrentAnimatorState(); // 放开动画
         master.SetActionState(lastState);
     }
 

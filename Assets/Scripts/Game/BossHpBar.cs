@@ -1,10 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
 
 using UnityEngine;
 using UnityEngine.UI;
-
-using static UnityEngine.UI.CanvasScaler;
 
 public class BossHpBar : BaseProgressBar
 {
@@ -62,7 +58,7 @@ public class BossHpBar : BaseProgressBar
         numberSpriteList = new Sprite[10];
         for (int i = 0; i < numberSpriteList.Length; i++)
         {
-            numberSpriteList[i] = GameManager.Instance.GetSprite("UI/Number/" + i);
+            numberSpriteList[i] = GameManager.Instance.GetSprite("UI/Wave_Number/" + i);
         }
         Spr_BossHpBar = new Sprite[7];
         Sprite[] sprites = GameManager.Instance.GetSprites("Pictures/UI/BossHpBar");

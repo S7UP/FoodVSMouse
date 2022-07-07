@@ -1,8 +1,3 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UIElements;
 /// <summary>
 /// 技能存储实体
 /// </summary>
@@ -153,7 +148,11 @@ public abstract class SkillAbility : AbilityEntity
         {
             OnSpelling();
             if (IsMeetCloseSpellingCondition())
+            {
+                OnMeetCloseSpellingCondition();
                 EndActivate();
+            }
+                
         }
         else
             OnNoSpelling();
@@ -209,6 +208,14 @@ public abstract class SkillAbility : AbilityEntity
     public override AbilityExecution CreateAbilityExecution()
     {
         return null;
+    }
+
+    /// <summary>
+    /// 当结束技能条件生效时,与EndActivate的差别是在外界强制关闭技能的方式是调用EndActivate，但不会经过这个方法
+    /// </summary>
+    public virtual void OnMeetCloseSpellingCondition()
+    {
+
     }
 
     /// <summary>

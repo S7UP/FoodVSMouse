@@ -1,5 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
+
 using UnityEngine;
 /// <summary>
 /// 格子组，控制多个格子绑定行动逻辑
@@ -69,5 +69,10 @@ public class GridGroup : MonoBehaviour, IGameControllerMember
     public void MPauseUpdate()
     {
         
+    }
+
+    public virtual void ExecuteRecycle()
+    {
+
     }
 }

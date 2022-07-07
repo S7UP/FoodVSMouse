@@ -1,7 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
 public class CastState : BaseActionState
 {
     public CastState(BaseUnit baseUnit) : base(baseUnit)

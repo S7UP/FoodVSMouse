@@ -1,15 +1,29 @@
-using System.Collections;
 using System.Collections.Generic;
+
 using UnityEngine;
 /// <summary>
 /// 三线酒架具体实现
 /// </summary>
 public class ThreeLineFoodUnit : FoodUnit
 {
+    private int[] countArray;
+
     public override void MInit()
     {
         base.MInit();
-        SetLevel(12);
+        // 根据转职情况来确定三条线各发几发子弹
+        switch (mShape)
+        {
+            case 1:
+                countArray = new int[] { 1, 2, 1 };
+                break;
+            case 2:
+                countArray = new int[] { 2, 2, 2 };
+                break;
+            default:
+                countArray = new int[] { 1, 1, 1 };
+                break;
+        }
     }
 
     /// <summary>
@@ -110,7 +124,7 @@ public class ThreeLineFoodUnit : FoodUnit
     {
         for (int i = -1; i <= 1; i++)
         {
-            for (int j = 0; j < 2; j++)
+            for (int j = 0; j < countArray[i+1]; j++)
             {
                 BaseBullet b = GameController.Instance.CreateBullet(this, transform.position, Vector2.right, BulletStyle.Wine);
                 b.SetDamage(mCurrentAttack);

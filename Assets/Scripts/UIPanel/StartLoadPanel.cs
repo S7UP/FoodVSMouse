@@ -1,17 +1,18 @@
-//using System.Collections;
-//using System.Collections.Generic;
-//using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
 
-//public class StartLoadPanel : BasePanel
-//{
-//    protected override void Awake()
-//    {
-//        base.Awake();
-//        Invoke("LoadNextScene", 2);
-//    }
+using UnityEngine;
 
-//    private void LoadNextScene()
-//    {
-//        mUIFacade.ChangeSceneState(new MainSceneState(mUIFacade));
-//    }
-//}
+public class StartLoadPanel : BasePanel
+{
+    protected override void Awake()
+    {
+        base.Awake();
+        Invoke("LoadNextScene", 1);
+    }
+
+    private void LoadNextScene()
+    {
+        mUIFacade.ChangeSceneState(new MainSceneState(mUIFacade));
+    }
+}

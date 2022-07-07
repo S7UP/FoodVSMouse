@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -17,6 +15,7 @@ public class IceBombBullet : ParabolaBullet
         GameObject instance = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "AreaEffect/IceAreaEffect");
         IceAreaEffectExecution iceEffect = instance.GetComponent<IceAreaEffectExecution>();
         iceEffect.Init(this.mMasterBaseUnit, 600, GetRowIndex(), 3, 3, -0.5f, 0, true, false); // 第二个参数为持续时间（帧）
+        iceEffect.isAffectCharacter = true; // 对人有效
         if (baseUnit != null && baseUnit.IsValid())
         {
             // 如果单位存在，则在单位位置爆炸

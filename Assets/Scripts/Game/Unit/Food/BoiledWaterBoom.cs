@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class BoiledWaterBoom : FoodUnit
@@ -7,15 +5,12 @@ public class BoiledWaterBoom : FoodUnit
     public override void MInit()
     {
         base.MInit();
-        SetLevel(12);
-    }
-
-    /// <summary>
-    /// 根据等级表和等级来更新对应数据
-    /// </summary>
-    public override void UpdateAttributeByLevel()
-    {
-        //NumericBox.Attack.SetBase((float)(attr.baseAttrbute.baseAttack + attr.valueList[mLevel]));
+        // 获取100%减伤，接近无限的生命值，以及免疫灰烬秒杀效果
+        NumericBox.Defense.SetBase(1);
+        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, new BoolModifier(true));
+        NumericBox.AddDecideModifierToBoolDict(StringManager.Invincibility, new BoolModifier(true));
+        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozen, new BoolModifier(true));
+        SetMaxHpAndCurrentHp(float.MaxValue);
     }
 
     /// <summary>
@@ -52,17 +47,7 @@ public class BoiledWaterBoom : FoodUnit
     /// </summary>
     public override void OnGeneralAttack()
     {
-        // 切换时的第一帧直接不执行update()，因为下述的info.normalizedTime的值还停留在上一个状态，逻辑会出问题！
-        if (currentStateTimer <= 0)
-        {
-            return;
-        }
-        // 伤害判定帧应当执行判定
-        if (IsDamageJudgment())
-        {
-            mAttackFlag = false;
-            ExecuteDamage();
-        }
+
     }
 
     /// <summary>
@@ -80,6 +65,7 @@ public class BoiledWaterBoom : FoodUnit
     /// </summary>
     public override void AfterGeneralAttack()
     {
+        ExecuteDamage();
         // 灰烬型卡片直接销毁自身
         ExecuteDeath();
     }
@@ -99,6 +85,15 @@ public class BoiledWaterBoom : FoodUnit
     /// </summary>
     public override void ExecuteDamage()
     {
+        // 原地产生一个爆炸效果
+        {
+            GameObject instance = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Effect/BoomEffect");
+            BaseEffect effect = instance.GetComponent<BaseEffect>();
+            effect.MInit();
+            effect.animator.runtimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Food/" + mType + "/BoomEffect");
+            effect.transform.position = transform.position;
+            GameController.Instance.AddEffect(effect);
+        }
         // 添加对应的判定检测器
         {
             GameObject instance = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "AreaEffect/BombAreaEffect");

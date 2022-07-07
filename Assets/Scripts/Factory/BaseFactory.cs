@@ -1,5 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
+
 using UnityEngine;
 // 游戏物体类型的工厂基类
 public class BaseFactory : IBaseFactory
@@ -86,5 +86,20 @@ public class BaseFactory : IBaseFactory
             Debug.Log("失败路径：" + itemLoadPath);
         }
         return itemGo;
+    }
+
+    /// <summary>
+    /// 清空工厂对象池里的对象
+    /// </summary>
+    public virtual void Clear()
+    {
+        foreach (var keyValuePair in objectPoolDict)
+        {
+            foreach (var item in keyValuePair.Value)
+            {
+                GameObject.Destroy(item);
+            }
+            keyValuePair.Value.Clear();
+        }
     }
 }

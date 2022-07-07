@@ -1,17 +1,18 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
 /// <summary>
 /// –‹√® ÛÀÊ¥”
 /// </summary>
 public class PandaRetinueMouse : MouseUnit
 {
-    /// <summary>
-    /// ≤•∑≈∑…––∂Øª≠
-    /// </summary>
-    public void PlayFlyClip()
+    public override void OnTransitionStateEnter()
     {
-        animator.Play("Fly");
+        animatorController.Play("Fly", true);
+    }
+
+    public override void OnTransitionState()
+    {
+        //if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
+        //{
+        //    SetActionState(new MoveState(this));
+        //}
     }
 }

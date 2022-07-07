@@ -1,8 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-
-using UnityEditor.SceneManagement;
 
 using UnityEngine;
 
@@ -25,7 +20,6 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
-        Debug.Log("GameManager Awake!");
         DontDestroyOnLoad(gameObject); // 切场景时不销毁
         _instance = this;
         playerManager = new PlayerManager();
@@ -34,10 +28,10 @@ public class GameManager : MonoBehaviour
         // 加载ConfigManager，目前的作用仅仅是锁60帧
         configManager = new ConfigManager();
         abilityManager = AbilityManager.GetSingleton();
-
         uiManager = new UIManager();
-        //EnterEditorScene();
-        EnterComBatScene();
+        // 初始场景
+        uiManager.mUIFacade.ChangeSceneState(new StartLoadSceneState(uiManager.mUIFacade));
+        //Test
     }
 
     /// <summary>
@@ -45,8 +39,7 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void EnterEditorScene()
     {
-        uiManager.mUIFacade.currentSceneState = new EditorSceneState(uiManager.mUIFacade);
-        uiManager.mUIFacade.currentSceneState.EnterScene();
+        uiManager.mUIFacade.ChangeSceneState(new EditorSceneState(uiManager.mUIFacade));
     }
 
     /// <summary>
@@ -54,8 +47,28 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void EnterComBatScene()
     {
-        uiManager.mUIFacade.currentSceneState = new GameNormalSceneState(uiManager.mUIFacade);
-        uiManager.mUIFacade.currentSceneState.EnterScene();
+        uiManager.mUIFacade.ChangeSceneState(new GameNormalSceneState(uiManager.mUIFacade));
+    }
+
+    /// <summary>
+    /// 进入选择配置场景
+    /// </summary>
+    public void EnterSelectScene()
+    {
+        uiManager.mUIFacade.ChangeSceneState(new SelectSceneState(uiManager.mUIFacade));
+    }
+
+    /// <summary>
+    /// 进入主页面场景
+    /// </summary>
+    public void EnterMainScene()
+    {
+        uiManager.mUIFacade.ChangeSceneState(new MainSceneState(uiManager.mUIFacade));
+    }
+
+    public Canvas GetUICanvas()
+    {
+        return uiManager.mUIFacade.uiCanvas;
     }
 
     public GameObject CreateItem(GameObject itemGo)
@@ -94,6 +107,14 @@ public class GameManager : MonoBehaviour
     public void PushGameObjectToFactory(FactoryType factoryType, string resourcePath, GameObject itemGo)
     {
         factoryManager.factoryDict[factoryType].PushItem(resourcePath, itemGo);
+    }
+
+    /// <summary>
+    /// 清空游戏对象工厂的对象
+    /// </summary>
+    public void ClearGameObjectFactory(FactoryType factoryType)
+    {
+        factoryManager.factoryDict[factoryType].Clear();
     }
 
     // 对于游戏对象工厂的来说，有一个缓冲池和一个真正的取回游戏对象的对象池，被回收的游戏对象会先进入缓冲池，需要调用这个方法将缓冲池的东西放进对象池以待命

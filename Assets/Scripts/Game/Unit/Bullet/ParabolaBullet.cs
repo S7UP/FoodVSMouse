@@ -1,8 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-
-using static UnityEngine.GraphicsBuffer;
 
 /// <summary>
 /// 抛物线移动式的子弹
@@ -10,7 +6,7 @@ using static UnityEngine.GraphicsBuffer;
 public class ParabolaBullet : BaseBullet
 {
     // 抛物线子弹最好使用刚体
-    new public Rigidbody2D rigidbody2D;
+    public Rigidbody2D r2D;
 
     public Vector3 firstPosition; // 初始点
     public Vector3 targetPosition; // 目标点
@@ -25,14 +21,14 @@ public class ParabolaBullet : BaseBullet
     public override void Awake()
     {
         base.Awake();
-        rigidbody2D = GetComponent<Rigidbody2D>();
+        r2D = GetComponent<Rigidbody2D>();
     }
 
     public override void MInit()
     {
         base.MInit();
         currentTimer = 0;
-        CloseCollision();
+        //CloseCollision();
     }
 
 
@@ -74,13 +70,13 @@ public class ParabolaBullet : BaseBullet
         {
             TakeDamage(null);
         }
-        else if(currentTimer >= totalTimer - 4)
-        {
-            OpenCollision();
-        }
+        //else if(currentTimer >= totalTimer - 4)
+        //{
+        //    OpenCollision();
+        //}
         velocityVertical -= g;
         Vector2 vx = Vector2.Lerp(firstPosition, targetPosition, (float)currentTimer/totalTimer);
-        rigidbody2D.MovePosition(new Vector2(vx.x, transform.position.y) + Vector2.up * GetVerticalVelocity());
+        r2D.MovePosition(new Vector2(vx.x, transform.position.y) + Vector2.up * GetVerticalVelocity());
         currentTimer++;
     }
 
@@ -107,29 +103,30 @@ public class ParabolaBullet : BaseBullet
     /// <param name="collision"></param>
     public void OnCollsion(Collider2D collision)
     {
-        //if (collision.tag.Equals("Food"))
-        //{
-        //    if (canAttackFood)
-        //    {
-        //        FoodUnit u = collision.GetComponent<FoodUnit>();
-        //        if (u.GetRowIndex() == currentRow)
-        //        {
-        //            TakeDamage(u);
-        //        }
-        //    }
-        //}else if (collision.tag.Equals("Mouse"))
-        //{
-        //    if (canAttackMouse)
-        //    {
-        //        MouseUnit u = collision.GetComponent<MouseUnit>();
-        //        if (u.GetRowIndex() == currentRow)
-        //        {
-        //            TakeDamage(u);
-        //        }
-        //    }
-        //}
+        if (collision.tag.Equals("Food"))
+        {
+            if (canAttackFood)
+            {
+                FoodUnit u = collision.GetComponent<FoodUnit>();
+                if (u.GetRowIndex() == currentRow)
+                {
+                    TakeDamage(u);
+                }
+            }
+        }
+            //}else if (collision.tag.Equals("Mouse"))
+            //{
+            //    if (canAttackMouse)
+            //    {
+            //        MouseUnit u = collision.GetComponent<MouseUnit>();
+            //        if (u.GetRowIndex() == currentRow)
+            //        {
+            //            TakeDamage(u);
+            //        }
+            //    }
+            //}
 
-    }
+        }
 
     public override void OnTriggerEnter2D(Collider2D collision)
     {

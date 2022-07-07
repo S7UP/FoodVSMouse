@@ -1,6 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using TMPro;
 
 using UnityEngine;
 /// <summary>
@@ -10,6 +7,7 @@ public class FlyThrowBombSkillAbility : SkillAbility
 {
     private bool canSkill; // 是否可以施放，由该技能持有者决定
     private bool canClose; // 是否需要关闭，由该技能持有者决定
+    private float targetX;
 
     public FlyThrowBombSkillAbility(BaseUnit pmaster) : base(pmaster)
     {
@@ -24,9 +22,10 @@ public class FlyThrowBombSkillAbility : SkillAbility
     /// <summary>
     /// 设置技能为可施放
     /// </summary>
-    public void SetSkillConditionEnable()
+    public void SetSkillConditionEnable(float targetX)
     {
         canSkill = true;
+        this.targetX = targetX;
     }
 
 
@@ -52,7 +51,7 @@ public class FlyThrowBombSkillAbility : SkillAbility
     {
         // 丢出炸弹实体
         FlyBombBullet flybombBullet = GameController.Instance.CreateBullet(master, master.transform.position + Vector3.left*0.225f + Vector3.up*0.3f, Vector2.down, BulletStyle.FlyBomb) as FlyBombBullet;
-        flybombBullet.InitVelocity(0, 1.0f/ConfigManager.fps, master.transform.position.y, master.GetRowIndex());
+        flybombBullet.InitVelocity(1.0f/60,  targetX, master.transform.position.y, master.GetRowIndex());
         flybombBullet.UpdateRenderLayer(0); // 再更新一下图层吧
         flybombBullet.transform.right = Vector3.right;
         // 停下来，切状态，播动画
@@ -87,5 +86,6 @@ public class FlyThrowBombSkillAbility : SkillAbility
     {
         master.SetActionState(new MoveState(master));
         canSkill = false;
+        targetX = 0;
     }
 }

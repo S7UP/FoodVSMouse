@@ -1,7 +1,4 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 
 /// <summary>
 /// 冻结状态
@@ -11,6 +8,7 @@ public class FrozenState : BaseActionState
 {
     protected IBaseActionState lastState; // 上一个状态
     private Func<bool> isMeetingExitCondition;
+    private BoolModifier boolModifier = new BoolModifier(true);
 
     public FrozenState(BaseUnit baseUnit, IBaseActionState baseActionState) : base(baseUnit)
     {
@@ -26,7 +24,7 @@ public class FrozenState : BaseActionState
     public override void OnEnter()
     {
         mBaseUnit.isFrozenState = true;
-        mBaseUnit.AnimatorStop(); // 停止动画
+        mBaseUnit.PauseCurrentAnimatorState(boolModifier); // 停止动画
     }
 
     public override void OnUpdate()
@@ -54,7 +52,7 @@ public class FrozenState : BaseActionState
     public override void OnExit()
     {
         mBaseUnit.isFrozenState = false;
-        mBaseUnit.AnimatorContinue(); // 放开动画
+        mBaseUnit.ResumeCurrentAnimatorState(boolModifier); // 放开动画
         mBaseUnit.SetActionState(lastState);
     }
 }

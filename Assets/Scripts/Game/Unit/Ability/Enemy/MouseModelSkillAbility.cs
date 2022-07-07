@@ -1,9 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using TMPro;
-
-using UnityEngine;
-
 /// <summary>
 /// 老鼠技能模板
 /// </summary>

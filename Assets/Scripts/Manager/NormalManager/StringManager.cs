@@ -1,12 +1,11 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
 public class StringManager
 {
     // panel
+    public const string StartLoadPanel = "StartLoadPanel";
     public const string GameNormalPanel = "GameNormalPanel";
     public const string EditorPanel = "EditorPanel";
+    public const string SelectPanel = "SelectPanel";
+    public const string MainPanel = "MainPanel";
 
     // 常用标签
     public const string BulletDamgeIncreasement = "子弹伤害增幅";
@@ -25,6 +24,7 @@ public class StringManager
 
     // 通用免疫类型
     public const string IgnoreSlowDown = "减速免疫";
+    public const string IgnoreDecAttackSpeed = "攻速降低免疫";
     public const string IgnoreStun = "晕眩免疫";
     public const string IgnoreBombInstantKill = "免疫炸弹的秒杀效果";
     public const string Invincibility = "免疫伤害（无敌）";

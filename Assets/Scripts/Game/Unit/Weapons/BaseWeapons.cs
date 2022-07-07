@@ -1,5 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
+
 using UnityEngine;
 
 /// <summary>
@@ -33,6 +33,7 @@ public class BaseWeapons : MonoBehaviour, IGameControllerMember
     public WeaponsGeneralAttackSkillAbility weaponsGeneralAttackSkillAbility;
 
     public SkillAbilityManager skillAbilityManager { get; set; } = new SkillAbilityManager(); // 技能管理器
+    public AnimatorController animatorController = new AnimatorController(); // 动画播放控制器
 
     public virtual void Awake()
     {
@@ -42,6 +43,8 @@ public class BaseWeapons : MonoBehaviour, IGameControllerMember
 
     public virtual void MInit()
     {
+        animatorController.Initialize();
+        animatorController.ChangeAnimator(animator);
         master = null;
         isFrozenState = false;
         mAttackFlag = false;
@@ -55,7 +58,8 @@ public class BaseWeapons : MonoBehaviour, IGameControllerMember
 
     public virtual void MUpdate()
     {
-        if(!isDisableSkill)
+        animatorController.Update();
+        if (!isDisableSkill)
             skillAbilityManager.Update();
         if (!isFrozenState)
             currentStateTimer += 1;
@@ -69,12 +73,12 @@ public class BaseWeapons : MonoBehaviour, IGameControllerMember
 
     public virtual void MPause()
     {
-
+        animatorController.Pause();
     }
 
     public virtual void MResume()
     {
-
+        animatorController.Resume();
     }
 
     /// <summary>
@@ -185,7 +189,7 @@ public class BaseWeapons : MonoBehaviour, IGameControllerMember
 
     public virtual void OnIdleStateEnter()
     {
-        animator.Play("Idle");
+        animatorController.Play("Idle", true);
     }
 
     public virtual void OnIdleState()
@@ -200,7 +204,7 @@ public class BaseWeapons : MonoBehaviour, IGameControllerMember
 
     public virtual void OnAttackStateEnter()
     {
-        animator.Play("Attack");
+        animatorController.Play("Attack");
     }
 
     public virtual void OnAttackState()
@@ -215,7 +219,7 @@ public class BaseWeapons : MonoBehaviour, IGameControllerMember
 
     public virtual void OnDieStateEnter()
     {
-        animator.Play("Die");
+        animatorController.Play("Die");
     }
 
     public virtual void OnDieStateExit()
@@ -243,14 +247,20 @@ public class BaseWeapons : MonoBehaviour, IGameControllerMember
 
     }
 
-    public virtual void AnimatorStop()
+    public virtual void PauseCurrentAnimatorState()
     {
-        animator.speed = 0;
+        if (animatorController.currentTask != null)
+        {
+            animatorController.Pause(animatorController.currentTask.aniName);
+        }
     }
 
-    public virtual void AnimatorContinue()
+    public virtual void ResumeCurrentAnimatorState()
     {
-        animator.speed = 1;
+        if (animatorController.currentTask != null)
+        {
+            animatorController.Resume(animatorController.currentTask.aniName);
+        }
     }
 
     /// <summary>
@@ -340,6 +350,8 @@ public class BaseWeapons : MonoBehaviour, IGameControllerMember
         // 进入死亡动画状态
         isDeathState = true;
         SetActionState(new WeaponsDieState(this));
+        // 清除技能效果
+        skillAbilityManager.TryEndAllSpellingSkillAbility();
     }
 
     public virtual void OnDieState()
@@ -357,6 +369,8 @@ public class BaseWeapons : MonoBehaviour, IGameControllerMember
     {
         // 我死了也要化身为腻鬼！！
         AfterDeath();
+        // 再清除技能效果
+        skillAbilityManager.TryEndAllSpellingSkillAbility();
         // 然后安心去世吧
         GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, mPreFabPath, this.gameObject);
     }

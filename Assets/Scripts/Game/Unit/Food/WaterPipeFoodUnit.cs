@@ -1,5 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
+
 using UnityEngine;
 /// <summary>
 /// 双向水管具体实现
@@ -19,7 +19,6 @@ public class WaterPipeFoodUnit : FoodUnit
     public override void MInit()
     {
         base.MInit();
-        SetLevel(12);
         // 根据转职情况来计算前后发射数
         maxFrontAttackCount = maxFrontAttackCountList[mShape];
         maxBackAttackCount = maxBackAttackCountList[mShape];

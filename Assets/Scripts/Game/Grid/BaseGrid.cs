@@ -1,7 +1,4 @@
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System;
 
 using UnityEngine;
 
@@ -17,29 +14,35 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
 
 
     public BaseGridState mMainGridState; // 主要地形状态
-    public List<BaseGridState> mOtherGridStateList; // 其它地形状态表（大多是临时的）
-    protected List<MouseUnit> mMouseUnitList; //　位于格子上的老鼠单位表
+    public List<BaseGridState> mOtherGridStateList = new List<BaseGridState>(); // 其它地形状态表（大多是临时的）
+    protected List<MouseUnit> mMouseUnitList = new List<MouseUnit>(); //　位于格子上的老鼠单位表
 
-    protected Dictionary<FoodInGridType, FoodUnit> mFoodUnitdict; // 恒定在此格子上的美食（即确实是种下去的而非临时性的）
-    protected Dictionary<ItemInGridType, BaseUnit> mItemUnitDict; // 在此格子上的道具
+    protected Dictionary<FoodInGridType, FoodUnit> mFoodUnitdict = new Dictionary<FoodInGridType, FoodUnit>(); // 恒定在此格子上的美食（即确实是种下去的而非临时性的）
+    protected Dictionary<ItemInGridType, BaseUnit> mItemUnitDict = new Dictionary<ItemInGridType, BaseUnit>(); // 在此格子上的道具
     protected CharacterUnit characterUnit; // 所持有的人物单位（如果有）
 
     public bool canBuild;
     public int currentXIndex { get; private set; }
     public int currentYIndex { get; private set; }
 
-    public GridActionPointManager gridActionPointManager; 
+    public GridActionPointManager gridActionPointManager = new GridActionPointManager();
 
     private void Awake()
     {
-        canBuild = true;
-        mMouseUnitList = new List<MouseUnit>();
-        mMainGridState = new BaseGridState(this);
-        mOtherGridStateList = new List<BaseGridState>();
-        mFoodUnitdict = new Dictionary<FoodInGridType, FoodUnit>();
-        mItemUnitDict = new Dictionary<ItemInGridType, BaseUnit>();
 
-        gridActionPointManager = new GridActionPointManager();
+    }
+
+    public void MInit()
+    {
+        mMainGridState = new BaseGridState(this);
+        mOtherGridStateList.Clear();
+        mMouseUnitList.Clear();
+        mFoodUnitdict.Clear();
+        mItemUnitDict.Clear();
+        characterUnit = null;
+        canBuild = true;
+        currentXIndex = 0;
+        currentYIndex = 0;
         gridActionPointManager.Initialize();
     }
 
@@ -159,22 +162,25 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         //SetUnitPosition(unit, Vector2.zero);
     }
 
+
     /// <summary>
     /// 将道具单位放置在该格子上
     /// </summary>
     /// <param name="unit"></param>
-    /// <param name="pos"></param>
-    public void SetItemUnitInGrid(BaseUnit unit)
+    /// <returns>含有同样tag的旧ItemUnit</returns>
+    public BaseUnit SetItemUnitInGrid(BaseUnit unit)
     {
+        BaseUnit old = null; // 原unit
         // Tag检测 有重复Tag的话则取消上一个
         ItemInGridType tag = (ItemInGridType)unit.mType;
         if (IsContainTag(tag))
         {
-            RemoveItemUnit(unit);
+            old = RemoveItemUnit(unit);
         }
         SetUnitPosition(unit, Vector2.zero);
         unit.SetGrid(this);
         AddItemUnit(unit);
+        return old;
     }
 
     /// <summary>
@@ -193,9 +199,16 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     /// <param name="food"></param>
     public void AddFoodUnit(FoodUnit food)
     {
+        FoodInGridType t = BaseCardBuilder.GetFoodInGridType(food.mType);
+        // 需要剔除并销毁上一个与自己相同标签的卡，这种情况会在开启快捷放卡设置后出现
+        if (IsContainTag(t))
+        {
+            mFoodUnitdict[t].DeathEvent();
+            RemoveFoodUnit(mFoodUnitdict[t]);
+        }
+        // 之后再把自身加入
         gridActionPointManager.TriggerActionPoint(GridActionPointType.BeforeSetFoodUnit, new GridAction(food, this));
-        //mFoodUnitList.Add(food);
-        mFoodUnitdict.Add(BaseCardBuilder.GetFoodInGridType(food.mType), food);
+        mFoodUnitdict.Add(t, food);
         gridActionPointManager.TriggerActionPoint(GridActionPointType.AfterSetFoodUnit, new GridAction(food, this));
     }
 
@@ -205,7 +218,6 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     public void RemoveFoodUnit(FoodUnit food)
     {
         gridActionPointManager.TriggerActionPoint(GridActionPointType.BeforeRemoveFoodUnit, new GridAction(food, this));
-        //mFoodUnitList.Remove(food);
         mFoodUnitdict.Remove(BaseCardBuilder.GetFoodInGridType(food.mType));
         gridActionPointManager.TriggerActionPoint(GridActionPointType.AfterRemoveFoodUnit, new GridAction(food, this));
     }
@@ -244,11 +256,17 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     /// <summary>
     /// 本格移除道具引用
     /// </summary>
-    public void RemoveItemUnit(BaseUnit unit)
+    public BaseUnit RemoveItemUnit(BaseUnit unit)
     {
         gridActionPointManager.TriggerActionPoint(GridActionPointType.BeforeRemoveItemUnit, new GridAction(unit, this));
-        mItemUnitDict.Remove((ItemInGridType)unit.mType);
+        BaseUnit old = null;
+        if (mItemUnitDict.ContainsKey((ItemInGridType)unit.mType))
+        {
+            old = mItemUnitDict[(ItemInGridType)unit.mType];
+            mItemUnitDict.Remove((ItemInGridType)unit.mType);
+        }
         gridActionPointManager.TriggerActionPoint(GridActionPointType.AfterRemoveItemUnit, new GridAction(unit, this));
+        return old;
     }
 
     /// <summary>
@@ -351,7 +369,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     }
 
     /// <summary>
-    /// 获取本格中所有可被攻击的美食列表
+    /// 获取本格中所有可被攻击的美食列表，从前往后攻击优先级逐级递减
     /// </summary>
     /// <returns></returns>
     public List<FoodUnit> GetAttackableFoodUnitList()
@@ -411,11 +429,6 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         return currentXIndex;
     }
 
-    public void MInit()
-    {
-        
-    }
-
     public void MUpdate()
     {
         int lastXIndex = currentXIndex;
@@ -430,7 +443,6 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
                 // 换行
                 GameController.Instance.ChangeAllyRow(lastYIndex, currentYIndex, unit);
             }
-            
         }
 
         // 同步角色位置
@@ -507,5 +519,13 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     public virtual void MPauseUpdate()
     {
         
+    }
+
+    /// <summary>
+    /// 执行回收
+    /// </summary>
+    public virtual void ExecuteRecycle()
+    {
+        GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, "Grid/Grid", this.gameObject);
     }
 }

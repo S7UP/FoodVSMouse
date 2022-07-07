@@ -1,7 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
 /// <summary>
 /// 基础变速地带
 /// </summary>
@@ -35,6 +31,6 @@ public class TimelinessShiftZone : BaseShiftZone
 
     public override void OnIdleStateEnter()
     {
-        animator.Play("Appear");
+        animatorController.Play("Appear");
     }
 }

@@ -1,8 +1,4 @@
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
-
-using static UnityEditor.Progress;
 /// <summary>
 /// 加血类老鼠的技能
 /// </summary>
@@ -12,6 +8,12 @@ public class HealMouse:MouseUnit
     private GeneralAttackSkillAbility generalAttackSkillAbility; // 平A技能
     private PreSkillAbility preSkillAbility; // 演奏前置
     private EnemyHealSkillAbility enemyHealSkillAbility; // 演奏 
+
+    public override void MInit()
+    {
+        base.MInit();
+        typeAndShapeValue = 1; // 图层权重+1
+    }
 
     /// <summary>
     /// 加载技能，加载普通攻击与回血技能
@@ -59,7 +61,7 @@ public class HealMouse:MouseUnit
 
     public override void OnCastStateEnter()
     {
-        animator.Play("Cast");
+        animatorController.Play("Cast", true);
     }
 
     /// <summary>

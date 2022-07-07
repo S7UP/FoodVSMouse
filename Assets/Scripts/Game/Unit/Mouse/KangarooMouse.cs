@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 /// <summary>
 /// ¥¸ Û¿‡
@@ -31,7 +29,7 @@ public class KangarooMouse : MouseUnit
                 isFirstRoot = true;
                 NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreFrozen, IgnoreFrozenModifier);
                 NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreStun, IgnoreStunModifier);
-                animator.Play("Drop");
+                animatorController.Play("Drop");
             });
         //statusAbilityManager.AddAfterRemoveStatusAbilityEvent(StringManager.Stun, 
         //    delegate {
@@ -88,33 +86,33 @@ public class KangarooMouse : MouseUnit
     public override void OnAttackStateEnter()
     {
         if (isFirstRoot)
-            animator.Play("Attack");
+            animatorController.Play("Attack");
         else
-            animator.Play("Jump");
+            animatorController.Play("Jump");
     }
 
     public override void OnMoveStateEnter()
     {
         if (isFirstRoot)
-            animator.Play("Move1");
+            animatorController.Play("Move1", true);
         else
-            animator.Play("Move0");
+            animatorController.Play("Move0", true);
     }
 
     public override void OnDieStateEnter()
     {
         if (isFirstRoot)
-            animator.Play("Die1");
+            animatorController.Play("Die1");
         else
-            animator.Play("Die0");
+            animatorController.Play("Die0");
     }
 
     public override void OnIdleStateEnter()
     {
         if (isFirstRoot)
-            animator.Play("Idle");
+            animatorController.Play("Idle", true);
         else
-            animator.Play("Move0");
+            animatorController.Play("Move0", true);
     }
 
     public override void OnIdleState()

@@ -1,6 +1,3 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -115,6 +112,6 @@ public class StraightMovePresetTasker: PresetTasker
 
     private bool EndCond()
     {
-        return currentTimer >= totalTimer;
+        return (currentTimer >= totalTimer || master.isDeathState);
     }
 }

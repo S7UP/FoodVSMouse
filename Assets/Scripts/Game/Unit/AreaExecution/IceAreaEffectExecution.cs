@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 /// <summary>
 /// ·¶Î§¶³½áÐ§¹û
@@ -42,6 +40,14 @@ public class IceAreaEffectExecution : RetangleAreaEffectExecution
     }
 
     public override void EventFood(FoodUnit unit)
+    {
+        if (!unit.NumericBox.GetBoolNumericValue(StringManager.IgnoreFrozen))
+        {
+            unit.AddNoCountUniqueStatusAbility(StringManager.Frozen, new FrozenStatusAbility(unit, time));
+        }
+    }
+
+    public override void EventCharacter(CharacterUnit unit)
     {
         if (!unit.NumericBox.GetBoolNumericValue(StringManager.IgnoreFrozen))
         {

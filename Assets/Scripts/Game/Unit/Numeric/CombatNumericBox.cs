@@ -1,9 +1,4 @@
-using Newtonsoft.Json.Linq;
-
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Timeline;
 
 /// <summary>
 /// 战斗数值匣子，在这里管理所有角色战斗数值的存储、变更、刷新等
@@ -35,13 +30,14 @@ public class CombatNumericBox
     public void Initialize()
     {
         // 这里初始化base值
-        Hp.SetBase(0);
-        Attack.SetBase(0);
-        AttackSpeed.SetBase(0);
-        Defense.SetBase(0);
-        MoveSpeed.SetBase(0);
-        Range.SetBase(0);
-        Shield.SetBase(0);
+        Hp.Initialize();
+        Attack.Initialize();
+        AttackSpeed.Initialize();
+        Defense.Initialize();
+        MoveSpeed.Initialize();
+        Range.Initialize();
+        Shield.Initialize();
+        IsDisableSkill.Initialize();
 
         IntDict.Clear();
         FloatDict.Clear();

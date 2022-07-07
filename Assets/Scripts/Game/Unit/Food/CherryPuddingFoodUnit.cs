@@ -1,5 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
+
 using UnityEngine;
 /// <summary>
 /// ”£Ã“∑¥µØ≤º∂°
@@ -25,7 +25,6 @@ public class CherryPuddingFoodUnit : FoodUnit
     public override void MInit()
     {
         base.MInit();
-        SetLevel(12);
     }
 
     /// <summary>

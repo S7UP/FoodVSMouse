@@ -1,9 +1,6 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
-using static ActionPointManager;
 /// <summary>
 /// 战斗场景中最基本的游戏单位
 /// </summary>
@@ -40,7 +37,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public float mCurrentRange { get { return NumericBox.Range.Value; } } //射程
     public float mBaseMoveSpeed { get { return NumericBox.MoveSpeed.baseValue; } } // 基础移动速度
     public float mCurrentMoveSpeed { get { return NumericBox.MoveSpeed.Value; } } // 当前移动速度
-    [SerializeField]
+
     //public float mCurrentTotalShieldValue { get { return NumericBox.Shield.Value; } } // 当前护盾值之和
     public float mCurrentTotalShieldValue;
 
@@ -56,13 +53,15 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public ActionPointManager actionPointManager { get; set; } = new ActionPointManager(); // 行动点管理器
     public SkillAbilityManager skillAbilityManager { get; set; } = new SkillAbilityManager(); // 技能管理器
     public StatusAbilityManager statusAbilityManager { get; set; } = new StatusAbilityManager(); // 时效状态（BUFF）管理器
-    public RenderManager renderManager { get; set; } = new RenderManager(); // 与渲染有关的管理器
+    public Dictionary<EffectType, BaseEffect> effectDict = new Dictionary<EffectType, BaseEffect>(); // 自身持有唯一性特效
+    public AnimatorController animatorController = new AnimatorController(); // 动画播放控制器
 
     public HitBox hitBox = new HitBox();
 
     public string mName; // 当前单位的种类名称
     public int mType; // 当前单位的种类（如不同的卡，不同的老鼠）
     public int mShape; // 当前种类单位的外观（同一张卡的0、1、2转，老鼠的0、1、2转或者其他变种）
+    public int typeAndShapeValue;
 
     public IBaseActionState mCurrentActionState; //+ 当前动作状态
     public int currentStateTimer = 0; // 当前状态的持续时间（切换状态时会重置）
@@ -92,8 +91,8 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
             {
                 case UnitType.Food:return "Food/" + mType;
                 case UnitType.Mouse:return "Mouse/" + mType;
-                case UnitType.Item: return "Item/" + mType;
-                case UnitType.Character: return "Character/0";
+                case UnitType.Item: return "Item/" + mType + "/"+mShape;
+                case UnitType.Character: return "Character/"+mType + "/" + mShape;
                 default:return null;
             }
         }
@@ -129,7 +128,8 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         actionPointManager.Initialize();
         skillAbilityManager.Initialize();
         statusAbilityManager.Initialize();
-        renderManager.Initialize();
+        effectDict.Clear();
+        animatorController.Initialize();
         hitBox.Initialize();
 
         CloseCollision();
@@ -139,7 +139,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public void SetActionState(IBaseActionState state)
     {
         // 若当前状态为死亡状态，则不能通过此方法再切换成别的状态
-        if (mCurrentActionState is DieState)
+        if (mCurrentActionState!=null && (mCurrentActionState is DieState || mCurrentActionState is BurnState))
             return;
 
         if(state is FrozenState)
@@ -152,7 +152,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         }
         else
         {
-            if (mCurrentActionState is FrozenState)
+            if (mCurrentActionState != null && mCurrentActionState is FrozenState)
             {
                 // 如果切换前的状态是冰冻，则不能执行OnExit（），因为其OnExit（）会包括该方法，最后会导致无限递归
                 mCurrentActionState = state;
@@ -204,8 +204,12 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
 
         // 进入死亡动画状态
         isDeathState = true;
+        // 清除技能效果
+        skillAbilityManager.TryEndAllSpellingSkillAbility();
         // 清除BUFF效果
         statusAbilityManager.TryEndAllStatusAbility();
+        // 清除特效
+        RemoveAllEffect();
         SetActionState(new DieState(this));
     }
 
@@ -215,21 +219,36 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         // 不知道要干啥了，反正这个地方肯定救不了了
     }
 
-    // 还愣着干什么，人没了救不了了
+    /// <summary>
+    /// 直接让目标死亡（只有经过AfterDeath()，不经过BeforeDeath()和DuringDeath()，注意与ExecuteDeath()有所区别)
+    /// </summary>
     public void DeathEvent()
     {
-        // 我死了也要化身为腻鬼！！
-        // override
+        // 再清除技能效果一次
+        skillAbilityManager.TryEndAllSpellingSkillAbility();
+        // 再清除BUFF效果一次
+        statusAbilityManager.TryEndAllStatusAbility();
+        // 再清除特效一次
+        RemoveAllEffect();
         AfterDeath();
         // 然后安心去世吧
-        GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, mPreFabPath, this.gameObject);
+        ExcuteRecycle();
     }
 
+    /// <summary>
+    /// 单位死亡后事件
+    /// </summary>
     public virtual void AfterDeath()
     {
         // 我死了也要化身为腻鬼！！
-        // override
-        // 然后安心去世吧
+    }
+
+    /// <summary>
+    /// 执行该单位回收事件
+    /// </summary>
+    public virtual void ExcuteRecycle()
+    {
+        GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, mPreFabPath, this.gameObject);
     }
 
 
@@ -240,6 +259,8 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     {
         // 进入死亡动画状态
         isDeathState = true;
+        // 清除技能效果
+        skillAbilityManager.TryEndAllSpellingSkillAbility();
         // 清除BUFF效果
         statusAbilityManager.TryEndAllStatusAbility();
         SetActionState(new BurnState(this));
@@ -280,11 +301,13 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         actionPointManager.Initialize();
         skillAbilityManager.Initialize();
         statusAbilityManager.Initialize();
-        renderManager.Initialize();
+        effectDict.Clear();
+        animatorController.Initialize();
         hitBox.Initialize();
         // 种类
         mType = attr.type;
         mShape = attr.shape;
+        typeAndShapeValue = 0; // 图层
         SetUnitType();
         // 血量
         NumericBox.Hp.SetBase((float)attr.baseHP);
@@ -303,6 +326,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         isDeathState = false;
 
         // 初始化当前动作状态
+        mCurrentActionState = null;
         SetActionState(new BaseActionState(this));
         // 设置动作点
         SetActionPointManager();
@@ -312,10 +336,14 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         OpenCollision();
         // 透明度默认先写到1
         SetAlpha(1.0f);
+        // 设置Collider2D的参数
+        SetCollider2DParam();
     }
 
     public virtual void MUpdate()
     {
+        // 动画控制器更新
+        animatorController.Update();
         // 时效性状态管理器更新
         statusAbilityManager.Update();
         // 技能管理器更新
@@ -351,14 +379,20 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
 
     }
 
+    /// <summary>
+    /// 当游戏暂停时
+    /// </summary>
     public virtual void MPause()
     {
-
+        animatorController.Pause();
     }
 
+    /// <summary>
+    /// 当游戏取消暂停时
+    /// </summary>
     public virtual void MResume()
     {
-
+        animatorController.Resume();
     }
 
     /// <summary>
@@ -817,19 +851,19 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     }
 
     /// <summary>
-    /// 由被冻结时调用，暂停当前动画
+    /// 暂停当前动画
     /// </summary>
-    public virtual void AnimatorStop()
+    public virtual void PauseCurrentAnimatorState(BoolModifier boolModifier)
     {
-
+        animatorController.AddPauseModifier(boolModifier);
     }
 
     /// <summary>
-    /// 由解除冻结时调用，解除暂停当前动画
+    /// 解除暂停当前动画
     /// </summary>
-    public virtual void AnimatorContinue()
+    public virtual void ResumeCurrentAnimatorState(BoolModifier boolModifier)
     {
-
+        animatorController.RemovePauseModifier(boolModifier);
     }
 
     /// <summary>
@@ -916,6 +950,87 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public virtual void MPauseUpdate()
     {
         
+    }
+
+    /// <summary>
+    /// 设置判定参数
+    /// </summary>
+    public virtual void SetCollider2DParam()
+    {
+        
+    }
+
+    /// <summary>
+    /// 是否可被选取为目标
+    /// </summary>
+    /// <returns></returns>
+    public virtual bool CanBeSelectedAsTarget()
+    {
+        return true;
+    }
+
+
+    /// <summary>
+    /// 自身是否持有某种特效
+    /// </summary>
+    /// <param name="t"></param>
+    /// <returns></returns>
+    public bool IsContainEffect(EffectType t)
+    {
+        if (effectDict.ContainsKey(t))
+        {
+            if (!effectDict[t].IsValid())
+            {
+                effectDict.Remove(t);
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// 为自身添加唯一性特效
+    /// </summary>
+    public void AddEffectToDict(EffectType t, BaseEffect eff)
+    {
+        effectDict.Add(t, eff);
+        eff.transform.SetParent(transform);
+        eff.transform.localPosition = Vector3.zero;
+        
+    }
+
+
+    /// <summary>
+    /// 移除某个特效引用
+    /// </summary>
+    public void RemoveEffectFromDict(EffectType t)
+    {
+        if (IsContainEffect(t))
+        {
+            BaseEffect eff = effectDict[t];
+            effectDict.Remove(t);
+            GameController.Instance.SetEffectDefaultParentTrans(eff);
+        }
+    }
+
+    /// <summary>
+    /// 移除自身所有特效引用（一般用于目标被回收时）
+    /// </summary>
+    public void RemoveAllEffect()
+    {
+        List<EffectType> l = new List<EffectType>();
+        foreach (var item in effectDict)
+        {
+            l.Add(item.Key);
+        }
+        foreach (var t in l)
+        {
+            RemoveEffectFromDict(t);
+        }
     }
     // 继续
 }

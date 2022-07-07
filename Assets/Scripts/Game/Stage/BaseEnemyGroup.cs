@@ -1,9 +1,7 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
-using static BaseEnemyGroup;
+using UnityEngine;
 /// <summary>
 /// 刷怪的基本单位：组
 /// </summary>

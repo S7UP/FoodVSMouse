@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 /// <summary>
@@ -18,7 +16,6 @@ public class CupLight : FoodUnit
         timer = 0;
         floatModifier = null;
         base.MInit();
-        SetLevel(12);
     }
 
     /// <summary>
@@ -57,7 +54,7 @@ public class CupLight : FoodUnit
             // 显示回复火苗数特效
             BaseEffect e = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Effect/Emp_AddFireEffect").GetComponent<BaseEffect>();
             GameController.Instance.AddEffect(e);
-            e.transform.SetParent(GameController.Instance.uICanvasGo.transform);
+            e.transform.SetParent(GameManager.Instance.GetUICanvas().transform);
             e.transform.localScale = Vector3.one;
             e.transform.position = transform.position;
             e.transform.Find("Img_AddFireEffect").Find("Text").GetComponent<Text>().text = "+" + replyCount;

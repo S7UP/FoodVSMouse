@@ -1,5 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
+
 using UnityEngine;
 
 public class PenguinMouse : MouseUnit
@@ -96,17 +96,17 @@ public class PenguinMouse : MouseUnit
     {
         if (throwIceBombSkillAbility.isThrow)
         {
-            animator.Play("Move1");
+            animatorController.Play("Move1", true);
         }
         else
         {
-            animator.Play("Move0");
+            animatorController.Play("Move0", true);
         }
     }
 
     public override void OnCastStateEnter()
     {
-        animator.Play("Cast");
+        animatorController.Play("Cast");
     }
 
     public override void OnCastState()
@@ -152,6 +152,8 @@ public class PenguinMouse : MouseUnit
         {
             foreach (var item in list)
             {
+                if (!item.CanBeSelectedAsTarget())
+                    continue;
                 int temp = item.GetColumnIndex();
                 if (temp < minColumnIndex)
                 {
@@ -176,6 +178,8 @@ public class PenguinMouse : MouseUnit
             {
                 foreach (var item in list)
                 {
+                    if (!item.CanBeSelectedAsTarget())
+                        continue;
                     int temp = item.GetColumnIndex();
                     if (temp < minColumnIndex)
                     {
@@ -193,6 +197,8 @@ public class PenguinMouse : MouseUnit
             {
                 foreach (var item in list)
                 {
+                    if (!item.CanBeSelectedAsTarget())
+                        continue;
                     int temp = item.GetColumnIndex();
                     if (temp < minColumnIndex)
                     {

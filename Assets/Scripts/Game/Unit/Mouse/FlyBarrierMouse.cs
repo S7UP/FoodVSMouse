@@ -1,7 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
 public class FlyBarrierMouse : MouseUnit
 {
     private bool isDrop; // 是否被击落
@@ -9,13 +5,14 @@ public class FlyBarrierMouse : MouseUnit
     private bool isDropBarrier;
     private int minDropBarrierColumn; // 降落障碍列
     private int maxDropBarrierColumn;
-    private FloatModifier speedRateModifier = new FloatModifier(50.0f); // 飞行状态下1.5倍速
+    private FloatModifier speedRateModifier = new FloatModifier(100.0f); // 飞行状态下1.5倍速
 
     public override void MInit()
     {
         base.MInit();
         isDrop = false;
         dropColumn = 0; // 降落列默认为0，即左一列
+        isDropBarrier = false;
         minDropBarrierColumn = 4; // 右五列
         maxDropBarrierColumn = 6; // 右三列
         NumericBox.MoveSpeed.AddFinalPctAddModifier(speedRateModifier);
@@ -48,9 +45,15 @@ public class FlyBarrierMouse : MouseUnit
         if(index > minDropBarrierColumn && index <= maxDropBarrierColumn)
         {
             BaseGrid g = GameController.Instance.mMapController.GetGrid(GetColumnIndex(), GetRowIndex());
-            if((g!=null && g.GetHighestAttackPriorityUnit() != null))
+            if(g!=null)
             {
-                return true;
+                foreach (var item in g.GetAttackableFoodUnitList())
+                {
+                    if (item.CanBeSelectedAsTarget())
+                    {
+                        return true;
+                    }
+                }
             }
             return false;
         }
@@ -82,7 +85,7 @@ public class FlyBarrierMouse : MouseUnit
             {
                 foreach (var item in b.GetGrid().GetAttackableFoodUnitList())
                 {
-                    if (!item.NumericBox.GetBoolNumericValue(StringManager.Invincibility) && !item.tag.Equals("Character"))
+                    if (!item.NumericBox.GetBoolNumericValue(StringManager.Invincibility) && !item.tag.Equals("Character") && item.CanBeSelectedAsTarget())
                     {
                         item.ExecuteDeath();
                     }
@@ -128,6 +131,12 @@ public class FlyBarrierMouse : MouseUnit
             NumericBox.MoveSpeed.RemoveFinalPctAddModifier(speedRateModifier); // 恢复正常走路速度
             // 设为转场状态，该状态下的具体实下如下几个方法
             SetActionState(new TransitionState(this));
+            // 如果是位于最后一列降落的，则直接触发猫猫
+            if (GetColumnIndex() <= 0)
+            {
+                BaseCat cat = GameController.Instance.mItemController.GetSpecificRowCat(GetRowIndex());
+                cat.OnTriggerEvent(); // 这个方法里已经包括了是否触发的判定，不用担心反复触发的问题
+            }
         }
     }
 
@@ -169,7 +178,7 @@ public class FlyBarrierMouse : MouseUnit
     /// </summary>
     public override void OnTransitionStateEnter()
     {
-        animator.Play("Drop");
+        animatorController.Play("Drop");
     }
 
     public override void OnTransitionState()

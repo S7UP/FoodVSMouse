@@ -1,5 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
+
 using UnityEngine;
 
 /// <summary>
@@ -27,7 +27,6 @@ public class HeaterFoodUnit : FoodUnit
     public override void MInit()
     {
         base.MInit();
-        SetLevel(12);
     }
 
     /// <summary>

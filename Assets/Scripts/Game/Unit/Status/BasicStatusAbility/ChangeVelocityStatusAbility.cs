@@ -1,6 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 /// <summary>
 /// 改变移速状态
 /// </summary>
@@ -10,6 +7,12 @@ public class ChangeVelocityStatusAbility : StatusAbility
     private float changePercent; // 基础移速度改变百分比
 
     public ChangeVelocityStatusAbility(BaseUnit pmaster, float changePercent) : base(pmaster)
+    {
+        this.changePercent = changePercent;
+        slowDownFloatModifier = new FloatModifier(changePercent);
+    }
+
+    public ChangeVelocityStatusAbility(BaseUnit pmaster, int time, float changePercent) : base(pmaster, time)
     {
         this.changePercent = changePercent;
         slowDownFloatModifier = new FloatModifier(changePercent);
