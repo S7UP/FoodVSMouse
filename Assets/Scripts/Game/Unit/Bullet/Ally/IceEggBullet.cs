@@ -39,6 +39,7 @@ public class IceEggBullet : ParabolaBullet
         }
         GameController.Instance.AddAreaEffectExecution(iceSlowEffect);
         GameController.Instance.AddAreaEffectExecution(dmgEffect);
+        ExecuteHitAction(baseUnit);
         KillThis();
     }
 

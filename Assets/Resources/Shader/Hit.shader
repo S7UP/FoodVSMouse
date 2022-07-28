@@ -8,6 +8,7 @@ Shader "ChangeColor/Hit"
         _Color("add color", Color) = (1,1,1,1)
         _FlashRate("_FlashRate",Range(0 , 0.5)) = 0
         _Alpha("alpha", Range(0 , 1.0)) = 1
+        _CutRateY("cutRateY", Range(0, 1.0)) = 0
     }
     SubShader
     {
@@ -46,6 +47,7 @@ Shader "ChangeColor/Hit"
             fixed4 _ColorSlow;
             fixed _FlashRate;//对外参数表示是否被攻击了
             fixed _Alpha;
+            fixed _CutRateY;
 
             v2f vert(appdata v)
             {
@@ -73,6 +75,7 @@ Shader "ChangeColor/Hit"
                     }
                 }
                 tex.a = tex.a*_Alpha;
+                clip(i.uv.y - _CutRateY);
                 return tex;
             }
             ENDCG

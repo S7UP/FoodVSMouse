@@ -44,6 +44,7 @@ public class BigStove : FoodUnit
             GameController.Instance.RemoveCostResourceModifier("Fire", floatModifier);
     }
 
+
     public override void MUpdate()
     {
         base.MUpdate();

@@ -106,4 +106,21 @@ public class BaseItem : BaseUnit
     {
         return mBoxCollider2D.enabled;
     }
+
+    /// <summary>
+    /// 获取贴图对象
+    /// </summary>
+    public override Sprite GetSpirte()
+    {
+        return spriteRenderer.sprite;
+    }
+
+    /// <summary>
+    /// 获取SpriterRenderer
+    /// </summary>
+    /// <returns></returns>
+    public override SpriteRenderer GetSpriteRenderer()
+    {
+        return spriteRenderer;
+    }
 }

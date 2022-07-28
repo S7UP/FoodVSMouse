@@ -42,13 +42,27 @@ public class WaterGridState : BaseGridState
     // 当有单位进入地形时施加给单位的效果
     public override void OnUnitEnter(BaseUnit baseUnit)
     {
-        baseUnit.AddUniqueStatusAbility(StringManager.WaterGridState, new WaterStatusAbility(baseUnit));
+        if (baseUnit.mHeight <= 0)
+        {
+            float descendGridCount;
+            if (baseUnit is FoodUnit)
+                descendGridCount = 0f;
+            else if (baseUnit is MouseUnit)
+                descendGridCount = 0.4f;
+            else if (baseUnit is BaseItem)
+                descendGridCount = 0f;
+            else if (baseUnit is CharacterUnit)
+                descendGridCount = 0f;
+            else
+                descendGridCount = 0;
+            baseUnit.AddUniqueStatusAbility(StringManager.WaterGridState, new WaterStatusAbility(baseUnit, descendGridCount));
+        }
     }
 
     // 当有单位处于地形时持续给单位的效果
     public override void OnUnitStay(BaseUnit baseUnit)
     {
-        // 不需要，因为持续效果已经在buff中生效了
+
     }
 
     // 当有单位离开地形时施加给单位的效果

@@ -13,7 +13,7 @@ public class DamageAreaEffectExecution : RetangleAreaEffectExecution
         resourcePath += "DamageAreaEffect";
     }
 
-    public void Init(BaseUnit creator, CombatAction.ActionType actionType, float damage, int currentRowIndex, int colCount, int rowCount, float offsetX, int offsetY, bool isAffectFood, bool isAffectMouse)
+    public void Init(BaseUnit creator, CombatAction.ActionType actionType, float damage, int currentRowIndex, float colCount, int rowCount, float offsetX, int offsetY, bool isAffectFood, bool isAffectMouse)
     {
         this.creator = creator;
         this.actionType = actionType;

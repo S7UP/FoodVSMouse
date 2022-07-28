@@ -19,5 +19,9 @@ public class Test
 
         // 添加美食卡槽信息
         //BaseCardBuilder.SaveNewCardBuilderInfo();
+
+        //Sprite s = GameManager.Instance.GetSprite("Mouse/10/0/0");
+        //Debug.Log("pivot = " + s.pivot);
+        //Debug.Log("rect = " + s.rect);
     }
 }

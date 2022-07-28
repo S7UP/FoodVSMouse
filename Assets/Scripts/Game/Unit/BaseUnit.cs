@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+
+
 using UnityEngine;
 /// <summary>
 /// 战斗场景中最基本的游戏单位
@@ -45,6 +47,10 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     protected bool mAttackFlag; // 作用于一次攻击能否打出来的flag
     public int mHeight; //+ 高度
     public Vector2 moveRotate; // 移动方向
+    // 以下三个为图片精灵偏移量
+    public FloatNumeric SpriteOffsetX = new FloatNumeric();
+    public FloatNumeric SpriteOffsetY = new FloatNumeric();
+    public Vector2 SpriteOffset { get { return new Vector2(SpriteOffsetX.Value, SpriteOffsetY.Value); } }
     public bool isFrozenState; // 是否在冻结状态
     public bool isDeathState{ get; set; } // 是否在死亡状态
     public bool isDisableSkill { get { return NumericBox.IsDisableSkill.Value; } } // 是否禁用主动技能
@@ -55,7 +61,8 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public StatusAbilityManager statusAbilityManager { get; set; } = new StatusAbilityManager(); // 时效状态（BUFF）管理器
     public Dictionary<EffectType, BaseEffect> effectDict = new Dictionary<EffectType, BaseEffect>(); // 自身持有唯一性特效
     public AnimatorController animatorController = new AnimatorController(); // 动画播放控制器
-
+    public List<ITask> TaskList = new List<ITask>(); // 自身挂载任务表
+    public Dictionary<string, ITask> TaskDict = new Dictionary<string, ITask>(); // 任务字典（仅记录引用不实际执行逻辑，执行逻辑在任务表中）
     public HitBox hitBox = new HitBox();
 
     public string mName; // 当前单位的种类名称
@@ -131,6 +138,10 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         effectDict.Clear();
         animatorController.Initialize();
         hitBox.Initialize();
+        SpriteOffsetX.Initialize(); SpriteOffsetY.Initialize();
+        SetSpriteLocalPosition(Vector2.zero);
+        TaskList.Clear();
+        TaskDict.Clear();
 
         CloseCollision();
     }
@@ -209,7 +220,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         // 清除BUFF效果
         statusAbilityManager.TryEndAllStatusAbility();
         // 清除特效
-        RemoveAllEffect();
+        // RemoveAllEffect();
         SetActionState(new DieState(this));
     }
 
@@ -304,6 +315,10 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         effectDict.Clear();
         animatorController.Initialize();
         hitBox.Initialize();
+        SpriteOffsetX.Initialize(); SpriteOffsetY.Initialize();
+        SetSpriteLocalPosition(Vector2.zero);
+        TaskList.Clear();
+        TaskDict.Clear();
         // 种类
         mType = attr.type;
         mShape = attr.shape;
@@ -356,6 +371,8 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         mCurrentActionState.OnUpdate();
         // 受击进度盒子更新
         hitBox.Update();
+        // 挂载任务更新
+        OnTaskUpdate();
     }
 
     /// <summary>
@@ -642,6 +659,11 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public void RemoveStatusAbility(StatusAbility statusAbility)
     {
         statusAbilityManager.RemoveStatusAbility(statusAbility);
+    }
+
+    public StatusAbility GetUniqueStatus(string statusName)
+    {
+        return statusAbilityManager.GetUniqueStatus(statusName);
     }
 
     public void AddUniqueStatusAbility(string statusName, StatusAbility statusAbility)
@@ -931,6 +953,23 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     }
 
     /// <summary>
+    /// 获取贴图对象
+    /// </summary>
+    public virtual Sprite GetSpirte()
+    {
+        return null;
+    }
+
+    /// <summary>
+    /// 获取SpriterRenderer
+    /// </summary>
+    /// <returns></returns>
+    public virtual SpriteRenderer GetSpriteRenderer()
+    {
+        return null;
+    }
+
+    /// <summary>
     /// 设置贴图对象坐标
     /// </summary>
     public virtual void SetSpriteLocalPosition(Vector2 vector2)
@@ -995,12 +1034,11 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     /// <summary>
     /// 为自身添加唯一性特效
     /// </summary>
-    public void AddEffectToDict(EffectType t, BaseEffect eff)
+    public void AddEffectToDict(EffectType t, BaseEffect eff, Vector2 localPosition)
     {
         effectDict.Add(t, eff);
         eff.transform.SetParent(transform);
-        eff.transform.localPosition = Vector3.zero;
-        
+        eff.transform.localPosition = localPosition;
     }
 
 
@@ -1013,7 +1051,8 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         {
             BaseEffect eff = effectDict[t];
             effectDict.Remove(t);
-            GameController.Instance.SetEffectDefaultParentTrans(eff);
+            //GameController.Instance.SetEffectDefaultParentTrans(eff);
+            eff.Recycle();
         }
     }
 
@@ -1030,6 +1069,132 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         foreach (var t in l)
         {
             RemoveEffectFromDict(t);
+        }
+    }
+
+    /// <summary>
+    /// 改变贴图X偏移
+    /// </summary>
+    /// <param name="f"></param>
+    public void AddSpriteOffsetX(FloatModifier f)
+    {
+        SpriteOffsetX.AddAddModifier(f);
+        SetSpriteLocalPosition(SpriteOffset);
+    }
+
+    /// <summary>
+    /// 移除改变贴图X偏移
+    /// </summary>
+    /// <param name="f"></param>
+    public void RemoveSpriteOffsetX(FloatModifier f)
+    {
+        SpriteOffsetX.RemoveAddModifier(f);
+        SetSpriteLocalPosition(SpriteOffset);
+    }
+
+    /// <summary>
+    /// 移除改变贴图X偏移
+    /// </summary>
+    /// <param name="f"></param>
+    public void AddSpriteOffsetY(FloatModifier f)
+    {
+        SpriteOffsetY.AddAddModifier(f);
+        SetSpriteLocalPosition(SpriteOffset);
+    }
+
+    /// <summary>
+    /// 移除改变贴图Y偏移
+    /// </summary>
+    /// <param name="f"></param>
+    public void RemoveSpriteOffsetY(FloatModifier f)
+    {
+        SpriteOffsetY.RemoveAddModifier(f);
+        SetSpriteLocalPosition(SpriteOffset);
+    }
+
+    /// <summary>
+    /// 添加唯一性任务
+    /// </summary>
+    public void AddUniqueTask(string key, ITask t)
+    {
+        if (!TaskDict.ContainsKey(key))
+        {
+            TaskDict.Add(key, t);
+            AddTask(t);
+        }
+    }
+
+    /// <summary>
+    /// 添加一个任务
+    /// </summary>
+    /// <param name="t"></param>
+    public void AddTask(ITask t)
+    {
+        TaskList.Add(t);
+        t.OnEnter();
+    }
+
+    /// <summary>
+    /// 移除唯一性任务
+    /// </summary>
+    public void RemoveUniqueTask(string key)
+    {
+        if (TaskDict.ContainsKey(key))
+        {
+            RemoveTask(TaskDict[key]);
+            TaskDict.Remove(key);
+        }
+    }
+
+    /// <summary>
+    /// 移除一个任务
+    /// </summary>
+    /// <param name="t"></param>
+    public void RemoveTask(ITask t)
+    {
+        TaskList.Remove(t);
+        t.OnExit();
+    }
+
+    /// <summary>
+    /// 获取某个标记为key的任务
+    /// </summary>
+    /// <param name="key"></param>
+    /// <returns></returns>
+    public ITask GetTask(string key)
+    {
+        if (TaskDict.ContainsKey(key))
+            return TaskDict[key];
+        return null;
+    }
+
+    /// <summary>
+    /// Task组更新
+    /// </summary>
+    private void OnTaskUpdate()
+    {
+        List<string> deleteKeyList = new List<string>();
+        foreach (var keyValuePair in TaskDict)
+        {
+            ITask t = keyValuePair.Value;
+            if (t.IsMeetingExitCondition())
+                deleteKeyList.Add(keyValuePair.Key);
+        }
+        foreach (var key in deleteKeyList)
+        {
+            RemoveUniqueTask(key);
+        }
+        List<ITask> deleteTask = new List<ITask>();
+        foreach (var t in TaskList)
+        {
+            if (t.IsMeetingExitCondition())
+                deleteTask.Add(t);
+            else
+                t.OnUpdate();
+        }
+        foreach (var t in deleteTask)
+        {
+            RemoveTask(t);
         }
     }
     // 继续

@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-
+using System;
 using UnityEngine;
 
 public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
@@ -14,11 +14,16 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
 
     // 自身属性
     public float mVelocity;
+    public float mAccelerate;
+    public int mAccelerateTime;
+    public int mMovetime;
     public Vector2 mRotate;
     public float mHeight;
     public float mDamage;
     public bool isDeathState;
     public BulletStyle style;
+    private Action<BaseBullet, BaseUnit> HitAction; // 中弹后的事件（由外部添加）
+
     // 外界给的标签
     public Dictionary<string, int> TagDict = new Dictionary<string, int>();
 
@@ -28,9 +33,46 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
 
     public virtual void Awake()
     {
-        animator = transform.GetChild(0).GetComponent<Animator>();
+        animator = transform.Find("SpriteGo").GetComponent<Animator>();
         mCircleCollider2D = GetComponent<CircleCollider2D>();
         spriteRenderer = transform.Find("SpriteGo").GetComponent<SpriteRenderer>();
+    }
+
+    /// <summary>
+    /// 每次初始化都要做的事
+    /// </summary>
+    public virtual void MInit()
+    {
+        animatorController.Initialize();
+        animatorController.ChangeAnimator(animator);
+        mVelocity = 0.0f;    
+        mAccelerate = 0;
+        mAccelerateTime = 0;
+        mMovetime = 0;
+        mRotate = Vector2.zero;
+        mDamage = 0;
+        mHeight = 0;
+        isDeathState = false;
+        HitAction = null;
+        TagDict.Clear();
+        SetCollision(true);
+        SetActionState(new BulletFlyState(this));
+    }
+
+    /// <summary>
+    /// 设置速度变化事件
+    /// </summary>
+    public void SetVelocityChangeEvent(float v0, float v1, int t)
+    {
+        if (t < 1)
+        {
+            Debug.Log("速度变化时间不能小于1帧");
+            return;
+        }
+        mAccelerate = (v1 - v0) / t;
+        mVelocity = v0;
+        mMovetime = 0;
+        mAccelerateTime = t;
     }
 
     // 子弹对目标造成伤害，TakeDamage的调用时机是敌对单位碰到了这个子弹，然后过来调用这个子弹的伤害逻辑
@@ -38,6 +80,7 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     {
         if (baseUnit != null)
             new DamageAction(CombatAction.ActionType.CauseDamage, mMasterBaseUnit, baseUnit, mDamage).ApplyAction();
+        ExecuteHitAction(baseUnit);
         KillThis();
     }
 
@@ -74,23 +117,6 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     }
 
     /// <summary>
-    /// 每次初始化都要做的事
-    /// </summary>
-    public virtual void MInit()
-    {
-        animatorController.Initialize();
-        animatorController.ChangeAnimator(animator);
-        mVelocity = 0.0f;
-        mRotate = Vector2.zero;
-        mDamage = 0;
-        mHeight = 0;
-        isDeathState = false;
-        TagDict.Clear();
-        SetCollision(true);
-        SetActionState(new BulletFlyState(this));
-    }
-
-    /// <summary>
     /// 仅改变子弹外观（Ani)并且不改变样式(style)
     /// </summary>
     /// <param name="style"></param>
@@ -108,7 +134,7 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     /// 改变方向
     /// </summary>
     /// <param name="v"></param>
-    public void SetRotate(Vector2 v)
+    public virtual void SetRotate(Vector2 v)
     {
         mRotate = v;
         transform.right = v;
@@ -223,6 +249,9 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     public virtual void OnFlyState()
     {
         transform.position += (Vector3)mRotate * mVelocity;
+        if (mMovetime < mAccelerateTime)
+            mVelocity += mAccelerate;
+        mMovetime ++;
     }
 
     public virtual void OnFlyStateExit()
@@ -336,6 +365,30 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     public virtual void MPauseUpdate()
     {
         
+    }
+
+    public void SetHeight(float height)
+    {
+        mHeight = height;
+    }
+
+    /// <summary>
+    /// 设置被弹事件
+    /// </summary>
+    /// <param name="HitAction"></param>
+    public void SetHitAction(Action<BaseBullet, BaseUnit> HitAction)
+    {
+        this.HitAction = HitAction;
+    }
+
+    /// <summary>
+    /// 执行被弹事件
+    /// </summary>
+    /// <param name="hitedUnit"></param>
+    public void ExecuteHitAction(BaseUnit hitedUnit)
+    {
+        if (HitAction != null)
+            HitAction(this, hitedUnit);
     }
 }
 

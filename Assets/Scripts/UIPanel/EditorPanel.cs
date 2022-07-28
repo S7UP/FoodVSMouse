@@ -2,12 +2,16 @@ using System.Collections.Generic;
 
 using UnityEngine;
 using UnityEngine.UI;
-
+using DG.Tweening;
 using static BaseRound;
 
 public class EditorPanel : BasePanel
 {
     // 索引
+    private Image Img_Background0;
+    private Image Img_Background1;
+    private Tweener BackgroundChangeTweener;
+
     private GameObject MouseEditorUI;
     private Transform scrEnemyContentRoundListTrans;
     private Transform scrContentEnemyGroupListTrans; // 右侧显示组数按钮的滚动窗口
@@ -36,6 +40,21 @@ public class EditorPanel : BasePanel
     private Emp_ApartAdd emp_ApartAdd;
     private GameObject Img_ApartEditView;
     private Button Btn_AddStageRoundInfo; // 添加一个大轮敌人按钮
+    private Img_StagePath mImg_StagePath;
+    private Button Btn_Del;
+
+    private GameObject Img_Confirm;
+    private Button Btn_Yes;
+    private Button Btn_Cancel;
+
+    private Img_StageConfig mImg_StageConfig;
+
+    private ConfigCardUI mConfigCardUI;
+
+    private Button Btn_ReturnToMain;
+
+    private Text Tex_FloatFont;
+    private Tweener AlphaDecTweener; 
 
     private Transform scrContentRoundListTrans; // 显示轮数的滚动窗体
 
@@ -65,6 +84,13 @@ public class EditorPanel : BasePanel
     protected override void Awake()
     {
         base.Awake();
+        Img_Background0 = transform.Find("Img_Background0").GetComponent<Image>();
+        Img_Background1 = transform.Find("Img_Background1").GetComponent<Image>();
+        Img_Background1.color = new Color(1, 1, 1, 0);
+        BackgroundChangeTweener = Img_Background1.DOFade(1, 1);
+        BackgroundChangeTweener.Pause();
+        BackgroundChangeTweener.SetAutoKill(false);
+
         MouseEditorUI = transform.Find("MouseEditorUI").gameObject;
         scrEnemyContentRoundListTrans = transform.Find("MouseEditorUI").Find("Emp_RoundList").Find("Scr_RoundList").Find("Viewport").Find("Content");
         scrContentEnemyGroupListTrans = transform.Find("MouseEditorUI").Find("Emp_EnemyGroupList").Find("Viewport").Find("Content");
@@ -73,7 +99,7 @@ public class EditorPanel : BasePanel
         Btn_Return.onClick.AddListener( delegate { ReturnLast(); });
         Btn_Save = transform.Find("Btn_Save").GetComponent<Button>();
         Btn_Save.onClick.AddListener(SaveAll);
-        InF_StageName = transform.Find("Img_StageName").Find("InputField").GetComponent<InputField>();
+        InF_StageName = transform.Find("StageEditorUI").Find("Img_RoundInfo").Find("Emp_StageName").Find("InputField").GetComponent<InputField>();
         InF_StageName.onEndEdit.AddListener(delegate { OnStageNameInputFieldChanged(); });
         Btn_AddRoundInfo = transform.Find("MouseEditorUI").Find("Emp_RoundList").Find("Emp_OperateRound").Find("Btn_AddRoundInfo").GetComponent<Button>();
         Btn_AddRoundInfo.onClick.AddListener(delegate { AddNewRoundInfo(); });
@@ -114,6 +140,35 @@ public class EditorPanel : BasePanel
         Img_ApartEditView = StageEditorUI.transform.Find("Img_ApartEditView").gameObject;
         Btn_AddStageRoundInfo = StageEditorUI.transform.Find("Emp_RoundList").Find("Emp_OperateRound").Find("Btn_AddRoundInfo").GetComponent<Button>();
         Btn_AddStageRoundInfo.onClick.AddListener(delegate { AddNewRoundInfo(); });
+        mImg_StagePath = StageEditorUI.transform.Find("Img_StagePath").GetComponent<Img_StagePath>();
+        mImg_StagePath.SetEditorPanel(this);
+        Btn_Del = StageEditorUI.transform.Find("Img_RoundInfo").Find("Btn_Del").GetComponent<Button>();
+        Btn_Del.onClick.AddListener(delegate { Img_Confirm.SetActive(true); });
+
+        Img_Confirm = transform.Find("Img_Confirm").gameObject;
+        Img_Confirm.SetActive(false);
+        Btn_Yes = Img_Confirm.transform.Find("Img_Dialog").Find("Btn_Yes").GetComponent<Button>();
+        Btn_Yes.onClick.AddListener(delegate { OnYesDeleteBtnClick(); });
+        Btn_Cancel = Img_Confirm.transform.Find("Img_Dialog").Find("Btn_Cancel").GetComponent<Button>();
+        Btn_Cancel.onClick.AddListener(delegate { OnCancelDeleteBtnClick(); });
+
+        Tex_FloatFont = transform.Find("Tex_FloatFont").GetComponent<Text>();
+        Tex_FloatFont.gameObject.SetActive(false);
+        AlphaDecTweener = Tex_FloatFont.DOFade(0, 1);
+        AlphaDecTweener.onPlay = delegate { Tex_FloatFont.color = new Color(Tex_FloatFont.color.r, Tex_FloatFont.color.g, Tex_FloatFont.color.b, 1); Tex_FloatFont.gameObject.SetActive(true); };
+        AlphaDecTweener.onComplete = delegate { Tex_FloatFont.gameObject.SetActive(false); };
+        AlphaDecTweener.Pause();
+        AlphaDecTweener.SetAutoKill(false);
+
+        mImg_StageConfig = StageEditorUI.transform.Find("Img_StageConfig").GetComponent<Img_StageConfig>();
+        mImg_StageConfig.SetEditorPanel(this);
+
+        mConfigCardUI = transform.Find("ConfigCardUI").GetComponent<ConfigCardUI>();
+        mConfigCardUI.SetEditorPanel(this);
+        mConfigCardUI.gameObject.SetActive(false);
+
+        Btn_ReturnToMain = transform.Find("Btn_ReturnToMain").GetComponent<Button>();
+        Btn_ReturnToMain.onClick.AddListener(OnReturnToMainClick);
 
         roundInfoStack = new Stack<BaseRound.RoundInfo>();
         currentRoundIndexStack = new Stack<int>();
@@ -126,14 +181,17 @@ public class EditorPanel : BasePanel
 
 
         // test
-        LoadStage(Test.TestStageName);
+        // LoadStage(Test.TestStageName);
     }
 
     // Start is called before the first frame update
     void Start()
     {
         emp_ApartAdd.button.onClick.AddListener(delegate { OnApartAddClick(); });
-        UpdateUI();
+        //UpdateUI();
+
+        mImg_StagePath.Initial();
+        mImg_StageConfig.Initial();
     }
 
     /// <summary>
@@ -142,8 +200,20 @@ public class EditorPanel : BasePanel
     /// <param name="stageName"></param>
     public void LoadStage(string stageName)
     {
-        currentStageInfo = BaseStage.Load(stageName);
+        LoadStage(BaseStage.Load(stageName));
+    }
+
+    public void LoadStage(BaseStage.StageInfo info)
+    {
+        currentStageInfo = info;
+        if (info.waveIndexList == null)
+            info.waveIndexList = new List<int>();
+        if (info.roundInfoList == null)
+            info.roundInfoList = new List<BaseRound.RoundInfo>();
+        if (info.availableCardInfoList == null)
+            info.availableCardInfoList = new List<AvailableCardInfo>();
         InF_StageName.text = currentStageInfo.name;
+        UpdateUI();
     }
 
     /// <summary>
@@ -271,6 +341,9 @@ public class EditorPanel : BasePanel
     /// </summary>
     private void UpdateStageEditorUI()
     {
+        // 更新当前关卡配置面板数据
+        mImg_StageConfig.Initial();
+
         // 设置当前显示轮数的面板
         scrContentRoundListTrans = scrStageContentRoundListTrans;
 
@@ -363,6 +436,18 @@ public class EditorPanel : BasePanel
     }
 
     /// <summary>
+    /// 更换背景
+    /// </summary>
+    public void ChangeBackground(int chapterIndex, int sceneIndex)
+    {
+        Img_Background0.sprite = Img_Background1.sprite;
+        Img_Background0.SetNativeSize();
+        Img_Background1.sprite = GameManager.Instance.GetSprite("Chapter/"+ chapterIndex+"/"+sceneIndex+"/0");
+        Img_Background1.SetNativeSize();
+        BackgroundChangeTweener.Restart();
+    }
+
+    /// <summary>
     /// 根据下标从小轮表中选中指定轮并进入
     /// </summary>
     /// <param name="roundIndex"></param>
@@ -411,6 +496,8 @@ public class EditorPanel : BasePanel
     private void SaveAll()
     {
         BaseStage.Save(currentStageInfo);
+        Tex_FloatFont.text = "当前关卡信息保存成功！";
+        AlphaDecTweener.Restart();
     }
 
     /// <summary>
@@ -758,6 +845,72 @@ public class EditorPanel : BasePanel
     {
         scr_SelectEnemyType.gameObject.SetActive(true);
         scr_SelectEnemyType.SetEnemyGroup(GetCurrentEnemyGroupList()[index]);
+    }
+
+    /// <summary>
+    /// 确实删除当前关
+    /// </summary>
+    private void OnYesDeleteBtnClick()
+    {
+        List<BaseStage.StageInfo> infoList = GameManager.Instance.attributeManager.GetStageInfoListFromScene(currentStageInfo.chapterIndex, currentStageInfo.sceneIndex);
+        // 从本地删除最后一位文件（本地删除并不影响上表）
+        BaseStage.Delete(infoList[infoList.Count - 1]);
+        // 从表中移除当前这个关卡
+        int startIndex = currentStageInfo.stageIndex;
+        infoList.Remove(infoList[startIndex]);
+        // 此后所有文件关下标-1
+        for (int i = startIndex; i < infoList.Count; i++)
+        {
+            BaseStage.StageInfo info = infoList[i];
+            info.stageIndex--;
+            // 保存
+            BaseStage.Save(info);
+        }
+        // 重载
+        infoList = GameManager.Instance.attributeManager.ReloadStageInfoListFromScene(mImg_StagePath.GetChapterIndex(), mImg_StagePath.GetSceneIndex());
+        if (mImg_StagePath.GetStageIndex() == infoList.Count)
+            mImg_StagePath.SetStageIndex(infoList.Count-1);
+        // 刷新关卡下拉列表
+        mImg_StagePath.UpdateStageDropDown();
+
+        // 隐藏
+        Img_Confirm.SetActive(false);
+        // 给出提示
+        Tex_FloatFont.text = "当前关卡已删除！";
+        AlphaDecTweener.Restart();
+    }
+
+    private void OnCancelDeleteBtnClick()
+    {
+        Img_Confirm.SetActive(false);
+    }
+
+    /// <summary>
+    /// 获取当前关卡信息
+    /// </summary>
+    /// <returns></returns>
+    public BaseStage.StageInfo GetCurrentStageInfo()
+    {
+        return currentStageInfo;
+    }
+
+    /// <summary>
+    /// 开关卡片配置面板
+    /// </summary>
+    /// <param name="enable"></param>
+    public void SetConfigCardUIEnable(bool enable)
+    {
+        mConfigCardUI.gameObject.SetActive(enable);
+        if(enable)
+            mConfigCardUI.Initial();
+    }
+
+    /// <summary>
+    /// 当返回主菜单被点击时
+    /// </summary>
+    private void OnReturnToMainClick()
+    {
+        GameManager.Instance.EnterMainScene();
     }
 
     // Update is called once per frame

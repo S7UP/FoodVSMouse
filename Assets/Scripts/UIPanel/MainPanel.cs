@@ -1,5 +1,3 @@
-using UnityEngine;
-
 /// <summary>
 /// Ö÷Ãæ°å
 /// </summary>

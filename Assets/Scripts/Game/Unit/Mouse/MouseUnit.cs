@@ -26,7 +26,6 @@ public class MouseUnit : BaseUnit
     public int currentYIndex; // 当前地标Y下标
     public bool isBoss; // 是否是BOSS单位
 
-
     // 索敌相关
     protected bool isBlock { get; set; } // 是否被阻挡
     protected BaseUnit mBlockUnit; // 阻挡者
@@ -68,7 +67,6 @@ public class MouseUnit : BaseUnit
         // 装上正常的受击材质
         spriteRenderer.material = GameManager.Instance.GetMaterial("Hit");
         UpdateRuntimeAnimatorController(); // 更新贴图
-
     }
 
     public override void SetUnitType()
@@ -688,5 +686,22 @@ public class MouseUnit : BaseUnit
     public bool IsBoss()
     {
         return isBoss;
+    }
+
+    /// <summary>
+    /// 获取贴图对象
+    /// </summary>
+    public override Sprite GetSpirte()
+    {
+        return spriteRenderer.sprite;
+    }
+
+    /// <summary>
+    /// 获取SpriterRenderer
+    /// </summary>
+    /// <returns></returns>
+    public override SpriteRenderer GetSpriteRenderer()
+    {
+        return spriteRenderer;
     }
 }

@@ -93,6 +93,26 @@ public class MovementGridGroup : GridGroup
         }
     }
 
+    /// <summary>
+    /// 设置当前移动进程百分比
+    /// </summary>
+    public void SetCurrentMovementPercent(float percent)
+    {
+        currentTime = Mathf.FloorToInt(positionList[currentPositionListIndex].moveTime*percent);
+        SetPosition(Vector3.Lerp(startPosition, endPosition, (float)currentTime / positionList[currentPositionListIndex].moveTime));
+    }
+
+    /// <summary>
+    /// 获取一个实例
+    /// </summary>
+    public static MovementGridGroup GetInstance()
+    {
+        return GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Grid/MovementGridGroup").GetComponent<MovementGridGroup>();
+    }
+
+    /// <summary>
+    /// 回收自身进对象池
+    /// </summary>
     public override void ExecuteRecycle()
     {
         GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, "Grid/MovementGridGroup", this.gameObject);

@@ -1,9 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Timeline;
-
-using static UnityEngine.UI.CanvasScaler;
 /// <summary>
 /// ¿§·È·Û
 /// </summary>

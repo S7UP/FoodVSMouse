@@ -5,7 +5,7 @@ using UnityEngine;
 /// <summary>
 /// 空中运输型
 /// </summary>
-public class AirTransportMouse : MouseUnit
+public class AirTransportMouse : MouseUnit, IFlyUnit
 {
     private AirTransportSummonSkillAbility airTransportSummonSkillAbility;
 
@@ -161,5 +161,10 @@ public class AirTransportMouse : MouseUnit
         {
             DeathEvent();
         }
+    }
+
+    public void ExecuteDrop()
+    {
+        // 然而航母不能击坠2333
     }
 }

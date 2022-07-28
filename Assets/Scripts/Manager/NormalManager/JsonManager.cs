@@ -9,7 +9,6 @@ public class JsonManager
 {
     public static void Save<T>(T obj, string path)
     {
-        //string filePath = Application.dataPath + "/Resources/Json/" + path + ".json";
         string filePath = Application.streamingAssetsPath + "/Json/" + path + ".json";
         string saveJsonStr = JsonConvert.SerializeObject(obj);
         StreamWriter sw = new StreamWriter(filePath);
@@ -20,7 +19,6 @@ public class JsonManager
     // 读取JSON文件解析为对象
     public static T Load<T>(string path)
     {
-        //string filepath = Application.dataPath + "/Resources/Json/" + path + ".json";
         string filepath = Application.streamingAssetsPath + "/Json/" + path + ".json";
         if (File.Exists(filepath))
         {
@@ -31,5 +29,21 @@ public class JsonManager
         }
         Debug.Log("文件加载失败，加载路径是：" + filepath);
         return default(T);
+    }
+
+    /// <summary>
+    /// 删除某个JSON文件
+    /// </summary>
+    /// <param name="path"></param>
+    public static void Delete(string path)
+    {
+        string filepath = Application.streamingAssetsPath + "/Json/" + path + ".json";
+        Debug.Log("文件路径为：" + filepath);
+        if (File.Exists(filepath))
+        {
+            //删除文件
+            Debug.Log("删除文件："+filepath+" 成功！");
+            File.Delete(filepath);
+        }
     }
 }

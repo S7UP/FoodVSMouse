@@ -43,7 +43,6 @@ public class FoodUnit : BaseUnit
         spriteRenderer1 = transform.Find("Ani_Food").gameObject.GetComponent<SpriteRenderer>();
         spriteRenderer2 = transform.Find("Ani_Rank").gameObject.GetComponent<SpriteRenderer>();
         mBoxCollider2D = transform.GetComponent<BoxCollider2D>();
-        defaultMaterial = spriteRenderer1.material;  // 装上正常的受击材质
     }
 
     // 单位被对象池回收时触发
@@ -53,7 +52,7 @@ public class FoodUnit : BaseUnit
         mGrid = null; // 卡片所在的格子（单格卡)
         mGridList = null; // 卡片所在的格子（多格卡）
         isUseSingleGrid = false; // 是否只占一格
-        spriteRenderer1.material = defaultMaterial; // 换回来
+
     }
 
     // 每次对象被创建时要做的初始化工作
@@ -72,10 +71,12 @@ public class FoodUnit : BaseUnit
         animator.runtimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Food/"+mType+"/"+mShape);
         SetActionState(new IdleState(this));
 
-        SetLevel(6);
+        SetLevel(0);
         // 受伤闪白
         AddActionPointListener(ActionPointType.PostReceiveDamage, FlashWhenHited);
         spriteRenderer2.enabled = true; // 激活星级动画
+        // 装上正常的受击材质
+        spriteRenderer1.material = GameManager.Instance.GetMaterial("Hit");
     }
 
     /// <summary>
@@ -96,7 +97,12 @@ public class FoodUnit : BaseUnit
     {
         mLevel = level;
         UpdateAttributeByLevel();
-        rankAnimator.Play(mLevel.ToString()); // 先播放星级的图标动画
+        if (mLevel > 3)
+        {
+            rankAnimator.gameObject.SetActive(true);
+            rankAnimator.Play(mLevel.ToString()); // 先播放星级的图标动画
+        }else
+            rankAnimator.gameObject.SetActive(false);
     }
 
     /// <summary>
@@ -529,5 +535,22 @@ public class FoodUnit : BaseUnit
         base.MResume();
         // 取消暂停武器动作
         rankAnimator.speed = 1;
+    }
+
+    /// <summary>
+    /// 获取贴图对象
+    /// </summary>
+    public override Sprite GetSpirte()
+    {
+        return spriteRenderer1.sprite;
+    }
+
+    /// <summary>
+    /// 获取SpriterRenderer
+    /// </summary>
+    /// <returns></returns>
+    public override SpriteRenderer GetSpriteRenderer()
+    {
+        return spriteRenderer1;
     }
 }

@@ -9,6 +9,8 @@ public class GameManager : MonoBehaviour
     public UIManager uiManager;
     public ConfigManager configManager;
     public AbilityManager abilityManager;
+    public AttributeManager attributeManager;
+    public PlayerData playerData;
 
     private static GameManager _instance;
 
@@ -29,6 +31,11 @@ public class GameManager : MonoBehaviour
         configManager = new ConfigManager();
         abilityManager = AbilityManager.GetSingleton();
         uiManager = new UIManager();
+        attributeManager = new AttributeManager();
+        attributeManager.Initial();
+        // 加载玩家数据(静态)
+        playerData = PlayerData.LoadPlayerData();
+        Debug.Log(playerData);
         // 初始场景
         uiManager.mUIFacade.ChangeSceneState(new StartLoadSceneState(uiManager.mUIFacade));
         //Test

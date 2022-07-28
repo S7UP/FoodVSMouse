@@ -35,30 +35,35 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
         CancelSelectShovel();
 
         // 初始化卡槽信息，需要外部读取赋值，现拟赋值
-        List<int[]> inList = new List<int[]>();
-        inList.Add(new int[] { ((int)FoodNameTypeMap.CoffeePowder), 0, 16});
-        inList.Add(new int[] { 0, 2, 16 });
-        inList.Add(new int[] { 1, 2, 16 });
-        inList.Add(new int[] { 2, 1, 16 });
-        inList.Add(new int[] { 4, 1, 16 });
-        inList.Add(new int[] { ((int)FoodNameTypeMap.IceCream), 1, 10 });
-        inList.Add(new int[] { 6, 2, 16 });
-        inList.Add(new int[]{ 7, 2, 16 });
-        inList.Add(new int[]{ 8, 2, 16 });
-        inList.Add(new int[] { 11, 0, 16 });
-        inList.Add(new int[] { 12, 1, 16 });
-        inList.Add(new int[] { 15, 0, 16 });
-        inList.Add(new int[] { 16, 0, 16 });
-        inList.Add(new int[] { 17, 0, 16 });
-        inList.Add(new int[] { 18, 0, 16 });
+        //List<int[]> inList = new List<int[]>();
+        //inList.Add(new int[] { ((int)FoodNameTypeMap.CoffeePowder), 0, 13});
+        //inList.Add(new int[] { 0, 2, 13 });
+        //inList.Add(new int[] { 1, 2, 13 });
+        //inList.Add(new int[] { 2, 2, 13 });
+        //inList.Add(new int[] { 4, 1, 13 });
+        //inList.Add(new int[] { ((int)FoodNameTypeMap.IceCream), 1, 13 });
+        //inList.Add(new int[] { 6, 2, 13 });
+        //inList.Add(new int[]{ 7, 2, 13 });
+        //inList.Add(new int[]{ 8, 2, 13 });
+        //inList.Add(new int[] { ((int)FoodNameTypeMap.SugarGourd), 2, 13});
+        ////inList.Add(new int[] { (int)FoodNameTypeMap.MouseCatcher, 0, 13 });
+        ////inList.Add(new int[] { (int)FoodNameTypeMap.SpicyStringBoom, 0, 13 });
+        //inList.Add(new int[] { 11, 0, 13 });
+        //inList.Add(new int[] { 12, 1, 13 });
+        //inList.Add(new int[] { 15, 0, 13 });
+        //inList.Add(new int[] { 16, 0, 13 });
+        //inList.Add(new int[] { 17, 0, 13 });
+        //inList.Add(new int[] { 18, 0, 13 });
+        //inList.Add(new int[] { (int)FoodNameTypeMap.PineappleBreadBoom, 2, 13 });
+        List<AvailableCardInfo> selectedCardList = GameManager.Instance.playerData.GetCurrentSelectedCardInfoList();
 
         CardBuilderManager m = new CardBuilderManager();
-        for (int i = 0; i < inList.Count; i++)
+        for (int i = 0; i < selectedCardList.Count; i++)
         {
             // 产生卡片建造器Object实例的同时取得其对应脚本，与UI层作关联
             BaseCardBuilder cardBuilder = BaseCardBuilder.GetResource();
             cardBuilder.MInit(); // 初始化数据
-            cardBuilder.Load(inList[i][0], inList[i][1], inList[i][2]); // 读取对应信息
+            cardBuilder.Load(selectedCardList[i].type, selectedCardList[i].maxShape, selectedCardList[i].maxLevel); // 读取对应信息
             m.SetDefaultActionListener(cardBuilder); // 设置默认监听
             if (mGameNormalPanel.AddCardSlot(cardBuilder))  // 将对象添加到卡槽UI里，负责显示，如果添加成功则执行以下，否则回收目标对象！
                 mCardBuilderList.Add(cardBuilder); // 负责更新数据

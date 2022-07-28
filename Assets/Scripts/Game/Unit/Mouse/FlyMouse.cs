@@ -1,4 +1,7 @@
-public class FlyMouse : MouseUnit
+/// <summary>
+/// 基础空军
+/// </summary>
+public class FlyMouse : MouseUnit, IFlyUnit
 {
     private bool isDrop; // 是否被击落
     private int dropColumn; // 降落列
@@ -21,7 +24,7 @@ public class FlyMouse : MouseUnit
         base.MUpdate();
         if (IsMeetDropCondition())
         {
-            ExcuteDrop();
+            ExecuteDrop();
         }
     }
 
@@ -36,13 +39,18 @@ public class FlyMouse : MouseUnit
     /// <summary>
     /// 执行降落，仅一次
     /// </summary>
-    private void ExcuteDrop()
+    public void ExecuteDrop()
     {
         if (!isDrop)
         {
             isDrop = true;
+            // 若当前生命值大于飞行状态临界点，则需要强制同步生命值至临界点
+            if (mCurrentHp > mHertRateList[0] * mMaxHp)
+            {
+                mCurrentHp = (float)mHertRateList[0] * mMaxHp;
+            }
             mHertRateList[0] = double.MaxValue;
-            UpdateHertMap(); // 通过强制改变HertRateList然后强制更新，转变阶段
+            UpdateHertMap(); // 强制更新一次贴图
             // 设为转场状态，该状态下的具体实下如下几个方法
             SetActionState(new TransitionState(this));
             // 取消飞行状态移除移速加成
@@ -79,7 +87,7 @@ public class FlyMouse : MouseUnit
         // 2 受伤移动
         if (mHertIndex > 0 && mHertIndex <= 2 && !isDrop)
         {
-            ExcuteDrop();
+            ExecuteDrop();
         }
     }
 

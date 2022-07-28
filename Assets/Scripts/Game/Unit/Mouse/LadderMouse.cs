@@ -31,7 +31,8 @@ public class LadderMouse : MouseUnit
     {
         BaseLadder l = (BaseLadder)GameController.Instance.CreateItem(targetGrid.GetColumnIndex(), targetGrid.GetRowIndex(), (int)ItemInGridType.Ladder, mShape);
         // …Ë÷√Ã˘ÕºœÚ”“∆´“∆
-        l.SetSpriteLocalPosition(new Vector2(0.5f*MapManager.gridWidth, 0));
+        //l.SetSpriteLocalPosition(new Vector2(0.5f*MapManager.gridWidth, 0));
+        l.AddSpriteOffsetX(new FloatModifier(0.5f * MapManager.gridWidth));
         l.SetMoveDistance(MapManager.gridWidth*3);
     }
 

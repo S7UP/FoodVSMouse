@@ -38,7 +38,8 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
         Debug.Log("InitPanel()");
         mShovelModel.transform.position = mShovelSlot2Trans.transform.position; // ²ù×Ó¹éÎ»
         Tex_Pause.text = "ÔÝÍ£ÓÎÏ·";
-        SetMenuEnable(false);
+        Mask.SetActive(false);
+        MenuUI.SetActive(false);
     }
 
     /// <summary>
@@ -105,6 +106,7 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
     /// </summary>
     public void OnReturnToSelcetClick()
     {
+        GameController.Instance.RecycleAndDestoryAllInstance();
         GameManager.Instance.EnterSelectScene();
     }
 
@@ -113,6 +115,7 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
     /// </summary>
     public void OnReturnToMainClick()
     {
+        GameController.Instance.RecycleAndDestoryAllInstance();
         GameManager.Instance.EnterMainScene();
     }
 
@@ -123,6 +126,10 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
     {
         Mask.SetActive(enable);
         MenuUI.SetActive(enable);
+        if (enable)
+            GameController.Instance.Pause();
+        else
+            GameController.Instance.Resume();
     }
 
     /// <summary>

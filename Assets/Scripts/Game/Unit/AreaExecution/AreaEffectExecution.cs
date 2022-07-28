@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-
+using System;
 using UnityEngine;
 
 /// <summary>
@@ -20,6 +20,10 @@ public class AreaEffectExecution : MonoBehaviour
     public bool isIgnoreHeight; // 是否无视高度
     public float affectHeight; // 目标受影响的高度
 
+    private Action<FoodUnit> EventFoodAction;
+    private Action<MouseUnit> EventMouseAction;
+    private Action<CharacterUnit> EventCharacterAction;
+
     public virtual void Awake()
     {
         rigibody2D = GetComponent<Rigidbody2D>();
@@ -37,6 +41,24 @@ public class AreaEffectExecution : MonoBehaviour
         isAffectCharacter = false;
         isIgnoreHeight = true; // 默认情况下无视高度
         affectHeight = 0;
+        EventFoodAction = null;
+        EventMouseAction = null;
+        EventCharacterAction = null;
+    }
+
+    public void SetEventFoodAction(Action<FoodUnit> action)
+    {
+        EventFoodAction = action;
+    }
+
+    public void SetEventMouseAction(Action<MouseUnit> action)
+    {
+        EventMouseAction = action;
+    }
+
+    public void SetEventCharacterAction(Action<CharacterUnit> action)
+    {
+        EventCharacterAction = action;
     }
 
     public void OnCollision(Collider2D collision)
@@ -145,15 +167,24 @@ public class AreaEffectExecution : MonoBehaviour
             // 因此认为可以直接回收掉这个对象
             foreach (var item in foodUnitList)
             {
-                EventFood(item);
+                if (EventFoodAction != null)
+                    EventFoodAction(item);
+                else
+                    EventFood(item);
             }
             foreach (var item in mouseUnitList)
             {
-                EventMouse(item);
+                if (EventMouseAction != null)
+                    EventMouseAction(item);
+                else
+                    EventMouse(item);
             }
             foreach (var item in charcaterList)
             {
-                EventCharacter(item);
+                if (EventCharacterAction != null)
+                    EventCharacterAction(item);
+                else
+                    EventCharacter(item);
             }
             isAlive = false;
             ExecuteRecycle();

@@ -236,7 +236,8 @@ public class Scr_SelectEnemyType : MonoBehaviour
     /// </summary>
     private void ConstructView()
     {
-        DirectoryInfo direction = new DirectoryInfo(Application.dataPath + "/Resources/Json/Mouse"); // 获取JSON文件夹下的所有文件
+        //DirectoryInfo direction = new DirectoryInfo(Application.dataPath + "/Resources/Json/Mouse"); // 获取JSON文件夹下的所有文件
+        DirectoryInfo direction = new DirectoryInfo(Application.streamingAssetsPath + "/Json/Mouse"); // 获取JSON文件夹下的所有文件
         FileInfo[] files = direction.GetFiles("*");
         foreach (var typeFile in files)
         {
@@ -245,7 +246,8 @@ public class Scr_SelectEnemyType : MonoBehaviour
             {
                 string path = "Mouse/" + typeFile.Name.Replace(typeFile.Extension, "") + "/0";
                 Debug.Log("path = " + path);
-                MouseUnit.Attribute attr = JsonManager.Load<MouseUnit.Attribute>(path);
+                // MouseUnit.Attribute attr = JsonManager.Load<MouseUnit.Attribute>(path);
+                MouseUnit.Attribute attr = GameManager.Instance.attributeManager.GetMouseUnitAttribute(type, 0);
                 typeList.Add(new SelectEnemyInfo()
                 {
                     attr = attr.baseAttrbute,
@@ -255,7 +257,8 @@ public class Scr_SelectEnemyType : MonoBehaviour
             List<SelectEnemyInfo> oneShapeList = new List<SelectEnemyInfo>();
             shapeList.Add(oneShapeList);
 
-            FileInfo[] shapeFiles = new DirectoryInfo(Application.dataPath + "/Resources/Json/Mouse/"+type).GetFiles("*");
+            //FileInfo[] shapeFiles = new DirectoryInfo(Application.dataPath + "/Resources/Json/Mouse/"+type).GetFiles("*");
+            FileInfo[] shapeFiles = new DirectoryInfo(Application.streamingAssetsPath + "/Json/Mouse/" + type).GetFiles("*");
             foreach (var f in shapeFiles)
             {
                 Debug.Log("shapeFileName = " + f.FullName);
@@ -267,7 +270,8 @@ public class Scr_SelectEnemyType : MonoBehaviour
                     int shape = int.Parse(name.Replace(".json", ""));
                     {
                         string path = "Mouse/" + typeFile.Name.Replace(typeFile.Extension, "") + "/" + shape;
-                        MouseUnit.Attribute attr = JsonManager.Load<MouseUnit.Attribute>(path);
+                        // MouseUnit.Attribute attr = JsonManager.Load<MouseUnit.Attribute>(path);
+                        MouseUnit.Attribute attr = GameManager.Instance.attributeManager.GetMouseUnitAttribute(type, shape);
                         oneShapeList.Add(new SelectEnemyInfo()
                         {
                             attr = attr.baseAttrbute,

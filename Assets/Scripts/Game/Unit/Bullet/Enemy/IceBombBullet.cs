@@ -27,7 +27,7 @@ public class IceBombBullet : ParabolaBullet
             iceEffect.transform.position = MapManager.GetGridLocalPosition(GetColumnIndex(), GetRowIndex());
         }
         GameController.Instance.AddAreaEffectExecution(iceEffect);
-        //base.TakeDamage(baseUnit);
+        ExecuteHitAction(baseUnit);
         KillThis();
     }
 

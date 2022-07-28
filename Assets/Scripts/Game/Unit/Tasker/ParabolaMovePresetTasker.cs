@@ -15,6 +15,7 @@ public class ParabolaMovePresetTasker: PresetTasker
     private float velocityX; // 水平方向速度
     private float velocityY; // 垂直方向的速度
     private float sY; // y方向上的位移 
+    private FloatModifier f = new FloatModifier(0);
 
     /// <summary>
     /// 构造方法
@@ -41,7 +42,7 @@ public class ParabolaMovePresetTasker: PresetTasker
         InitAction = null;
         UpdateAciton = Update;
         EndCondition = EndCond;
-        EndEvent = null;
+        EndEvent = EndEventFunc;
     }
 
     private void Update()
@@ -52,12 +53,20 @@ public class ParabolaMovePresetTasker: PresetTasker
         // 横向为判定坐标移动
         targerUnit.SetPosition(vx);
         // 纵向为贴图相对坐标移动（纵向判定坐标不变）
-        targerUnit.SetSpriteLocalPosition(rotationY * sY);
+        targerUnit.RemoveSpriteOffsetY(f);
+        f.Value = rotationY.y * sY;
+        targerUnit.AddSpriteOffsetY(f);
+        //targerUnit.SetSpriteLocalPosition(rotationY * sY);
         currentTimer++;
     }
 
     private bool EndCond()
     {
         return (currentTimer > totalTimer || !targerUnit.IsAlive());
+    }
+
+    private void EndEventFunc()
+    {
+        targerUnit.RemoveSpriteOffsetY(f);
     }
 }

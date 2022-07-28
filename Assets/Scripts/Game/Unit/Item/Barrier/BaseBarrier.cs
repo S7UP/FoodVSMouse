@@ -34,7 +34,7 @@ public class BaseBarrier : BaseItem
 
     public override bool CanHit(BaseBullet bullet)
     {
-        return true;
+        return GetHeight()==bullet.mHeight;
     }
 
     // rigibodyœ‡πÿ

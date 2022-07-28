@@ -1,4 +1,3 @@
-using Newtonsoft.Json.Linq;
 
 using System.Collections.Generic;
 
@@ -30,7 +29,9 @@ public class BaseCostController : MonoBehaviour, IBaseCostController, IGameContr
         mAddCostDict.Clear();
         mShieldGettingCostDict.Clear();
 
-        AddCostType("Fire", 3000.0f);
+        AddCostType("Fire", GameController.Instance.mCurrentStage.mStageInfo.startCost);
+        // 自然回复
+        AddCostResourceModifier("Fire", new FloatModifier((float)25/7/60));
 
         // 初始化时就要更新一次UI显示
         UpdateCostDisplayer();

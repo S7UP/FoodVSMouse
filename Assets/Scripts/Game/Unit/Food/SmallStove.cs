@@ -44,6 +44,15 @@ public class SmallStove : FoodUnit
         base.BeforeDeath();
     }
 
+    /// <summary>
+    /// 再移除一次，以防止强制移除效果不触发产能清空判定bug
+    /// </summary>
+    public override void AfterDeath()
+    {
+        if (floatModifier != null)
+            GameController.Instance.RemoveCostResourceModifier("Fire", floatModifier);
+    }
+
     public override void MUpdate()
     {
         base.MUpdate();

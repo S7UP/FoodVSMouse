@@ -70,18 +70,10 @@ public class FlyBombBullet : BaseBullet
         GameObject instance = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "AreaEffect/BombAreaEffect");
         BombAreaEffectExecution bombEffect = instance.GetComponent<BombAreaEffectExecution>();
         bombEffect.Init(this.mMasterBaseUnit, 900, GetRowIndex(), 1, 1, 0, 0, true, false);
-        //if (baseUnit != null && baseUnit.IsValid())
-        //{
-        //    // 如果单位存在，则在单位位置爆炸
-        //    bombEffect.transform.position = baseUnit.transform.position;
-        //}
-        //else
-        //{
-            // 否则位于格子正中心爆炸
-            bombEffect.transform.position = MapManager.GetGridLocalPosition(GetColumnIndex(), GetRowIndex());
-        //}
+        // 位于格子正中心爆炸
+        bombEffect.transform.position = MapManager.GetGridLocalPosition(GetColumnIndex(), GetRowIndex());
         GameController.Instance.AddAreaEffectExecution(bombEffect);
-
+        ExecuteHitAction(baseUnit);
         KillThis();
     }
 

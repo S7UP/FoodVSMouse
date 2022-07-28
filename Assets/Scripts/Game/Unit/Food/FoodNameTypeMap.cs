@@ -32,5 +32,6 @@ public enum FoodNameTypeMap
     WoodenPlug = 26,
     Octopus = 27,
     CoffeeCan = 28,
-    RotatedCoffeeCan = 29
+    RotatedCoffeeCan = 29,
+    SugarGourd = 30
 }

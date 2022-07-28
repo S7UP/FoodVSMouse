@@ -9,6 +9,7 @@ public class BaseEffect : MonoBehaviour, IGameControllerMember
     public string clipName; // 编辑器获取
     private string resPath = "Effect/";
     public string resName = ""; // 编辑器获取
+    public bool isCycle;
 
     public virtual void Awake()
     {
@@ -22,7 +23,7 @@ public class BaseEffect : MonoBehaviour, IGameControllerMember
 
     public virtual void MUpdate()
     {
-        if (AnimatorManager.GetCurrentFrame(animator) == AnimatorManager.GetTotalFrame(animator)-1) // 当播放到最后一帧时退出
+        if (!isCycle && AnimatorManager.GetCurrentFrame(animator) == AnimatorManager.GetTotalFrame(animator)-1) // 当播放到最后一帧时退出
         {
             Recycle();
         }

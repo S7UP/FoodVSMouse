@@ -1,8 +1,10 @@
 using System.Collections.Generic;
 
 using UnityEngine;
-
-public class AerialBombardmentMouse : MouseUnit
+/// <summary>
+/// 机械投弹鼠
+/// </summary>
+public class AerialBombardmentMouse : MouseUnit, IFlyUnit
 {
     private GeneralAttackSkillAbility generalAttackSkillAbility;
     private FlyThrowBombSkillAbility flyThrowBombSkillAbility;
@@ -84,18 +86,23 @@ public class AerialBombardmentMouse : MouseUnit
     /// <summary>
     /// 执行降落，仅一次
     /// </summary>
-    private void ExcuteDrop()
+    public void ExecuteDrop()
     {
         if (!isDrop)
         {
             isDrop = true;
+            // 若当前生命值大于飞行状态临界点，则需要强制同步生命值至临界点
+            if(mCurrentHp> mHertRateList[0] * mMaxHp)
+            {
+                mCurrentHp = (float)mHertRateList[0]*mMaxHp;
+            }
             mHertRateList[0] = double.MaxValue;
+            UpdateHertMap(); // 强制更新一次贴图
             // 如果此时在投弹，那么应当立即取消投弹状态
             if (flyThrowBombSkillAbility.isSpelling)
             {
                 flyThrowBombSkillAbility.EndActivate();
             }
-            // UpdateHertMap(); // 通过强制改变HertRateList然后强制更新，转变阶段
             // 设为转场状态，该状态下的具体实下如下几个方法
             SetActionState(new TransitionState(this));
         }
@@ -124,7 +131,7 @@ public class AerialBombardmentMouse : MouseUnit
         // 2 受伤移动
         if (mHertIndex > 0 && mHertIndex <= 2 && !isDrop)
         {
-            ExcuteDrop();
+            ExecuteDrop();
         }
     }
 

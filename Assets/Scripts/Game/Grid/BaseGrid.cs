@@ -24,6 +24,8 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     public bool canBuild;
     public int currentXIndex { get; private set; }
     public int currentYIndex { get; private set; }
+    public bool isHeightLimit = true; // 地形效果是否只作用于特定高度
+    public float mHeight = 0;
 
     public GridActionPointManager gridActionPointManager = new GridActionPointManager();
 
@@ -43,6 +45,8 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         canBuild = true;
         currentXIndex = 0;
         currentYIndex = 0;
+        isHeightLimit = true;
+        mHeight = 0;
         gridActionPointManager.Initialize();
     }
 
@@ -210,6 +214,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         gridActionPointManager.TriggerActionPoint(GridActionPointType.BeforeSetFoodUnit, new GridAction(food, this));
         mFoodUnitdict.Add(t, food);
         gridActionPointManager.TriggerActionPoint(GridActionPointType.AfterSetFoodUnit, new GridAction(food, this));
+        OnUnitEnter(food);
     }
 
     /// <summary>
@@ -219,6 +224,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     {
         gridActionPointManager.TriggerActionPoint(GridActionPointType.BeforeRemoveFoodUnit, new GridAction(food, this));
         mFoodUnitdict.Remove(BaseCardBuilder.GetFoodInGridType(food.mType));
+        OnUnitExit(food);
         gridActionPointManager.TriggerActionPoint(GridActionPointType.AfterRemoveFoodUnit, new GridAction(food, this));
     }
 
@@ -230,16 +236,18 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     {
         gridActionPointManager.TriggerActionPoint(GridActionPointType.BeforeMouseUnitEnter, new GridAction(mouse, this));
         mMouseUnitList.Add(mouse);
+        OnUnitEnter(mouse);
         gridActionPointManager.TriggerActionPoint(GridActionPointType.AfterMouseUnitEnter, new GridAction(mouse, this));
     }
 
     /// <summary>
-    /// 本格移除美食引用
+    /// 本格移除老鼠引用
     /// </summary>
     public void RemoveMouseUnit(MouseUnit mouse)
     {
         gridActionPointManager.TriggerActionPoint(GridActionPointType.BeforeMouseUnitExit, new GridAction(mouse, this));
         mMouseUnitList.Remove(mouse);
+        OnUnitExit(mouse);
         gridActionPointManager.TriggerActionPoint(GridActionPointType.AfterMouseUnitExit, new GridAction(mouse, this));
     }
 
@@ -250,6 +258,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     {
         gridActionPointManager.TriggerActionPoint(GridActionPointType.BeforeRemoveItemUnit, new GridAction(unit, this));
         mItemUnitDict.Add((ItemInGridType)unit.mType, unit);
+        OnUnitEnter(unit);
         gridActionPointManager.TriggerActionPoint(GridActionPointType.AfterRemoveItemUnit, new GridAction(unit, this));
     }
 
@@ -263,6 +272,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         if (mItemUnitDict.ContainsKey((ItemInGridType)unit.mType))
         {
             old = mItemUnitDict[(ItemInGridType)unit.mType];
+            OnUnitExit(old);
             mItemUnitDict.Remove((ItemInGridType)unit.mType);
         }
         gridActionPointManager.TriggerActionPoint(GridActionPointType.AfterRemoveItemUnit, new GridAction(unit, this));
@@ -275,6 +285,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     public void AddCharacterUnit(CharacterUnit c)
     {
         characterUnit = c;
+        OnUnitEnter(c);
     }
 
     /// <summary>
@@ -284,6 +295,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     {
         CharacterUnit c = characterUnit;
         characterUnit = null;
+        OnUnitExit(c);
         return c;
     }
 
@@ -323,10 +335,9 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         if (collision.tag.Equals("Mouse"))
         {
             MouseUnit unit = collision.GetComponent<MouseUnit>();
-            if (!unit.isDeathState && unit.GetRowIndex() == currentYIndex && !mMouseUnitList.Contains(unit))
+            if (!unit.isDeathState && unit.GetRowIndex() == currentYIndex && unit.CanBeSelectedAsTarget() && (!isHeightLimit || unit.GetHeight()==mHeight) && !mMouseUnitList.Contains(unit))
             { 
                 AddMouseUnit(unit);
-                OnUnitEnter(unit);
             }
         }
     }
@@ -407,7 +418,6 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         {
             MouseUnit unit = collision.GetComponent<MouseUnit>();
             RemoveMouseUnit(unit);
-            OnUnitExit(unit);
         }
     }
 
@@ -519,6 +529,14 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     public virtual void MPauseUpdate()
     {
         
+    }
+
+    /// <summary>
+    /// 获取一个实例
+    /// </summary>
+    public static BaseGrid GetInstance()
+    {
+        return GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Grid/Grid").GetComponent<BaseGrid>();
     }
 
     /// <summary>

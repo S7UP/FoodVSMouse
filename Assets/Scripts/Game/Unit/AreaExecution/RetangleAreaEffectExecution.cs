@@ -7,7 +7,7 @@ public class RetangleAreaEffectExecution : AreaEffectExecution
     public int currentRowIndex; // 当前行下标
     public float offsetX;
     public int offsetY;
-    public int colCount; // 受影响列数
+    public float colCount; // 受影响列数
     public int rowCount; // 受影响行数
     public BoxCollider2D boxCollider2D;
 
@@ -17,7 +17,7 @@ public class RetangleAreaEffectExecution : AreaEffectExecution
         boxCollider2D = GetComponent<BoxCollider2D>();
     }
 
-    public void Init(int currentRowIndex, int colCount, int rowCount, float offsetX, int offsetY, bool isAffectFood, bool isAffectMouse)
+    public void Init(int currentRowIndex, float colCount, int rowCount, float offsetX, int offsetY, bool isAffectFood, bool isAffectMouse)
     {
         this.currentRowIndex = currentRowIndex;
         this.rowCount = rowCount;

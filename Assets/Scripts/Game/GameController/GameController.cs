@@ -212,7 +212,8 @@ public class GameController : MonoBehaviour
             Destroy(mCurrentStage);
         mCurrentStage = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Stage/Stage").GetComponent<BaseStage>();
         // mCurrentStage.Save();
-        mCurrentStage.DemoLoad();
+        //mCurrentStage.DemoLoad();
+        mCurrentStage.Load();
         mCurrentStage.Init();
 
         // 自身变量初始化
@@ -220,18 +221,7 @@ public class GameController : MonoBehaviour
         isPause = false;
         mCurrentWaitIEnumerator = null;
 
-        // 回收场上所有对象 && 自身表引用初始化
-        ClearAllEnemy();
-        ClearAllAlly();
-        ClearAllBullet();
-        ClearAllAreaEffectExecution();
-        ClearAllEffect();
-        ClearAllTasker();
-        mCharacterController.RecycleCurrentCharacter(); // 回收角色对象
-        mItemController.RecycleAll(); // 回收所有道具对象
-        mMapController.RecycleAllGridAndGroup(); // 回收所有格子与格子组对象
-        // 清空游戏对象工厂的所有对象（清空的是上一步回收的东西）
-        GameManager.Instance.ClearGameObjectFactory(FactoryType.GameFactory);
+        RecycleAndDestoryAllInstance();
 
         // 自身携带控制器初始化（要写到初始化的最后，不建议后面再加其他初始化）
         foreach (IGameControllerMember member in MMemberList)
@@ -345,7 +335,8 @@ public class GameController : MonoBehaviour
     /// <returns></returns>
     public MouseUnit CreateMouseUnit(int xIndex, int yIndex, BaseEnemyGroup.EnemyInfo enemyInfo)
     {
-        SetMouseAttribute(JsonManager.Load<MouseUnit.Attribute>("Mouse/"+enemyInfo.type+"/"+enemyInfo.shape+"")); // 准备先持有要创建实例的初始化信息
+        //SetMouseAttribute(JsonManager.Load<MouseUnit.Attribute>("Mouse/"+enemyInfo.type+"/"+enemyInfo.shape+"")); // 准备先持有要创建实例的初始化信息\
+        SetMouseAttribute(GameManager.Instance.attributeManager.GetMouseUnitAttribute(enemyInfo.type, enemyInfo.shape));
         MouseUnit mouse = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Mouse/"+enemyInfo.type).GetComponent<MouseUnit>();
         mouse.transform.SetParent(enemyListGo[yIndex].transform);
         mouse.MInit();
@@ -396,7 +387,8 @@ public class GameController : MonoBehaviour
     /// <returns></returns>
     public BaseUnit CreateItem(int xIndex, int yIndex, int type, int shape)
     {
-        SetItemAttribute(JsonManager.Load<BaseUnit.Attribute>("Item/" + type + "/" + shape + "")); // 准备先持有要创建实例的初始化信息
+        //SetItemAttribute(JsonManager.Load<BaseUnit.Attribute>("Item/" + type + "/" + shape + "")); // 准备先持有要创建实例的初始化信息
+        SetItemAttribute(GameManager.Instance.attributeManager.GetItemUnitAttribute(type, shape)); // 准备先持有要创建实例的初始化信息
         BaseUnit item = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Item/" + type + "/"+shape).GetComponent<BaseUnit>();
         item.MInit();
         AddItem(item, xIndex, yIndex);
@@ -412,7 +404,8 @@ public class GameController : MonoBehaviour
     /// <returns></returns>
     public BaseUnit CreateItem(Vector2 position, int type, int shape)
     {
-        SetItemAttribute(JsonManager.Load<BaseUnit.Attribute>("Item/" + type + "/" + shape + "")); // 准备先持有要创建实例的初始化信息
+        //SetItemAttribute(JsonManager.Load<BaseUnit.Attribute>("Item/" + type + "/" + shape + "")); // 准备先持有要创建实例的初始化信息
+        SetItemAttribute(GameManager.Instance.attributeManager.GetItemUnitAttribute(type, shape)); // 准备先持有要创建实例的初始化信息
         BaseUnit item = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Item/" + type + "/" + shape).GetComponent<BaseUnit>();
         item.MInit();
         item.transform.position = position;
@@ -466,7 +459,8 @@ public class GameController : MonoBehaviour
     /// <returns></returns>
     public CharacterUnit CreateCharacter(int type, int shape)
     {
-        SetItemAttribute(JsonManager.Load<BaseUnit.Attribute>("Character/" + type + "/" + shape + "")); // 准备先持有要创建实例的初始化信息
+        //SetCharacterAttribute(JsonManager.Load<BaseUnit.Attribute>("Character/" + type + "/" + shape + "")); // 准备先持有要创建实例的初始化信息
+        SetCharacterAttribute(GameManager.Instance.attributeManager.GetCharacterUnitAttribute(type, shape)); // 准备先持有要创建实例的初始化信息
         CharacterUnit c = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Character/" + type + "/" + shape).GetComponent<CharacterUnit>();
         c.MInit();
         return c;
@@ -934,5 +928,25 @@ public class GameController : MonoBehaviour
 
         // 将缓冲池的游戏对象放回到对象池
         GameManager.Instance.PushGameObjectFromBufferToPool();
+    }
+
+
+    /// <summary>
+    /// 回收战斗场景中的所有相关对象并且销毁
+    /// </summary>
+    public void RecycleAndDestoryAllInstance()
+    {
+        // 回收场上所有对象 && 自身表引用初始化
+        ClearAllEnemy();
+        ClearAllAlly();
+        ClearAllBullet();
+        ClearAllAreaEffectExecution();
+        ClearAllEffect();
+        ClearAllTasker();
+        mCharacterController.RecycleCurrentCharacter(); // 回收角色对象
+        mItemController.RecycleAll(); // 回收所有道具对象
+        mMapController.RecycleAllGridAndGroup(); // 回收所有格子与格子组对象
+        // 清空游戏对象工厂的所有对象（清空的是上一步回收的东西）
+        GameManager.Instance.ClearGameObjectFactory(FactoryType.GameFactory);
     }
 }

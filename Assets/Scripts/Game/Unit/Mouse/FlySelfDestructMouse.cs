@@ -1,8 +1,6 @@
 using UnityEngine;
 
-using static UnityEngine.UI.CanvasScaler;
-
-public class FlySelfDestructMouse : MouseUnit
+public class FlySelfDestructMouse : MouseUnit, IFlyUnit
 {
     private bool isDrop; // 是否被击落
     private int dropColumn; // 降落列
@@ -19,8 +17,8 @@ public class FlySelfDestructMouse : MouseUnit
         // 初始免疫炸弹秒杀效果
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, IgnoreBombInstantKill);
         // 在受到伤害结算之后，直接判定为击坠状态
-        AddActionPointListener(ActionPointType.PostReceiveDamage, delegate { ExcuteDrop(); });
-        AddActionPointListener(ActionPointType.PostReceiveReboundDamage, delegate { ExcuteDrop(); });
+        AddActionPointListener(ActionPointType.PostReceiveDamage, delegate { ExecuteDrop(); });
+        AddActionPointListener(ActionPointType.PostReceiveReboundDamage, delegate { ExecuteDrop(); });
     }
 
     public override void MUpdate()
@@ -28,7 +26,7 @@ public class FlySelfDestructMouse : MouseUnit
         base.MUpdate();
         if (IsMeetDropCondition())
         {
-            ExcuteDrop();
+            ExecuteDrop();
         }
     }
 
@@ -43,7 +41,7 @@ public class FlySelfDestructMouse : MouseUnit
     /// <summary>
     /// 执行降落，仅一次
     /// </summary>
-    private void ExcuteDrop()
+    public void ExecuteDrop()
     {
         if (!isDrop)
         {
@@ -119,5 +117,32 @@ public class FlySelfDestructMouse : MouseUnit
                 new BurnDamageAction(CombatAction.ActionType.CauseDamage, this, unit, float.MaxValue).ApplyAction();
             }
         }
+    }
+
+    /// <summary>
+    /// 是否能被作为目标选中
+    /// </summary>
+    /// <returns></returns>
+    public override bool CanBeSelectedAsTarget()
+    {
+        // 如果在坠机状态则不可被选为目标
+        if (isDrop)
+            return false;
+        else
+            return base.CanBeSelectedAsTarget();
+    }
+
+    /// <summary>
+    /// 是否能被子弹击中
+    /// </summary>
+    /// <param name="bullet"></param>
+    /// <returns></returns>
+    public override bool CanHit(BaseBullet bullet)
+    {
+        // 如果在坠机状态下则不可被子弹击中
+        if (isDrop)
+            return false;
+        else
+            return base.CanHit(bullet);
     }
 }

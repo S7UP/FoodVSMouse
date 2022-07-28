@@ -1,4 +1,7 @@
-public class FlyBarrierMouse : MouseUnit
+/// <summary>
+/// 飞行路障鼠
+/// </summary>
+public class FlyBarrierMouse : MouseUnit, IFlyUnit
 {
     private bool isDrop; // 是否被击落
     private int dropColumn; // 降落列
@@ -21,14 +24,34 @@ public class FlyBarrierMouse : MouseUnit
     public override void MUpdate()
     {
         base.MUpdate();
+
+    }
+
+    public override void OnMoveState()
+    {
+        base.OnMoveState();
         if (IsMeetDropBarrierCondition())
         {
-            ExcuteDropBarrier();
+            SetActionState(new CastState(this));
         }
 
         if (IsMeetDropCondition())
         {
-            ExcuteDrop();
+            ExecuteDrop();
+        }
+    }
+
+    public override void OnCastStateEnter()
+    {
+        animatorController.Play("Move", true);
+    }
+
+    public override void OnCastState()
+    {
+        if (animatorController.GetCurrentAnimatorStateRecorder().timer > 60)
+        {
+            ExcuteDropBarrier();
+            SetActionState(new MoveState(this));
         }
     }
 
@@ -120,11 +143,17 @@ public class FlyBarrierMouse : MouseUnit
     /// <summary>
     /// 执行降落，仅一次
     /// </summary>
-    private void ExcuteDrop()
+    public void ExecuteDrop()
     {
         if (!isDrop)
         {
             isDrop = true;
+            isDropBarrier = true;
+            // 若当前生命值大于飞行状态临界点，则需要强制同步生命值至临界点
+            if (mCurrentHp > mHertRateList[1] * mMaxHp)
+            {
+                mCurrentHp = (float)mHertRateList[1] * mMaxHp;
+            }
             mHertRateList[0] = double.MaxValue;
             mHertRateList[1] = double.MaxValue;
             UpdateHertMap(); // 通过强制改变HertRateList然后强制更新，转变阶段
@@ -169,7 +198,7 @@ public class FlyBarrierMouse : MouseUnit
 
         if (mHertIndex > 1 && mHertIndex <= 2 && !isDrop)
         {
-            ExcuteDrop();
+            ExecuteDrop();
         }
     }
 

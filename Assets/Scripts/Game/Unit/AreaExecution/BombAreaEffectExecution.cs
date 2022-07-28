@@ -14,7 +14,7 @@ public class BombAreaEffectExecution : RetangleAreaEffectExecution
         resourcePath += "BombAreaEffect";
     }
 
-    public void Init(BaseUnit creator, float damage, int currentRowIndex, int colCount, int rowCount, float offsetX, int offsetY, bool isAffectFood, bool isAffectMouse)
+    public void Init(BaseUnit creator, float damage, int currentRowIndex, float colCount, int rowCount, float offsetX, int offsetY, bool isAffectFood, bool isAffectMouse)
     {
         this.creator = creator;
         this.damage = damage;
@@ -40,7 +40,7 @@ public class BombAreaEffectExecution : RetangleAreaEffectExecution
         }
         else
         {
-            new BurnDamageAction(CombatAction.ActionType.CauseDamage, creator, unit, float.MaxValue).ApplyAction();
+            new BurnDamageAction(CombatAction.ActionType.CauseDamage, creator, unit, unit.mCurrentHp).ApplyAction();
         }
     }
 
@@ -53,7 +53,7 @@ public class BombAreaEffectExecution : RetangleAreaEffectExecution
         }
         else
         {
-            new BurnDamageAction(CombatAction.ActionType.CauseDamage, creator, unit, float.MaxValue).ApplyAction();
+            new BurnDamageAction(CombatAction.ActionType.CauseDamage, creator, unit, unit.mCurrentHp).ApplyAction();
         }
     }
 }

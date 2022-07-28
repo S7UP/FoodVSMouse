@@ -95,8 +95,8 @@ public class BaseProgressController : MonoBehaviour, IBaseProgressController, IG
         }
 
         // 时间相关
-        isTimeLimit = true; // 测试用，暂时设为有时间限制的关卡
-        totalTimer = 5 * 60 * 60; // 5分钟
+        isTimeLimit = GameController.Instance.mCurrentStage.mStageInfo.isEnableTimeLimit;
+        totalTimer = GameController.Instance.mCurrentStage.mStageInfo.totalSeconds * 60; 
         if (!isTimeLimit)
             Emp_LeftTimerTrans.gameObject.SetActive(false);
         currentTimerLeft = totalTimer - GameController.Instance.GetCurrentStageFrame();

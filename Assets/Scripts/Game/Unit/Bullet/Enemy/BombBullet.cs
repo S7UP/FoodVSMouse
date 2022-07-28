@@ -26,7 +26,7 @@ public class BombBullet : ParabolaBullet
             bombEffect.transform.position = MapManager.GetGridLocalPosition(GetColumnIndex(), GetRowIndex());
         }
         GameController.Instance.AddAreaEffectExecution(bombEffect);
-        //base.TakeDamage(baseUnit);
+        ExecuteHitAction(baseUnit);
         KillThis();
     }
 

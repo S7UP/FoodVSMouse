@@ -15,12 +15,37 @@ public class BaseStage : MonoBehaviour
     }
 
     /// <summary>
+    /// 章节关卡的数据信息（章号、场景号、关号）
+    /// </summary>
+    [System.Serializable]
+    public struct ChapterStageValue
+    {
+        public int chapterIndex;
+        public int sceneIndex;
+        public int stageIndex;
+    }
+
+    /// <summary>
     /// 关卡信息
     /// </summary>
     [System.Serializable]
-    public struct StageInfo
+    public class StageInfo
     {
         public string name; // 关卡名
+        public string background; // 关卡背景描述
+        public string illustrate; // 关卡机制说明
+        public string additionalNotes; // 关卡附加说明
+        public int chapterIndex;
+        public int sceneIndex;
+        public int stageIndex;
+        public int startCost; // 初始费用
+        public bool isEnableTimeLimit; // 是否启用时间限制
+        public int totalSeconds; // 关卡总时间（秒）
+        public bool isEnableCardLimit; // 是否启用卡片限制
+        public List<AvailableCardInfo> availableCardInfoList; // 可选用的卡片信息表
+        public bool isEnableCardCount; // 是否启用卡片数量限制
+        public int cardCount; // 卡片数量
+
         public List<BaseRound.RoundInfo> roundInfoList; // 关卡轮数表
         public List<int> waveIndexList; // 一大波标志下标表
         public StageMode defaultMode; // 默认关卡模式
@@ -31,6 +56,7 @@ public class BaseStage : MonoBehaviour
         /// </summary>
         public List<List<int>> apartList;
         public int perpareTime; // 出怪前的准备时间
+        
 
         /// <summary>
         /// 获取整个关卡轮数表
@@ -41,6 +67,27 @@ public class BaseStage : MonoBehaviour
             BaseRound.RoundInfo roundInfo = new BaseRound.RoundInfo();
             roundInfo.roundInfoList = roundInfoList;
             return roundInfo;
+        }
+
+        /// <summary>
+        /// 按编号升序排序可选用卡组
+        /// </summary>
+        public void SortAvailableCardInfoList()
+        {
+            for (int i = 0; i < availableCardInfoList.Count; i++)
+            {
+                AvailableCardInfo a = availableCardInfoList[i];
+                for (int j = i+1; j < availableCardInfoList.Count; j++)
+                {
+                    AvailableCardInfo b = availableCardInfoList[j];
+                    if (a.type > b.type)
+                    {
+                        availableCardInfoList[i] = b;
+                        availableCardInfoList[j] = a;
+                        a = b;
+                    }
+                }
+            }
         }
     }
 
@@ -60,15 +107,6 @@ public class BaseStage : MonoBehaviour
     /// </summary>
     public void StartStage()
     {
-        //enumerator = Start();
-        //if (mCoroutine != null)
-        //{
-        //    GameController.Instance.StopCoroutine(mCoroutine);
-        //    mCoroutine = null;
-        //}
-        //mCoroutine = GameController.Instance.StartCoroutine(enumerator);
-        //if (GameController.Instance.isPause)
-        //    PauseStage();
         StartCoroutine(Execute());
     }
 
@@ -85,36 +123,6 @@ public class BaseStage : MonoBehaviour
             yield return null;
         }
     }
-
-    ///// <summary>
-    ///// 暂停关卡
-    ///// </summary>
-    //public void PauseStage()
-    //{
-    //    if (mCoroutine != null)
-    //    {
-    //        GameController.Instance.StopCoroutine(mCoroutine);
-    //    }
-    //    foreach (var item in mRoundList)
-    //    {
-    //        item.PauseRound();
-    //    }
-    //}
-
-    ///// <summary>
-    ///// 恢复
-    ///// </summary>
-    //public void ResumeStage()
-    //{
-    //    if (mCoroutine != null)
-    //    {
-    //        GameController.Instance.StartCoroutine(enumerator);
-    //    }
-    //    foreach (var item in mRoundList)
-    //    {
-    //        item.ResumeRound();
-    //    }
-    //}
 
     /// <summary>
     /// 关卡开始
@@ -157,87 +165,32 @@ public class BaseStage : MonoBehaviour
         Save(mStageInfo);
     }
 
+    /// <summary>
+    /// 存档关卡信息
+    /// </summary>
+    /// <param name="stageInfo"></param>
     public static void Save(StageInfo stageInfo)
     {
         Debug.Log("开始存档关卡信息！");
-        JsonManager.Save(stageInfo, "Stage/" + stageInfo.name);
+        JsonManager.Save(stageInfo, "Stage/Chapter/"+stageInfo.chapterIndex+"/"+stageInfo.sceneIndex+"/"+stageInfo.stageIndex);
         Debug.Log("关卡信息存档完成！");
     }
 
     /// <summary>
-    /// 关卡模版，测试用
+    /// 删除某个关卡信息
     /// </summary>
-    public static void DemoSave()
+    /// <param name="stageInfo"></param>
+    public static void Delete(StageInfo stageInfo)
     {
-        List<BaseEnemyGroup> enemyGroupList = new List<BaseEnemyGroup>();
-        // 每轮有一组老鼠，一组老鼠有三只
-        BaseEnemyGroup enemyGroup = new BaseEnemyGroup();
-        enemyGroup.Init(
-            0, // apartIndex
-            0, // startIndex
-            new BaseEnemyGroup.EnemyInfo()
-            {
-                type = 0,
-                shape = 0
-            },
-            3 // mouse count
-            );
-        enemyGroupList.Add(enemyGroup);
-
-
-        // 搞个六轮
-        List<BaseRound.RoundInfo> roundInfos = new List<BaseRound.RoundInfo>();
-        for (int i = 0; i < 6; i++)
-        {
-            BaseRound.RoundInfo roundInfo = new BaseRound.RoundInfo
-            {
-                name = "第"+(i+1)+"轮",
-                info = "",
-                roundInfoList = null, // 自身的小轮
-                baseEnemyGroupList = enemyGroupList, // 组
-                interval = 1, // 组与组之间的间隔
-                endTime = 240 // 结尾处等待时间
-            };
-            roundInfos.Add(roundInfo);
-        }
-
-
-        List<List<int>> apartList = new List<List<int>>();
-        for (int i = 0; i < 2; i++)
-        {
-            apartList.Add(new List<int>());
-        }
-        // 添加1267路至组1
-        apartList[0].Add(0);
-        apartList[0].Add(1);
-        apartList[0].Add(5);
-        apartList[0].Add(6);
-        // 添加345路至组2
-        apartList[1].Add(2);
-        apartList[1].Add(3);
-        apartList[1].Add(4);
-
-        StageInfo stageInfo = new StageInfo()
-        {
-            name = "test关卡",
-            roundInfoList = roundInfos,
-            waveIndexList = new List<int> { 1, 2 },
-            defaultMode = StageMode.HalfRandom,
-            apartList = apartList,
-            perpareTime = 180
-        };
-
-        Debug.Log("开始存档关卡信息！");
-        JsonManager.Save(stageInfo, "Stage/test");
-        Debug.Log("关卡信息存档完成！");
+        Debug.Log("开始删除关卡信息！");
+        JsonManager.Delete("Stage/Chapter/" + stageInfo.chapterIndex + "/" + stageInfo.sceneIndex + "/" + stageInfo.stageIndex);
+        Debug.Log("关卡信息删除成功！");
     }
 
-    /// <summary>
-    /// 从本地中读取关卡信息
-    /// </summary>
-    public void DemoLoad()
+    public void Load()
     {
-        mStageInfo = Load(Test.TestStageName);
+        ChapterStageValue values = GameManager.Instance.playerData.GetCurrentChapterStageValue();
+        mStageInfo = Load("Chapter/"+ values.chapterIndex + "/" + values.sceneIndex + "/" + values.stageIndex);
     }
 
     public static StageInfo Load(string path)

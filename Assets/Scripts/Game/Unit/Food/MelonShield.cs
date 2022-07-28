@@ -16,8 +16,8 @@ public class MelonShield : FoodUnit
     public override void Awake()
     {
         base.Awake();
-        Spr_Inside = transform.Find("Spr_Inside").GetComponent<SpriteRenderer>();
-        typeAndShapeToLayer = 1; // 渲染层级应该要大一点
+        Spr_Inside = transform.Find("Ani_Food").Find("Spr_Inside").GetComponent<SpriteRenderer>();
+        typeAndShapeToLayer = 1; // 渲染层级应该要大一点s
     }
 
     // 单位被对象池回收时触发

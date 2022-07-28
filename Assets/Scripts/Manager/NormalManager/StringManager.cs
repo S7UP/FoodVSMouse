@@ -16,6 +16,7 @@ public class StringManager
     public const string IgnoreFrozenSlowDown = "冰冻减速效果免疫";
     public const string Frozen = "冻结";
     public const string IgnoreFrozen = "冻结效果免疫";
+    public const string Stun = "晕眩";
 
     public const string WaterGridState = "溺水";
     public const string IgnoreWaterGridState = "溺水免疫"; // 水上单位自带
