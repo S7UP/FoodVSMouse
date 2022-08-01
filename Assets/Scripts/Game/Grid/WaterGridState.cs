@@ -4,8 +4,8 @@
 public class WaterGridState : BaseGridState
 {
     public WaterGridState(BaseGrid grid):base(grid)
-    { 
-
+    {
+        gridType = GridType.Water;
     }
 
     public override void OnEnter()

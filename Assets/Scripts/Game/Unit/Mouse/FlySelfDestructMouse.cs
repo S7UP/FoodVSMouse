@@ -88,7 +88,7 @@ public class FlySelfDestructMouse : MouseUnit, IFlyUnit
 
         if (isDrop && !isDeathState)
         {
-            float t = AnimatorManager.GetNormalizedTime(animator);
+            float t = animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime();
             rigibody2D.MovePosition(Vector2.Lerp(start_position, target_position, t));
             // 这种情况下表明已坠落，执行死亡
             if (t >= 1)

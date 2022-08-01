@@ -76,7 +76,9 @@ public class ConfigCardUI : MonoBehaviour
         foreach (var item in list)
         {
             cardDict[(FoodNameTypeMap)item.type].SetInfo(item.type, item.maxShape, item.maxLevel);
+            cardDict[(FoodNameTypeMap)item.type].isUpdate = true;
             cardDict[(FoodNameTypeMap)item.type].SetSelected(true);
+            cardDict[(FoodNameTypeMap)item.type].isUpdate = false;
         }
         if(list.Count>0)
             currentSelectedModel = cardDict[(FoodNameTypeMap)list[0].type]; // 默认选择关卡配置的第一张卡作为选中卡

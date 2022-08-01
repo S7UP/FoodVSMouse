@@ -25,4 +25,7 @@ public interface IBaseStateImplementor
     public void OnAttackStateContinue();
     public void OnCastStateContinue();
     public void OnTransitionStateContinue();
+    public void OnFrozenStateEnter();
+    public void OnFrozenState();
+    public void OnFrozenStateExit();
 }

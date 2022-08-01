@@ -186,6 +186,7 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     {
         // 单位动作状态由状态机决定（如移动、攻击、待机、死亡）
         mCurrentActionState.OnUpdate();
+        animatorController.Update();
         // 子弹若出屏了请自删
         if (!IsInView())
         {
@@ -261,7 +262,7 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
 
     public virtual void OnHitStateEnter()
     {
-        animatorController.Play("Hit");
+        animatorController.Play("Hit", false);
         SetCollision(false);
         isDeathState = true;
     }
@@ -269,17 +270,16 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     public virtual void OnHitState()
     {
         // 动画播放完一次后，转为移动状态
-        AnimatorStateInfo info = animator.GetCurrentAnimatorStateInfo(0);
-        //if (info.normalizedTime >= 1.0f)
-        if(AnimatorManager.GetCurrentFrame(animator) == AnimatorManager.GetTotalFrame(animator))
+        if(animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
         {
-            SetActionState(new BaseBulletActionState(this));
+            //SetActionState(new BaseBulletActionState(this));
+            ExecuteRecycle();
         }
     }
 
     public virtual void OnHitStateExit()
     {
-        ExecuteRecycle();
+        // ExecuteRecycle();
         //GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, "Bullet/"+((int)style), gameObject);
     }
 

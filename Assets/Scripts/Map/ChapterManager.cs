@@ -107,4 +107,13 @@ public class ChapterManager
         }
         return l;
     }
+
+    /// <summary>
+    /// 获取特定场景名字
+    /// </summary>
+    /// <returns></returns>
+    public static string GetSceneName(ChapterNameTypeMap chapterIndex, int sceneIndex)
+    {
+        return sceneNameDict[chapterIndex][sceneIndex];
+    }
 }

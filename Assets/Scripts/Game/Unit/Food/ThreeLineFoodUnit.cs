@@ -94,8 +94,7 @@ public class ThreeLineFoodUnit : FoodUnit
     /// <returns></returns>
     public override bool IsMeetEndGeneralAttackCondition()
     {
-        return animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 1.0f; // 攻击动画播放完整一次后视为技能结束
-        //return AnimatorManager.GetCurrentFrame(animator) == AnimatorManager.GetTotalFrame(animator);
+        return animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce();
     }
 
     /// <summary>
@@ -113,8 +112,7 @@ public class ThreeLineFoodUnit : FoodUnit
     /// <returns></returns>
     public override bool IsDamageJudgment()
     {
-        AnimatorStateInfo info = animator.GetCurrentAnimatorStateInfo(0);
-        return (info.normalizedTime - Mathf.FloorToInt(info.normalizedTime) >= attackPercent && mAttackFlag);
+        return (animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime() >= attackPercent && mAttackFlag);
     }
 
     /// <summary>

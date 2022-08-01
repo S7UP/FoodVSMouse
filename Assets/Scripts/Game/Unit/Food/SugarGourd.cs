@@ -19,11 +19,18 @@ public class SugarGourd : FoodUnit
         base.MInit();
         currentAttackCount = 0;
         maxAttackCount = countArray[mShape];
-        endAttackPercent = 0.9f;
+        endAttackPercent = 0.7f;
         attackPercentList = new List<float>();
-        for (int i = 0; i < maxAttackCount; i++)
+        if (maxAttackCount <= 1)
         {
-            attackPercentList.Add(attackPercent + (endAttackPercent - attackPercent) * i / (maxAttackCount - 1));
+            attackPercentList.Add(endAttackPercent);
+        }
+        else
+        {
+            for (int i = 0; i < maxAttackCount; i++)
+            {
+                attackPercentList.Add(attackPercent + (endAttackPercent - attackPercent) * i / (maxAttackCount - 1));
+            }
         }
         currentAttackCount = 0;
     }
@@ -94,8 +101,7 @@ public class SugarGourd : FoodUnit
     /// <returns></returns>
     public override bool IsMeetEndGeneralAttackCondition()
     {
-        //return animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 1.0f; // 攻击动画播放完整一次后视为技能结束
-        return animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime() >= 1.0f;
+        return animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce();
     }
 
     /// <summary>
@@ -113,9 +119,6 @@ public class SugarGourd : FoodUnit
     /// <returns></returns>
     public override bool IsDamageJudgment()
     {
-        //AnimatorStateInfo info = animator.GetCurrentAnimatorStateInfo(0);
-        //return (currentAttackCount < maxAttackCount && info.normalizedTime - Mathf.FloorToInt(info.normalizedTime) >= attackPercentList[currentAttackCount]);
-        //AnimatorStateInfo info = animator.GetCurrentAnimatorStateInfo(0);
         return (currentAttackCount < maxAttackCount && animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime() >= attackPercentList[currentAttackCount]);
     }
 

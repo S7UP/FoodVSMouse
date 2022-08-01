@@ -103,6 +103,7 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
     public GameObject mImg_CDMask2;
     public GameObject mTex_CDLeft;
     public GameObject mImg_Rank;
+    private Text Tex_Key;
 
     
     public FoodUnit mProduct; // 当前卡片实体产品
@@ -175,8 +176,7 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
     /// <param name="level"></param>
     public void Load(int type, int shape, int level)
     {
-        // 从Json读取相关数据
-        //attr = JsonManager.Load<Attribute>("CardBuilder/" + type + "/" + shape + "");
+        // 读取相关数据
         attr = GameManager.Instance.attributeManager.GetCardBuilderAttribute(type, shape);
         // 卡片种类与转职情况
         mType = type;
@@ -186,24 +186,6 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
         mImg_Rank.GetComponent<Image>().sprite = GameManager.Instance.GetSprite("UI/Rank2/"+level);
         // 费用
         double cost = attr.GetCost(level);
-        //if(attr.costList!=null && attr.costList.Count > 0)
-        //{
-        //    if (level < 0)
-        //    {
-        //        cost = attr.costList[0];
-        //    }else if(level >= attr.costList.Count)
-        //    {
-        //        cost = attr.costList[attr.costList.Count-1];
-        //    }
-        //    else
-        //    {
-        //        cost = attr.costList[level];
-        //    }
-        //}
-        //else
-        //{
-        //    cost = attr.cost;
-        //}
         if (!mBaseCostDict.ContainsKey("Fire"))
         {
             mBaseCostDict.Add("Fire", (float)cost);
@@ -215,25 +197,6 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
 
         // CD
         double cd = attr.GetCD(level);
-        //if (attr.CDList != null && attr.CDList.Count > 0)
-        //{
-        //    if (level < 0)
-        //    {
-        //        cd = attr.CDList[0];
-        //    }
-        //    else if (level >= attr.CDList.Count)
-        //    {
-        //        cd = attr.CDList[attr.CDList.Count - 1];
-        //    }
-        //    else
-        //    {
-        //        cd = attr.CDList[level];
-        //    }
-        //}
-        //else
-        //{
-        //    cd = attr.baseCD;
-        //}
         mBaseCD = Mathf.FloorToInt((float)cd * ConfigManager.fps);
         mCD = mBaseCD;
         mCDLeft = 0;
@@ -254,6 +217,7 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
         mImg_CDMask2 = transform.Find("Img_CDMask2").gameObject;
         mTex_CDLeft = transform.Find("Tex_CDLeft").gameObject;
         mImg_Rank = transform.Find("Img_Rank").gameObject;
+        Tex_Key = transform.Find("Img_Key").Find("Text").GetComponent<Text>();
     }
 
     /// <summary>
@@ -292,6 +256,7 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
     public void SetIndex(int index)
     {
         arrayIndex = index;
+        Tex_Key.text = GameManager.Instance.playerData.GetCurrentCardKeyList()[index].ToString();
     }
 
     /// <summary>

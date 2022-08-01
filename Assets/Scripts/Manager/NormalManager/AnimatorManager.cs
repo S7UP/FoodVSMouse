@@ -73,6 +73,7 @@ public class AnimatorManager
                 return animationClip.length;
             }
         }
+        Debug.Log("未在animator里发现名为:"+name+"的动画片段");
         return -1;
     }
 

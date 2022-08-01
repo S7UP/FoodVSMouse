@@ -116,13 +116,13 @@ public class PenguinMouse : MouseUnit
             return;
         }
         // 动画播放完一次后，退出技能状态
-        if (AnimatorManager.GetCurrentFrame(animator) == AnimatorManager.GetTotalFrame(animator))
+        if(animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
         {
             if (throwIceBombSkillAbility != null)
             {
                 throwIceBombSkillAbility.CloseSkill();
             }
-        }else if (AnimatorManager.GetNormalizedTime(animator) > 0.5 && mAttackFlag)
+        }else if (animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime() > 0.5 && mAttackFlag)
         {
             mAttackFlag = false;
             if (throwIceBombSkillAbility != null)

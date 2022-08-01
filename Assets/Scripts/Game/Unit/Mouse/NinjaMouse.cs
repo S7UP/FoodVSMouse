@@ -175,11 +175,11 @@ public class NinjaMouse : MouseUnit
     {
         if (currentStateTimer == 0)
             return;
-        if(AnimatorManager.GetNormalizedTime(animator) > 1.0f)
+        if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
         {
             summonRetinueSkillAbility.EndActivate();
         }
-        else if (AnimatorManager.GetNormalizedTime(animator) > 0.6f && mAttackFlag)
+        else if(animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime() > 0.6f && mAttackFlag)
         {
             mAttackFlag = false;
             summonRetinueSkillAbility.SetSummonEnable();
@@ -235,7 +235,7 @@ public class NinjaMouse : MouseUnit
     /// <returns></returns>
     public bool IsCurrentClipEnd()
     {
-        return AnimatorManager.GetNormalizedTime(animator) > 1.0f;
+        return animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce();
     }
 
     /// <summary>

@@ -94,15 +94,17 @@ public class LadderMouse : MouseUnit
     public override void OnCastStateEnter()
     {
         animatorController.Play("Put");
+        Debug.Log("t = " + animatorController.GetCurrentAnimatorStateRecorder().aniTime);
     }
 
     public override void OnCastState()
     {
         if (currentStateTimer == 0)
             return;
-
-        if (AnimatorManager.GetNormalizedTime(animator) > 1.0)
+        Debug.Log("r = "+ animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime());
+        if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
         {
+            Debug.Log("putLadderSkillAbility.TriggerEvent()");
             putLadderSkillAbility.TriggerEvent(); // 触发实际事件
             putLadderSkillAbility.SetEndSkill();
         }

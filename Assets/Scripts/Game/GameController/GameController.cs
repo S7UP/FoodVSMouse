@@ -42,7 +42,7 @@ public class GameController : MonoBehaviour
     public List<BaseEffect> baseEffectList; // 存活的特效表
     public List<Tasker> taskerList; // 存活的任务执行器表
     //BaseRule[] mRuleList; //+ 规则表
-    //KeyBoardSetting mKeyBoardSetting; //+ 键位控制接口
+    public KeyBoardSetting mKeyBoardSetting; // 键位控制接口
     //Recorder mRecorder; //+ 用户操作记录者
     //public NumberManager numberManager;
 
@@ -196,6 +196,11 @@ public class GameController : MonoBehaviour
         // 角色控制器
         mCharacterController = new CharacterController();
         MMemberList.Add(mCharacterController);
+
+        // 键位控制器
+        mKeyBoardSetting = new KeyBoardSetting();
+        MMemberList.Add(mKeyBoardSetting);
+
 
         Test.OnGameControllerAwake();
     }
@@ -775,11 +780,11 @@ public class GameController : MonoBehaviour
         // mCurrentStage.Update();
 
         // test
-        if (Input.GetKeyDown(KeyCode.Alpha1))
-        {
-            GameNormalPanel gameNormalPanel = (GameNormalPanel)GameManager.Instance.uiManager.mUIFacade.currentScenePanelDict[StringManager.GameNormalPanel];
-            gameNormalPanel.OnShovelSlotTrigger();
-        }
+        //if (Input.GetKeyDown(KeyCode.Alpha1))
+        //{
+        //    GameNormalPanel gameNormalPanel = (GameNormalPanel)GameManager.Instance.uiManager.mUIFacade.currentScenePanelDict[StringManager.GameNormalPanel];
+        //    gameNormalPanel.OnShovelSlotTrigger();
+        //}
 
         // 各种组件的Update()
         foreach (IGameControllerMember member in MMemberList)
@@ -948,5 +953,32 @@ public class GameController : MonoBehaviour
         mMapController.RecycleAllGridAndGroup(); // 回收所有格子与格子组对象
         // 清空游戏对象工厂的所有对象（清空的是上一步回收的东西）
         GameManager.Instance.ClearGameObjectFactory(FactoryType.GameFactory);
+    }
+
+    /// <summary>
+    /// 加载当前关的键控表并且应用效果于键位控制器LoadAndFixKeyBoardSetting()
+    /// </summary>
+    public void LoadAndFixKeyBoardSetting()
+    {
+        List<char> c_list = GameManager.Instance.playerData.GetCurrentCardKeyList();
+        List<AvailableCardInfo> a_list = GameManager.Instance.playerData.GetCurrentSelectedCardInfoList();
+        for (int i = 0; i < a_list.Count; i++)
+        {
+            int j = i;
+            if (c_list[i] != '\0')
+            {
+                char c = c_list[i];
+                if (c >= 'A' && c <= 'Z')
+                {
+                    c -= 'A';
+                    c += 'a';
+                }
+                mKeyBoardSetting.AddAction((KeyCode)c, delegate { 
+                    mCardController.mCardBuilderList[j].OnClick();
+                    if (GameController.Instance.mCardController.isSelectCard)
+                        GameController.Instance.mCardController.OnMouseLeftDownWhenSelectedCard();
+                });
+            }
+        }
     }
 }

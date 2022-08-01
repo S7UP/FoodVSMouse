@@ -47,7 +47,7 @@ public class BaseWeapons : MonoBehaviour, IGameControllerMember
         animatorController.ChangeAnimator(animator);
         master = null;
         isFrozenState = false;
-        mAttackFlag = false;
+        mAttackFlag = true;
         isDisableSkill = false;
         attackPercent = 0.5f; //test
         isDeathState = false;
@@ -102,8 +102,6 @@ public class BaseWeapons : MonoBehaviour, IGameControllerMember
     public virtual bool IsHasTarget()
     {
         List<BaseUnit>[] list = GameController.Instance.GetEnemyList();
-        //int start = Mathf.Max(0, GetRowIndex() - 1);
-        //int end = Mathf.Min(GetRowIndex() + 1, MapController.yRow - 1);
         int start = GetRowIndex();
         int end = start;
         for (int i = start; i <= end; i++)
@@ -157,7 +155,7 @@ public class BaseWeapons : MonoBehaviour, IGameControllerMember
     /// <returns></returns>
     public virtual bool IsMeetEndGeneralAttackCondition()
     {
-        return animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 1.0f; // 攻击动画播放完整一次后视为技能结束
+        return animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce();
     }
 
     /// <summary>
@@ -175,8 +173,7 @@ public class BaseWeapons : MonoBehaviour, IGameControllerMember
     /// <returns></returns>
     public virtual bool IsDamageJudgment()
     {
-        AnimatorStateInfo info = animator.GetCurrentAnimatorStateInfo(0);
-        return (info.normalizedTime - Mathf.FloorToInt(info.normalizedTime) >= attackPercent && mAttackFlag);
+        return (animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime() >= attackPercent && mAttackFlag);
     }
 
     /// <summary>
@@ -358,7 +355,7 @@ public class BaseWeapons : MonoBehaviour, IGameControllerMember
     {
         if (currentStateTimer == 0)
             return;
-        if (AnimatorManager.GetNormalizedTime(animator)>1.0)
+        if(animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
         {
             DeathEvent();
         }

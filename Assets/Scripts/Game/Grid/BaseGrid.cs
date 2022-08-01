@@ -12,6 +12,17 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         ItemInGridType.TimelinessBarrier
     };
 
+    /// <summary>
+    /// 格子类型危险权重表
+    /// </summary>
+    public static Dictionary<GridType, int> GridDangerousWeightDict = new Dictionary<GridType, int>()
+    {
+        { GridType.None, 1},
+        { GridType.Default, 1},
+        { GridType.Water, 3}, // 众所周知水是剧毒的
+        { GridType.Lava, 2},
+    };
+
 
     public BaseGridState mMainGridState; // 主要地形状态
     public List<BaseGridState> mOtherGridStateList = new List<BaseGridState>(); // 其它地形状态表（大多是临时的）
@@ -69,6 +80,9 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     public virtual bool CanBuildCard(FoodInGridType foodInGridType)
     {
         if (!canBuild)
+            return false;
+        // 人物被视为默认类型的美食，即不能与默认类型的共存
+        if (characterUnit != null && foodInGridType.Equals(FoodInGridType.Default))
             return false;
         foreach (var tag in NoAllowBuildTagList)
         {
@@ -545,5 +559,32 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     public virtual void ExecuteRecycle()
     {
         GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, "Grid/Grid", this.gameObject);
+    }
+
+    /// <summary>
+    /// 获取该格子的主要地形类型
+    /// </summary>
+    public GridType GetGridType()
+    {
+        if (mMainGridState != null)
+            return mMainGridState.gridType;
+        else
+            return GridType.None;
+    }
+
+    /// <summary>
+    /// 获取本格子的默认危险权重
+    /// </summary>
+    /// <returns></returns>
+    public int GetDefaultDangerousWeight()
+    {
+        if (GridDangerousWeightDict.ContainsKey(GetGridType()))
+        {
+            return GridDangerousWeightDict[GetGridType()];
+        }
+        else
+        {
+            return 1;
+        }
     }
 }

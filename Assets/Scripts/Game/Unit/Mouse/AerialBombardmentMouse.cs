@@ -147,7 +147,8 @@ public class AerialBombardmentMouse : MouseUnit, IFlyUnit
             return;
         }
         // 动画播放完一次后，通知技能效果结束
-        if (AnimatorManager.GetCurrentFrame(animator) == AnimatorManager.GetTotalFrame(animator))
+        //if (AnimatorManager.GetCurrentFrame(animator) == AnimatorManager.GetTotalFrame(animator))
+        if(animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
         {
             flyThrowBombSkillAbility.CloseSkill();
         }
@@ -168,7 +169,8 @@ public class AerialBombardmentMouse : MouseUnit, IFlyUnit
             return;
         }
         // 动画播放完一次后，转为移动状态
-        if (AnimatorManager.GetCurrentFrame(animator) == AnimatorManager.GetTotalFrame(animator))
+        //if (AnimatorManager.GetCurrentFrame(animator) == AnimatorManager.GetTotalFrame(animator))
+        if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
         {
             SetActionState(new MoveState(this));
         }

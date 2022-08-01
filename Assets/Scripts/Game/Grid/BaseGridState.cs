@@ -2,10 +2,12 @@ public class BaseGridState
 {
     // 持有该状态的格子
     public BaseGrid mGrid;
+    public GridType gridType;
 
     public BaseGridState(BaseGrid grid)
     {
         mGrid = grid;
+        gridType = GridType.Default;
     }
 
     // 地形切换为该状态瞬间需要做的事

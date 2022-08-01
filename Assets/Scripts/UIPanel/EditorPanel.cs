@@ -50,6 +50,9 @@ public class EditorPanel : BasePanel
     private Img_StageConfig mImg_StageConfig;
 
     private ConfigCardUI mConfigCardUI;
+    private GameObject EditTextAreaUI;
+    private InputField Inp_EditTextArea;
+    private Button Btn_ExitEditTextArea;
 
     private Button Btn_ReturnToMain;
 
@@ -166,6 +169,12 @@ public class EditorPanel : BasePanel
         mConfigCardUI = transform.Find("ConfigCardUI").GetComponent<ConfigCardUI>();
         mConfigCardUI.SetEditorPanel(this);
         mConfigCardUI.gameObject.SetActive(false);
+
+        EditTextAreaUI = transform.Find("EditTextAreaUI").gameObject;
+        EditTextAreaUI.SetActive(false);
+        Inp_EditTextArea = transform.Find("EditTextAreaUI").Find("Panel").Find("Img_center").Find("Emp_Container").Find("Scr").Find("Viewport").Find("Content").Find("InputField").GetComponent<InputField>();
+        Btn_ExitEditTextArea = transform.Find("EditTextAreaUI").Find("Panel").Find("Btn_Exit").GetComponent<Button>();
+        Btn_ExitEditTextArea.onClick.AddListener(delegate { EditTextAreaUI.SetActive(false); });
 
         Btn_ReturnToMain = transform.Find("Btn_ReturnToMain").GetComponent<Button>();
         Btn_ReturnToMain.onClick.AddListener(OnReturnToMainClick);
@@ -295,6 +304,8 @@ public class EditorPanel : BasePanel
                 go.transform.SetParent(scrContentEnemyGroupListTrans);
                 go.transform.localScale = Vector3.one;
                 EnemyGroupUI enemyGroupUI = go.GetComponent<EnemyGroupUI>();
+                enemyGroupUI.SetEditorPanel(this);
+                enemyGroupUI.Initial();
                 enemyGroupUI.SetEnemyGroup(item);
                 // 删除按钮重置监听
                 {
@@ -911,6 +922,37 @@ public class EditorPanel : BasePanel
     private void OnReturnToMainClick()
     {
         GameManager.Instance.EnterMainScene();
+    }
+
+    /// <summary>
+    /// 编辑关卡的文本说明
+    /// </summary>
+    /// <param name="s"></param>
+    public void ShowEditTextArea(int type)
+    {
+        EditTextAreaUI.SetActive(true);
+        Inp_EditTextArea.onEndEdit.RemoveAllListeners();
+        if (type == 0)
+        {
+            if (GetCurrentStageInfo().background == null)
+                GetCurrentStageInfo().background = "";
+            Inp_EditTextArea.text = GetCurrentStageInfo().background;
+            Inp_EditTextArea.onEndEdit.AddListener(delegate { GetCurrentStageInfo().background = Inp_EditTextArea.text; });
+        }
+        else if (type == 1)
+        {
+            if (GetCurrentStageInfo().illustrate == null)
+                GetCurrentStageInfo().illustrate = "";
+            Inp_EditTextArea.text = GetCurrentStageInfo().illustrate;
+            Inp_EditTextArea.onEndEdit.AddListener(delegate { GetCurrentStageInfo().illustrate = Inp_EditTextArea.text; });
+        }
+        else if (type == 2)
+        {
+            if (GetCurrentStageInfo().additionalNotes == null)
+                GetCurrentStageInfo().additionalNotes = "";
+            Inp_EditTextArea.text = GetCurrentStageInfo().additionalNotes;
+            Inp_EditTextArea.onEndEdit.AddListener(delegate { GetCurrentStageInfo().additionalNotes = Inp_EditTextArea.text; });
+        }
     }
 
     // Update is called once per frame

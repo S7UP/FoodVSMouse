@@ -136,12 +136,12 @@ public class MelonShield : FoodUnit
     }
 
     /// <summary>
-    /// 死亡时若剩余生命值大于0则对范围内所有敌人造成一次剩余生命值的伤害
+    /// 一转前提下死亡时若剩余生命值大于0则对范围内所有敌人造成一次剩余生命值的伤害
     /// 此方法用于一些即死机制、强制移除时触发
     /// </summary>
     public override void AfterDeath()
     {
-        if (mCurrentHp > 0)
+        if (mShape>0 && mCurrentHp > 0)
         {
             // 添加对应的判定检测器
             {

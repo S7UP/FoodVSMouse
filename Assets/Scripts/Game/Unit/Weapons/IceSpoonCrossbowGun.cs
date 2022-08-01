@@ -6,6 +6,7 @@ using UnityEngine;
 /// </summary>
 public class IceSpoonCrossbowGun : BaseWeapons
 {
+    private BaseUnit target;
     private Vector3 targetPosition;
 
     public override void MInit()
@@ -36,6 +37,7 @@ public class IceSpoonCrossbowGun : BaseWeapons
                 if(item.transform.position.x > master.transform.position.x)
                 {
                     flag = true;
+                    target = item;
                     break;
                 }
             }
@@ -50,7 +52,7 @@ public class IceSpoonCrossbowGun : BaseWeapons
     /// </summary>
     public override void ExecuteDamage()
     {
-        SearchTargetPosition();
+        //SearchTargetPosition();
         float d = Mathf.Abs(targetPosition.x - master.transform.position.x);
         
         if (d < MapManager.gridWidth)
@@ -86,7 +88,7 @@ public class IceSpoonCrossbowGun : BaseWeapons
         }
         if (list.Count <= 0)
             return;
-        targetPosition = list[0].transform.position;
+        targetPosition = target.transform.position;
         foreach (var item in list)
         {
             if(item.transform.position.x < targetPosition.x && item.transform.position.x > master.transform.position.x)

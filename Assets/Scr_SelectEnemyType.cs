@@ -1,7 +1,7 @@
 using System.Collections.Generic;
+
 using UnityEngine;
 using UnityEngine.UI;
-using System.IO;
 
 public class Scr_SelectEnemyType : MonoBehaviour
 {
@@ -14,7 +14,6 @@ public class Scr_SelectEnemyType : MonoBehaviour
     // 引用
     private Transform scrContentSelectEnemyTypeTrans; // 选择敌人滚动窗体
     private GameObject Emp_ReturnSelectEnemyType; // 返回上级选择敌人种类
-    private Canvas canvas;
     public EditorPanel editorPanel;
 
     // 绑定的敌人组
@@ -36,7 +35,6 @@ public class Scr_SelectEnemyType : MonoBehaviour
         scrContentSelectEnemyTypeTrans = transform.Find("Viewport").Find("Content");
         Emp_ReturnSelectEnemyType = scrContentSelectEnemyTypeTrans.Find("Emp_ReturnLast").gameObject;
         Emp_ReturnSelectEnemyType.transform.Find("Button").GetComponent<Button>().onClick.AddListener(delegate { OnReturnSelectEnemeyTypeClick(); });
-        canvas = GameObject.Find("Canvas").GetComponent<Canvas>();
 
         selectedEnemyType = -1;
         selectedEnemyShape = -1;
@@ -236,49 +234,66 @@ public class Scr_SelectEnemyType : MonoBehaviour
     /// </summary>
     private void ConstructView()
     {
-        //DirectoryInfo direction = new DirectoryInfo(Application.dataPath + "/Resources/Json/Mouse"); // 获取JSON文件夹下的所有文件
-        DirectoryInfo direction = new DirectoryInfo(Application.streamingAssetsPath + "/Json/Mouse"); // 获取JSON文件夹下的所有文件
-        FileInfo[] files = direction.GetFiles("*");
-        foreach (var typeFile in files)
+        //DirectoryInfo direction = new DirectoryInfo(Application.streamingAssetsPath + "/Json/Mouse"); // 获取JSON文件夹下的所有文件
+        //FileInfo[] files = direction.GetFiles("*");
+        //foreach (var typeFile in files)
+        //{
+        //    int type = int.Parse(typeFile.Name.Replace(typeFile.Extension, "")); // 去后缀
+        //    {
+        //        string path = "Mouse/" + typeFile.Name.Replace(typeFile.Extension, "") + "/0";
+        //        MouseUnit.Attribute attr = GameManager.Instance.attributeManager.GetMouseUnitAttribute(type, 0);
+        //        typeList.Add(new SelectEnemyInfo()
+        //        {
+        //            attr = attr.baseAttrbute,
+        //            sprite = GameManager.Instance.GetSprite("Mouse/" + attr.baseAttrbute.type + "/" + attr.baseAttrbute.shape + "/icon")
+        //        });
+        //    }
+        //    List<SelectEnemyInfo> oneShapeList = new List<SelectEnemyInfo>();
+        //    shapeList.Add(oneShapeList);
+
+        //    FileInfo[] shapeFiles = new DirectoryInfo(Application.streamingAssetsPath + "/Json/Mouse/" + type).GetFiles("*");
+        //    foreach (var f in shapeFiles)
+        //    {
+        //        string name = f.Name.Replace(f.Extension, "");
+        //        // 只读取JSON
+        //        if (name.EndsWith(".json"))
+        //        {
+        //            int shape = int.Parse(name.Replace(".json", ""));
+        //            {
+        //                MouseUnit.Attribute attr = GameManager.Instance.attributeManager.GetMouseUnitAttribute(type, shape);
+        //                oneShapeList.Add(new SelectEnemyInfo()
+        //                {
+        //                    attr = attr.baseAttrbute,
+        //                    sprite = GameManager.Instance.GetSprite("Mouse/" + attr.baseAttrbute.type + "/" + attr.baseAttrbute.shape + "/icon")
+        //                });
+        //            }
+        //        }
+        //    }
+        //}
+
+
+        //
+        foreach (var keyValuePair in MouseManager.GetMouseTypeNameDict())
         {
-            Debug.Log("typeFileName = " + typeFile.Name);
-            int type = int.Parse(typeFile.Name.Replace(typeFile.Extension, "")); // 去后缀
+            MouseNameTypeMap type = keyValuePair.Key;
+            MouseUnit.Attribute attr = GameManager.Instance.attributeManager.GetMouseUnitAttribute((int)type, 0);
+            typeList.Add(new SelectEnemyInfo()
             {
-                string path = "Mouse/" + typeFile.Name.Replace(typeFile.Extension, "") + "/0";
-                Debug.Log("path = " + path);
-                // MouseUnit.Attribute attr = JsonManager.Load<MouseUnit.Attribute>(path);
-                MouseUnit.Attribute attr = GameManager.Instance.attributeManager.GetMouseUnitAttribute(type, 0);
-                typeList.Add(new SelectEnemyInfo()
-                {
-                    attr = attr.baseAttrbute,
-                    sprite = GameManager.Instance.GetSprite("Mouse/" + attr.baseAttrbute.type + "/" + attr.baseAttrbute.shape + "/icon")
-                });
-            }
+                attr = attr.baseAttrbute,
+                sprite = GameManager.Instance.GetSprite("Mouse/" + attr.baseAttrbute.type + "/" + attr.baseAttrbute.shape + "/icon")
+            });
+
             List<SelectEnemyInfo> oneShapeList = new List<SelectEnemyInfo>();
             shapeList.Add(oneShapeList);
-
-            //FileInfo[] shapeFiles = new DirectoryInfo(Application.dataPath + "/Resources/Json/Mouse/"+type).GetFiles("*");
-            FileInfo[] shapeFiles = new DirectoryInfo(Application.streamingAssetsPath + "/Json/Mouse/" + type).GetFiles("*");
-            foreach (var f in shapeFiles)
+            foreach (var keyValuePair2 in MouseManager.GetShapeNameDict(type))
             {
-                Debug.Log("shapeFileName = " + f.FullName);
-                string name = f.Name.Replace(f.Extension, "");
-                // 只读取JSON
-                if (name.EndsWith(".json"))
+                int shape = keyValuePair2.Key;
+                MouseUnit.Attribute attr2 = GameManager.Instance.attributeManager.GetMouseUnitAttribute((int)type, shape);
+                oneShapeList.Add(new SelectEnemyInfo()
                 {
-                    Debug.Log("Name = " + name);
-                    int shape = int.Parse(name.Replace(".json", ""));
-                    {
-                        string path = "Mouse/" + typeFile.Name.Replace(typeFile.Extension, "") + "/" + shape;
-                        // MouseUnit.Attribute attr = JsonManager.Load<MouseUnit.Attribute>(path);
-                        MouseUnit.Attribute attr = GameManager.Instance.attributeManager.GetMouseUnitAttribute(type, shape);
-                        oneShapeList.Add(new SelectEnemyInfo()
-                        {
-                            attr = attr.baseAttrbute,
-                            sprite = GameManager.Instance.GetSprite("Mouse/" + attr.baseAttrbute.type + "/" + attr.baseAttrbute.shape + "/icon")
-                        });
-                    }
-                }
+                    attr = attr2.baseAttrbute,
+                    sprite = GameManager.Instance.GetSprite("Mouse/" + attr2.baseAttrbute.type + "/" + attr2.baseAttrbute.shape + "/icon")
+                });
             }
         }
     }
@@ -293,15 +308,15 @@ public class Scr_SelectEnemyType : MonoBehaviour
     void Update()
     {
         // 当鼠标在UI范围之外点击，则屏蔽该UI
-        if (Input.GetMouseButtonDown(0))
-        {
-            Vector2 pos = canvas.worldCamera.ScreenToWorldPoint(Input.mousePosition);
-            Debug.Log("mouseposition:" + pos);
-            RectTransform rect = GetComponent<RectTransform>();
-            if (pos.x > rect.position.x + rect.rect.width / 200 || pos.x < rect.position.x - rect.rect.width / 200 || pos.y > rect.position.y + rect.rect.height / 200 || pos.y < rect.position.y - rect.rect.height / 200)
-            {
-                gameObject.SetActive(false);
-            }
-        }
+        //if (Input.GetMouseButtonDown(0))
+        //{
+        //    Vector2 pos = canvas.worldCamera.ScreenToWorldPoint(Input.mousePosition);
+        //    Debug.Log("mouseposition:" + pos);
+        //    RectTransform rect = GetComponent<RectTransform>();
+        //    if (pos.x > rect.position.x + rect.rect.width / 200 || pos.x < rect.position.x - rect.rect.width / 200 || pos.y > rect.position.y + rect.rect.height / 200 || pos.y < rect.position.y - rect.rect.height / 200)
+        //    {
+        //        gameObject.SetActive(false);
+        //    }
+        //}
     }
 }

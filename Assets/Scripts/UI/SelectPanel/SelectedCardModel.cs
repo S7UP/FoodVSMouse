@@ -8,14 +8,18 @@ using System;
 /// </summary>
 public class SelectedCardModel : MonoBehaviour
 {
+    private SelectedCardUI mSelectedCardUI;
     private RectTransform Emp_Card_RectTrans;
     private Text Tex_Cost;
     private Button Btn_Cancel;
     private Dropdown Dro_Rank;
     private Dropdown Dro_Shape;
     private Image mImage;
+    private Button Btn_KeyButton;
+    private InputField Inp_Key;
+    private bool isUpdateKey;
 
-    private AvailableCardInfo mAvailableCardInfo;
+    private AvailableCardInfo mAvailableCardInfo;   
 
     private void Awake()
     {
@@ -25,15 +29,18 @@ public class SelectedCardModel : MonoBehaviour
         Dro_Rank = Emp_Card_RectTrans.Find("Dro_Rank").GetComponent<Dropdown>();
         Dro_Shape = Emp_Card_RectTrans.Find("Dro_Shape").GetComponent<Dropdown>();
         mImage = Emp_Card_RectTrans.GetComponent<Image>();
+        Btn_KeyButton = Emp_Card_RectTrans.Find("Btn_KeyButton").GetComponent<Button>();
+        Inp_Key = Btn_KeyButton.transform.Find("InputField").GetComponent<InputField>();
     }
 
     public void SetAvailableCardInfo(AvailableCardInfo info)
     {
+        Dictionary<FoodNameTypeMap, AvailableCardInfo> dict = mSelectedCardUI.GetCurrentAvailableCardDict();
         mAvailableCardInfo = info;
         // 设置rank下拉列表
         Dro_Rank.ClearOptions();
         List<Dropdown.OptionData> dataList = new List<Dropdown.OptionData>();
-        for (int i = 0; i <= info.maxLevel; i++)
+        for (int i = 0; i <= dict[(FoodNameTypeMap)info.type].maxLevel; i++)
         {
             dataList.Add(new Dropdown.OptionData(GameManager.Instance.GetSprite("UI/Rank2/"+i)));
         }
@@ -43,7 +50,7 @@ public class SelectedCardModel : MonoBehaviour
         // 设置shape下拉列表
         Dro_Shape.ClearOptions();
         dataList = new List<Dropdown.OptionData>();
-        for (int i = 0; i <= info.maxShape; i++)
+        for (int i = 0; i <= dict[(FoodNameTypeMap)info.type].maxShape; i++)
         {
             dataList.Add(new Dropdown.OptionData(GameManager.Instance.GetSprite("Food/"+info.type+"/" + i + "/display")));
         }
@@ -52,6 +59,32 @@ public class SelectedCardModel : MonoBehaviour
         Dro_Shape.onValueChanged.AddListener(delegate { mAvailableCardInfo.maxShape = Dro_Shape.value; });
         // 设置费用文本
         Tex_Cost.text = GameManager.Instance.attributeManager.GetCardBuilderAttribute(info.type, Dro_Shape.value).GetCost(info.maxLevel)+"";
+        // 设置键控
+        Inp_Key.onValueChanged.RemoveAllListeners();
+        Inp_Key.onValueChanged.AddListener(
+            delegate {
+                if (isUpdateKey)
+                    return;
+                int index = mSelectedCardUI.GetModelInListIndex(this);
+                // 只取最后一位输入的字符
+                if (Inp_Key.text != null && !Inp_Key.text.Equals("") && Inp_Key.text.Length>0)
+                {
+                    char c = Inp_Key.text.ToCharArray()[0];
+                    if (c >= 'a' && c <= 'z')
+                    {
+                        c -= 'a';
+                        c += 'A';
+                    }
+                    isUpdateKey = true;
+                    Inp_Key.text = c.ToString();
+                    isUpdateKey = false;
+                    mSelectedCardUI.UpdateKeyByIndex(index, c);
+                }
+                else
+                {
+                    mSelectedCardUI.UpdateKeyByIndex(index, '\0');
+                }
+            });
     }
 
     /// <summary>
@@ -131,5 +164,21 @@ public class SelectedCardModel : MonoBehaviour
         Dro_Rank.transform.Find("Display").GetComponent<Image>().color = new Color(1, 1, 1, 1);
         Dro_Shape.transform.Find("Display").GetComponent<Image>().color = new Color(1, 1, 1, 1);
         mImage.enabled = true;
+    }
+
+    public void SetSelectedCardUI(SelectedCardUI ui)
+    {
+        mSelectedCardUI = ui;
+    }
+
+    /// <summary>
+    /// 更新一次Key，在卡片顺序发生变化时调用
+    /// </summary>
+    public void UpdateKey()
+    {
+        isUpdateKey = true;
+        int index = mSelectedCardUI.GetModelInListIndex(this);
+        Inp_Key.text = mSelectedCardUI.GetKeyByIndex(index).ToString();
+        isUpdateKey = false;
     }
 }

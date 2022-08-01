@@ -115,6 +115,20 @@ public class AvailableCardUI : MonoBehaviour
             Debug.Log("未找到对应卡片模型！");
     }
 
+    /// <summary>
+    /// 获取可选卡的字典
+    /// </summary>
+    /// <returns></returns>
+    public Dictionary<FoodNameTypeMap, AvailableCardInfo> GetCurrentAvailableCardDict()
+    {
+        Dictionary<FoodNameTypeMap, AvailableCardInfo> dict = new Dictionary<FoodNameTypeMap, AvailableCardInfo>();
+        foreach (var keyValuePair in availableCardDict)
+        {
+            dict.Add(keyValuePair.Key, keyValuePair.Value.GetAvailableCardInfo());
+        }
+        return dict;
+    }
+
     // Start is called before the first frame update
     void Start()
     {

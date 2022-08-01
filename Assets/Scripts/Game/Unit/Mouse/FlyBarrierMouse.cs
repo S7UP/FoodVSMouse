@@ -217,7 +217,8 @@ public class FlyBarrierMouse : MouseUnit, IFlyUnit
             return;
         }
         // 动画播放完一次后，转为移动状态
-        if (AnimatorManager.GetCurrentFrame(animator) == AnimatorManager.GetTotalFrame(animator))
+        //if (AnimatorManager.GetCurrentFrame(animator) == AnimatorManager.GetTotalFrame(animator))
+        if(animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
         {
             SetActionState(new MoveState(this));
         }

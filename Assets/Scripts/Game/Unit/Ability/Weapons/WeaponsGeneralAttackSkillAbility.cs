@@ -6,7 +6,6 @@ public class WeaponsGeneralAttackSkillAbility : WeaponsSkillAbility
 
     public WeaponsGeneralAttackSkillAbility(BaseWeapons w, SkillAbilityInfo info) :base(w, info)
     {
-        
         noClearEnergyWhenStart = false;
         noClearEnergyWhenEnd = true;
     }

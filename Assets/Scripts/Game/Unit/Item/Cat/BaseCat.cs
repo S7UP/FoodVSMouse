@@ -48,13 +48,14 @@ public class BaseCat : BaseItem
     {
         if (currentStateTimer == 0)
             return;
-        if(AnimatorManager.GetNormalizedTime(animator)>1.0)
+
+        if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
             SetActionState(new MoveState(this));
     }
 
     public override void OnMoveStateEnter()
     {
-        animatorController.Play("Move");
+        animatorController.Play("Move", true);
     }
 
     public override void OnMoveState()

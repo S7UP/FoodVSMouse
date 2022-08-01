@@ -90,7 +90,7 @@ public class NonMainstreamMouse : MouseUnit
         if (currentStateTimer == 0)
             return;
         // 动作播放完 或 被阻挡了则停止躲避技能
-        if (AnimatorManager.GetNormalizedTime(animator) > 1.0 || IsHasTarget())
+        if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce() || IsHasTarget())
             dodgeSpikesSkillAbility.EndSkill();
     }
 

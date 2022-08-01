@@ -55,7 +55,11 @@ public class IceBucketFoodUnit : FoodUnit
     /// </summary>
     public override void OnGeneralAttack()
     {
-
+        if (IsDamageJudgment())
+        {
+            // 灰烬型卡片直接销毁自身
+            ExecuteDeath();
+        }
     }
 
     /// <summary>
@@ -64,19 +68,7 @@ public class IceBucketFoodUnit : FoodUnit
     /// <returns></returns>
     public override bool IsMeetEndGeneralAttackCondition()
     {
-        return animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 1.0f; // 攻击动画播放完整一次后视为技能结束
-        //return AnimatorManager.GetCurrentFrame(animator) == AnimatorManager.GetTotalFrame(animator);
-    }
-
-    /// <summary>
-    /// 退出普通攻击后要做的事
-    /// </summary>
-    public override void AfterGeneralAttack()
-    {
-        // 执行伤害效果
-        ExecuteDamage();
-        // 灰烬型卡片直接销毁自身
-        ExecuteDeath();
+        return animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce();
     }
 
     /// <summary>
@@ -85,8 +77,7 @@ public class IceBucketFoodUnit : FoodUnit
     /// <returns></returns>
     public override bool IsDamageJudgment()
     {
-        AnimatorStateInfo info = animator.GetCurrentAnimatorStateInfo(0);
-        return (info.normalizedTime - Mathf.FloorToInt(info.normalizedTime) >= attackPercent && mAttackFlag);
+        return (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce());
     }
 
     /// <summary>
@@ -109,5 +100,15 @@ public class IceBucketFoodUnit : FoodUnit
             item.AddNoCountUniqueStatusAbility(StringManager.Frozen, new FrozenStatusAbility(item, 240));
             item.AddNoCountUniqueStatusAbility(StringManager.FrozenSlowDown, new FrozenSlowStatusAbility(item, 600));
         }
+    }
+
+    /// <summary>
+    /// 亡语
+    /// </summary>
+    public override void AfterDeath()
+    {
+        base.AfterDeath();
+        // 伤害判定为消失时触发
+        ExecuteDamage();
     }
 }

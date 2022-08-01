@@ -13,4 +13,5 @@ public enum BulletStyle
     IceEgg = 7,
     Honey = 8,
     SugarGourd = 9, // ÌÇºùÂ«
+    CatBullet = 10
 }

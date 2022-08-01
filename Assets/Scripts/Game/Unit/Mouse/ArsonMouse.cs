@@ -122,13 +122,13 @@ public class ArsonMouse : MouseUnit
             return;
 
         // 动画播放完一次后，退出技能状态
-        if (AnimatorManager.GetCurrentFrame(animator) == AnimatorManager.GetTotalFrame(animator))
+        if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
         {
             if (throwBombSkillAbility != null)
             {
                 throwBombSkillAbility.CloseSkill();
             }
-        }else if (AnimatorManager.GetNormalizedTime(animator) > 0.5 && mAttackFlag)
+        }else if(animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime() > 0.5 && mAttackFlag)
         {
             mAttackFlag = false;
             if (throwBombSkillAbility != null)

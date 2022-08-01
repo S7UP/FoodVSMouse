@@ -92,7 +92,7 @@ public class BaseItem : BaseUnit
             return;
         }
 
-        if (AnimatorManager.GetNormalizedTime(animator)>1.0) // 动画播放完毕后调用DeathEvent()
+        if(animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
         {
             DeathEvent();
         }

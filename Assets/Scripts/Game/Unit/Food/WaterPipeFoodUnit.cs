@@ -95,7 +95,7 @@ public class WaterPipeFoodUnit : FoodUnit
     /// <returns></returns>
     public override bool IsMeetEndGeneralAttackCondition()
     {
-        return animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 1.0f; // 攻击动画播放完整一次后视为技能结束
+        return animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce();
     }
 
     /// <summary>
@@ -113,8 +113,7 @@ public class WaterPipeFoodUnit : FoodUnit
     /// <returns></returns>
     public override bool IsDamageJudgment()
     {
-        AnimatorStateInfo info = animator.GetCurrentAnimatorStateInfo(0);
-        return (currentAttackCount < maxAttackCount && info.normalizedTime - Mathf.FloorToInt(info.normalizedTime) >= attackPercentList[currentAttackCount]);
+        return currentAttackCount<attackPercentList.Count && animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime() >= attackPercentList[currentAttackCount];
     }
 
     /// <summary>

@@ -50,6 +50,11 @@ public class SelectStageUI : MonoBehaviour
     /// </summary>
     public void Initial()
     {
+        // 移除旧页面的按钮
+        foreach (var item in Btn_StageList)
+        {
+            GameManager.Instance.PushGameObjectToFactory(FactoryType.UIFactory, "SelectPanel/Btn_Stage", item.gameObject);
+        }
         Btn_StageList.Clear();
         maxPage = 0;
         currentPageIndex = 0;
@@ -113,7 +118,7 @@ public class SelectStageUI : MonoBehaviour
         }
         // 被选中的这个按钮变金
         btn.GetComponent<Image>().sprite = BtnSelectedSprite;
-        mSelectPanel.UpdateSelectEquipmentUIByChangeStage();
+        mSelectPanel.UpdateUIByChangeStage();
     }
 
     /// <summary>

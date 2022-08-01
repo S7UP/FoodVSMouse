@@ -35,26 +35,6 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
         CancelSelectShovel();
 
         // 初始化卡槽信息，需要外部读取赋值，现拟赋值
-        //List<int[]> inList = new List<int[]>();
-        //inList.Add(new int[] { ((int)FoodNameTypeMap.CoffeePowder), 0, 13});
-        //inList.Add(new int[] { 0, 2, 13 });
-        //inList.Add(new int[] { 1, 2, 13 });
-        //inList.Add(new int[] { 2, 2, 13 });
-        //inList.Add(new int[] { 4, 1, 13 });
-        //inList.Add(new int[] { ((int)FoodNameTypeMap.IceCream), 1, 13 });
-        //inList.Add(new int[] { 6, 2, 13 });
-        //inList.Add(new int[]{ 7, 2, 13 });
-        //inList.Add(new int[]{ 8, 2, 13 });
-        //inList.Add(new int[] { ((int)FoodNameTypeMap.SugarGourd), 2, 13});
-        ////inList.Add(new int[] { (int)FoodNameTypeMap.MouseCatcher, 0, 13 });
-        ////inList.Add(new int[] { (int)FoodNameTypeMap.SpicyStringBoom, 0, 13 });
-        //inList.Add(new int[] { 11, 0, 13 });
-        //inList.Add(new int[] { 12, 1, 13 });
-        //inList.Add(new int[] { 15, 0, 13 });
-        //inList.Add(new int[] { 16, 0, 13 });
-        //inList.Add(new int[] { 17, 0, 13 });
-        //inList.Add(new int[] { 18, 0, 13 });
-        //inList.Add(new int[] { (int)FoodNameTypeMap.PineappleBreadBoom, 2, 13 });
         List<AvailableCardInfo> selectedCardList = GameManager.Instance.playerData.GetCurrentSelectedCardInfoList();
 
         CardBuilderManager m = new CardBuilderManager();
@@ -202,6 +182,40 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
         mCardBuilderList.Clear();
     }
 
+    /// <summary>
+    /// 当已选择卡片时，鼠标按下了左键
+    /// </summary>
+    public void OnMouseLeftDownWhenSelectedCard()
+    {
+        // TODO 读取当前卡片和格子信息，综合判断能否放下去，放下去后进行后续处理然后退出放卡模式
+
+        if (Constructe()) // 这一步是把卡放下去，如果放成功了则取消卡片选择
+        {
+            Debug.Log("您放下了卡");
+            CancelSelectCard();
+        }
+        else
+        {
+            Debug.Log("放卡失败，请选择合适位置放卡！");
+        }
+    }
+
+    /// <summary>
+    /// 当已选择铲子时，鼠标按下了左键
+    /// </summary>
+    public void OnMouseLeftDownWhenSelectedShovel()
+    {
+        if (Destructe()) // 执行一次移除操作
+        {
+            Debug.Log("您移除了卡");
+        }
+        else
+        {
+            Debug.Log("移除失败，请选择合适位置放卡！");
+        }
+        CancelSelectShovel();
+    }
+
     public void MDestory()
     {
         throw new System.NotImplementedException();
@@ -233,17 +247,7 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
             // 在选取卡片状态时，每帧都要判断鼠标的按下情况
             if (Input.GetMouseButtonDown(0)) // 左键尝试放卡
             {
-                // TODO 读取当前卡片和格子信息，综合判断能否放下去，放下去后进行后续处理然后退出放卡模式
-                
-                if(Constructe()) // 这一步是把卡放下去，如果放成功了则取消卡片选择
-                {
-                    Debug.Log("您放下了卡");
-                    CancelSelectCard();
-                }
-                else
-                {
-                    Debug.Log("放卡失败，请选择合适位置放卡！");
-                }
+                OnMouseLeftDownWhenSelectedCard();
             }
             else if(Input.GetMouseButtonDown(1)){ // 右键直接取消
                 Debug.Log("您取消了放卡");
@@ -254,15 +258,7 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
             // 在使用铲子状态时，每帧都要判断鼠标的按下情况
             if (Input.GetMouseButtonDown(0)) // 左键尝试放卡
             {
-                if (Destructe()) // 执行一次移除操作
-                {
-                    Debug.Log("您移除了卡");
-                }
-                else
-                {
-                    Debug.Log("移除失败，请选择合适位置放卡！");
-                }
-                CancelSelectShovel();
+                OnMouseLeftDownWhenSelectedShovel();
             }
             else if (Input.GetMouseButtonDown(1))
             { 

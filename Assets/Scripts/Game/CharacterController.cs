@@ -14,9 +14,10 @@ public class CharacterController:IGameControllerMember
     }
 
     public void MInit()
-    { 
-        // TODO 读取玩家选取的角色，生成角色初始实例，并暂时设置为非活动状态，需要玩家放下后才可以激活
-        mCurrentCharacter = GameController.Instance.CreateCharacter(0, 0); // 这里暂时默认用type=0 shape=0 的角色
+    {
+        // 读取玩家选取的角色，生成角色初始实例，并暂时设置为非活动状态，需要玩家放下后才可以激活
+        CharacterInfo info = GameManager.Instance.playerData.GetCharacterInfo();
+        mCurrentCharacter = GameController.Instance.CreateCharacter(info.type, info.shape);
         mCurrentCharacter.gameObject.SetActive(false);
         // 直接进入角色放置模式
         mGameNormalPanel.EnterCharacterConstructMode();

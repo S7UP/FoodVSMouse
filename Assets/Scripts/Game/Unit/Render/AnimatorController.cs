@@ -230,13 +230,8 @@ public class AnimatorController
         }
         // 自动读取机制
         int nameHash1 = Animator.StringToHash(aniName);
-        //Debug.Log("nameHash1=" + nameHash1);
         if (animator.HasState(0, nameHash1))
         {
-            // animator.Play(nameHash1);
-            // bool isName = animator.GetCurrentAnimatorStateInfo(0).IsName(aniName);
-            //Debug.Log("isName = " + isName);
-            //Debug.Log("nameHash2 = " + animator.GetCurrentAnimatorStateInfo(0).shortNameHash);
             AddTask(animator, aniName, false, 0, 1);
             return taskListDict[aniName];
         }

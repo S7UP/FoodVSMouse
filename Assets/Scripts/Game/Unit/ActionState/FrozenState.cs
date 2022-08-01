@@ -23,12 +23,14 @@ public class FrozenState : BaseActionState
 
     public override void OnEnter()
     {
+        mBaseUnit.OnFrozenStateEnter();
         mBaseUnit.isFrozenState = true;
         mBaseUnit.PauseCurrentAnimatorState(boolModifier); // 停止动画
     }
 
     public override void OnUpdate()
     {
+        mBaseUnit.OnFrozenState();
         if (IsMeetingExitCondition())
             TryExitCurrentState();
     }
@@ -51,6 +53,7 @@ public class FrozenState : BaseActionState
 
     public override void OnExit()
     {
+        mBaseUnit.OnFrozenStateExit();
         mBaseUnit.isFrozenState = false;
         mBaseUnit.ResumeCurrentAnimatorState(boolModifier); // 放开动画
         mBaseUnit.SetActionState(lastState);

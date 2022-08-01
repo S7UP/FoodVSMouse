@@ -74,14 +74,14 @@ public class PandaMouse : MouseUnit
             return;
         }
         // 动画播放完一次后，退出技能状态
-        if (AnimatorManager.GetNormalizedTime(animator)>1.0)
+        if(animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
         {
             if (throwLittleMouseSkillAbility != null)
             {
                 throwLittleMouseSkillAbility.CloseSkill();
             }
         }
-        else if (AnimatorManager.GetNormalizedTime(animator) > 0.4 && mAttackFlag)
+        else if (animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime() > 0.4 && mAttackFlag)
         {
             mAttackFlag = false;
             if (throwLittleMouseSkillAbility != null)
@@ -155,7 +155,7 @@ public class PandaMouse : MouseUnit
     /// <returns></returns>
     public override bool IsMeetEndGeneralAttackCondition()
     {
-        return animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 1.0f; // 攻击动画播放完整一次后视为技能结束
+        return animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce();
     }
 
 

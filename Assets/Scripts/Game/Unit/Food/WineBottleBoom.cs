@@ -54,16 +54,11 @@ public class WineBottleBoom : FoodUnit
     /// </summary>
     public override void OnGeneralAttack()
     {
-        // 切换时的第一帧直接不执行update()，因为下述的info.normalizedTime的值还停留在上一个状态，逻辑会出问题！
-        if (currentStateTimer <= 0)
-        {
-            return;
-        }
         // 伤害判定帧应当执行判定
         if (IsDamageJudgment())
         {
-            mAttackFlag = false;
-            ExecuteDamage();
+            // 灰烬型卡片直接销毁自身
+            ExecuteDeath();
         }
     }
 
@@ -73,17 +68,7 @@ public class WineBottleBoom : FoodUnit
     /// <returns></returns>
     public override bool IsMeetEndGeneralAttackCondition()
     {
-        return (AnimatorManager.GetCurrentFrame(animator) == AnimatorManager.GetTotalFrame(animator)-1); // 当播放到最后一帧时退出
-        //return animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 1.0f; // 攻击动画播放完整一次后视为技能结束
-    }
-
-    /// <summary>
-    /// 退出普通攻击后要做的事
-    /// </summary>
-    public override void AfterGeneralAttack()
-    {
-        // 灰烬型卡片直接销毁自身
-        ExecuteDeath();
+        return animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce();
     }
 
     /// <summary>
@@ -92,8 +77,7 @@ public class WineBottleBoom : FoodUnit
     /// <returns></returns>
     public override bool IsDamageJudgment()
     {
-        AnimatorStateInfo info = animator.GetCurrentAnimatorStateInfo(0);
-        return (info.normalizedTime - Mathf.FloorToInt(info.normalizedTime) >= attackPercent && mAttackFlag);
+        return (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce());
     }
 
     /// <summary>
@@ -117,5 +101,15 @@ public class WineBottleBoom : FoodUnit
             bombEffect.transform.position = this.GetPosition();
             GameController.Instance.AddAreaEffectExecution(bombEffect);
         }
+    }
+
+    /// <summary>
+    /// 亡语
+    /// </summary>
+    public override void AfterDeath()
+    {
+        base.AfterDeath();
+        // 伤害判定为消失时触发
+        ExecuteDamage();
     }
 }

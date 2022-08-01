@@ -80,7 +80,7 @@ public class MagicMirrorMouse : MouseUnit
                 stealFireEnergySkillAbiliby.EndCasting();
             }
         }
-        else if (AnimatorManager.GetNormalizedTime(animator) > 1.0)
+        else if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
         {
             if (castState == 0)
             {

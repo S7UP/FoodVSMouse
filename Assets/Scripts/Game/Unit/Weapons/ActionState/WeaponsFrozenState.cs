@@ -57,4 +57,9 @@ public class WeaponsFrozenState : WeaponsActionState
     {
         OnExit();
     }
+
+    public void SetExitCondition(Func<bool> isMeetingExitCondition)
+    {
+        this.isMeetingExitCondition = isMeetingExitCondition;
+    }
 }

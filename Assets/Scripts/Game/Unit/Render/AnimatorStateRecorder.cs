@@ -47,12 +47,6 @@ public class AnimatorStateRecorder
 
     public void Update()
     {
-        // 非循环动画播放完一次后通知其控制器退出
-        //if (IsFinishOnce() && !isCycle)
-        //{
-        //    animatorController.FinishCurrentTask();
-        //}
-
         if (!isPause && (!IsFinishOnce() || isCycle))
             timer+=speed;
     }
@@ -88,7 +82,7 @@ public class AnimatorStateRecorder
     /// <returns></returns>
     public bool IsFinishOnce()
     {
-        return (timer / aniTime) >= 1;
+        return GetNormalizedTime() >= 1.0f;
     }
 
     /// <summary>

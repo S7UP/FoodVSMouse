@@ -143,7 +143,7 @@ public class AirTransportMouse : MouseUnit, IFlyUnit
         if (state == 0 || state == 2)
         {
             // 在开舱门或者关舱门阶段时，检测动画播放程度来推进下一阶段
-            if(AnimatorManager.GetNormalizedTime(animator) >= 1.0f)
+            if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
             {
                 if (state == 0)
                     airTransportSummonSkillAbility.SetFinishPreCast();

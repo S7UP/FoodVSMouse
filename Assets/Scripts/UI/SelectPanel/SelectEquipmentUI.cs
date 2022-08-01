@@ -1,5 +1,6 @@
 using DG.Tweening;
 
+using System.Collections.Generic;
 using UnityEngine;
 /// <summary>
 /// 选关界面-配置选择界面
@@ -49,6 +50,7 @@ public class SelectEquipmentUI : MonoBehaviour
         mAvailableCardUI.LoadAvailableCardInfoFromStage(mSelectPanel.GetCurrentSelectedStageInfo());
         // SelectedCardUI.Initial()要于AvailableCardUI.Initial()之后
         mSelectedCardUI.Initial();
+        mSelectWeaponsUI.Initial();
     }
 
     /// <summary>
@@ -74,6 +76,15 @@ public class SelectEquipmentUI : MonoBehaviour
     public void CancelSelectCard(FoodNameTypeMap type)
     {
         mSelectedCardUI.RemoveCard((int)type);
+    }
+
+    /// <summary>
+    /// 获取当前可选用卡片的字典
+    /// </summary>
+    /// <returns></returns>
+    public Dictionary<FoodNameTypeMap, AvailableCardInfo> GetCurrentAvailableCardDict()
+    {
+        return mAvailableCardUI.GetCurrentAvailableCardDict();
     }
 
     /// <summary>
@@ -129,8 +140,11 @@ public class SelectEquipmentUI : MonoBehaviour
     {
         // 把当前选择的卡组转存至playerData,以供下一个场景读取
         GameManager.Instance.playerData.SetCurrentSelectedCardInfoList(mSelectedCardUI.GetCurrentSelectedCardGroup());
+        GameManager.Instance.playerData.SetCurrentCardKeyList(mSelectedCardUI.GetCurrentSelectedKeyGroup());
         BaseStage.StageInfo info = mSelectPanel.GetCurrentSelectedStageInfo();
         GameManager.Instance.playerData.SetCurrentChapterStageValue(info.chapterIndex, info.sceneIndex, info.stageIndex);
+        GameManager.Instance.playerData.SetWeaponsInfo(mSelectWeaponsUI.GetSelctedWeaponsInfo());
+        GameManager.Instance.playerData.SetCharacterInfo(mSelectWeaponsUI.GetSelctedCharacterInfo());
         mSelectPanel.EnterComBatScene();
     }
 }

@@ -44,7 +44,7 @@ public class SnailMouse : MouseUnit
         if (currentStateTimer == 0)
             return;
         // 动画播放完就切回去
-        if (AnimatorManager.GetNormalizedTime(animator) > 1.0)
+        if(animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
         {
             releaseMucusSkillAbility.EndActivate();
         }

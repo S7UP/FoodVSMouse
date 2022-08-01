@@ -47,7 +47,11 @@ public class BoiledWaterBoom : FoodUnit
     /// </summary>
     public override void OnGeneralAttack()
     {
-
+        if (IsDamageJudgment())
+        {
+            // 灰烬型卡片直接销毁自身
+            ExecuteDeath();
+        }
     }
 
     /// <summary>
@@ -56,18 +60,7 @@ public class BoiledWaterBoom : FoodUnit
     /// <returns></returns>
     public override bool IsMeetEndGeneralAttackCondition()
     {
-        return (AnimatorManager.GetCurrentFrame(animator) == AnimatorManager.GetTotalFrame(animator)-1); // 当播放到最后一帧时退出
-        //return animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 1.0f; // 攻击动画播放完整一次后视为技能结束
-    }
-
-    /// <summary>
-    /// 退出普通攻击后要做的事
-    /// </summary>
-    public override void AfterGeneralAttack()
-    {
-        ExecuteDamage();
-        // 灰烬型卡片直接销毁自身
-        ExecuteDeath();
+        return animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce();
     }
 
     /// <summary>
@@ -76,8 +69,7 @@ public class BoiledWaterBoom : FoodUnit
     /// <returns></returns>
     public override bool IsDamageJudgment()
     {
-        AnimatorStateInfo info = animator.GetCurrentAnimatorStateInfo(0);
-        return (info.normalizedTime - Mathf.FloorToInt(info.normalizedTime) >= attackPercent && mAttackFlag);
+        return (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce());
     }
 
     /// <summary>
@@ -102,5 +94,15 @@ public class BoiledWaterBoom : FoodUnit
             bombEffect.transform.position = this.GetPosition();
             GameController.Instance.AddAreaEffectExecution(bombEffect);
         }
+    }
+
+    /// <summary>
+    /// 亡语
+    /// </summary>
+    public override void AfterDeath()
+    {
+        base.AfterDeath();
+        // 伤害判定为消失时触发
+        ExecuteDamage();
     }
 }

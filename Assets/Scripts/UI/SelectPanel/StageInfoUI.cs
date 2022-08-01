@@ -7,6 +7,7 @@ using UnityEngine.UI;
 /// </summary>
 public class StageInfoUI : MonoBehaviour
 {
+    private SelectPanel mSelectPanel;
     private RectTransform rectTransform;
     private Tweener ShowTween;
     private GameObject Emp_StageInfo;
@@ -15,6 +16,13 @@ public class StageInfoUI : MonoBehaviour
     private Sprite btnSprite0; // 上方按钮暗
     private Sprite btnSprite1; // 上方按钮亮
     private Image[] imgList;
+    private Image Img_Map;
+    private Text Tex_MapName;
+    private Text Tex_StageName;
+    private Text Tex_TimeLimit;
+    private Text Tex_Background;
+    private Text Tex_Illustrate;
+    private Text Tex_AddInfo;
 
     private void Awake()
     {
@@ -35,6 +43,14 @@ public class StageInfoUI : MonoBehaviour
         imgList[0] = transform.Find("Img_Center").Find("Emp_BtnList").Find("Button").GetComponent<Image>();
         imgList[1] = transform.Find("Img_Center").Find("Emp_BtnList").Find("Button1").GetComponent<Image>();
         imgList[2] = transform.Find("Img_Center").Find("Emp_BtnList").Find("Button2").GetComponent<Image>();
+
+        Img_Map = Emp_StageInfo.transform.Find("Scr_Map").Find("Viewport").Find("Content").Find("Img_Map").GetComponent<Image>();
+        Tex_MapName = Emp_StageInfo.transform.Find("Img_TextArea").Find("Tex_MapName").GetComponent<Text>();
+        Tex_StageName = Emp_StageInfo.transform.Find("Img_TextArea").Find("Tex_StageName").GetComponent<Text>();
+        Tex_TimeLimit = Emp_StageInfo.transform.Find("Img_TextArea").Find("Tex_TimeLimit").GetComponent<Text>();
+        Tex_Background = Emp_StageInfo.transform.Find("Img_TextArea").Find("Tex_Background").GetComponent<Text>();
+        Tex_Illustrate = Emp_StageInfo.transform.Find("Img_TextArea").Find("Tex_Illustrate").GetComponent<Text>();
+        Tex_AddInfo = Scr_AddInfo.transform.Find("Viewport").Find("Content").Find("Text").GetComponent<Text>();
     }
 
     /// <summary>
@@ -59,6 +75,32 @@ public class StageInfoUI : MonoBehaviour
     }
 
     /// <summary>
+    /// 更新显示信息
+    /// </summary>
+    public void UpdateInfo()
+    {
+        // 关卡情报
+        BaseStage.StageInfo info = mSelectPanel.GetCurrentSelectedStageInfo();
+        Img_Map.sprite = GameManager.Instance.GetSprite("Chapter/"+ info.chapterIndex+"/"+ info.sceneIndex+"/0");
+        Tex_MapName.text = "地图名称："+ChapterManager.GetSceneName((ChapterNameTypeMap)info.chapterIndex, info.sceneIndex);
+        Tex_StageName.text = "关卡名称：" + info.name;
+        if (info.isEnableTimeLimit)
+        {
+            Tex_TimeLimit.gameObject.SetActive(true);
+            Tex_TimeLimit.text = "时间限制：" + info.totalSeconds + "秒";
+        }
+        else
+        {
+            Tex_TimeLimit.gameObject.SetActive(false);
+        }
+        Tex_Background.text = info.background;
+        Tex_Illustrate.text = info.illustrate;
+
+        // 附加说明
+        Tex_AddInfo.text = info.illustrate;
+    }
+
+    /// <summary>
     /// 显示当前UI
     /// </summary>
     public void Show()
@@ -74,7 +116,10 @@ public class StageInfoUI : MonoBehaviour
         ShowTween.PlayBackwards();
     }
 
-
+    public void SetSelectPanel(SelectPanel panel)
+    {
+        mSelectPanel = panel;
+    }
 
     /////////////////////////////////////以下方法是暴露给按钮用的/////////////////////////////////
     

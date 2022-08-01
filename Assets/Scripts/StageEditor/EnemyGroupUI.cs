@@ -9,6 +9,7 @@ public class EnemyGroupUI : MonoBehaviour
     public BaseEnemyGroup mBaseEnemyGroup;
 
     // 引用
+    private EditorPanel mEditorPanel;
     private GameObject Emp_MaskList;
     private Image Img_Mouse;
     private Image[] Img_MaskList;
@@ -16,6 +17,7 @@ public class EnemyGroupUI : MonoBehaviour
     private Text Tex_Shape;
     private Dropdown Dro_StartIndex;
     private Dropdown Dro_Number;
+    private Dropdown Dro_ApartIndex;
     private Button Btn_Del;
     private Button Btn_EnemyType;
     private RectTransform rectTransform;
@@ -35,10 +37,23 @@ public class EnemyGroupUI : MonoBehaviour
         Tex_Shape = transform.Find("Img_Mouse").Find("Emp_Info").Find("Tex_Shape").GetComponent<Text>();
         Dro_StartIndex = transform.Find("Img_Mouse").Find("Emp_Info").Find("Emp_StartIndex").Find("Dropdown").GetComponent<Dropdown>();
         Dro_Number = transform.Find("Img_Mouse").Find("Emp_Info").Find("Emp_Number").Find("Dropdown").GetComponent<Dropdown>();
+        Dro_ApartIndex = transform.Find("Img_Mouse").Find("Emp_Info").Find("Emp_ApartIndex").Find("Dropdown").GetComponent<Dropdown>();
         rectTransform = transform.GetComponent<RectTransform>();
+
+        Btn_Del = transform.Find("Img_Mouse").Find("Emp_Info").Find("Btn_Del").GetComponent<Button>();
+        Btn_EnemyType = transform.Find("Img_Mouse").GetComponent<Button>();
+    }
+
+    public void Initial()
+    {
+        Dro_StartIndex.onValueChanged.RemoveAllListeners();
+        Dro_Number.onValueChanged.RemoveAllListeners();
+        Dro_ApartIndex.onValueChanged.RemoveAllListeners();
         // 下拉框初始化
         Dro_StartIndex.ClearOptions();
         Dro_Number.ClearOptions();
+        Dro_ApartIndex.ClearOptions();
+        // 变种
         List<Dropdown.OptionData> dataList = new List<Dropdown.OptionData>();
         for (int i = 0; i < 7; i++)
         {
@@ -52,7 +67,7 @@ public class EnemyGroupUI : MonoBehaviour
         {
             Dro_StartIndexOnValueChanged();
         });
-
+        // 数量
         List<Dropdown.OptionData> dataList2 = new List<Dropdown.OptionData>();
         for (int i = 0; i <= 7; i++)
         {
@@ -60,16 +75,26 @@ public class EnemyGroupUI : MonoBehaviour
             data.text = (i).ToString();
             dataList2.Add(data);
         }
-        Dro_Number.AddOptions(dataList2);
+        Dro_Number.AddOptions(dataList2);                                                              
         Dro_Number.value = 1;
         Dro_Number.onValueChanged.AddListener(delegate
         {
             Dro_NumberOnValueChanged();
         });
-
-        Btn_Del = transform.Find("Img_Mouse").Find("Emp_Info").Find("Btn_Del").GetComponent<Button>();
-        Btn_EnemyType = transform.Find("Img_Mouse").GetComponent<Button>();
-        //DisplayUpdate();
+        // 分路组
+        List<Dropdown.OptionData> dataList3 = new List<Dropdown.OptionData>();
+        for (int i = 0; i < mEditorPanel.GetCurrentStageInfo().apartList.Count; i++)
+        {
+            Dropdown.OptionData data = new Dropdown.OptionData();
+            data.text = (i + 1).ToString();
+            dataList3.Add(data);
+        }
+        Dro_ApartIndex.AddOptions(dataList3);
+        Dro_ApartIndex.value = 0;
+        Dro_ApartIndex.onValueChanged.AddListener(delegate
+        {
+            Dro_ApartIndexOnValueChanged();
+        });
     }
 
     /// <summary>
@@ -91,7 +116,7 @@ public class EnemyGroupUI : MonoBehaviour
     }
 
     /// <summary>
-    /// 初始行下拉框被点时的事件
+    /// 初始行下拉框值发生改变的事件
     /// </summary>
     private void Dro_StartIndexOnValueChanged()
     {
@@ -100,11 +125,20 @@ public class EnemyGroupUI : MonoBehaviour
     }
 
     /// <summary>
-    /// 数量下拉框被点时的事件
+    /// 数量下拉框值发生改变的事件
     /// </summary>
     private void Dro_NumberOnValueChanged()
     {
         mBaseEnemyGroup.mCount = Dro_Number.value;
+        DisplayUpdate();
+    }
+
+    /// <summary>
+    /// 分路组下拉框值发生改变的
+    /// </summary>
+    private void Dro_ApartIndexOnValueChanged()
+    {
+        mBaseEnemyGroup.mApartIndex = Dro_ApartIndex.value;
         DisplayUpdate();
     }
 
@@ -121,6 +155,12 @@ public class EnemyGroupUI : MonoBehaviour
         // 下拉框选项更新
         Dro_StartIndex.value = mBaseEnemyGroup.mStartIndex;
         Dro_Number.value = mBaseEnemyGroup.mCount;
+        // 如果敌军刷怪组越界了，那么则重置为0
+        if (mBaseEnemyGroup.mApartIndex > Dro_ApartIndex.options.Count - 1)
+        {
+            mBaseEnemyGroup.mApartIndex = 0;
+        }
+        Dro_ApartIndex.value = mBaseEnemyGroup.mApartIndex;
     }
 
     public void ChangeMouseInfo(BaseEnemyGroup.EnemyInfo enemyInfo)
@@ -161,6 +201,11 @@ public class EnemyGroupUI : MonoBehaviour
             Img_MaskList[index].enabled = true;
         }
 
+    }
+
+    public void SetEditorPanel(EditorPanel panel)
+    {
+        mEditorPanel = panel;
     }
 
     /// <summary>

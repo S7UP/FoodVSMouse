@@ -30,6 +30,11 @@ public class MouseUnit : BaseUnit
     protected bool isBlock { get; set; } // 是否被阻挡
     protected BaseUnit mBlockUnit; // 阻挡者
 
+    // 换行相关
+    // 相对权重表，默认情况下该表为空，可以插入特定值使得某些类型的敌人有特殊地形的趋向
+    public Dictionary<GridType, int> GridDangerousWeightDict = new Dictionary<GridType, int>();
+
+
     /// <summary>
     /// 老鼠每次被投入战场时要做的初始化工作，要确定其各种属性
     /// </summary>
@@ -51,6 +56,7 @@ public class MouseUnit : BaseUnit
         currentYIndex = 0;
         moveRotate = Vector2.left;
         isBoss = false;
+        GridDangerousWeightDict.Clear();
 
         // 初始为移动状态
         SetActionState(new MoveState(this));
@@ -185,7 +191,7 @@ public class MouseUnit : BaseUnit
     /// <returns></returns>
     public override bool IsMeetEndGeneralAttackCondition()
     {
-        return animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 1.0f; // 攻击动画播放完整一次后视为技能结束
+        return animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce();
     }
 
     /// <summary>
@@ -246,8 +252,7 @@ public class MouseUnit : BaseUnit
     /// <returns></returns>
     public virtual bool IsDamageJudgment()
     {
-        AnimatorStateInfo info = animator.GetCurrentAnimatorStateInfo(0);
-        return (info.normalizedTime - Mathf.FloorToInt(info.normalizedTime) >= attackPercent && mAttackFlag);
+        return animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime() >= attackPercent && mAttackFlag;
     }
 
     /// <summary>
@@ -475,18 +480,13 @@ public class MouseUnit : BaseUnit
     private void UpdateAttackAnimationSpeed()
     {
         AnimatorStateRecorder a = animatorController.GetAnimatorStateRecorder("Attack");
-        float time = a.aniTime; // 一倍速下一次攻击动画的播放时间（帧）
-        float interval = 1 / NumericBox.AttackSpeed.Value * 60;  // 攻击间隔（帧）
-        float speed = Mathf.Max(1, time / interval); // 计算动画实际播放速度
-        animatorController.SetSpeed("Attack", speed);
-    }
-
-    /// <summary>
-    /// 恢复动画播放速度
-    /// </summary>
-    private void ResumeAnimationSpeed()
-    {
-        AnimatorManager.SetClipSpeed(animator, "Attack", 1.0f);
+        if (a != null)
+        {
+            float time = a.aniTime; // 一倍速下一次攻击动画的播放时间（帧）
+            float interval = 1 / NumericBox.AttackSpeed.Value * 60;  // 攻击间隔（帧）
+            float speed = Mathf.Max(1, time / interval); // 计算动画实际播放速度
+            animatorController.SetSpeed("Attack", speed);
+        }
     }
 
     /// <summary>
@@ -703,5 +703,84 @@ public class MouseUnit : BaseUnit
     public override SpriteRenderer GetSpriteRenderer()
     {
         return spriteRenderer;
+    }
+
+    /// <summary>
+    /// 能否被驱使换行
+    /// </summary>
+    /// <returns></returns>
+    public virtual bool CanDrivenAway()
+    {
+        return true;
+    }
+
+    /// <summary>
+    /// 被驱使更换行数
+    /// </summary>
+    public virtual void DrivenAway()
+    {
+        // 计算上中下格的危险权重，然后取危险权重小的换行
+        int currentRowIndex = GetRowIndex();
+        int currentColumnIndex = GetColumnIndex();
+        int startIndex = Mathf.Max(0, currentRowIndex - 1);
+        int endIndex = Mathf.Min(6, currentRowIndex + 1);
+        Dictionary<int, int> rowIndex_WeightMap = new Dictionary<int, int>();
+        // 这步是取出权重最小的几个格子
+        int min = int.MaxValue;
+        for (int i = startIndex; i <= endIndex; i++)
+        {
+            int weight = 1;
+            BaseGrid grid = GameController.Instance.mMapController.GetGrid(currentColumnIndex, i);
+            if(grid != null)
+            {
+                weight *= grid.GetDefaultDangerousWeight()* GetDangerousWeight(grid.GetGridType());
+            }
+            // 如果是中格，则将危险权重翻10倍，此目的旨在尽可能不让老鼠停留在本路
+            if (i == currentRowIndex)
+                weight *= 10;
+            if(weight < min)
+            {
+                min = weight;
+                rowIndex_WeightMap.Clear();
+                rowIndex_WeightMap.Add(i, weight);
+            }
+            else if(weight == min)
+            {
+                rowIndex_WeightMap.Add(i, weight);
+            }
+        }
+        // 超过一个结果时需要优先移除本路，此目的旨在尽可能不让老鼠停留在本路
+        if (rowIndex_WeightMap.Count > 1)
+        {
+            rowIndex_WeightMap.Remove(currentRowIndex);
+        }
+        // 然后从剩下的里面随机抽取一名幸运观众作为最终移动行
+        int selectedIndex = Random.Range(0, rowIndex_WeightMap.Count); // 还是注意，生成整形时不包括最大值
+        int j = 0;
+        foreach (var keyValuePair in rowIndex_WeightMap)
+        {
+            if (j == selectedIndex)
+            {
+                // 纵向位移
+                GameController.Instance.AddTasker(new StraightMovePresetTasker(this, MapManager.gridHeight/60, Vector3.up * (currentRowIndex - keyValuePair.Key), 60));
+                break;
+            }
+            j++;
+        }
+    }
+
+    /// <summary>
+    /// 获取相对权重
+    /// </summary>
+    /// <param name="gridType"></param>
+    /// <returns></returns>
+    public int GetDangerousWeight(GridType gridType)
+    {
+        if (GridDangerousWeightDict.ContainsKey(gridType))
+        {
+            return GridDangerousWeightDict[gridType];
+        }
+        else
+            return 1;
     }
 }

@@ -75,7 +75,7 @@ public class IceCream : FoodUnit
         BaseGrid g = GetGrid();
         if (g == null)
             return false;
-        return (AnimatorManager.GetNormalizedTime(animator) >= attackPercent && mAttackFlag && g.GetHighestAttackPriorityUnit()!=null && g.GetHighestAttackPriorityUnit() is FoodUnit);
+        return (animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime() >= attackPercent && mAttackFlag && g.GetHighestAttackPriorityUnit() != null && g.GetHighestAttackPriorityUnit() is FoodUnit);
     }
 
     /// <summary>
@@ -84,7 +84,7 @@ public class IceCream : FoodUnit
     /// <returns></returns>
     public override bool IsMeetEndGeneralAttackCondition()
     {
-        return (AnimatorManager.GetNormalizedTime(animator)>1.0 && !mAttackFlag);
+        return (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce() && !mAttackFlag);
     }
 
     /// <summary>

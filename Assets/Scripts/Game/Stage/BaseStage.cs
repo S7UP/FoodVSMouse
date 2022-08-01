@@ -133,6 +133,8 @@ public class BaseStage : MonoBehaviour
         GameController.Instance.mProgressController.mRoundProgressBar.UpdateRoundCountUI(0);
         mCurrentRoundIndex = -1;
         mCurrentRoundTimer = 0;
+        // 先等一帧，第一帧要放人
+        yield return StartCoroutine(WaitForIEnumerator(1));
         Debug.Log("游戏开始了！现在是第"+GameController.Instance.GetCurrentStageFrame()+"帧");
         yield return StartCoroutine(WaitForIEnumerator(mStageInfo.perpareTime));
         //yield return GameController.Instance.Wait(mStageInfo.perpareTime);

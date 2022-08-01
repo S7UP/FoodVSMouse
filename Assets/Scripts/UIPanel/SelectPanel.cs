@@ -29,6 +29,7 @@ public class SelectPanel : BasePanel
         mSelectStageUI = transform.Find("SelectStageUI").GetComponent<SelectStageUI>();
         mSelectStageUI.SetSelectPanel(this);
         mStageInfoUI = transform.Find("StageInfoUI").GetComponent<StageInfoUI>();
+        mStageInfoUI.SetSelectPanel(this);
         mSelectEquipmentUI = transform.Find("SelectEquipmentUI").GetComponent<SelectEquipmentUI>();
         mSelectEquipmentUI.SetSelectPanel(this);
         Btn_LastChapter = transform.Find("Btn_LastChapter").GetComponent<Button>();
@@ -63,6 +64,8 @@ public class SelectPanel : BasePanel
         mChapter.gameObject.SetActive(true);
 
         mChapter.Initial();
+        mSelectStageUI.Initial();
+        mStageInfoUI.Initial();
         mSelectEquipmentUI.Initial();
 
         currentSceneStageList = null;
@@ -133,6 +136,8 @@ public class SelectPanel : BasePanel
         mSelectStageUI.Hide();
         mStageInfoUI.Hide();
         mSelectEquipmentUI.Hide();
+        // 重置选关面板
+        mSelectStageUI.Initial();
     }
 
     /// <summary>
@@ -143,15 +148,16 @@ public class SelectPanel : BasePanel
         mSelectStageUI.Show();
         mStageInfoUI.Show();
         mSelectEquipmentUI.Show();
-        UpdateSelectEquipmentUIByChangeStage(); // 根据当前选中关更新配置
+        // UpdateUIByChangeStage(); // 根据当前选中关更新配置
     }
 
     /// <summary>
-    /// 当切换到其他关卡时，应当列新一下配置选择UI
+    /// 当切换到其他关卡时，应当更新一下相关UI
     /// </summary>
-    public void UpdateSelectEquipmentUIByChangeStage()
+    public void UpdateUIByChangeStage()
     {
         mSelectEquipmentUI.LoadAndFixUI(); // 根据当前选中关更新配置
+        mStageInfoUI.UpdateInfo(); // 更新右侧关卡信息
     }
 
     /// <summary>

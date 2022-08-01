@@ -14,6 +14,9 @@ public class Img_StageConfig : MonoBehaviour
     private InputField Inp_CardCount;
     private Toggle Tog_Card;
     private Button Btn_ConfigCard;
+    private Button Btn_Background;
+    private Button Btn_Illustrate;
+    private Button Btn_AdditionalNotes;
 
     private void Awake()
     {
@@ -36,6 +39,13 @@ public class Img_StageConfig : MonoBehaviour
         Btn_ConfigCard = transform.Find("Emp_ConfigList").Find("Tog_Card").Find("Button").GetComponent<Button>();
         Btn_ConfigCard.onClick.AddListener(delegate { OnCardConfigButtonClick(); });
         Btn_ConfigCard.interactable = false;
+
+        Btn_Background = transform.Find("Emp_ConfigList").Find("Emp_Background").Find("Button").GetComponent<Button>();
+        Btn_Background.onClick.AddListener(delegate { mEditorPanel.ShowEditTextArea(0); });
+        Btn_Illustrate = transform.Find("Emp_ConfigList").Find("Emp_Illustrate").Find("Button").GetComponent<Button>();
+        Btn_Illustrate.onClick.AddListener(delegate { mEditorPanel.ShowEditTextArea(1); });
+        Btn_AdditionalNotes = transform.Find("Emp_ConfigList").Find("Emp_AdditionalNotes").Find("Button").GetComponent<Button>();
+        Btn_AdditionalNotes.onClick.AddListener(delegate { mEditorPanel.ShowEditTextArea(2); });
     }
 
     public void Initial()

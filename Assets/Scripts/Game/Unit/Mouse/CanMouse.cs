@@ -51,7 +51,7 @@ public class CanMouse : MouseUnit
         isReinstallState = true;
         // 轻装状态效果移除
         NumericBox.MoveSpeed.RemovePctAddModifier(moveSpeedModifier2);
-        NumericBox.AttackSpeed.RemoveAddModifier(attackSpeedModifier);
+        NumericBox.AttackSpeed.RemovePctAddModifier(attackSpeedModifier);
 
         // 获取减伤
         NumericBox.Defense.AddAddModifier(defenseModifier);
@@ -85,7 +85,7 @@ public class CanMouse : MouseUnit
         // 获取加速效果
         NumericBox.MoveSpeed.AddPctAddModifier(moveSpeedModifier2);
         // 获取攻速加成效果
-        NumericBox.AttackSpeed.AddAddModifier(attackSpeedModifier);
+        NumericBox.AttackSpeed.AddPctAddModifier(attackSpeedModifier);
 
         mHertIndex = 1;
         UpdateRuntimeAnimatorController();
@@ -115,7 +115,7 @@ public class CanMouse : MouseUnit
     {
         if (currentStateTimer == 0)
             return;
-        if (AnimatorManager.GetNormalizedTime(animator) > 1.0)
+        if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
             SetActionState(new MoveState(this));
     }
 

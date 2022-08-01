@@ -872,6 +872,21 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     {
     }
 
+    public virtual void OnFrozenStateEnter()
+    {
+
+    }
+
+    public virtual void OnFrozenState()
+    {
+
+    }
+
+    public virtual void OnFrozenStateExit()
+    {
+
+    }
+
     /// <summary>
     /// ÔÝÍ£µ±Ç°¶¯»­
     /// </summary>

@@ -15,11 +15,14 @@ public class PlayerData
     /// 主线玩家携带卡片组信息
     /// </summary>
     public Dictionary<int, Dictionary<int, Dictionary<int, List<List<AvailableCardInfo>>>>> ChapterCardGroupDict;
-
+    public Dictionary<int, Dictionary<int, Dictionary<int, List<List<char>>>>> ChapterKeyGroupDict;
 
     // 以下是非序列化内容
     private BaseStage.ChapterStageValue currentChapterStageValue;
     private List<AvailableCardInfo> currentSelectedCardInfoList = new List<AvailableCardInfo>(); // 当前携带的卡片组（选卡场景与关卡场景对接）
+    private List<char> currentCardKeyList = new List<char>(); // 当前键位控制表
+    private WeaponsInfo currentWeaponsInfo;
+    private CharacterInfo currentCharacterInfo;
 
     /// <summary>
     /// 从本地加载玩家存档数据
@@ -45,6 +48,8 @@ public class PlayerData
     {
         if (data.ChapterCardGroupDict == null)
             data.ChapterCardGroupDict = new Dictionary<int, Dictionary<int, Dictionary<int, List<List<AvailableCardInfo>>>>>();
+        if (data.ChapterKeyGroupDict == null)
+            data.ChapterKeyGroupDict = new Dictionary<int, Dictionary<int, Dictionary<int, List<List<char>>>>>();
         // 转存
         data.Save();
     }
@@ -64,6 +69,24 @@ public class PlayerData
         if (!ChapterCardGroupDict[chapter][scene].ContainsKey(stage))
             ChapterCardGroupDict[chapter][scene].Add(stage, new List<List<AvailableCardInfo>>());
         return ChapterCardGroupDict[chapter][scene][stage];
+    }
+
+    /// <summary>
+    /// 载入某关的键位设置表
+    /// </summary>
+    /// <param name="chapter"></param>
+    /// <param name="scene"></param>
+    /// <param name="stage"></param>
+    /// <returns></returns>
+    public List<List<char>> LoadKeyGroupList(int chapter, int scene, int stage)
+    {
+        if (!ChapterKeyGroupDict.ContainsKey(chapter))
+            ChapterKeyGroupDict.Add(chapter, new Dictionary<int, Dictionary<int, List<List<char>>>>());
+        if (!ChapterKeyGroupDict[chapter].ContainsKey(scene))
+            ChapterKeyGroupDict[chapter].Add(scene, new Dictionary<int, List<List<char>>>());
+        if (!ChapterKeyGroupDict[chapter][scene].ContainsKey(stage))
+            ChapterKeyGroupDict[chapter][scene].Add(stage, new List<List<char>>());
+        return ChapterKeyGroupDict[chapter][scene][stage];
     }
 
     /// <summary>
@@ -87,6 +110,26 @@ public class PlayerData
     }
 
     /// <summary>
+    /// 保存某关的键位设置表
+    /// </summary>
+    /// <param name="chapter"></param>
+    /// <param name="scene"></param>
+    /// <param name="stage"></param>
+    /// <param name="cardGroupList"></param>
+    public void SaveKeyGroupList(int chapter, int scene, int stage, List<List<char>> keyGroupList)
+    {
+        if (!ChapterKeyGroupDict.ContainsKey(chapter))
+            ChapterKeyGroupDict.Add(chapter, new Dictionary<int, Dictionary<int, List<List<char>>>>());
+        if (!ChapterKeyGroupDict[chapter].ContainsKey(scene))
+            ChapterKeyGroupDict[chapter].Add(scene, new Dictionary<int, List<List<char>>>());
+        if (!ChapterKeyGroupDict[chapter][scene].ContainsKey(stage))
+            ChapterKeyGroupDict[chapter][scene].Add(stage, keyGroupList);
+        else
+            ChapterKeyGroupDict[chapter][scene][stage] = keyGroupList;
+        Save();
+    }
+
+    /// <summary>
     /// 保存自己
     /// </summary>
     public void Save()
@@ -104,12 +147,30 @@ public class PlayerData
     }
 
     /// <summary>
+    /// 获取当前键位控制表
+    /// </summary>
+    /// <returns></returns>
+    public List<char> GetCurrentCardKeyList()
+    {
+        return currentCardKeyList;
+    }
+
+    /// <summary>
     /// 设置当前选择的卡片信息表
     /// </summary>
     /// <param name="list"></param>
     public void SetCurrentSelectedCardInfoList(List<AvailableCardInfo> list)
     {
         currentSelectedCardInfoList = list;
+    }
+
+    /// <summary>
+    /// 设置当前键位控制表
+    /// </summary>
+    /// <param name="list"></param>
+    public void SetCurrentCardKeyList(List<char> list)
+    {
+        currentCardKeyList = list;
     }
 
     /// <summary>
@@ -130,5 +191,25 @@ public class PlayerData
     public BaseStage.ChapterStageValue GetCurrentChapterStageValue()
     {
         return currentChapterStageValue;
+    }
+
+    public void SetWeaponsInfo(WeaponsInfo info)
+    {
+        currentWeaponsInfo = info;
+    }
+
+    public WeaponsInfo GetWeaponsInfo()
+    {
+        return currentWeaponsInfo;
+    }
+
+    public void SetCharacterInfo(CharacterInfo info)
+    {
+        currentCharacterInfo = info;
+    }
+
+    public CharacterInfo GetCharacterInfo()
+    {
+        return currentCharacterInfo;
     }
 }

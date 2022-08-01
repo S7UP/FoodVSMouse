@@ -52,7 +52,6 @@ public class CoffeePowder : FoodUnit
     /// <returns></returns>
     public override bool IsMeetEndGeneralAttackCondition()
     {
-        //return (AnimatorManager.GetNormalizedTime(animator) > 1.0 && !mAttackFlag);
         AnimatorStateRecorder a = animatorController.GetCurrentAnimatorStateRecorder();
         if (a != null)
         {

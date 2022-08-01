@@ -15,7 +15,9 @@ public class SelectedCardUI : MonoBehaviour
     private Button Btn_Save;
 
     private List<List<AvailableCardInfo>> cardGroupList;
+    private List<List<char>> keyGroupList;
     private List<AvailableCardInfo> currentSelectedCardGroup;
+    private List<char> currentSelectedKeyGroup;
 
     private void Awake()
     {
@@ -34,15 +36,31 @@ public class SelectedCardUI : MonoBehaviour
         // 获取卡组表
         BaseStage.StageInfo info = mSelectEquipmentUI.GetCurrentSelectedStageInfo();
         cardGroupList = GameManager.Instance.playerData.LoadCardGroupList(info.chapterIndex, info.sceneIndex, info.stageIndex);
+        keyGroupList = GameManager.Instance.playerData.LoadKeyGroupList(info.chapterIndex, info.sceneIndex, info.stageIndex);
         if (cardGroupList.Count < 8) // 默认8个卡片组
             for (int i = cardGroupList.Count; i < 8; i++)
             {
                 cardGroupList.Add(new List<AvailableCardInfo>());
             }
+        if(keyGroupList.Count<8)
+            for (int i = keyGroupList.Count; i < 8; i++)
+            {
+                keyGroupList.Add(new List<char>());
+            }
+        foreach (var keyGroup in keyGroupList)
+        {
+            // 自动补全至18槽的key，默认值为'\0'
+            if(keyGroup.Count < 18)
+            {
+                for (int i = keyGroup.Count; i < 18; i++)
+                {
+                    keyGroup.Add('\0');
+                }
+            }
+        }
         // 更新卡组按钮表
         UpdateCardGroupButtonList();
         SetCurrentSelectedCardGroup(0); // 默认第一个为当前选用卡组
-
     }
 
     /// <summary>
@@ -51,6 +69,7 @@ public class SelectedCardUI : MonoBehaviour
     private void SetCurrentSelectedCardGroup(int arrayIndex)
     {
         currentSelectedCardGroup = cardGroupList[arrayIndex];
+        currentSelectedKeyGroup = keyGroupList[arrayIndex];
         // 填充卡片模型
         UpdateCardModelList();
         // 被选中的卡片组按钮高亮，其他置暗色
@@ -61,6 +80,7 @@ public class SelectedCardUI : MonoBehaviour
         Btn_CardGroup[arrayIndex].GetComponent<Image>().sprite = GameManager.Instance.GetSprite("UI/SelectPanel/33");
         // 更新文本显示
         UpdateCardCountText();
+        UpdateDisplayKey();
     }
 
     /// <summary>
@@ -101,10 +121,13 @@ public class SelectedCardUI : MonoBehaviour
             mSelectEquipmentUI.SetAvailableCardModelSelect((FoodNameTypeMap)item.GetInfo().type, false);
         }
         cardModelList.Clear();
+        // 根据可选卡列表强制更新已选卡列表信息，使得已选卡限制在可选卡的范围内
+        UpdateCurrentSelectedCardGroupByAvailableCardUI();
         // 填充卡片模型
         foreach (var item in currentSelectedCardGroup)
         {
             SelectedCardModel model = SelectedCardModel.CreateInstance();
+            model.SetSelectedCardUI(this);
             model.SetAvailableCardInfo(item);
             model.transform.SetParent(SelectedCardListTrans);
             model.transform.localScale = Vector3.one;
@@ -115,6 +138,33 @@ public class SelectedCardUI : MonoBehaviour
             mSelectEquipmentUI.SetAvailableCardModelSelect((FoodNameTypeMap)item.type, true);
             // 添加取消监听
             model.AddListenerToCancelButton(delegate { mSelectEquipmentUI.CancelSelectCard((FoodNameTypeMap)model.GetInfo().type); });
+        }
+        UpdateDisplayKey();
+    }
+
+    /// <summary>
+    /// 根据可选卡列表强制更新已选卡列表信息，使得已选卡限制在可选卡的范围内
+    /// </summary>
+    private void UpdateCurrentSelectedCardGroupByAvailableCardUI()
+    {
+        Dictionary<FoodNameTypeMap, AvailableCardInfo> dict = GetCurrentAvailableCardDict();
+        List<AvailableCardInfo> removeList = new List<AvailableCardInfo>();
+        foreach (var item in currentSelectedCardGroup)
+        {
+            // 如果可选卡里没有此类型卡，就直接进入移除名单内
+            if (!dict.ContainsKey((FoodNameTypeMap)item.type))
+            {
+                removeList.Add(item);
+                continue;
+            }
+            // 转职情况 和 星级情况 取可选卡与当前选用卡的最小值
+            item.maxShape = Mathf.Min(item.maxShape, dict[(FoodNameTypeMap)item.type].maxShape);
+            item.maxLevel = Mathf.Min(item.maxLevel, dict[(FoodNameTypeMap)item.type].maxLevel);
+        }
+        // 移除
+        foreach (var item in removeList)
+        {
+            currentSelectedCardGroup.Remove(item);
         }
     }
 
@@ -128,6 +178,7 @@ public class SelectedCardUI : MonoBehaviour
     {
         AvailableCardInfo info = new AvailableCardInfo(type, shape, level);
         SelectedCardModel model = SelectedCardModel.CreateInstance();
+        model.SetSelectedCardUI(this);
         model.SetAvailableCardInfo(info);
         model.transform.SetParent(SelectedCardListTrans);
         model.transform.localScale = Vector3.one;
@@ -141,6 +192,7 @@ public class SelectedCardUI : MonoBehaviour
         UpdateCardCountText();
         // 添加取消监听
         model.AddListenerToCancelButton(delegate { mSelectEquipmentUI.CancelSelectCard((FoodNameTypeMap)model.GetInfo().type); });
+        UpdateDisplayKey();
         return model;
     }
 
@@ -187,6 +239,7 @@ public class SelectedCardUI : MonoBehaviour
                     });
                 // 更新文本显示
                 UpdateCardCountText();
+                UpdateDisplayKey();
             }
             else
             {
@@ -218,6 +271,7 @@ public class SelectedCardUI : MonoBehaviour
     {
         BaseStage.StageInfo info = mSelectEquipmentUI.GetCurrentSelectedStageInfo();
         GameManager.Instance.playerData.SaveCardGroupList(info.chapterIndex, info.sceneIndex, info.stageIndex, cardGroupList);
+        GameManager.Instance.playerData.SaveKeyGroupList(info.chapterIndex, info.sceneIndex, info.stageIndex, keyGroupList);
     }
 
     /// <summary>
@@ -226,6 +280,15 @@ public class SelectedCardUI : MonoBehaviour
     public List<AvailableCardInfo> GetCurrentSelectedCardGroup()
     {
         return currentSelectedCardGroup;
+    }
+
+    /// <summary>
+    /// 获取当前的键位控制表
+    /// </summary>
+    /// <returns></returns>
+    public List<char> GetCurrentSelectedKeyGroup()
+    {
+        return currentSelectedKeyGroup;
     }
 
 
@@ -241,5 +304,78 @@ public class SelectedCardUI : MonoBehaviour
     public int GetSelectedCardCount()
     {
         return currentSelectedCardGroup.Count;
+    }
+
+    /// <summary>
+    /// 获取某个模型在数组的下标
+    /// </summary>
+    /// <returns></returns>
+    public int GetModelInListIndex(SelectedCardModel model)
+    {
+        int i = 0;
+        foreach (var item in cardModelList)
+        {
+            if (item == model)
+                return i;
+            i++;
+        }
+        return -1;
+    }
+
+    /// <summary>
+    /// 根据下标获取当前键位
+    /// </summary>
+    /// <param name="index"></param>
+    /// <returns></returns>
+    public char GetKeyByIndex(int index)
+    {
+        if(index >= currentSelectedKeyGroup.Count)
+            for (int i = currentSelectedKeyGroup.Count; i <= index; i++)
+            {
+                currentSelectedKeyGroup.Add(default);
+            }
+        return currentSelectedKeyGroup[index];
+    }
+
+    /// <summary>
+    /// 根据下标更新键位表
+    /// </summary>
+    /// <param name="index"></param>
+    /// <param name="key"></param>
+    public void UpdateKeyByIndex(int index, char key)
+    {
+        if (!key.Equals('\0'))
+        {
+            for (int i = 0; i < currentSelectedKeyGroup.Count; i++)
+            {
+                if (currentSelectedKeyGroup[i].Equals(key))
+                {
+                    currentSelectedKeyGroup[i] = '\0';
+                    cardModelList[i].UpdateKey();
+                    break;
+                }
+            }
+        }
+        currentSelectedKeyGroup[index] = key;
+    }
+
+    /// <summary>
+    /// 更新卡片显示的键位
+    /// </summary>
+    public void UpdateDisplayKey()
+    {
+        foreach (var item in cardModelList)
+        {
+            item.UpdateKey();
+        }
+    }
+
+    /// <summary>
+    /// 获取可以选择的卡片表
+    /// </summary>
+    /// <returns></returns>
+    public Dictionary<FoodNameTypeMap, AvailableCardInfo> GetCurrentAvailableCardDict()
+    {
+        return mSelectEquipmentUI.GetCurrentAvailableCardDict();
     }
 }

@@ -21,11 +21,11 @@ public class SpicyStringBoom : FoodUnit
     {
         if (IsFinishPrepare())
         {
-            animatorController.Play("Idle");
+            animatorController.Play("Idle", true);
         }
         else
         {
-            animatorController.Play("Prepare");
+            animatorController.Play("Prepare", true);
         }
     }
 
@@ -33,21 +33,38 @@ public class SpicyStringBoom : FoodUnit
     {
         if (!IsFinishPrepare())
             prepareTime--;
-        else
-        {
-            // 准备好后才会检测本格是否有满足触发条件的敌人
-            foreach (var enemy in GetGrid().GetMouseUnitList())
-            {
-                if (enemy.GetHeight() == 1)
-                {
-                    isTriggerBoom = true;
-                    ExecuteDeath();
-                    break;
-                }
-            }
-        }
+        //else
+        //{
+        //    // 准备好后才会检测本格是否有满足触发条件的敌人
+        //    foreach (var enemy in GetGrid().GetMouseUnitList())
+        //    {
+        //        if (enemy.GetHeight() == 1)
+        //        {
+        //            isTriggerBoom = true;
+        //            ExecuteDeath();
+        //            break;
+        //        }
+        //    }
+        //}
         if (prepareTime == 1)
             SetActionState(new TransitionState(this));
+    }
+
+    /// <summary>
+    /// 检测空军并触发爆炸
+    /// </summary>
+    /// <param name="collision"></param>
+    public void OnTriggerEnter2D(Collider2D collision)
+    {
+        if(IsFinishPrepare() && collision.tag.Equals("Mouse"))
+        {
+            MouseUnit m = collision.GetComponent<MouseUnit>();
+            if (m.GetHeight() == 1 && GetRowIndex()==m.GetRowIndex() && m.CanBeSelectedAsTarget())
+            {
+                isTriggerBoom = true;
+                ExecuteDeath();
+            }
+        }
     }
 
     public override void OnTransitionStateEnter()

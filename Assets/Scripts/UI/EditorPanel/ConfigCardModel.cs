@@ -12,6 +12,7 @@ public class ConfigCardModel : MonoBehaviour
     private Image Img_Rank;
     private Image Img_Mask;
     private Toggle toggle;
+    public bool isUpdate;
 
     private int type;
     private int shape;
@@ -28,6 +29,8 @@ public class ConfigCardModel : MonoBehaviour
         toggle = transform.Find("Toggle").GetComponent<Toggle>();
         toggle.onValueChanged.AddListener(delegate { 
             Img_Mask.gameObject.SetActive(!IsSelected());
+            if (isUpdate)
+                return;
             if (IsSelected())
             {
                 // 被选中则通知父级UI在关卡信息模型中添加此项
@@ -48,7 +51,10 @@ public class ConfigCardModel : MonoBehaviour
         shape = 0;
         rank = 0;
         name = "unknow";
+        // 因为要动toggle的值但又不能触发监听所以需要作保护
+        isUpdate = true;
         toggle.isOn = false;
+        isUpdate = false;
     }
 
     public void SetInfo(int type, int shape, int rank)

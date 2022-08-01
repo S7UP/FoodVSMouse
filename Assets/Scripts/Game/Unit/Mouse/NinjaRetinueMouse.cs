@@ -23,7 +23,7 @@ public class NinjaRetinueMouse : MouseUnit
         if (currentStateTimer == 0)
             return;
 
-        if (AnimatorManager.GetNormalizedTime(animator) > 1.0f)
+        if(animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
             SetActionState(new MoveState(this));
     }
 

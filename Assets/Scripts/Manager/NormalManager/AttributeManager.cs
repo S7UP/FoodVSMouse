@@ -127,16 +127,6 @@ public class AttributeManager
         {
             list.Add(stageInfoDict[chapterIndex][sceneIndex][i]);
         }
-
-        //for (int i = 0; i < list.Count; i++)
-        //{
-        //    BaseStage.StageInfo info = list[i];
-        //    info.chapterIndex = chapterIndex;
-        //    info.sceneIndex = sceneIndex;
-        //    info.stageIndex = i;
-        //    BaseStage.Save(info);
-        //}
-
         return list;
     }
 
@@ -179,7 +169,7 @@ public class AttributeManager
     /// </summary>
     /// <param name="chapterIndex">章节号</param>
     /// <param name="sceneIndex">场景号</param>
-    /// <param name="name">关卡名</param>
+    /// <param name="arrayIndex">关卡序号</param>
     /// <returns></returns>
     public BaseStage.StageInfo GetStageInfo(int chapterIndex, int sceneIndex, int arrayIndex)
     {
