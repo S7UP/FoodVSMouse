@@ -334,12 +334,6 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         return mMouseUnitList;
     }
 
-    // 退出时取消标记
-    private void OnMouseExit()
-    {
-        GameController.Instance.overGrid = null;
-    }
-
     /// <summary>
     /// 碰撞事件
     /// </summary>
@@ -413,6 +407,15 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
             list.Add(mFoodUnitdict[FoodInGridType.WaterVehicle]);
         }
         return list;
+    }
+
+    /// <summary>
+    /// 获取本格的人物，如果没有则返回空值
+    /// </summary>
+    /// <returns></returns>
+    public CharacterUnit GetCharacterUnit()
+    {
+        return characterUnit;
     }
 
     // rigibody相关

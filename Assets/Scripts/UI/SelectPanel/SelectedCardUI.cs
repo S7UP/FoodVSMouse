@@ -123,6 +123,8 @@ public class SelectedCardUI : MonoBehaviour
         cardModelList.Clear();
         // 根据可选卡列表强制更新已选卡列表信息，使得已选卡限制在可选卡的范围内
         UpdateCurrentSelectedCardGroupByAvailableCardUI();
+        // 强制更新卡片数量最大值为卡片数量上限
+        UpdateCurrentSelectedCardGroupByCountLimit();
         // 填充卡片模型
         foreach (var item in currentSelectedCardGroup)
         {
@@ -165,6 +167,21 @@ public class SelectedCardUI : MonoBehaviour
         foreach (var item in removeList)
         {
             currentSelectedCardGroup.Remove(item);
+        }
+    }
+
+    /// <summary>
+    /// 强制更新卡片数量最大值为卡片数量上限
+    /// </summary>
+    private void UpdateCurrentSelectedCardGroupByCountLimit()
+    {
+        if (mSelectEquipmentUI.GetCurrentSelectedStageInfo().isEnableCardCount)
+        {
+            int count = currentSelectedCardGroup.Count;
+            for (int i = mSelectEquipmentUI.GetCurrentSelectedStageInfo().cardCount; i < count; i++)
+            {
+                currentSelectedCardGroup.RemoveAt(currentSelectedCardGroup.Count - 1);
+            }
         }
     }
 

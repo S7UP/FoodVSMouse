@@ -5,7 +5,7 @@ using UnityEngine.UI;
 /// <summary>
 /// 游戏进程管理器
 /// </summary>
-public class BaseProgressController : MonoBehaviour, IBaseProgressController, IGameControllerMember
+public class BaseProgressController : MonoBehaviour, IGameControllerMember
 {
     // 引用
     private Transform Emp_LeftTimerTrans;
@@ -73,9 +73,32 @@ public class BaseProgressController : MonoBehaviour, IBaseProgressController, IG
         }
     }
 
-    public bool IsEnd()
+    /// <summary>
+    /// 当前道中进度是否结束
+    /// </summary>
+    /// <returns></returns>
+    public bool IsPathEnd()
     {
-        throw new System.NotImplementedException();
+        return mRoundProgressBar.IsFinish();
+    }
+
+    /// <summary>
+    /// 当前BOSS进度是否结束
+    /// </summary>
+    /// <returns></returns>
+    public bool IsBossEnd()
+    {
+        return mBossHpBar.IsFinish();
+    }
+
+    /// <summary>
+    /// 是否超时了
+    /// </summary>
+    public bool IsTimeOut()
+    {
+        if (!isTimeLimit)
+            return false;
+        return currentTimerLeft <= 0;
     }
 
     public void MInit()
@@ -99,6 +122,8 @@ public class BaseProgressController : MonoBehaviour, IBaseProgressController, IG
         totalTimer = GameController.Instance.mCurrentStage.mStageInfo.totalSeconds * 60; 
         if (!isTimeLimit)
             Emp_LeftTimerTrans.gameObject.SetActive(false);
+        else
+            Emp_LeftTimerTrans.gameObject.SetActive(true);
         currentTimerLeft = totalTimer - GameController.Instance.GetCurrentStageFrame();
 
         UpdateTimerDisplayer();
@@ -197,7 +222,7 @@ public class BaseProgressController : MonoBehaviour, IBaseProgressController, IG
 
     public void MDestory()
     {
-        throw new System.NotImplementedException();
+        
     }
 
     public void MPause()

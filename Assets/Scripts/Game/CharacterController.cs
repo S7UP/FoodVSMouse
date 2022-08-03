@@ -7,6 +7,7 @@ public class CharacterController:IGameControllerMember
 {
     private GameNormalPanel mGameNormalPanel;
     public CharacterUnit mCurrentCharacter; // 当前角色
+    public bool IsCharacterDeath;
 
     public CharacterController()
     {
@@ -19,6 +20,7 @@ public class CharacterController:IGameControllerMember
         CharacterInfo info = GameManager.Instance.playerData.GetCharacterInfo();
         mCurrentCharacter = GameController.Instance.CreateCharacter(info.type, info.shape);
         mCurrentCharacter.gameObject.SetActive(false);
+        IsCharacterDeath = false;
         // 直接进入角色放置模式
         mGameNormalPanel.EnterCharacterConstructMode();
         GameController.Instance.Pause(); // 暂停游戏，直到把人放下去为止
@@ -26,12 +28,15 @@ public class CharacterController:IGameControllerMember
 
     public void MUpdate()
     {
-        //HandleSetCharacter();
+        if(mCurrentCharacter!=null && mCurrentCharacter.IsAlive())
+            mGameNormalPanel.SetCharacterHpTextAndPosition(mCurrentCharacter.mCurrentHp, mCurrentCharacter.transform.position - 0.3f*Vector3.up);
     }
 
     public void MPauseUpdate()
     {
-        HandleSetCharacter();
+        // 当人物没死亡时且人物实例未放置于场中时，暂停代表下人
+        if(!IsCharacterDeath)
+            HandleSetCharacter();
     }
 
     /// <summary>
@@ -107,6 +112,15 @@ public class CharacterController:IGameControllerMember
         {
             mCurrentCharacter.ExcuteRecycle();
         }
+    }
+
+    /// <summary>
+    /// 当人物噶了之后
+    /// </summary>
+    public void AfterCharacterDeath()
+    {
+        IsCharacterDeath = true;
+        GameController.Instance.Lose();
     }
 
 

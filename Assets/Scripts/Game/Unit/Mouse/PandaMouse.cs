@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 
 using UnityEngine;
+
+using static UnityEditor.Progress;
 /// <summary>
 /// –‹√®¿‡
 /// </summary>
@@ -112,6 +114,10 @@ public class PandaMouse : MouseUnit
                 foreach (var item in grid.GetAttackableFoodUnitList())
                 {
                     TakeDamage(item);
+                }
+                if (grid.GetCharacterUnit() != null)
+{
+                    TakeDamage(grid.GetCharacterUnit());
                 }
             }
             else

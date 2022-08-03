@@ -207,12 +207,16 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     /// </summary>
     public bool IsInView()
     {
-        Vector3 worldPos = transform.position;
-        Vector2 viewPos = Camera.main.WorldToViewportPoint(worldPos); // 世界坐标转为屏幕坐标，然后判断是不是在(0,0)-(1,1)之间
-        if (viewPos.x >= 0 && viewPos.x <= 1 && viewPos.y >= 0 && viewPos.y <= 1)
+        //Vector3 worldPos = transform.position;
+        //Vector2 viewPos = Camera.main.WorldToViewportPoint(worldPos); // 世界坐标转为屏幕坐标，然后判断是不是在(0,0)-(1,1)之间
+        //if (viewPos.x >= 0 && viewPos.x <= 1 && viewPos.y >= 0 && viewPos.y <= 1)
+        //    return true;
+        //else
+        //    return false;
+        Vector3 p = transform.position;
+        if (p.x > MapManager.GetColumnX(-2) && p.x < MapManager.GetColumnX(9) && p.y > MapManager.GetRowY(9) && p.y < MapManager.GetRowY(-3))
             return true;
-        else
-            return false;
+        return false;
     }
 
     /// <summary>

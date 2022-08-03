@@ -100,7 +100,7 @@ public class BaseMap : MonoBehaviour, IGameControllerMember
         // 格子管理
         Ray r = GameController.Instance.mCamera.ScreenPointToRay(Input.mousePosition);
         RaycastHit2D hit = Physics2D.Raycast(new Vector2(r.origin.x, r.origin.y), Vector2.zero, Mathf.Infinity, mask);
-
+        GameController.Instance.overGrid = null;
         if (hit.collider != null)
         {
             if (hit.collider.tag == "Grid")
@@ -131,7 +131,7 @@ public class BaseMap : MonoBehaviour, IGameControllerMember
         // 格子管理
         Ray r = GameController.Instance.mCamera.ScreenPointToRay(Input.mousePosition);
         RaycastHit2D hit = Physics2D.Raycast(new Vector2(r.origin.x, r.origin.y), Vector2.zero, Mathf.Infinity, mask);
-
+        GameController.Instance.overGrid = null;
         if (hit.collider != null)
         {
             if (hit.collider.tag == "Grid")

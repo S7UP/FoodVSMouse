@@ -149,13 +149,13 @@ public class AreaEffectExecution : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+
     }
 
-    private void FixedUpdate()
-    {
-        fixCount++;
-    }
+    //private void Update()
+    //{
+    //    fixCount++;
+    //}
 
     public void MUpdate()
     {
@@ -188,6 +188,10 @@ public class AreaEffectExecution : MonoBehaviour
             }
             isAlive = false;
             ExecuteRecycle();
+        }
+        else
+        {
+            fixCount++;
         }
     }
 

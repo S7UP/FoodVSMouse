@@ -319,7 +319,10 @@ public class CharacterUnit : BaseUnit
             weapons = null;
         }
         // 更新角色管理器的信息
-
+        if (GameController.Instance.mCharacterController != null)
+        {
+            GameController.Instance.mCharacterController.AfterCharacterDeath();
+        }
     }
 
     public override void MUpdate()
@@ -442,14 +445,16 @@ public class CharacterUnit : BaseUnit
     {
         base.MPause();
         // 暂停武器动作
-        weapons.MPause();
+        if(weapons!=null)
+            weapons.MPause();
     }
 
     public override void MResume()
     {
         base.MResume();
         // 取消暂停武器动作
-        weapons.MResume();
+        if (weapons != null)
+            weapons.MResume();
     }
 
     /// <summary>

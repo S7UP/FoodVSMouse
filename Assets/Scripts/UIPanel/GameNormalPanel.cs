@@ -2,6 +2,7 @@ using System.Collections.Generic;
 
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.UIElements;
 
 /// <summary>
 /// 负责管理战斗场景UI面板的类
@@ -18,6 +19,14 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
     public Text Tex_Pause; // 暂停文本
     public GameObject Mask; // 黑色遮罩
     public GameObject MenuUI; // 菜单
+    public GameObject Img_Hp; // 血量实例
+    private Text Tex_Hp; // 血量文本
+    private GameObject WinPanel;
+    private Animator Ani_Win;
+    private GameObject LosePanel;
+    private Animator Ani_Lose;
+
+    public bool IsInCharacterConstructMode; // 是否在角色放置模式
 
     private void Awake()
     {
@@ -30,7 +39,13 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
         Tex_Pause = transform.Find("Btn_Pause").Find("Text").GetComponent<Text>();
         Mask = transform.Find("Mask").gameObject;
         MenuUI = transform.Find("MenuUI").gameObject;
+        Img_Hp = transform.Find("Img_Hp").gameObject;
+        Tex_Hp = transform.Find("Img_Hp").Find("Text").GetComponent<Text>();
         //mShovelModel.transform.position = mShovelSlot2Trans.transform.position; // 铲子归位
+        WinPanel = transform.Find("WinPanel").gameObject;
+        Ani_Win = WinPanel.transform.Find("Img_Win").GetComponent<Animator>();
+        LosePanel = transform.Find("LosePanel").gameObject;
+        Ani_Lose = WinPanel.transform.Find("Img_Lose").GetComponent<Animator>();
     }
 
     public void InitPanel()
@@ -40,6 +55,10 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
         Tex_Pause.text = "暂停游戏";
         Mask.SetActive(false);
         MenuUI.SetActive(false);
+        Img_Hp.SetActive(false);
+        WinPanel.SetActive(false);
+        LosePanel.SetActive(false);
+        IsInCharacterConstructMode = false;
     }
 
     /// <summary>
@@ -59,6 +78,10 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
     /// </summary>
     public void OnPauseButtonClick()
     {
+        // 在人物放置阶段点暂停是没有任何吊用的
+        if (IsInCharacterConstructMode)
+            return;
+
         // 先获取目前是暂停还是非暂停状态
         if (GameController.Instance.isPause)
         {
@@ -126,6 +149,10 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
     {
         Mask.SetActive(enable);
         MenuUI.SetActive(enable);
+        // 在人物放置阶段不执行后续逻辑
+        if (IsInCharacterConstructMode)
+            return;
+
         if (enable)
             GameController.Instance.Pause();
         else
@@ -182,6 +209,8 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
     public void EnterCharacterConstructMode()
     {
         mCardModel.ShowCardModel(CardModel.DisplayMode.SetCharacter);
+        Img_Hp.SetActive(false);
+        IsInCharacterConstructMode = true;
     }
 
     /// <summary>
@@ -190,6 +219,8 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
     public void ExitCharacterConstructMode()
     {
         mCardModel.HideCardModel();
+        Img_Hp.SetActive(true);
+        IsInCharacterConstructMode = false;
     }
 
     /// <summary>
@@ -197,6 +228,8 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
     /// </summary>
     public void EnterCardConstructMode()
     {
+        if (IsInCharacterConstructMode)
+            return;
         mCardModel.ShowCardModel(CardModel.DisplayMode.SetCard);
     }
 
@@ -213,6 +246,8 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
     /// </summary>
     public void EnterCardRemoveMode()
     {
+        if (IsInCharacterConstructMode)
+            return;
         mShovelModel.ShowModel();
     }
 
@@ -230,10 +265,40 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
     /// </summary>
     public void OnShovelSlotTrigger()
     {
+        if (IsInCharacterConstructMode)
+            return;
         GameController.Instance.mCardController.SelectShovel();
     }
 
+    /// <summary>
+    /// 设置人物HP文本与位置
+    /// </summary>
+    /// <param name="hp"></param>
+    public void SetCharacterHpTextAndPosition(float hp, Vector3 position)
+    {
+        Img_Hp.transform.position = position;
+        Tex_Hp.text = "HP:" + hp;
+    }
 
+    /// <summary>
+    /// 进入胜利结算界面
+    /// </summary>
+    public void EnterWinPanel()
+    {
+        InitPanel();
+        WinPanel.SetActive(true);
+        Ani_Win.Play("win", 0, 0);
+    }
+
+    /// <summary>
+    /// 进入失败结算界面
+    /// </summary>
+    public void EnterLosePanel()
+    {
+        InitPanel();
+        LosePanel.SetActive(true);
+        Ani_Win.Play("lose", 0, 0);
+    }
 
     public void EnterPanel()
     {

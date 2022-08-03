@@ -52,8 +52,7 @@ public class GameController : MonoBehaviour
     // 所有需要放到GameController管理Init、Update的东西
     protected List<IGameControllerMember> MMemberList;
 
-    private IEnumerator mCurrentWaitIEnumerator; // 当前等待协程
-    private Coroutine mCoroutine;
+    public GameNormalPanel mGameNormalPanel;
 
     // 定义私有构造函数，使外界不能创建该类实例
     private GameController()
@@ -144,14 +143,14 @@ public class GameController : MonoBehaviour
 
         MMemberList = new List<IGameControllerMember>();
         // 获取当前场景的UIPanel
-        GameNormalPanel panel = (GameNormalPanel)GameManager.Instance.uiManager.mUIFacade.currentScenePanelDict[StringManager.GameNormalPanel];
-        panel.InitInGameController();
+        mGameNormalPanel = (GameNormalPanel)GameManager.Instance.uiManager.mUIFacade.currentScenePanelDict[StringManager.GameNormalPanel];
+        mGameNormalPanel.InitInGameController();
         // 从UIPanel中获取各种控制器脚本
-        mCostController = panel.transform.Find("CostControllerUI").GetComponent<BaseCostController>();
+        mCostController = mGameNormalPanel.transform.Find("CostControllerUI").GetComponent<BaseCostController>();
         MMemberList.Add(mCostController);
-        mCardController = panel.transform.Find("CardControllerUI").GetComponent<BaseCardController>();
+        mCardController = mGameNormalPanel.transform.Find("CardControllerUI").GetComponent<BaseCardController>();
         MMemberList.Add(mCardController);
-        mProgressController = panel.transform.Find("ProgressControllerUI").GetComponent<BaseProgressController>();
+        mProgressController = mGameNormalPanel.transform.Find("ProgressControllerUI").GetComponent<BaseProgressController>();
         MMemberList.Add(mProgressController);
         mMapController = GameObject.Find("MapController").GetComponent<MapController>();
         MMemberList.Add(mMapController);
@@ -224,7 +223,6 @@ public class GameController : MonoBehaviour
         // 自身变量初始化
         mFrameNum = 0;
         isPause = false;
-        mCurrentWaitIEnumerator = null;
 
         RecycleAndDestoryAllInstance();
 
@@ -246,6 +244,24 @@ public class GameController : MonoBehaviour
         //StartCoroutine(mCurrentStage.Start());
         //StopAllCoroutines();
         mCurrentStage.StartStage();
+    }
+
+    /// <summary>
+    /// 赢下这把游戏
+    /// </summary>
+    public void Win()
+    {
+        mGameNormalPanel.EnterWinPanel();
+        Pause();
+    }
+
+    /// <summary>
+    /// 输掉这把游戏
+    /// </summary>
+    public void Lose()
+    {
+        mGameNormalPanel.EnterLosePanel();
+        Pause();
     }
 
     // Start is called before the first frame update
@@ -599,6 +615,22 @@ public class GameController : MonoBehaviour
     }
 
     /// <summary>
+    /// 当前场上还存在敌人吗
+    /// </summary>
+    /// <returns></returns>
+    public bool IsHasEnemyInScene()
+    {
+        for (int i = 0; i < mEnemyList.Length; i++)
+        {
+            foreach (var item in GetSpecificRowEnemyList(i))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// <summary>
     /// 更换敌人所在行
     /// </summary>
     /// <param name="oldIndex"></param>
@@ -929,6 +961,16 @@ public class GameController : MonoBehaviour
                     taskerList.Remove(tasker);
                 }
             }
+        }
+
+        // 胜利判定（当前道中已完成且场上不存在敌人）
+        if(mProgressController.IsPathEnd() && !IsHasEnemyInScene())
+        {
+            Win();
+        }else if (mProgressController.IsTimeOut())
+        {
+            // 超时判定
+            Lose();
         }
 
         // 将缓冲池的游戏对象放回到对象池

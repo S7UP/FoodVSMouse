@@ -88,6 +88,15 @@ public class BossHpBar : BaseProgressBar
     }
 
     /// <summary>
+    /// 当前进度条是否结束
+    /// </summary>
+    /// <returns></returns>
+    public override bool IsFinish()
+    {
+        return mUnit == null || mUnit.IsValid();
+    }
+
+    /// <summary>
     /// 设置目标
     /// </summary>
     public void SetTarget(BaseUnit unit)

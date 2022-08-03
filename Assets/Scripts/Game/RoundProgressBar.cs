@@ -84,9 +84,13 @@ public class RoundProgressBar : BaseProgressBar
         Img_One.sprite = numberSpriteList[roundCount % 10];
     }
 
+    /// <summary>
+    /// 当前进度条是否结束
+    /// </summary>
+    /// <returns></returns>
     public override bool IsFinish()
     {
-        return false;
+        return currentProgress >= 1.0f;
     }
 
     /// <summary>

@@ -472,6 +472,11 @@ public class MouseUnit : BaseUnit
         {
             spriteRenderer.material.SetFloat("_FlashRate", 0.5f * hitBox.GetPercent());
         }
+        // ½ø¼ÒÅÐ¶¨
+        if(transform.position.x < MapManager.GetColumnX(-1) - 0.5f * MapManager.gridWidth)
+        {
+            GameController.Instance.Lose();
+        }
     }
 
     /// <summary>
