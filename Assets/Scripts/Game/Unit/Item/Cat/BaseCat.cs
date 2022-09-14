@@ -85,14 +85,20 @@ public class BaseCat : BaseItem
             MouseUnit m = collision.GetComponent<MouseUnit>();
             if (m.GetRowIndex() == GetRowIndex())
             {
-                OnTriggerEvent();
+                // 检测目标能否触发猫，如果能就触发
+                if(m.CanTriggerCat())
+                    OnTriggerEvent();
 
-                if (m.IsBoss())
-                    // 对BOSS造成900点伤害
-                    new DamageAction(CombatAction.ActionType.CauseDamage, this, m, 900).ApplyAction();
-                else
-                    // 把老鼠创死
-                    m.ExecuteDeath();
+                // 在触发猫时产生伤害判定
+                if (isTrigger)
+                {
+                    if (m.IsBoss())
+                        // 对BOSS造成900点伤害
+                        new DamageAction(CombatAction.ActionType.CauseDamage, this, m, 900).ApplyAction();
+                    else
+                        // 把老鼠创死
+                        m.ExecuteDeath();
+                }
             }
         }
     }

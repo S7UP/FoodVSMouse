@@ -33,6 +33,7 @@ public class DamageAreaEffectExecution : RetangleAreaEffectExecution
 
     public override void EventMouse(MouseUnit unit)
     {
+        base.EventMouse(unit);
         if (actionType == CombatAction.ActionType.ReboundDamage)
         {
             new ReboundDamageAction(actionType, creator, unit, damage).ApplyAction();
@@ -45,6 +46,7 @@ public class DamageAreaEffectExecution : RetangleAreaEffectExecution
 
     public override void EventFood(FoodUnit unit)
     {
+        base.EventFood(unit);
         if (actionType == CombatAction.ActionType.ReboundDamage)
         {
             new ReboundDamageAction(actionType, creator, unit, damage).ApplyAction();
@@ -57,6 +59,7 @@ public class DamageAreaEffectExecution : RetangleAreaEffectExecution
 
     public override void EventCharacter(CharacterUnit unit)
     {
+        base.EventCharacter(unit);
         if (actionType == CombatAction.ActionType.ReboundDamage)
         {
             new ReboundDamageAction(actionType, creator, unit, damage).ApplyAction();

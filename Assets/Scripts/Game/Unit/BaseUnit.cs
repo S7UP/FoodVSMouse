@@ -85,6 +85,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
                 case UnitType.Mouse: return "Mouse/";
                 case UnitType.Item: return "Item/";
                 case UnitType.Character: return "Character/";
+                case UnitType.Boss: return "Boss/";
                 default: return null;
             }
         }
@@ -100,6 +101,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
                 case UnitType.Mouse:return "Mouse/" + mType;
                 case UnitType.Item: return "Item/" + mType + "/"+mShape;
                 case UnitType.Character: return "Character/"+mType + "/" + mShape;
+                case UnitType.Boss: return "Boss/" + mType + "/" + mShape;
                 default:return null;
             }
         }
@@ -243,7 +245,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         RemoveAllEffect();
         AfterDeath();
         // 然后安心去世吧
-        ExcuteRecycle();
+        ExecuteRecycle();
     }
 
     /// <summary>
@@ -257,7 +259,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     /// <summary>
     /// 执行该单位回收事件
     /// </summary>
-    public virtual void ExcuteRecycle()
+    public virtual void ExecuteRecycle()
     {
         GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, mPreFabPath, this.gameObject);
     }
@@ -353,6 +355,8 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         SetAlpha(1.0f);
         // 设置Collider2D的参数
         SetCollider2DParam();
+        // 大小初始化
+        SetLocalScale(Vector2.one);
     }
 
     public virtual void MUpdate()
@@ -872,9 +876,10 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     {
     }
 
+    private BoolModifier FrozenModifier = new BoolModifier(true);
     public virtual void OnFrozenStateEnter()
     {
-
+        animatorController.AddPauseModifier(FrozenModifier);
     }
 
     public virtual void OnFrozenState()
@@ -884,7 +889,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
 
     public virtual void OnFrozenStateExit()
     {
-
+        animatorController.RemovePauseModifier(FrozenModifier);
     }
 
     /// <summary>
@@ -976,10 +981,28 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     }
 
     /// <summary>
+    /// 如果有多个贴图对象则使用这个方法
+    /// </summary>
+    /// <returns></returns>s
+    public virtual List<Sprite> GetSpriteList()
+    {
+        return null;
+    }
+
+    /// <summary>
     /// 获取SpriterRenderer
     /// </summary>
     /// <returns></returns>
     public virtual SpriteRenderer GetSpriteRenderer()
+    {
+        return null;
+    }
+
+    /// <summary>
+    /// 如果有多个，则用这个方法
+    /// </summary>
+    /// <returns></returns>
+    public virtual List<SpriteRenderer> GetSpriteRendererList()
     {
         return null;
     }
@@ -1211,6 +1234,14 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         {
             RemoveTask(t);
         }
+    }
+
+    /// <summary>
+    /// 设置大小
+    /// </summary>
+    public virtual void SetLocalScale(Vector2 scale)
+    {
+        transform.localScale = scale;
     }
     // 继续
 }

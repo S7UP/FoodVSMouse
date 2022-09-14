@@ -31,7 +31,7 @@ public class AttackSpeedStatusAbility : StatusAbility
         }
         else
         {
-            OnEnableEffect();
+            SetEffectEnable(true);
         }
     }
 
@@ -83,6 +83,6 @@ public class AttackSpeedStatusAbility : StatusAbility
     /// </summary>
     public override void AfterEffect()
     {
-        OnDisableEffect();
+        SetEffectEnable(false);
     }
 }

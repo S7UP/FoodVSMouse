@@ -2,7 +2,6 @@ using System.Collections.Generic;
 
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.UIElements;
 
 /// <summary>
 /// 负责管理战斗场景UI面板的类
@@ -45,7 +44,7 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
         WinPanel = transform.Find("WinPanel").gameObject;
         Ani_Win = WinPanel.transform.Find("Img_Win").GetComponent<Animator>();
         LosePanel = transform.Find("LosePanel").gameObject;
-        Ani_Lose = WinPanel.transform.Find("Img_Lose").GetComponent<Animator>();
+        Ani_Lose = LosePanel.transform.Find("Img_Lose").GetComponent<Animator>();
     }
 
     public void InitPanel()

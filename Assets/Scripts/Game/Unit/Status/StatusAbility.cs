@@ -4,7 +4,7 @@
 public class StatusAbility : AbilityEntity
 {
     public StatusAbilityManager statusAbilityManager { get; set; }
-    private bool isDisableEffect { get; set; } // 是否禁用此BUFF产生的效果（不影响持续时间的流逝）
+    private bool isDisableEffect { get; set; } = true; // 是否禁用此BUFF产生的效果（不影响持续时间的流逝）
     public bool canActiveInDeathState; // 在死亡状态下能否继续触发
     public FloatNumeric totalTime = new FloatNumeric(); // 总持续时间（若为-1则代表该buff非时效性）
     public float leftTime; // 当前剩余时间

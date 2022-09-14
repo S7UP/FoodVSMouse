@@ -6,4 +6,5 @@ public enum UnitType
     Item = 2, // 道具
     Character = 3, // 人物
     Weapons = 4, // 武器
+    Boss = 5, // 
 }

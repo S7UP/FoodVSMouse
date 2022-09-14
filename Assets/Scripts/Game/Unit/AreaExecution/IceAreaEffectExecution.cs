@@ -33,25 +33,28 @@ public class IceAreaEffectExecution : RetangleAreaEffectExecution
 
     public override void EventMouse(MouseUnit unit)
     {
+        base.EventMouse(unit);
         if (!unit.NumericBox.GetBoolNumericValue(StringManager.IgnoreFrozen))
         {
-            unit.AddNoCountUniqueStatusAbility(StringManager.Frozen, new FrozenStatusAbility(unit, time));
+            unit.AddNoCountUniqueStatusAbility(StringManager.Frozen, new FrozenStatusAbility(unit, time, false));
         }
     }
 
     public override void EventFood(FoodUnit unit)
     {
+        base.EventFood(unit);
         if (!unit.NumericBox.GetBoolNumericValue(StringManager.IgnoreFrozen))
         {
-            unit.AddNoCountUniqueStatusAbility(StringManager.Frozen, new FrozenStatusAbility(unit, time));
+            unit.AddNoCountUniqueStatusAbility(StringManager.Frozen, new FrozenStatusAbility(unit, time, false));
         }
     }
 
     public override void EventCharacter(CharacterUnit unit)
     {
+        base.EventCharacter(unit);
         if (!unit.NumericBox.GetBoolNumericValue(StringManager.IgnoreFrozen))
         {
-            unit.AddNoCountUniqueStatusAbility(StringManager.Frozen, new FrozenStatusAbility(unit, time));
+            unit.AddNoCountUniqueStatusAbility(StringManager.Frozen, new FrozenStatusAbility(unit, time, false));
         }
     }
 }

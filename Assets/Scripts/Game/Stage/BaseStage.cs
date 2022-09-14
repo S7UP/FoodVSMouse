@@ -98,9 +98,9 @@ public class BaseStage : MonoBehaviour
     public BaseRound mCurrentRound;
     public int mCurrentRoundTimer;
     public int mCurrentRoundIndex;
-    private List<int> apartRowOffsetList; // 当前分路组对应行偏移量
-    //private IEnumerator enumerator;
-    //private Coroutine mCoroutine;
+    private List<Stack<int>> apartRowOffsetStackList; // 当前分路组对应行偏移量
+    public bool isWinWhenClearAllBoss; // 在击败所有BOSS后是否判定为胜利 如果是，则只要击败最后一个BOSS就算胜利，否则需要消灭场上所有老鼠才算胜利
+    public int bossLeft; // 全关剩余BOSS数，在游戏开始时会先统计有多少个BOSS
 
     /// <summary>
     /// 开始关卡
@@ -137,7 +137,6 @@ public class BaseStage : MonoBehaviour
         yield return StartCoroutine(WaitForIEnumerator(1));
         Debug.Log("游戏开始了！现在是第"+GameController.Instance.GetCurrentStageFrame()+"帧");
         yield return StartCoroutine(WaitForIEnumerator(mStageInfo.perpareTime));
-        //yield return GameController.Instance.Wait(mStageInfo.perpareTime);
         Debug.Log("开始出怪了！现在是第" + GameController.Instance.GetCurrentStageFrame() + "帧");
         for (int i = 0; i < mRoundList.Count; i++)
         {
@@ -146,17 +145,13 @@ public class BaseStage : MonoBehaviour
             mCurrentRoundTimer = 0;
             mCurrentRoundIndex = i;
             if (mStageInfo.defaultMode.Equals(StageMode.HalfRandom))
-            {
-                for (int j = 0; j < mStageInfo.apartList.Count; j++)
-                {
-                    apartRowOffsetList[j] = Random.Range(0, mStageInfo.apartList[j].Count); // 注意，生成整形时不包括最大值
-                }
-            }
-            //yield return GameController.Instance.StartCoroutine(mCurrentRound.Execute());
+                PushRandomToRowOffsetStack();
+            else
+                PushZeroToRowOffsetStack();
             yield return StartCoroutine(mCurrentRound.Execute());
+            PopRowOffsetStack();
         }
         Debug.Log("出怪完毕！");
-        //enumerator = null;
     }
 
     /// <summary>
@@ -205,8 +200,6 @@ public class BaseStage : MonoBehaviour
     /// </summary>
     public virtual void Init()
     {
-        //enumerator = null;
-        //mCoroutine = null;
         mCurrentRound = null;
         mCurrentRoundTimer = 0;
         mCurrentRoundIndex = -1;
@@ -229,11 +222,22 @@ public class BaseStage : MonoBehaviour
         }
 
         // 行偏移量初始化
-        apartRowOffsetList = new List<int>();
-        for (int i = 0; i < mStageInfo.apartList.Count; i++)
+        apartRowOffsetStackList = new List<Stack<int>>();
+        for (int j = 0; j < mStageInfo.apartList.Count; j++)
         {
-            apartRowOffsetList.Add(0);
+            apartRowOffsetStackList.Add(new Stack<int>()); // 注意，生成整形时不包括最大值
         }
+
+        // 计算本关BOSS数
+        foreach (var item in mStageInfo.roundInfoList)
+        {
+            bossLeft += item.GetBossCount();
+        }
+        // 如果本关有存在BOSS，则胜利条件改为击败所有BOSS,而非消灭所有敌人
+        if (bossLeft > 0)
+            isWinWhenClearAllBoss = true;
+        else
+            isWinWhenClearAllBoss = false;
     }
 
     /// <summary>
@@ -317,6 +321,52 @@ public class BaseStage : MonoBehaviour
     /// <returns></returns>
     public int GetApartRowOffsetByIndex(int apartIndex)
     {
-        return apartRowOffsetList[apartIndex];
+        int offset = 0;
+        foreach (var item in apartRowOffsetStackList[apartIndex])
+        {
+            offset += item;
+        }
+        return offset;
+    }
+
+    /// <summary>
+    /// 往行偏移栈中添加随机数（用于轮随机模式）
+    /// </summary>
+    public void PushRandomToRowOffsetStack()
+    {
+        for (int j = 0; j < mStageInfo.apartList.Count; j++)
+        {
+            apartRowOffsetStackList[j].Push(Random.Range(0, mStageInfo.apartList[j].Count)); // 注意，生成整形时不包括最大值
+        }
+    }
+
+    /// <summary>
+    /// 往行偏移栈中添加0（用于轮固定模式）
+    /// </summary>
+    public void PushZeroToRowOffsetStack()
+    {
+        for (int j = 0; j < mStageInfo.apartList.Count; j++)
+        {
+            apartRowOffsetStackList[j].Push(0);
+        }
+    }
+
+    /// <summary>
+    /// 从行偏移栈中移出
+    /// </summary>
+    public void PopRowOffsetStack()
+    {
+        for (int j = 0; j < mStageInfo.apartList.Count; j++)
+        {
+            apartRowOffsetStackList[j].Pop();
+        }
+    }
+
+    /// <summary>
+    /// BOSS数-1，仅在BOSS对象被回收时调用
+    /// </summary>
+    public void DecBossCount()
+    {
+        bossLeft--;
     }
 }

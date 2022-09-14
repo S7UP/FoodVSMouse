@@ -33,6 +33,7 @@ public class AbilityManager
         AbilityDict.Add(UnitType.Food, new List<List<List<SkillAbility.SkillAbilityInfo>>>());
         AbilityDict.Add(UnitType.Mouse, new List<List<List<SkillAbility.SkillAbilityInfo>>>());
         AbilityDict.Add(UnitType.Weapons, new List<List<List<SkillAbility.SkillAbilityInfo>>>());
+        AbilityDict.Add(UnitType.Boss, new List<List<List<SkillAbility.SkillAbilityInfo>>>());
         //LoadAll();
     }
 
@@ -120,13 +121,6 @@ public class AbilityManager
         }
     }
 
-    //public void LoadAll()
-    //{
-    //    Load(UnitType.Food);
-    //    Load(UnitType.Mouse);
-    //    Load(UnitType.Weapons);
-    //}
-
     private List<SkillAbility.SkillAbilityInfo> Load(UnitType unitType, int type, int shape)
     {
         string path = "Skill";
@@ -144,6 +138,9 @@ public class AbilityManager
             case UnitType.Weapons:
                 unitTypeStr += "Weapons/";
                 break;
+            case UnitType.Boss:
+                unitTypeStr += "Boss/";
+                break;
             default:
                 break;
         }
@@ -151,55 +148,6 @@ public class AbilityManager
         List<SkillAbility.SkillAbilityInfo> infoList = JsonManager.Load<List<SkillAbility.SkillAbilityInfo>>(path);
         return infoList;
     }
-
-    //private void Load(UnitType unitType)
-    //{
-    //    List<List<List<SkillAbility.SkillAbilityInfo>>> list = new List<List<List<SkillAbility.SkillAbilityInfo>>>();
-    //    //string path = Application.dataPath + "/Resources/Json/Skill";
-    //    string path = Application.streamingAssetsPath + "/Json/Skill";
-    //    string unitTypeStr = "";
-    //    switch (unitType)
-    //    {
-    //        case UnitType.Default:
-    //            break;
-    //        case UnitType.Food:
-    //            unitTypeStr += "Food";
-    //            break;
-    //        case UnitType.Mouse:
-    //            unitTypeStr += "Mouse";
-    //            break;
-    //        case UnitType.Weapons:
-    //            unitTypeStr += "Weapons";
-    //            break;
-    //        default:
-    //            break;
-    //    }
-    //    path += "/" + unitTypeStr;
-    //    DirectoryInfo direction = new DirectoryInfo(path); // 获取JSON文件夹下的所有文件
-    //    FileInfo[] files = direction.GetFiles("*");
-    //    foreach (var typeFile in files)
-    //    {
-    //        int typeIndex = int.Parse(typeFile.Name.Replace(typeFile.Extension, "")); // 去后缀
-    //        // 进入这层子文件夹读取
-    //        FileInfo[] shapeFiles = new DirectoryInfo(path + "/" + typeIndex).GetFiles("*");
-    //        foreach (var f in shapeFiles)
-    //        {
-    //            string name = f.Name.Replace(f.Extension, "");
-    //            // 只读取JSON
-    //            if (name.EndsWith(".json"))
-    //            {
-    //                int shapeIndex = int.Parse(name.Replace(".json", ""));
-    //                Debug.Log("path=" + "Skill/" + unitTypeStr + "/" + typeIndex + "/" + shapeIndex);
-    //                List<SkillAbility.SkillAbilityInfo> infoList = JsonManager.Load<List<SkillAbility.SkillAbilityInfo>>("Skill/" + unitTypeStr + "/" + typeIndex + "/" + shapeIndex);
-    //                List<SkillAbility.SkillAbilityInfo> list = GetSkillAbilityInfoList(unitType, typeIndex, shapeIndex);
-    //                foreach (var item in infoList)
-    //                {
-    //                    list.Add(item);
-    //                }
-    //            }
-    //        }
-    //    }
-    //}
 
     public static AbilityManager GetSingleton()
     {

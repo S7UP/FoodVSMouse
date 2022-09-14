@@ -12,6 +12,7 @@ public class AttributeManager
 {
     public Dictionary<int, Dictionary<int, FoodUnit.Attribute>> foodAttributeDict = new Dictionary<int, Dictionary<int, FoodUnit.Attribute>>();
     public Dictionary<int, Dictionary<int, MouseUnit.Attribute>> mouseAttributeDict = new Dictionary<int, Dictionary<int, MouseUnit.Attribute>>();
+    public Dictionary<int, Dictionary<int, MouseUnit.Attribute>> bossAttributeDict = new Dictionary<int, Dictionary<int, MouseUnit.Attribute>>();
     public Dictionary<int, Dictionary<int, BaseUnit.Attribute>> itemAttributeDict = new Dictionary<int, Dictionary<int, BaseUnit.Attribute>>();
     public Dictionary<int, Dictionary<int, BaseUnit.Attribute>> characterAttributeDict = new Dictionary<int, Dictionary<int, BaseUnit.Attribute>>();
     public Dictionary<int, Dictionary<int, BaseCardBuilder.Attribute>> cardBuilderAttributeDict = new Dictionary<int, Dictionary<int, BaseCardBuilder.Attribute>>();
@@ -24,6 +25,7 @@ public class AttributeManager
     {
         foodAttributeDict.Clear();
         mouseAttributeDict.Clear();
+        bossAttributeDict.Clear();
         itemAttributeDict.Clear();
         characterAttributeDict.Clear();
         cardBuilderAttributeDict.Clear();
@@ -58,6 +60,21 @@ public class AttributeManager
         if (!mouseAttributeDict[type].ContainsKey(shape))
             mouseAttributeDict[type].Add(shape, JsonManager.Load<MouseUnit.Attribute>("Mouse/" + type + "/" + shape + ""));
         return mouseAttributeDict[type][shape];
+    }
+
+    /// <summary>
+    /// 获取特定BOSS单位的属性
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="shape"></param>
+    /// <returns></returns>
+    public MouseUnit.Attribute GetBossUnitAttribute(int type, int shape)
+    {
+        if (!bossAttributeDict.ContainsKey(type))
+            bossAttributeDict.Add(type, new Dictionary<int, MouseUnit.Attribute>());
+        if (!bossAttributeDict[type].ContainsKey(shape))
+            bossAttributeDict[type].Add(shape, JsonManager.Load<MouseUnit.Attribute>("Boss/" + type + "/" + shape + ""));
+        return bossAttributeDict[type][shape];
     }
 
     /// <summary>

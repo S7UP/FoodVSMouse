@@ -28,12 +28,16 @@ public class BaseProgressController : MonoBehaviour, IGameControllerMember
     private Sprite[] redNumberList;
     private List<Image> Img_TimerList;
     private GameObject Emp_BossHpBar;
+    private GameObject Emp_BossHpBar2;
     private GameObject Emp_RoundProgressBar;
 
     // 管理变量
     public List<BaseProgressBar> mProgressBarList = new List<BaseProgressBar>(); // 内含各种进度条的集合
     public RoundProgressBar mRoundProgressBar; // 轮数进度条引用
     public BossHpBar mBossHpBar;
+    private bool lastHasTarget1;
+    public BossHpBar mBossHpBar2;
+    private bool lastHasTarget2;
     // 时间相关
     private bool isTimeLimit; // 关卡是否有时间限制
     private int totalTimer; // 总时间
@@ -43,6 +47,9 @@ public class BaseProgressController : MonoBehaviour, IGameControllerMember
     private void Awake()
     {
         Emp_BossHpBar = transform.Find("Emp_BossHpBar").gameObject;
+        mBossHpBar = Emp_BossHpBar.GetComponent<BossHpBar>();
+        Emp_BossHpBar2 = transform.Find("Emp_BossHpBar2").gameObject;
+        mBossHpBar2 = Emp_BossHpBar2.GetComponent<BossHpBar>();
         Emp_RoundProgressBar = transform.Find("Emp_RoundProgressBar").gameObject;
         Emp_LeftTimerTrans = transform.Find("Emp_LeftTimer");
         HourTrans = Emp_LeftTimerTrans.Find("Hour");
@@ -103,17 +110,21 @@ public class BaseProgressController : MonoBehaviour, IGameControllerMember
 
     public void MInit()
     {
+        lastHasTarget1 = false;
+        lastHasTarget2 = false;
         mProgressBarList.Clear();
         // 获取轮数进度条脚本
         mRoundProgressBar = Emp_RoundProgressBar.GetComponent<RoundProgressBar>();
         mProgressBarList.Add(mRoundProgressBar);
         // 获取BOSS血条脚本
-        mBossHpBar = Emp_BossHpBar.GetComponent<BossHpBar>();
         mProgressBarList.Add(mBossHpBar);
-
+        mProgressBarList.Add(mBossHpBar2);
+        // 隐藏血条显示波数进度
+        HideBossHpBar();
         // 初始化所有脚本内容
         for (int i = 0; i < mProgressBarList.Count; i++)
         {
+            mProgressBarList[i].SetProgressController(this);
             mProgressBarList[i].PInit();
         }
 
@@ -142,6 +153,70 @@ public class BaseProgressController : MonoBehaviour, IGameControllerMember
             currentTimerLeft = totalTimer - GameController.Instance.GetCurrentStageFrame();
             UpdateTimerDisplayer();
         }
+        // 更新血条
+        UpdateBossHpBar();
+    }
+
+    public void SetBossHpBarTarget(BaseUnit unit, int barNumber) 
+    {
+        BossHpBar b;
+        if (!mBossHpBar.HasTarget())
+            b = mBossHpBar;
+        else if (!mBossHpBar2.HasTarget())
+            b = mBossHpBar2;
+        else
+            return;
+
+        b.SetTarget(unit, barNumber);
+        ShowBossHpBar();
+        
+        if (unit is BossUnit)
+        {
+            b.SetIcon(GameManager.Instance.GetSprite("UI/BossIcon/"+unit.mType));
+            b.SetName(GameManager.Instance.attributeManager.GetBossUnitAttribute(unit.mType, unit.mShape).baseAttrbute.name);
+        }
+        else
+        {
+            b.SetIcon(null);
+            b.SetName("unknow");
+        }
+    }
+
+    public void HideBossHpBar()
+    {
+        mBossHpBar.gameObject.SetActive(false);
+        mBossHpBar2.gameObject.SetActive(false);
+        mRoundProgressBar.gameObject.SetActive(true);
+    }
+
+    public void ShowBossHpBar()
+    {
+        if(mBossHpBar.HasTarget())
+            mBossHpBar.gameObject.SetActive(true);
+        if(mBossHpBar2.HasTarget())
+            mBossHpBar2.gameObject.SetActive(true);
+        mRoundProgressBar.gameObject.SetActive(false);
+    }
+
+    private void UpdateBossHpBar()
+    {
+        // 检测BOSS存在情况与上一帧是否相同，如果相同则跳过更新
+        if (mBossHpBar.HasTarget() == lastHasTarget1 && mBossHpBar2.HasTarget() == lastHasTarget2)
+            return;
+        lastHasTarget1 = mBossHpBar.HasTarget();
+        lastHasTarget2 = mBossHpBar2.HasTarget();
+        // 否则检测两BOSS存在情况
+        if (lastHasTarget1 || lastHasTarget2)
+        {
+            // 只要有存在一只血条就会显示
+            ShowBossHpBar();
+        }
+        else
+        {
+            // 否则取消血条显示
+            HideBossHpBar();
+        }
+
     }
 
     /// <summary>

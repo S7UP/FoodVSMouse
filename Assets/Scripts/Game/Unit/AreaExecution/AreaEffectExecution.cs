@@ -112,7 +112,8 @@ public class AreaEffectExecution : MonoBehaviour
     /// </summary>
     public virtual void EventFood(FoodUnit unit)
     {
-
+        if (EventFoodAction != null)
+            EventFoodAction(unit);
     }
 
     /// <summary>
@@ -120,7 +121,8 @@ public class AreaEffectExecution : MonoBehaviour
     /// </summary>
     public virtual void EventMouse(MouseUnit unit)
     {
-
+        if (EventMouseAction != null)
+            EventMouseAction(unit);
     }
 
     /// <summary>
@@ -129,7 +131,8 @@ public class AreaEffectExecution : MonoBehaviour
     /// <param name="unit"></param>
     public virtual void EventCharacter(CharacterUnit unit)
     {
-
+        if (EventCharacterAction != null)
+            EventCharacterAction(unit);
     }
 
     public bool IsValid()
@@ -142,8 +145,8 @@ public class AreaEffectExecution : MonoBehaviour
     /// </summary>
     public void SetAffectHeight(float height)
     {
-        this.affectHeight = height;
-        this.isIgnoreHeight = false;
+        affectHeight = height;
+        isIgnoreHeight = false;
     }
 
     // Start is called before the first frame update
@@ -167,23 +170,23 @@ public class AreaEffectExecution : MonoBehaviour
             // 因此认为可以直接回收掉这个对象
             foreach (var item in foodUnitList)
             {
-                if (EventFoodAction != null)
-                    EventFoodAction(item);
-                else
+                //if (EventFoodAction != null)
+                //    EventFoodAction(item);
+                //else
                     EventFood(item);
             }
             foreach (var item in mouseUnitList)
             {
-                if (EventMouseAction != null)
-                    EventMouseAction(item);
-                else
+                //if (EventMouseAction != null)
+                //    EventMouseAction(item);
+                //else
                     EventMouse(item);
             }
             foreach (var item in charcaterList)
             {
-                if (EventCharacterAction != null)
-                    EventCharacterAction(item);
-                else
+                //if (EventCharacterAction != null)
+                //    EventCharacterAction(item);
+                //else
                     EventCharacter(item);
             }
             isAlive = false;

@@ -15,12 +15,12 @@ public class MapManager
 
 
     // 规定左上角那一格为(0, 0), 右下角为(8, 6)
-    public static float GetColumnX(int xIndex)
+    public static float GetColumnX(float xIndex)
     {
         return CenterX + (float)(-(MapController.xColumn - 1) / 2 + xIndex) * gridWidth;
     }
 
-    public static float GetRowY(int yIndex)
+    public static float GetRowY(float yIndex)
     {
         return CenterY + (float)((MapController.yRow - 1) / 2 - yIndex) * gridHeight;
     }
@@ -37,7 +37,7 @@ public class MapManager
     }
 
     // 获取某一格的中心坐标（相对）
-    public static Vector3 GetGridLocalPosition(int xIndex, int yIndex)
+    public static Vector3 GetGridLocalPosition(float xIndex, float yIndex)
     {
         return new Vector3(GetColumnX(xIndex), GetRowY(yIndex), 0);
     }

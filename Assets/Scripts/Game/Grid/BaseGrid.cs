@@ -9,7 +9,8 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     /// </summary>
     public static List<ItemInGridType> NoAllowBuildTagList = new List<ItemInGridType>()
     {
-        ItemInGridType.TimelinessBarrier
+        ItemInGridType.TimelinessBarrier,
+        ItemInGridType.WindCave, 
     };
 
     /// <summary>
@@ -365,7 +366,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     }
 
     /// <summary>
-    /// 获取本格中最高攻击优先级的单位
+    /// 默认情况下，获取本格中最高攻击优先级的单位
     /// </summary>
     public BaseUnit GetHighestAttackPriorityUnit()
     {
@@ -380,6 +381,27 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         {
             return characterUnit;
         }
+        return null;
+    }
+
+    /// <summary>
+    /// 获取本格中最高攻击优先级的单位，其中包括水中载具
+    /// </summary>
+    /// <returns></returns>
+    public BaseUnit GetHighestAttackPriorityUnitIncludeWaterVehicle()
+    {
+        if (IsContainTag(FoodInGridType.Shield))
+        {
+            return mFoodUnitdict[FoodInGridType.Shield];
+        }
+        else if (IsContainTag(FoodInGridType.Default))
+        {
+            return mFoodUnitdict[FoodInGridType.Default];
+        }
+        else if (characterUnit != null)
+        {
+            return characterUnit;
+        }
         else if (IsContainTag(FoodInGridType.WaterVehicle))
         {
             return mFoodUnitdict[FoodInGridType.WaterVehicle];
@@ -388,10 +410,53 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     }
 
     /// <summary>
-    /// 获取本格中所有可被攻击的美食列表，从前往后攻击优先级逐级递减
+    /// 获取本格中最高铲除优先级的单位
+    /// </summary>
+    /// <returns></returns>
+    public BaseUnit GetHighestRemovePriorityUnit()
+    {
+        if (IsContainTag(FoodInGridType.Shield))
+        {
+            return mFoodUnitdict[FoodInGridType.Shield];
+        }
+        else if (IsContainTag(FoodInGridType.Default))
+        {
+            return mFoodUnitdict[FoodInGridType.Default];
+        }
+        else if (characterUnit != null)
+        {
+            return characterUnit;
+        }
+        else if (IsContainTag(FoodInGridType.WaterVehicle))
+        {
+            return mFoodUnitdict[FoodInGridType.WaterVehicle];
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// 默认情况下，获取本格中所有可被攻击的美食列表，从前往后攻击优先级逐级递减
     /// </summary>
     /// <returns></returns>
     public List<FoodUnit> GetAttackableFoodUnitList()
+    {
+        List<FoodUnit> list = new List<FoodUnit>();
+        if (IsContainTag(FoodInGridType.Shield))
+        {
+            list.Add(mFoodUnitdict[FoodInGridType.Shield]);
+        }
+        if (IsContainTag(FoodInGridType.Default))
+        {
+            list.Add(mFoodUnitdict[FoodInGridType.Default]);
+        }
+        return list;
+    }
+
+    /// <summary>
+    /// 获取本格中所有可被攻击的美食列表，从前往后攻击优先级逐级递减，包括水载具
+    /// </summary>
+    /// <returns></returns>
+    public List<FoodUnit> GetAttackableFoodUnitListIncludeWaterVehicle()
     {
         List<FoodUnit> list = new List<FoodUnit>();
         if (IsContainTag(FoodInGridType.Shield))

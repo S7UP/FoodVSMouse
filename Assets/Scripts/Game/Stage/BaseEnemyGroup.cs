@@ -56,6 +56,7 @@ public class BaseEnemyGroup
     public int mStartIndex; // 在当前分路组下的第几下标对应的行开始作为怪的起始点
     public EnemyInfo mEnemyInfo; // 敌人种类
     public int mCount; // 敌人数量
+    public float mHp;
 
     /// <summary>
     /// 初始化方法

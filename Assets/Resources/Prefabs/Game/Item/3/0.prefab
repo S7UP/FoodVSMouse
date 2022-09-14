@@ -201,7 +201,7 @@ Animator:
   m_GameObject: {fileID: 7911401160402135796}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: f8f28a845bda7a443a747572d840b9da, type: 2}
+  m_Controller: {fileID: 9100000, guid: e71bce604f15adb43850bfb62461b716, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0

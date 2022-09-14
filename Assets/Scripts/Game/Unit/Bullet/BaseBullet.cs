@@ -23,6 +23,7 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     public bool isDeathState;
     public BulletStyle style;
     private Action<BaseBullet, BaseUnit> HitAction; // 中弹后的事件（由外部添加）
+    public bool isnKillSelf;
 
     // 外界给的标签
     public Dictionary<string, int> TagDict = new Dictionary<string, int>();
@@ -53,6 +54,7 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
         mDamage = 0;
         mHeight = 0;
         isDeathState = false;
+        isnKillSelf = false;
         HitAction = null;
         TagDict.Clear();
         SetCollision(true);
@@ -81,7 +83,8 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
         if (baseUnit != null)
             new DamageAction(CombatAction.ActionType.CauseDamage, mMasterBaseUnit, baseUnit, mDamage).ApplyAction();
         ExecuteHitAction(baseUnit);
-        KillThis();
+        if(!isnKillSelf)
+            KillThis();
     }
 
     /// <summary>
@@ -207,12 +210,6 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     /// </summary>
     public bool IsInView()
     {
-        //Vector3 worldPos = transform.position;
-        //Vector2 viewPos = Camera.main.WorldToViewportPoint(worldPos); // 世界坐标转为屏幕坐标，然后判断是不是在(0,0)-(1,1)之间
-        //if (viewPos.x >= 0 && viewPos.x <= 1 && viewPos.y >= 0 && viewPos.y <= 1)
-        //    return true;
-        //else
-        //    return false;
         Vector3 p = transform.position;
         if (p.x > MapManager.GetColumnX(-2) && p.x < MapManager.GetColumnX(9) && p.y > MapManager.GetRowY(9) && p.y < MapManager.GetRowY(-3))
             return true;
@@ -276,7 +273,6 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
         // 动画播放完一次后，转为移动状态
         if(animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
         {
-            //SetActionState(new BaseBulletActionState(this));
             ExecuteRecycle();
         }
     }

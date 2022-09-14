@@ -31,7 +31,7 @@ public class ChangeVelocityStatusAbility : StatusAbility
         }
         else
         {
-            OnEnableEffect();
+            SetEffectEnable(true);
         }
     }
 
@@ -83,6 +83,6 @@ public class ChangeVelocityStatusAbility : StatusAbility
     /// </summary>
     public override void AfterEffect()
     {
-        OnDisableEffect();
+        SetEffectEnable(false);
     }
 }

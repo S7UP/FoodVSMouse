@@ -90,7 +90,7 @@ public class CharacterUnit : BaseUnit
     public void FlashWhenHited(CombatAction action)
     {
         // 当存在攻击来源时
-        if (action.Creator != null)
+        // if (action.Creator != null)
         {
             hitBox.OnHit();
         }
@@ -422,6 +422,8 @@ public class CharacterUnit : BaseUnit
     public override void SetSpriteLocalPosition(Vector2 vector2)
     {
         spriteTrans.localPosition = vector2;
+        if(weapons!=null)
+            weapons.transform.localPosition = vector2;
     }
 
     /// <summary>
@@ -481,6 +483,7 @@ public class CharacterUnit : BaseUnit
     /// </summary>
     public override void OnFrozenStateEnter()
     {
+        base.OnFrozenStateEnter();
         frozenStatus = new WeaponsFrozenState(weapons, weapons.mCurrentActionState);
         weapons.SetActionState(frozenStatus);
     }
@@ -490,6 +493,7 @@ public class CharacterUnit : BaseUnit
     /// </summary>
     public override void OnFrozenStateExit()
     {
+        base.OnFrozenStateExit();
         frozenStatus.TryExitCurrentState();
     }
 }

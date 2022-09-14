@@ -17,6 +17,9 @@ public abstract class SkillAbility : AbilityEntity
     public bool noClearEnergyWhenStart = true; // 在技能开始时不清空能量
     public bool noClearEnergyWhenEnd = false; // 在技能结束时不清空能量
 
+    public SkillAbility childSkill;
+    public SkillAbility masterSkill;
+
     public enum Type
     {
         GeneralAttack = 0, // 普通攻击
@@ -36,6 +39,16 @@ public abstract class SkillAbility : AbilityEntity
         public bool isExclusive;
         public bool canActiveInDeathState;
         public int priority;
+    }
+
+    public static SkillAbilityInfo GetDefaultSkillInfoInstance(string name)
+    {
+        return new SkillAbilityInfo() { name=name, needEnergy=1, startEnergy=0, energyRegeneration = 0, isExclusive=true, canActiveInDeathState=false, priority=0 };
+    }
+
+    public static SkillAbilityInfo GetDefaultSkillInfoInstance()
+    {
+        return GetDefaultSkillInfoInstance("unknow");
     }
 
     public SkillAbility()
@@ -134,6 +147,7 @@ public abstract class SkillAbility : AbilityEntity
         // 死亡检测，如果目标在死亡状态且这个技能不能在死亡期间释放则直接退出
         if (!IsActiveInDeath())
             return;
+
         // 能量回复
         if (enableEnergyRegeneration)
         {
@@ -146,11 +160,17 @@ public abstract class SkillAbility : AbilityEntity
         // 技能生效期间
         if (isSpelling)
         {
-            OnSpelling();
-            if (IsMeetCloseSpellingCondition())
+            SkillAbility UpdatedSkill = this;
+            // 如果有子技能，则执行子技能的Update并且屏蔽自己的Update
+            if (childSkill!=null)
             {
-                OnMeetCloseSpellingCondition();
-                EndActivate();
+                UpdatedSkill = childSkill;
+            }
+            UpdatedSkill.OnSpelling();
+            if (UpdatedSkill.IsMeetCloseSpellingCondition())
+            {
+                UpdatedSkill.OnMeetCloseSpellingCondition();
+                UpdatedSkill.EndActivate();
             }
                 
         }
@@ -223,6 +243,14 @@ public abstract class SkillAbility : AbilityEntity
     /// </summary>
     public override void EndActivate()
     {
+        // 清空父技能对自己的引用
+        if (masterSkill != null)
+            masterSkill.childSkill = null;
+
+        // 清空子技能
+        if (childSkill!=null)
+            childSkill.EndActivate();
+
         isSpelling = false;
         if(!noClearEnergyWhenEnd)
             ClearCurrentEnergy(); // 清空能量槽
@@ -234,7 +262,7 @@ public abstract class SkillAbility : AbilityEntity
     /// </summary>
     public virtual void AfterSpell()
     {
-
+        
     }
 
     /// <summary>
@@ -260,7 +288,17 @@ public abstract class SkillAbility : AbilityEntity
     /// <returns></returns>
     public virtual bool IsActiveInDeath()
     {
-        return (master.IsAlive()) || canActiveInDeathState;
+        return master.IsAlive() || canActiveInDeathState;
+    }
+
+    /// <summary>
+    /// 在该技能中运行一个小技能
+    /// </summary>
+    public void ActivateChildAbility(SkillAbility skill)
+    {
+        childSkill = skill;
+        skill.masterSkill = this;
+        skill.ActivateAbility();
     }
 
     public static bool operator >(SkillAbility a, SkillAbility b)

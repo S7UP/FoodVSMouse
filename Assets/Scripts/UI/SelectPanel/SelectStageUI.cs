@@ -89,6 +89,7 @@ public class SelectStageUI : MonoBehaviour
                 Button btn = GameManager.Instance.GetGameObjectResource(FactoryType.UIFactory, "SelectPanel/Btn_Stage").GetComponent<Button>();
                 btn.transform.Find("Text").GetComponent<Text>().text = info.name;
                 int j = i;
+                btn.onClick.RemoveAllListeners();
                 btn.onClick.AddListener(delegate { OnBtnStageClick(btn, j); });
                 btn.transform.SetParent(Trans_StageList);
                 btn.transform.localScale = Vector3.one;
@@ -109,6 +110,7 @@ public class SelectStageUI : MonoBehaviour
     /// </summary>
     public void OnBtnStageClick(Button btn, int index)
     {
+        Debug.Log("index="+index);
         mSelectPanel.SetCurrentSelectedStageInfo(index);
         selectIndex = index;
         // 当前页所有按钮变蓝

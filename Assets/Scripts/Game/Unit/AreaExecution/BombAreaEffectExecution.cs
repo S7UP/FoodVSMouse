@@ -42,10 +42,12 @@ public class BombAreaEffectExecution : RetangleAreaEffectExecution
         {
             new BurnDamageAction(CombatAction.ActionType.CauseDamage, creator, unit, unit.mCurrentHp).ApplyAction();
         }
+        base.EventMouse(unit);
     }
 
     public override void EventFood(FoodUnit unit)
     {
+        base.EventFood(unit);
         // м╛ио
         if (unit.NumericBox.GetBoolNumericValue(StringManager.IgnoreBombInstantKill))
         {

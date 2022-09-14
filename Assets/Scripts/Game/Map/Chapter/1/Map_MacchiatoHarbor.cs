@@ -1,3 +1,7 @@
+using System.Collections.Generic;
+
+using UnityEngine;
+
 /// <summary>
 /// 玛奇朵港
 /// </summary>
@@ -26,7 +30,17 @@ public class Map_MacchiatoHarbor : ChapterMap
     /// </summary>
     public override void ProcessingGridList()
     {
+        List<Vector2> list = new List<Vector2>()
+        {
+            new Vector2(8, 1), new Vector2(6, 2), new Vector2(8, 3), new Vector2(6, 4), new Vector2(8, 5)
+        };
 
+        foreach (var item in list)
+        {
+            // 生成风洞
+            BaseWindCave c = (BaseWindCave)GameController.Instance.CreateItem((int)item.x, (int)item.y, (int)ItemInGridType.WindCave, 0);
+            c.SetStartTimeAndMaxTime(360, 480);
+        }
     }
 
     /// <summary>

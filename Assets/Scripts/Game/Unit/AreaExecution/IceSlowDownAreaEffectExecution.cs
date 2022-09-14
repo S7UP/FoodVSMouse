@@ -32,6 +32,7 @@ public class IceSlowDownAreaEffectExecution : RetangleAreaEffectExecution
 
     public override void EventMouse(MouseUnit unit)
     {
+        base.EventMouse(unit);
         if (!unit.NumericBox.GetBoolNumericValue(StringManager.IgnoreFrozen))
         {
             unit.AddNoCountUniqueStatusAbility(StringManager.FrozenSlowDown, new FrozenSlowStatusAbility(unit, time));
@@ -40,6 +41,7 @@ public class IceSlowDownAreaEffectExecution : RetangleAreaEffectExecution
 
     public override void EventFood(FoodUnit unit)
     {
+        base.EventFood(unit);
         if (!unit.NumericBox.GetBoolNumericValue(StringManager.IgnoreFrozen))
         {
             unit.AddNoCountUniqueStatusAbility(StringManager.FrozenSlowDown, new FrozenSlowStatusAbility(unit, time));

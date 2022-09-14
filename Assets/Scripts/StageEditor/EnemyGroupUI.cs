@@ -21,6 +21,8 @@ public class EnemyGroupUI : MonoBehaviour
     private Button Btn_Del;
     private Button Btn_EnemyType;
     private RectTransform rectTransform;
+    private GameObject Emp_Hp;
+    private InputField Inf_Hp;
 
     private void Awake()
     {
@@ -42,10 +44,17 @@ public class EnemyGroupUI : MonoBehaviour
 
         Btn_Del = transform.Find("Img_Mouse").Find("Emp_Info").Find("Btn_Del").GetComponent<Button>();
         Btn_EnemyType = transform.Find("Img_Mouse").GetComponent<Button>();
+
+        Emp_Hp = transform.Find("Img_Mouse").Find("Emp_Info").Find("Emp_Hp").gameObject;
+        Inf_Hp = Emp_Hp.transform.Find("InputField").GetComponent<InputField>();
     }
 
     public void Initial()
     {
+        Dro_StartIndex.gameObject.SetActive(true);
+        Dro_Number.gameObject.SetActive(true);
+        Dro_ApartIndex.gameObject.SetActive(true);
+
         Dro_StartIndex.onValueChanged.RemoveAllListeners();
         Dro_Number.onValueChanged.RemoveAllListeners();
         Dro_ApartIndex.onValueChanged.RemoveAllListeners();
@@ -54,6 +63,7 @@ public class EnemyGroupUI : MonoBehaviour
         Dro_Number.ClearOptions();
         Dro_ApartIndex.ClearOptions();
         // 变种
+        Dro_StartIndex.onValueChanged.RemoveAllListeners();
         List<Dropdown.OptionData> dataList = new List<Dropdown.OptionData>();
         for (int i = 0; i < 7; i++)
         {
@@ -68,6 +78,7 @@ public class EnemyGroupUI : MonoBehaviour
             Dro_StartIndexOnValueChanged();
         });
         // 数量
+        Dro_Number.onValueChanged.RemoveAllListeners();
         List<Dropdown.OptionData> dataList2 = new List<Dropdown.OptionData>();
         for (int i = 0; i <= 7; i++)
         {
@@ -81,7 +92,17 @@ public class EnemyGroupUI : MonoBehaviour
         {
             Dro_NumberOnValueChanged();
         });
+        // HP
+        Inf_Hp.onEndEdit.RemoveAllListeners();
+        Inf_Hp.onEndEdit.AddListener(delegate 
+        {
+            float value = int.Parse(Inf_Hp.text);
+            if (value <= 0)
+                value = 100;
+            Inf_HpOnValueChanged(value);
+        });
         // 分路组
+        Dro_ApartIndex.onValueChanged.RemoveAllListeners();
         List<Dropdown.OptionData> dataList3 = new List<Dropdown.OptionData>();
         for (int i = 0; i < mEditorPanel.GetCurrentStageInfo().apartList.Count; i++)
         {
@@ -134,6 +155,15 @@ public class EnemyGroupUI : MonoBehaviour
     }
 
     /// <summary>
+    /// 血量输入框值发生改变的事件
+    /// </summary>
+    private void Inf_HpOnValueChanged(float hp)
+    {
+        mBaseEnemyGroup.mHp = hp;
+        DisplayUpdate();
+    }
+
+    /// <summary>
     /// 分路组下拉框值发生改变的
     /// </summary>
     private void Dro_ApartIndexOnValueChanged()
@@ -154,7 +184,22 @@ public class EnemyGroupUI : MonoBehaviour
         DisplayUpdate();
         // 下拉框选项更新
         Dro_StartIndex.value = mBaseEnemyGroup.mStartIndex;
-        Dro_Number.value = mBaseEnemyGroup.mCount;
+        if (mEditorPanel.GetCurrentRoundInfo().isBossRound)
+        {
+            // 如果是BOSS轮，则取消数量显示（同样的BOSS只能有1只）
+            Dro_Number.gameObject.SetActive(false);
+            // 显示血量设置
+            Inf_Hp.gameObject.SetActive(true);
+            Inf_Hp.text = mBaseEnemyGroup.mHp.ToString();
+        }
+        else
+        {
+            Dro_Number.gameObject.SetActive(true);
+            // 隐藏血量设置
+            Inf_Hp.gameObject.SetActive(false);
+
+            Dro_Number.value = mBaseEnemyGroup.mCount;
+        }
         // 如果敌军刷怪组越界了，那么则重置为0
         if (mBaseEnemyGroup.mApartIndex > Dro_ApartIndex.options.Count - 1)
         {
@@ -167,7 +212,10 @@ public class EnemyGroupUI : MonoBehaviour
     {
         mBaseEnemyGroup.mEnemyInfo = enemyInfo;
         // 修改贴图
-        Img_Mouse.sprite = GameManager.Instance.GetSprite("Mouse/"+enemyInfo.type+"/"+enemyInfo.shape+"/display");
+        if (mEditorPanel.GetCurrentRoundInfo().isBossRound)
+            Img_Mouse.sprite = GameManager.Instance.GetSprite("Boss/" + enemyInfo.type + "/" + enemyInfo.shape + "/display");
+        else
+            Img_Mouse.sprite = GameManager.Instance.GetSprite("Mouse/" + enemyInfo.type + "/" + enemyInfo.shape + "/display");
         Img_Mouse.SetNativeSize();
         // 设置rect
         float w = Img_Mouse.GetComponent<RectTransform>().rect.width + Emp_MaskList.GetComponent<RectTransform>().rect.width;

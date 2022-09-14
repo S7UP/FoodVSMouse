@@ -12,13 +12,13 @@ public class BossHpBar : BaseProgressBar
         }
         set
         {
-            SetTarget(value);
+            SetTarget(value, 0);
         }
     }
     private BaseUnit mUnit; // 目标对象
     protected bool isAutoDestory; // 目标对象消失时是否自动销毁（隐藏）
 
-    private GameObject Img_BossIconDisplayer;
+    private Image Img_BossIcon;
     private GameObject Img_BossVirtualHp1;
     private GameObject Emp_BossHp;
     private GameObject Img_BossHp1;
@@ -27,8 +27,9 @@ public class BossHpBar : BaseProgressBar
     private GameObject Img_BossHpBar1;
     private GameObject Img_BossHpBar2;
     private GameObject Img_BossHpBar3;
-    private GameObject Img_BossName;
+    private Text Tex_BossName;
     private GameObject Emp_BossLifeLeft;
+    private Text Tex_LifePercent;
 
     private Sprite[] numberSpriteList; // 数字贴图
     private Sprite[] Spr_BossHpBar; // 血条颜色贴图
@@ -43,7 +44,7 @@ public class BossHpBar : BaseProgressBar
 
     private void Awake()
     {
-        Img_BossIconDisplayer = transform.Find("Img_BossIconDisplayer").gameObject;
+        Img_BossIcon = transform.Find("Img_BossIconDisplayer").Find("Image").GetComponent<Image>();
         Emp_BossHp = transform.Find("Emp_BossHp").gameObject;
         Img_BossVirtualHp1 = Emp_BossHp.transform.Find("Img_BossVirtualHp1").gameObject;
         Img_BossHp1 = Emp_BossHp.transform.Find("Img_BossHp1").gameObject;
@@ -52,8 +53,9 @@ public class BossHpBar : BaseProgressBar
         Img_BossHpBar1 = transform.Find("Img_BossHpBar1").gameObject;
         Img_BossHpBar2 = transform.Find("Img_BossHpBar2").gameObject;
         Img_BossHpBar3 = transform.Find("Img_BossHpBar3").gameObject;
-        Img_BossName = transform.Find("Img_BossName").gameObject;
+        Tex_BossName = transform.Find("Img_BossName").Find("Text").GetComponent<Text>();
         Emp_BossLifeLeft = transform.Find("Emp_BossLifeLeft").gameObject;
+        Tex_LifePercent = transform.Find("Tex_LifePercent").GetComponent<Text>();
 
         numberSpriteList = new Sprite[10];
         for (int i = 0; i < numberSpriteList.Length; i++)
@@ -99,15 +101,17 @@ public class BossHpBar : BaseProgressBar
     /// <summary>
     /// 设置目标
     /// </summary>
-    public void SetTarget(BaseUnit unit)
+    /// <param name="unit">目标单位</param>
+    /// <param name="barNumber">预设血条数，如果填小于等于0则自动计算血条数，算法定义在CalculateBarNumber()中</param>
+    public void SetTarget(BaseUnit unit, int barNumber)
     {
-        Debug.Log("use SetTarget()!");
         if (unit == null || !unit.IsValid())
         {
             Debug.LogWarning("设置了无效的目标！");
             return;
         }
         mUnit = unit;
+        mTotalBarNumber = barNumber;
         // 根据目标的最大生命值来计算血条管数
         CalculateBarNumber();
     }
@@ -117,16 +121,22 @@ public class BossHpBar : BaseProgressBar
     /// </summary>
     private void CalculateBarNumber()
     {
-        // 目标最大生命值小于等于1万时只启用一管血
-        if (mUnit.mMaxHp <= 10000.0)
+        // 如果没有预设血条数，则自动计算
+        if(mTotalBarNumber <= 0)
         {
-            mTotalBarNumber = 1;
+            if (mUnit.mMaxHp <= 10000.0)
+            {
+                // 目标最大生命值小于等于1万时只启用一管血
+                mTotalBarNumber = 1;
+            }
+            else
+            {
+                // 否则启用 目标 (最大生命值/10000)的值向上取整管血
+                mTotalBarNumber = Mathf.CeilToInt(mUnit.mMaxHp / 10000);
+            }
         }
-        else
-        {
-            // 否则启用 目标 (最大生命值/10000)的值向上取整管血
-            mTotalBarNumber = Mathf.CeilToInt(mUnit.mMaxHp / 10000);
-        }
+
+
         // 计算每管血代表的实际生命值
         mHpPerBar = mUnit.mMaxHp / mTotalBarNumber;
     }
@@ -176,7 +186,7 @@ public class BossHpBar : BaseProgressBar
     public override void PUpdate()
     {
         base.PUpdate();
-        if (mUnit != null && mUnit.IsValid())
+        if (HasTarget())
         {
             // 更新血条管数显示
             int currentBarNum = CalculateCurrentBarNum();
@@ -191,15 +201,27 @@ public class BossHpBar : BaseProgressBar
                 // 更新百位数数据显示
                 Emp_BossLifeLeft.transform.GetChild(0).GetComponent<Image>().sprite = numberSpriteList[Mathf.FloorToInt((currentBarNum % 1000) / 100)];
 
-                if (currentBarNum == 1)
+                if (currentBarNum <= 1)
                 {
                     // 当前仅剩一管血时，隐藏下层血条
                     Img_BossHp1.SetActive(false);
+                    Img_BossHp2.SetActive(true);
+                    Img_BossVirtualHp1.SetActive(true);
+                    Img_BossVirtualHp2.SetActive(true);
+                }
+                else
+                {
+                    Img_BossHp1.SetActive(true);
+                    Img_BossHp2.SetActive(true);
+                    Img_BossVirtualHp1.SetActive(true);
+                    Img_BossVirtualHp2.SetActive(true);
                 }
                 // 更新血条颜色
                 UpdateHpBarSprite();
                 // 上层虚血继承下层虚血百分比
-                mVirtualHpBarPercent2 = mVirtualHpBarPercent1;
+                // mVirtualHpBarPercent2 = mVirtualHpBarPercent1;
+                // 上层虚血清空
+                mVirtualHpBarPercent2 = 0;
                 // 下层虚血回调至100%
                 mVirtualHpBarPercent1 = 1.00f;
             }
@@ -221,7 +243,56 @@ public class BossHpBar : BaseProgressBar
             }
             Img_BossVirtualHp1.transform.localScale = new Vector3(mVirtualHpBarPercent1, 1, 1);
             Img_BossVirtualHp2.transform.localScale = new Vector3(mVirtualHpBarPercent2, 1, 1);
+            // 更新剩余血量百分比显示
+            Tex_LifePercent.text = (Mathf.Max(TargetUnit.GetHeathPercent(), 0)*100).ToString("#0.00") + "%";
+
+            if (!mUnit.IsAlive())
+            {
+                // 没血量时都隐藏就行了
+                Img_BossHp1.SetActive(false);
+                Img_BossHp2.SetActive(false);
+                Img_BossVirtualHp1.SetActive(false);
+                Img_BossVirtualHp2.SetActive(false);
+            }
         }
+        //else
+        //{
+        //    // 如果目标噶了就隐藏自己并重新显示道中
+        //    mProgressController.HideBossHpBar();
+        //}
+    }
+
+    /// <summary>
+    /// 是否有目标
+    /// </summary>
+    /// <returns></returns>
+    public bool HasTarget()
+    {
+        return mUnit != null && mUnit.IsValid();
+    }
+
+    /// <summary>
+    /// 设置目标头像缩略图
+    /// </summary>
+    /// <param name="s"></param>
+    public void SetIcon(Sprite s)
+    {
+        if (s == null)
+            Img_BossIcon.gameObject.SetActive(false);
+        else
+        {
+            Img_BossIcon.gameObject.SetActive(true);
+            Img_BossIcon.sprite = s;
+        }
+    }
+
+    /// <summary>
+    /// 设置名字
+    /// </summary>
+    /// <param name="name"></param>
+    public void SetName(string name)
+    {
+        Tex_BossName.text = name;
     }
 
     /// <summary>

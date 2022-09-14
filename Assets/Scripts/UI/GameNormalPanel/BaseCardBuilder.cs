@@ -15,7 +15,7 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
         {FoodNameTypeMap.CoffeePowder, FoodInGridType.NoAttach }, // ¿§·È·Û
         {FoodNameTypeMap.IceCream, FoodInGridType.NoAttach }, // ±ùä¿ÁÜ
         {FoodNameTypeMap.WoodenDisk, FoodInGridType.WaterVehicle }, // Ä¾ÅÌ×Ó
-        {FoodNameTypeMap.CottonCandy, FoodInGridType.FloatVehicel }, // ÃÞ»¨ÌÇ
+        {FoodNameTypeMap.CottonCandy, FoodInGridType.FloatVehicle }, // ÃÞ»¨ÌÇ
         {FoodNameTypeMap.MelonShield, FoodInGridType.Shield }, // ¹ÏÆ¤
     };
 

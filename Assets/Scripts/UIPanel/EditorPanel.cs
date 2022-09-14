@@ -22,11 +22,15 @@ public class EditorPanel : BasePanel
     private Button Btn_AddRoundInfo; // 添加一轮敌人按钮
     private Button Btn_DelRoundInfo; // 删除当前轮敌人按钮
     private InputField Inf_RoundName; // 当前轮名称
+    private Toggle Tog_IsBossRound; // 是否为BOSS轮选择
     private InputField Inf_Interval; // 当前组间隔
     private InputField Inf_EndTime; // 当前结束等待时间
     private Transform Emp_AddEnemyGroupTrans;
     private Button Btn_AddEnemyGroup; // 添加一组敌人按钮
     private Scr_SelectEnemyType scr_SelectEnemyType;
+    private Dropdown Dro_RoundMode; // 本轮模式选项框
+    private GameObject Emp_Interval;
+    private GameObject Emp_EndTime;
 
     private GameObject StageEditorUI;
     private Transform scrStageContentRoundListTrans;
@@ -84,6 +88,8 @@ public class EditorPanel : BasePanel
     // 是否在UI更新中的状态
     private bool isUIUpdateState;
 
+    private bool isUpdateBossToggle;
+
     protected override void Awake()
     {
         base.Awake();
@@ -110,9 +116,13 @@ public class EditorPanel : BasePanel
         Btn_DelRoundInfo.onClick.AddListener(() => { DelCurrentRoundInfo(); });
         Inf_RoundName = transform.Find("MouseEditorUI").Find("Img_RoundInfo").Find("Emp_Name").Find("InputField").GetComponent<InputField>();
         Inf_RoundName.onEndEdit.AddListener(delegate { OnRoundNameInFChange(); });
-        Inf_Interval = transform.Find("MouseEditorUI").Find("Img_RoundInfo").Find("Emp_Interval").Find("InputField").GetComponent<InputField>();
+        Tog_IsBossRound = transform.Find("MouseEditorUI").Find("Img_RoundInfo").Find("Emp_IsBossRound").Find("Toggle").GetComponent<Toggle>();
+        Tog_IsBossRound.onValueChanged.AddListener(delegate { OnIsBossRoundToggleClick(); });
+        Emp_Interval = transform.Find("MouseEditorUI").Find("Img_RoundInfo").Find("Emp_Interval").gameObject;
+        Inf_Interval = Emp_Interval.transform.Find("InputField").GetComponent<InputField>();
         Inf_Interval.onEndEdit.AddListener(delegate { OnRoundIntervalInFChange(); });
-        Inf_EndTime = transform.Find("MouseEditorUI").Find("Img_RoundInfo").Find("Emp_EndTime").Find("InputField").GetComponent<InputField>();
+        Emp_EndTime = transform.Find("MouseEditorUI").Find("Img_RoundInfo").Find("Emp_EndTime").gameObject;
+        Inf_EndTime = Emp_EndTime.transform.Find("InputField").GetComponent<InputField>();
         Inf_EndTime.onEndEdit.AddListener(delegate { OnRoundEndTimeInFChange(); });
         Emp_AddEnemyGroupTrans = scrContentEnemyGroupListTrans.Find("Emp_EnemyGroupOperate");
         Btn_AddEnemyGroup = Emp_AddEnemyGroupTrans.Find("Button").GetComponent<Button>();
@@ -120,18 +130,32 @@ public class EditorPanel : BasePanel
         scr_SelectEnemyType = transform.Find("MouseEditorUI").Find("Emp_EnemyGroupList").Find("Scr_SelectEnemyType").GetComponent<Scr_SelectEnemyType>();
         scr_SelectEnemyType.gameObject.SetActive(false);
 
+        Dro_RoundMode = MouseEditorUI.transform.Find("Emp_Mode").Find("Dropdown").GetComponent<Dropdown>();
+        {
+            Dro_RoundMode.ClearOptions();
+            List<Dropdown.OptionData> dataList = new List<Dropdown.OptionData>();
+            dataList.Add(new Dropdown.OptionData("固定模式"));
+            dataList.Add(new Dropdown.OptionData("半随机模式"));
+            Dro_RoundMode.AddOptions(dataList);
+            Dro_RoundMode.value = (int)BaseStage.StageMode.HalfRandom;
+            Dro_RoundMode.onValueChanged.AddListener(delegate { OnRoundModeDroChange(Dro_RoundMode.value); });
+        }
+
+
         StageEditorUI = transform.Find("StageEditorUI").gameObject;
         scrStageContentRoundListTrans = transform.Find("StageEditorUI").Find("Emp_RoundList").Find("Scr_RoundList").Find("Viewport").Find("Content");
         Inf_PrepareTime = StageEditorUI.transform.Find("Img_RoundInfo").Find("Emp_PrepareTime").Find("InputField").GetComponent<InputField>();
         Inf_PrepareTime.onEndEdit.AddListener(delegate { OnPrepareTimeInFChange(); });
         Dro_DefaultMode = StageEditorUI.transform.Find("Img_RoundInfo").Find("Emp_DefaultMode").Find("Dropdown").GetComponent<Dropdown>();
-        Dro_DefaultMode.ClearOptions();
-        List<Dropdown.OptionData> dataList = new List<Dropdown.OptionData>();
-        dataList.Add(new Dropdown.OptionData("半随机模式"));
-        dataList.Add(new Dropdown.OptionData("固定模式"));
-        Dro_DefaultMode.AddOptions(dataList);
-        Dro_DefaultMode.value = (int)BaseStage.StageMode.HalfRandom;
-        Dro_DefaultMode.onValueChanged.AddListener(delegate { OnDefaultModeDroChange(Dro_DefaultMode.value); });
+        {
+            Dro_DefaultMode.ClearOptions();
+            List<Dropdown.OptionData> dataList = new List<Dropdown.OptionData>();
+            dataList.Add(new Dropdown.OptionData("半随机模式"));
+            dataList.Add(new Dropdown.OptionData("固定模式"));
+            Dro_DefaultMode.AddOptions(dataList);
+            Dro_DefaultMode.value = (int)BaseStage.StageMode.HalfRandom;
+            Dro_DefaultMode.onValueChanged.AddListener(delegate { OnDefaultModeDroChange(Dro_DefaultMode.value); });
+        }
         scrContentApartListTrans = StageEditorUI.transform.Find("Img_ApartList").Find("Scroll View").Find("Viewport").Find("Content");
         Btn_AddApart = StageEditorUI.transform.Find("Img_ApartList").Find("Btn_Add").GetComponent<Button>();
         Btn_AddApart.onClick.AddListener(delegate { OnAddNewApartClick(); });
@@ -184,6 +208,7 @@ public class EditorPanel : BasePanel
         roundBtnList = new List<Button>();
         enemyGroupUIList = new List<EnemyGroupUI>();
         isUIUpdateState = false;
+        isUpdateBossToggle = false;
         apartGoList = new List<GameObject>();
         apartEditGoList = new List<Emp_ApartEdit>();
         currentApartIndex = -1;
@@ -250,7 +275,14 @@ public class EditorPanel : BasePanel
     {
         if (roundInfoStack.Count > 0)
         {
-            return GetCurrentRoundInfo().baseEnemyGroupList;
+            if (GetCurrentRoundInfo().isBossRound)
+            {
+                if (GetCurrentRoundInfo().bossList == null)
+                    GetCurrentRoundInfo().bossList = new List<BaseEnemyGroup>();
+                return GetCurrentRoundInfo().bossList;
+            }
+            else
+                return GetCurrentRoundInfo().baseEnemyGroupList;
         }
         else
         {
@@ -284,8 +316,15 @@ public class EditorPanel : BasePanel
         BaseRound.RoundInfo currentRoundInfo = GetCurrentRoundInfo();
         // 更新左面板
         Inf_RoundName.text = currentRoundInfo.name;
+        if (!isUpdateBossToggle)
+        {
+            Tog_IsBossRound.isOn = currentRoundInfo.isBossRound;
+            Emp_Interval.gameObject.SetActive(!currentRoundInfo.isBossRound);
+        }
         Inf_Interval.text = currentRoundInfo.interval.ToString();
         Inf_EndTime.text = currentRoundInfo.endTime.ToString();
+
+        Dro_RoundMode.value = (int)currentRoundInfo.roundMode;
 
         UpdateRoundInfoContent();
 
@@ -296,9 +335,10 @@ public class EditorPanel : BasePanel
         }
         enemyGroupUIList.Clear();
         // 更新右面板
-        if (currentRoundInfo.baseEnemyGroupList != null)
+        List<BaseEnemyGroup> list = GetCurrentEnemyGroupList();
+        if (list != null)
         {
-            foreach (var item in currentRoundInfo.baseEnemyGroupList)
+            foreach (var item in list)
             {
                 GameObject go = GameManager.Instance.GetGameObjectResource(FactoryType.UIFactory, "Emp_EnemyGroup");
                 go.transform.SetParent(scrContentEnemyGroupListTrans);
@@ -579,7 +619,6 @@ public class EditorPanel : BasePanel
     {
         if (currentRoundIndexStack.Count > 0 && !isUIUpdateState)
         {
-            Debug.Log("OnRoundNameInFChange");
             BaseRound.RoundInfo currentRoundInfo = GetCurrentRoundInfo();
             currentRoundInfo.name = Inf_RoundName.text;
         }
@@ -645,8 +684,18 @@ public class EditorPanel : BasePanel
     {
         if (!isUIUpdateState || StageEditorUI.activeSelf)
         {
-            Debug.Log("OnDefaultModeDroChange");
             currentStageInfo.defaultMode = (BaseStage.StageMode)new_index;
+        }
+    }
+
+    /// <summary>
+    /// 当当前轮出怪模式发生改变时
+    /// </summary>
+    private void OnRoundModeDroChange(int new_index)
+    {
+        if (!isUIUpdateState || MouseEditorUI.activeSelf)
+        {
+            GetCurrentRoundInfo().roundMode = (BaseRound.RoundMode)new_index;
         }
     }
 
@@ -836,7 +885,10 @@ public class EditorPanel : BasePanel
     /// </summary>
     private void OnAddEnemyGroupClick()
     {
-        GetCurrentEnemyGroupList().Add(BaseEnemyGroup.GetInitalEnemyGroupInfo());
+        if (GetCurrentRoundInfo().isBossRound)
+            GetCurrentEnemyGroupList().Add(new BaseEnemyGroup() { mCount=1, mEnemyInfo = new BaseEnemyGroup.EnemyInfo() { type=20, shape=0 } });
+        else
+            GetCurrentEnemyGroupList().Add(BaseEnemyGroup.GetInitalEnemyGroupInfo());
         UpdateUI();
     }
 
@@ -922,6 +974,30 @@ public class EditorPanel : BasePanel
     private void OnReturnToMainClick()
     {
         GameManager.Instance.EnterMainScene();
+    }
+
+    /// <summary>
+    /// 当是否为BOSS轮的单选框被点击时
+    /// </summary>
+    private void OnIsBossRoundToggleClick() 
+    {
+        if (isUIUpdateState)
+            return;
+        isUpdateBossToggle = true;
+        bool isBoss = Tog_IsBossRound.isOn;
+        GetCurrentRoundInfo().isBossRound = isBoss;
+        if (isBoss)
+        {
+            // 当选择为BOSS模式时，隐藏组间隔
+            Emp_Interval.gameObject.SetActive(false);
+        }
+        else
+        {
+            // 当选择为非BOSS模式时
+            Emp_Interval.gameObject.SetActive(true);
+        }
+        UpdateUI();
+        isUpdateBossToggle = false;
     }
 
     /// <summary>

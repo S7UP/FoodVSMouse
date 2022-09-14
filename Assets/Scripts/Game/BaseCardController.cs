@@ -156,7 +156,7 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
         BaseGrid g = GameController.Instance.GetOverGrid();
         if (g != null)
         {
-            BaseUnit target = g.GetHighestAttackPriorityUnit();
+            BaseUnit target = g.GetHighestRemovePriorityUnit();
             if (target is FoodUnit)
             {
                 // 添加一个移除特效

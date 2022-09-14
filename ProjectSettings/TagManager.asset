@@ -27,7 +27,7 @@ TagManager:
   - Grid
   - ItemCollideEnemy
   - ItemCollideAlly
-  - 
+  - BothCollide
   - 
   - 
   - 

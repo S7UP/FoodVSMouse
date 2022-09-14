@@ -44,7 +44,7 @@ public class BaseEffect : MonoBehaviour, IGameControllerMember
 
     public virtual void MInit()
     {
-        animator.Play(resName);
+        animator.Play(clipName, 0, 0);
     }
 
     public virtual void MPause()
@@ -65,5 +65,14 @@ public class BaseEffect : MonoBehaviour, IGameControllerMember
     public virtual void MDestory()
     {
         
+    }
+
+    public static BaseEffect CreateInstance(RuntimeAnimatorController r, string clipName, bool isCycle)
+    {
+        BaseEffect e = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Effect/EffectModel").GetComponent<BaseEffect>();
+        e.animator.runtimeAnimatorController = r;
+        e.clipName = clipName;
+        e.isCycle = isCycle;
+        return e;
     }
 }

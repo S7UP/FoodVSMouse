@@ -5,6 +5,8 @@ using UnityEngine;
 public class EnemyBullet : BaseBullet
 {
     public Rigidbody2D r2D;
+    public bool isIgnoreFood;
+    public bool isIgnoreCharacter;
 
     public override void Awake()
     {
@@ -14,9 +16,16 @@ public class EnemyBullet : BaseBullet
 
     public void OnCollsion(Collider2D collision)
     {
-        if (collision.tag.Equals("Food") || collision.tag.Equals("Character"))
+        if (!isIgnoreFood && collision.tag.Equals("Food"))
         {
-            BaseUnit u = collision.GetComponent<BaseUnit>();
+            FoodUnit u = collision.GetComponent<FoodUnit>();
+            if (UnitManager.CanBulletHit(u, this))
+            {
+                TakeDamage(u);
+            }
+        }else if(!isIgnoreCharacter && collision.tag.Equals("Character"))
+        {
+            CharacterUnit u = collision.GetComponent<CharacterUnit>();
             if (UnitManager.CanBulletHit(u, this))
             {
                 TakeDamage(u);

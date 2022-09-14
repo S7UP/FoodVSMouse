@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class BaseProgressBar : MonoBehaviour, IBaseProgressBar
 {
+    protected BaseProgressController mProgressController;
     public float currentProgress; // 当前进度
 
     public virtual bool IsFinish()
@@ -26,5 +27,10 @@ public class BaseProgressBar : MonoBehaviour, IBaseProgressBar
     public virtual void Show()
     {
 
+    }
+
+    public void SetProgressController(BaseProgressController c)
+    {
+        mProgressController = c;
     }
 }

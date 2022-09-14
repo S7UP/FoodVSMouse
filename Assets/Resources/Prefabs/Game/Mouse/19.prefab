@@ -102,13 +102,15 @@ MonoBehaviour:
   mName: 
   mType: 0
   mShape: 0
+  typeAndShapeValue: 0
   currentStateTimer: 0
   rigibody2D: {fileID: 0}
-  mCollider2D: {fileID: 0}
+  mBoxCollider2D: {fileID: 0}
   spriteTrans: {fileID: 0}
   mHertIndex: 0
   currentXIndex: 0
   currentYIndex: 0
+  isBoss: 0
 --- !u!1 &7911401160402135796
 GameObject:
   m_ObjectHideFlags: 0
@@ -181,7 +183,7 @@ SpriteRenderer:
   m_SortingLayerID: 481756845
   m_SortingLayer: 5
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: ece1ebc63dfab2c4c8b8ddbe504454e3, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 6585f5941bf8c8941b4a5098c5c19712, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -202,7 +204,7 @@ Animator:
   m_GameObject: {fileID: 7911401160402135796}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: b58a0eca909d52648aa1680985f975c7, type: 2}
+  m_Controller: {fileID: 9100000, guid: 1eaecaa6a83ac824ba39632c439f6b90, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0

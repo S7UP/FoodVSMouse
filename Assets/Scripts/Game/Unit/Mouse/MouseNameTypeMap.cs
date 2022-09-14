@@ -33,4 +33,7 @@ public enum MouseNameTypeMap
     NonMainstreamMouse = 27, // 非主流
     BeeMouse = 28, // 机械蜂箱
     CanMouse = 29, // 罐头鼠
+    RatTrainHead = 30, // 鼠国列车头
+    RatTrainBody = 31, // 鼠国列车车厢
+    TrumpetMouse = 32, // 小号鼠
 }

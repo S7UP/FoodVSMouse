@@ -32,6 +32,7 @@ public class CardBuilderManager
         {
             Dictionary<FoodNameTypeMap, Action<BaseCardBuilder>> d = AfterBuildActionDict;
             d.Add(FoodNameTypeMap.BigStove, AfterBuildBigFire);
+            d.Add(FoodNameTypeMap.WoodenDisk, AfterBuildWoodenDisk);
         }
 
         /// <summary>
@@ -49,6 +50,7 @@ public class CardBuilderManager
         {
             Dictionary<FoodNameTypeMap, Action<BaseCardBuilder>> d = AfterDestructeActionDict;
             d.Add(FoodNameTypeMap.BigStove, AfterDestructeBigFire);
+            d.Add(FoodNameTypeMap.WoodenDisk, AfterDestructeWoodenDisk);
         }
 
         /// <summary>
@@ -153,7 +155,7 @@ public class CardBuilderManager
     /// <summary>
     /// 种植非二转大火后增值效果
     /// </summary>
-    public void AfterBuildBigFire(BaseCardBuilder builder)
+    private void AfterBuildBigFire(BaseCardBuilder builder)
     {
         if (builder.mShape < 2)
         {
@@ -164,7 +166,7 @@ public class CardBuilderManager
     /// <summary>
     /// 移除非二转大火后减值效果
     /// </summary>
-    public void AfterDestructeBigFire(BaseCardBuilder builder)
+    private void AfterDestructeBigFire(BaseCardBuilder builder)
     {
         if (builder.mShape < 2)
         {
@@ -177,15 +179,36 @@ public class CardBuilderManager
     /// </summary>
     /// <param name="icecreamBuilder"></param>
     /// <param name="nextBuilder"></param>
-    public void OnIceCreamTrySelectedOther(BaseCardBuilder icecreamBuilder, BaseCardBuilder nextBuilder)
+    private void OnIceCreamTrySelectedOther(BaseCardBuilder icecreamBuilder, BaseCardBuilder nextBuilder)
     {
         // 如果是通过点击其他卡槽离开这个状态，且该卡槽CD没有转好，则直接消耗掉冰淇淋并让该卡CD重置
         if (nextBuilder != null && !nextBuilder.IsColdDown() && icecreamBuilder != nextBuilder)
         {
-            icecreamBuilder.FullCD();
+            icecreamBuilder.Cost();
             nextBuilder.ResetCD();
             GameController.Instance.mCardController.CancelSelectCard();
         }
     }
 
+    /// <summary>
+    /// 种植木盘子后的增值效果
+    /// </summary>
+    private void AfterBuildWoodenDisk(BaseCardBuilder builder)
+    {
+        if (builder.mShape < 2)
+        {
+            builder.mCostDict["Fire"] = builder.mCostDict["Fire"] + 25f;
+        }
+    }
+
+    /// <summary>
+    /// 移除木盘子后减值效果
+    /// </summary>
+    private void AfterDestructeWoodenDisk(BaseCardBuilder builder)
+    {
+        if (builder.mShape < 2)
+        {
+            builder.mCostDict["Fire"] = builder.mCostDict["Fire"] - 25f;
+        }
+    }
 }

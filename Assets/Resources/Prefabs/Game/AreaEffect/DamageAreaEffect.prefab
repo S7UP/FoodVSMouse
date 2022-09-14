@@ -95,12 +95,19 @@ MonoBehaviour:
   resourcePath: 
   foodUnitList: []
   mouseUnitList: []
+  charcaterList: []
   isAlive: 1
-  creator: {fileID: 0}
-  damage: 0
+  isAffectFood: 0
+  isAffectMouse: 0
+  isAffectCharacter: 0
+  isIgnoreHeight: 0
+  affectHeight: 0
   currentRowIndex: 0
   offsetX: 0
   offsetY: 0
   colCount: 0
   rowCount: 0
   boxCollider2D: {fileID: 8542134293540550198}
+  creator: {fileID: 0}
+  damage: 0
+  actionType: 0

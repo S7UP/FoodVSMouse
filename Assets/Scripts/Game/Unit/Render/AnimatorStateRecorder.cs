@@ -47,7 +47,7 @@ public class AnimatorStateRecorder
 
     public void Update()
     {
-        if (!isPause && (!IsFinishOnce() || isCycle))
+        if (!animatorController.IsPause() && !isPause && (!IsFinishOnce() || isCycle))
             timer+=speed;
     }
 
@@ -74,6 +74,15 @@ public class AnimatorStateRecorder
     public float GetNormalizedTime()
     {
         return timer / aniTime;
+    }
+
+    /// <summary>
+    /// 设置播放百分比
+    /// </summary>
+    /// <param name="percent"></param>
+    public void SetNormalizedTime(float percent)
+    {
+        timer = aniTime * percent;
     }
 
     /// <summary>

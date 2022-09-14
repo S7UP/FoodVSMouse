@@ -134,7 +134,7 @@ public class FoodUnit : BaseUnit
     public void FlashWhenHited(CombatAction action)
     {
         // 当存在攻击来源时
-        if (action.Creator != null)
+        // if (action.Creator != null)
         {
             hitBox.OnHit();
         }
@@ -492,18 +492,19 @@ public class FoodUnit : BaseUnit
     public override void SetSpriteLocalPosition(Vector2 vector2)
     {
         spriteTrans.localPosition = vector2;
+        rankAnimator.transform.localPosition = -0.15f*Vector2.up + vector2;
     }
 
     /// <summary>
     /// 执行该单位回收事件
     /// </summary>
-    public override void ExcuteRecycle()
+    public override void ExecuteRecycle()
     {
         // 如果目标有其建造器，则走建造器的销毁流程，否则走默认回收流程
         if (mBuilder != null)
             mBuilder.Destructe(this);
         else
-            base.ExcuteRecycle();
+            base.ExecuteRecycle();
     }
 
     /// <summary>

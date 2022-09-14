@@ -54,6 +54,7 @@ public class EnemyHealSkillAbility : SkillAbility
 
     public override void OnMeetCloseSpellingCondition()
     {
+        base.OnMeetCloseSpellingCondition();
         // ¼ÓÑª£¡
         float add = (master as HealMouse).GetHealValue();
         foreach (var unit in GameController.Instance.GetEachEnemy())

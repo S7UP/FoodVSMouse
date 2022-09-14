@@ -110,7 +110,7 @@ public class CharacterController:IGameControllerMember
     {
         if (mCurrentCharacter != null)
         {
-            mCurrentCharacter.ExcuteRecycle();
+            mCurrentCharacter.ExecuteRecycle();
         }
     }
 

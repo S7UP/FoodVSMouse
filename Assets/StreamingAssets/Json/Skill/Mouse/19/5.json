@@ -1,0 +1,4 @@
+[
+{"name":"普通攻击","needEnergy":90.0,"startEnergy":90.0,"energyRegeneration":1.0,"skillType":0,"canActiveInDeathState":false},
+{"name":"投掷二哥","needEnergy":9999.0,"startEnergy":9999.0,"energyRegeneration":0.0,"skillType":1,"isExclusive":true,"canActiveInDeathState":false,"priority":1}
+]

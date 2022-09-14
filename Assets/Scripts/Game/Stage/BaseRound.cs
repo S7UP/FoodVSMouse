@@ -7,6 +7,12 @@ using UnityEngine;
 [Serializable]
 public class BaseRound
 {
+    public enum RoundMode
+    {
+        Fixed = 0, // 固定模式
+        HalfRandom = 1, // 半随机模式
+    }
+
     [System.Serializable]
     public class RoundInfo
     {
@@ -16,6 +22,9 @@ public class BaseRound
         public List<BaseEnemyGroup> baseEnemyGroupList; // 组
         public int interval; // 组与组之间的间隔
         public int endTime; // 结尾处等待时间
+        public RoundMode roundMode; // 当前轮刷怪模式
+        public bool isBossRound; // 是否为BOSS轮次
+        public List<BaseEnemyGroup> bossList; // BOSS列表
 
         /// <summary>
         /// 获取本轮总持续时间
@@ -29,6 +38,22 @@ public class BaseRound
                 t += item.GetTotalTimer();
             }
             return t;
+        }
+
+        /// <summary>
+        /// 获取本轮中的BOSS数量（包括子轮）
+        /// </summary>
+        /// <returns></returns>
+        public int GetBossCount()
+        {
+            int count = 0;
+            foreach (var item in roundInfoList)
+            {
+                count += item.GetBossCount();
+            }
+            if (isBossRound && bossList != null)
+                count += bossList.Count;
+            return count;
         }
     }
 
@@ -61,44 +86,81 @@ public class BaseRound
     // 使用协程执行本轮的出怪逻辑
     public IEnumerator Execute()
     {
+        // 设置行偏移量
+        if (mRoundInfo.roundMode.Equals(RoundMode.Fixed))
+            GameController.Instance.mCurrentStage.PushZeroToRowOffsetStack();
+        else if(mRoundInfo.roundMode.Equals(RoundMode.HalfRandom))
+            GameController.Instance.mCurrentStage.PushRandomToRowOffsetStack();
+
         // 先执行自己的刷怪组的内容
-        Debug.Log("当前轮为："+mRoundInfo.name+"，开始刷怪！");
-        for (int i = 0; i < mRoundInfo.baseEnemyGroupList.Count; i++)
+        if (mRoundInfo.isBossRound)
         {
-            // 获取当前组
-            mCurrentEnemyGroup = mRoundInfo.baseEnemyGroupList[i];
-            // 获取最终实际刷怪位置表
-            BaseEnemyGroup.RealEnemyList realEnemyList = mCurrentEnemyGroup.TransFormToRealEnemyGroup();
-            // 通知GameController刷怪啦
-            CreateEnemies(realEnemyList);
+            // 如果是BOSS轮次
+            Debug.Log("当前轮为BOSS轮次，轮：" + mRoundInfo.name + "，开始刷怪！");
+            for (int i = 0; i < mRoundInfo.bossList.Count; i++)
+            {
+                // 获取当前组
+                mCurrentEnemyGroup = mRoundInfo.bossList[i];
+                // 获取最终实际刷怪位置表
+                BaseEnemyGroup.RealEnemyList realEnemyList = mCurrentEnemyGroup.TransFormToRealEnemyGroup();
+                // 通知GameController刷怪啦
+                CreateBoss(realEnemyList, mCurrentEnemyGroup.mHp);
+                // 没有间隔，BOSS是同时刷新的
+            }
 
-            // 间隔若干帧后刷新下一组
-            yield return GameController.Instance.mCurrentStage.StartCoroutine(GameController.Instance.mCurrentStage.WaitForIEnumerator(mRoundInfo.interval));
-            //yield return GameController.Instance.Wait(mRoundInfo.interval);
+            // 执行完后执行自身子轮的刷怪组内容
+            // 在BOSS轮次中，子轮先顺序执行一遍之后无限循环子轮的最后一个小轮直至BOSS死亡
+            if (mRoundList.Count > 0)
+            {
+                int j = 0;
+                while (GameController.Instance.IsHasBoss())
+                {
+                    BaseRound round = mRoundList[j];
+                    yield return GameController.Instance.mCurrentStage.StartCoroutine(round.Execute());
+                    if (j < mRoundList.Count - 1)
+                        j++;
+                }
+            }
+            else
+            {
+                // 如果没有定义小轮，则改为每秒检测一次BOSS是否存在，不存在则进入下一阶段
+                while (GameController.Instance.IsHasBoss())
+                {
+                    yield return GameController.Instance.mCurrentStage.StartCoroutine(GameController.Instance.mCurrentStage.WaitForIEnumerator(60));
+                }
+            }
+
         }
-
-        //int waitTime = 0;
-        //for (int i = 0; i < mRoundInfo.endTime; i++)
-        //{
-        //    waitTime++;
-        //    yield return null;
-        //}
-        
-
-        // 执行完后执行自身子轮的刷怪组内容
-        for (int i = 0; i < mRoundList.Count; i++)
+        else
         {
-            BaseRound round = mRoundList[i];
-            //yield return GameController.Instance.StartCoroutine(round.Execute());
-            yield return GameController.Instance.mCurrentStage.StartCoroutine(round.Execute());
+            // 小怪轮次
+            Debug.Log("当前轮为：" + mRoundInfo.name + "，开始刷怪！");
+            for (int i = 0; i < mRoundInfo.baseEnemyGroupList.Count; i++)
+            {
+                // 获取当前组
+                mCurrentEnemyGroup = mRoundInfo.baseEnemyGroupList[i];
+                // 获取最终实际刷怪位置表
+                BaseEnemyGroup.RealEnemyList realEnemyList = mCurrentEnemyGroup.TransFormToRealEnemyGroup();
+                // 通知GameController刷怪啦
+                CreateEnemies(realEnemyList);
+
+                // 间隔若干帧后刷新下一组
+                yield return GameController.Instance.mCurrentStage.StartCoroutine(GameController.Instance.mCurrentStage.WaitForIEnumerator(mRoundInfo.interval));
+            }
+
+            // 执行完后执行自身子轮的刷怪组内容
+            for (int i = 0; i < mRoundList.Count; i++)
+            {
+                BaseRound round = mRoundList[i];
+                yield return GameController.Instance.mCurrentStage.StartCoroutine(round.Execute());
+            }
         }
 
         yield return GameController.Instance.mCurrentStage.StartCoroutine(GameController.Instance.mCurrentStage.WaitForIEnumerator(mRoundInfo.endTime));
 
-        Debug.Log("本轮刷怪完成！");
+        GameController.Instance.mCurrentStage.PopRowOffsetStack();
 
-        //Debug.Log("本轮已结束，waitTime="+waitTime);
-        //currentEnumerator = null;
+        Debug.Log("本轮刷怪完成！");
     }
 
     /// <summary>
@@ -109,6 +171,20 @@ public class BaseRound
         for (int i = 0; i < realEnemyList.GetSize(); i++)
         {
             GameController.Instance.CreateMouseUnit(realEnemyList.Get(i), realEnemyList.enemyInfo);
+        }
+    }
+
+    /// <summary>
+    /// 根据实际刷怪位置表来刷BOSS
+    /// </summary>
+    /// <param name="realEnemyList"></param>
+    private void CreateBoss(BaseEnemyGroup.RealEnemyList realEnemyList, float hp)
+    {
+        for (int i = 0; i < realEnemyList.GetSize(); i++)
+        {
+            // GameController.Instance.CreateMouseUnit(realEnemyList.Get(i), realEnemyList.enemyInfo);
+            BossUnit b = GameController.Instance.CreateBossUnit(realEnemyList.Get(i), realEnemyList.enemyInfo, hp, -1);
+            
         }
     }
 

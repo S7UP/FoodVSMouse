@@ -6,6 +6,7 @@ public class MouseManager
 {
     private static Dictionary<MouseNameTypeMap, string> mouseTypeNameDict = new Dictionary<MouseNameTypeMap, string>() {
         { MouseNameTypeMap.NormalMouse, "基础鼠兵"},
+        { MouseNameTypeMap.StraddleMouse, "滑板类" },
         { MouseNameTypeMap.KangarooMouse, "袋鼠类"},
     //  { MouseNameTypeMap.DoorMouse, "正面防御类"},
         { MouseNameTypeMap.LadderMouse, "梯子类"},
@@ -15,12 +16,12 @@ public class MouseManager
         { MouseNameTypeMap.FlySelfDestructMouse, "空中自爆型"},
         { MouseNameTypeMap.AerialBombardmentMouse, "空中投弹型"},
         { MouseNameTypeMap.AirTransportMouse, "空中航母" },
-    //{ MouseNameTypeMap.NormalWaterMouse, "基础水军"},
-    //{ MouseNameTypeMap.SubmarineMouse, "潜水艇类"},
-    //{ MouseNameTypeMap.RowboatMouse, "划艇类"},
+        { MouseNameTypeMap.NormalWaterMouse, "基础水军"},
+        { MouseNameTypeMap.SubmarineMouse, "潜水艇类"},
+        { MouseNameTypeMap.RowboatMouse, "划艇类"},
     //{ MouseNameTypeMap.PounceMouse, "突袭类"},
         { MouseNameTypeMap.CatapultMouse, "投石车类"},
-    //{ MouseNameTypeMap.Mole, "鼹鼠类"},
+        { MouseNameTypeMap.Mole, "鼹鼠类"},
         { MouseNameTypeMap.PenguinMouse, "企鹅类"},
         { MouseNameTypeMap.ArsonMouse,  "纵火类"},
         { MouseNameTypeMap.PandaMouse, "熊猫类"},
@@ -41,11 +42,21 @@ public class MouseManager
         // 普通老鼠
         { MouseNameTypeMap.NormalMouse, new Dictionary<int, string>(){
             { 0, "平民鼠"},
+            { 1, "球迷鼠"},
+            { 2, "铁锅鼠"},
             { 3, "黄瓜平民鼠"},
+            { 4, "苹果球迷鼠"},
+            { 5, "煎蛋铁锅鼠"},
             { 6, "机械平民鼠"},
             { 7, "机械球迷鼠"},
             { 8, "机械铁锅鼠"},
             { 9, "滑轮鼠"},
+        }},
+        // 滑板鼠
+        { MouseNameTypeMap.StraddleMouse, new Dictionary<int, string>(){
+            { 0, "滑板鼠"},
+            { 1, "橘子滑板鼠"},
+            { 2, "机械滑板鼠"},
         }},
         // 跳跳鼠
         { MouseNameTypeMap.KangarooMouse, new Dictionary<int, string>(){
@@ -90,6 +101,37 @@ public class MouseManager
         { MouseNameTypeMap.AirTransportMouse, new Dictionary<int, string>(){
             { 0, "空中航母"},
         }},
+        // 基础水军
+        { MouseNameTypeMap.NormalWaterMouse, new Dictionary<int, string>(){
+            { 0, "纸船鼠"},
+        }},
+        // 潜水艇
+        { MouseNameTypeMap.SubmarineMouse, new Dictionary<int, string>(){
+            { 0, "潜水艇鼠"},
+            { 1, "打手潜水艇鼠"},
+            { 2, "拳皇拳击鼠"},
+            { 3, "僵尸潜水艇鼠"},
+            { 4, "僵尸打手潜水艇鼠"},
+            { 5, "僵尸拳皇拳击鼠"},
+        }},
+        // 划艇类
+        { MouseNameTypeMap.RowboatMouse, new Dictionary<int, string>(){
+            { 0, "划艇鼠"},
+            { 1, "龙舟鼠"},
+            { 2, "旗舰鼠"},
+            { 3, "僵尸划艇鼠"},
+            { 4, "僵尸龙舟鼠"},
+            { 5, "僵尸旗舰鼠"},
+        }},
+        // 鼹鼠
+        { MouseNameTypeMap.Mole, new Dictionary<int, string>(){
+            { 0, "鼹鼠"},
+            { 1, "牙医鼠"},
+            { 2, "锯刀狂鼠"},
+            { 3, "僵尸鼹鼠"},
+            { 4, "僵尸牙医鼠"},
+            { 5, "僵尸锯刀狂鼠"},
+        }},
         // 投石车类
         { MouseNameTypeMap.CatapultMouse, new Dictionary<int, string>(){
             { 0, "工程车鼠"},
@@ -111,6 +153,9 @@ public class MouseManager
             { 0, "熊猫鼠"},
             { 1, "摔角手鼠"},
             { 2, "特种兵鼠"},
+            { 3, "僵尸熊猫鼠"},
+            { 4, "僵尸摔角手鼠"},
+            { 5, "僵尸特种兵鼠"},
         }},
         // 魔镜类
         { MouseNameTypeMap.MagicMirrorMouse, new Dictionary<int, string>(){
@@ -133,6 +178,9 @@ public class MouseManager
             { 0, "熊猫鼠随从"},
             { 1, "摔角手鼠随从"},
             { 2, "特种兵鼠随从"},
+            { 3, "僵尸熊猫鼠随从"},
+            { 4, "僵尸摔角手鼠随从"},
+            { 5, "僵尸特种兵鼠随从"},
         }},
         // 蜗牛车鼠
         { MouseNameTypeMap.SnailMouse, new Dictionary<int, string>(){

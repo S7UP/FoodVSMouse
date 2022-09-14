@@ -23,10 +23,10 @@ public class IceSpoonCrossbowGun : BaseWeapons
     {
         // 单行索敌
         List<BaseUnit> list = new List<BaseUnit>();
-        // 筛选出高度为0的单位
+        // 筛选出高度为0的可选取单位
         foreach (var item in GameController.Instance.GetSpecificRowEnemyList(GetRowIndex()))
         {
-            if (item.GetHeight() == 0)
+            if (item.GetHeight() == 0 && item.CanBeSelectedAsTarget())
                 list.Add(item);
         }
         if (list.Count > 0)
@@ -38,10 +38,10 @@ public class IceSpoonCrossbowGun : BaseWeapons
                 {
                     flag = true;
                     target = item;
+                    SearchTargetPosition();
                     break;
                 }
             }
-            SearchTargetPosition();
             return flag;
         }
         return false;
@@ -80,10 +80,10 @@ public class IceSpoonCrossbowGun : BaseWeapons
     public void SearchTargetPosition()
     {
         List<BaseUnit> list = new List<BaseUnit>();
-        // 筛选出高度为0的单位
+        // 筛选出高度为0的可选取单位
         foreach (var item in GameController.Instance.GetSpecificRowEnemyList(GetRowIndex()))
         {
-            if (item.GetHeight() == 0)
+            if (item.GetHeight() == 0 && item.CanBeSelectedAsTarget())
                 list.Add(item);
         }
         if (list.Count <= 0)

@@ -1,0 +1,5 @@
+[{"name":"黄油加速带","needEnergy":1.0,"startEnergy":0.0,"energyRegeneration":0.0,"skillType":1,"isExclusive":true,"canActiveInDeathState":false,"priority":9},
+{"name":"到站下车","needEnergy":1.0,"startEnergy":0.0,"energyRegeneration":0.0,"skillType":1,"isExclusive":true,"canActiveInDeathState":false,"priority":8},
+{"name":"定时炸弹","needEnergy":1.0,"startEnergy":0.0,"energyRegeneration":0.0,"skillType":1,"isExclusive":true,"canActiveInDeathState":false,"priority":7},
+{"name":"定轨移动","needEnergy":1.0,"startEnergy":0.0,"energyRegeneration":0.0,"skillType":1,"isExclusive":true,"canActiveInDeathState":false,"priority":10},
+{"name":"超音速火车头","needEnergy":1.0,"startEnergy":0.0,"energyRegeneration":0.0,"skillType":1,"isExclusive":true,"canActiveInDeathState":false,"priority":10}]

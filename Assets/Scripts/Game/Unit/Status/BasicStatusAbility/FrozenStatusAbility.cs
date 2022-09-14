@@ -5,13 +5,15 @@ using UnityEngine;
 /// </summary>
 public class FrozenStatusAbility : StatusAbility
 {
-    private FrozenState frozenState;
-    private BoolModifier boolModifier;
+    // private FrozenState frozenState;
+    // private BoolModifier boolModifier;
     private BoolModifier frozenBoolModifier;
+    private StunStatusAbility stunStatusAbility; // 晕眩效果
+    private bool isForce = false; // 是否强制生效（无视免疫效果
 
-    public FrozenStatusAbility(BaseUnit pmaster, float time) : base(pmaster, time)
+    public FrozenStatusAbility(BaseUnit pmaster, float time, bool isForce) : base(pmaster, time)
     {
-
+        this.isForce = isForce;
     }
 
     /// <summary>
@@ -20,14 +22,14 @@ public class FrozenStatusAbility : StatusAbility
     public override void BeforeEffect()
     {
         // 检查是否免疫冻结
-        if (master.NumericBox.GetBoolNumericValue(StringManager.IgnoreFrozen))
+        if (!isForce && (master.NumericBox.GetBoolNumericValue(StringManager.IgnoreFrozen) || master.NumericBox.GetBoolNumericValue(StringManager.IgnoreStun)))
         {
             ClearLeftTime();
             SetEffectEnable(false);
         }
         else
         {
-            OnEnableEffect();
+            SetEffectEnable(true);
         }
     }
 
@@ -37,21 +39,24 @@ public class FrozenStatusAbility : StatusAbility
     /// </summary>
     public override void OnDisableEffect()
     {
+
         if (frozenBoolModifier != null)
         {
             master.NumericBox.RemoveDecideModifierToBoolDict(StringManager.Frozen, frozenBoolModifier);
             frozenBoolModifier = null;
         }
-        if (frozenState != null)
-        {
-            frozenState.TryExitCurrentState();
-            frozenState = null;
-        }
-        if (boolModifier != null)
-        {
-            master.RemoveDisAbleSkillModifier(boolModifier);
-            boolModifier = null;
-        }
+        // 移除晕眩效果
+        master.RemoveNoCountUniqueStatusAbility(StringManager.Stun);
+        //if (frozenState != null)
+        //{
+        //    frozenState.TryExitCurrentState();
+        //    frozenState = null;
+        //}
+        //if (boolModifier != null)
+        //{
+        //    master.RemoveDisAbleSkillModifier(boolModifier);
+        //    boolModifier = null;
+        //}
     }
 
     /// <summary>
@@ -65,15 +70,24 @@ public class FrozenStatusAbility : StatusAbility
             frozenBoolModifier = new BoolModifier(true);
             master.NumericBox.AddDecideModifierToBoolDict(StringManager.Frozen, frozenBoolModifier);
         }
-
-        // 目标动作状态转化为冻结状态
-        if (frozenState == null)
+        // 为目标施加晕眩效果
+        if (stunStatusAbility == null)
+            stunStatusAbility = new StunStatusAbility(master, leftTime, isForce);
+        else
         {
-            frozenState = new FrozenState(master, master.mCurrentActionState);
-            master.SetActionState(frozenState);
+            stunStatusAbility.leftTime = Mathf.Max(stunStatusAbility.leftTime, this.leftTime);
+            stunStatusAbility.totalTime = (stunStatusAbility.totalTime.baseValue > this.totalTime.baseValue ? stunStatusAbility.totalTime : this.totalTime);
         }
-        if (boolModifier == null)
-            boolModifier = master.AddDisAbleSkillModifier();
+        master.AddNoCountUniqueStatusAbility(StringManager.Stun, stunStatusAbility);
+
+        //// 目标动作状态转化为冻结状态
+        //if (frozenState == null)
+        //{
+        //    frozenState = new FrozenState(master, master.mCurrentActionState);
+        //    master.SetActionState(frozenState);
+        //}
+        //if (boolModifier == null)
+        //    boolModifier = master.AddDisAbleSkillModifier();
         // 添加变色效果
         master.SetFrozeSlowEffectEnable(true);
     }
@@ -109,7 +123,7 @@ public class FrozenStatusAbility : StatusAbility
     /// </summary>
     public override void AfterEffect()
     {
-        OnDisableEffect();
+        SetEffectEnable(false);
         // 此效果结束后，如果目标身上已经没有冰冻类减益效果，则移除目标的变色效果
         if (!TagsManager.IsUnitFrozen(master))
         {

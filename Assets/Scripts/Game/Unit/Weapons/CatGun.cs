@@ -18,8 +18,11 @@ public class CatGun : BaseWeapons
     public override bool IsHasTarget()
     {
         List<BaseUnit>[] list = GameController.Instance.GetEnemyList();
-        if (list[GetRowIndex()].Count > 0)
-            return true;
+        foreach (var m in list[GetRowIndex()])
+        {
+            if (m.CanBeSelectedAsTarget())
+                return true;
+        }
         return false;
     }
 

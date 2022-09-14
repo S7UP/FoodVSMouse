@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 
 using UnityEngine;
@@ -48,6 +47,8 @@ public class GameController : MonoBehaviour
 
     private int mFrameNum; //+ 当前游戏帧
     public bool isPause;
+    public bool isEnableNoTargetAttackMode{ get { return IsEnableNoTargetAttackModeNumeric.Value; } } // 是否开启无目标的攻击模式
+    private BoolNumeric IsEnableNoTargetAttackModeNumeric = new BoolNumeric();
 
     // 所有需要放到GameController管理Init、Update的东西
     protected List<IGameControllerMember> MMemberList;
@@ -211,6 +212,7 @@ public class GameController : MonoBehaviour
     {
         //StopAllCoroutines(); // 停用全部协程
 
+        RecycleAndDestoryAllInstance();
         // 当前关卡对象创建
         if (mCurrentStage != null)
             Destroy(mCurrentStage);
@@ -223,8 +225,9 @@ public class GameController : MonoBehaviour
         // 自身变量初始化
         mFrameNum = 0;
         isPause = false;
+        IsEnableNoTargetAttackModeNumeric.Initialize();
 
-        RecycleAndDestoryAllInstance();
+        
 
         // 自身携带控制器初始化（要写到初始化的最后，不建议后面再加其他初始化）
         foreach (IGameControllerMember member in MMemberList)
@@ -356,7 +359,6 @@ public class GameController : MonoBehaviour
     /// <returns></returns>
     public MouseUnit CreateMouseUnit(int xIndex, int yIndex, BaseEnemyGroup.EnemyInfo enemyInfo)
     {
-        //SetMouseAttribute(JsonManager.Load<MouseUnit.Attribute>("Mouse/"+enemyInfo.type+"/"+enemyInfo.shape+"")); // 准备先持有要创建实例的初始化信息\
         SetMouseAttribute(GameManager.Instance.attributeManager.GetMouseUnitAttribute(enemyInfo.type, enemyInfo.shape));
         MouseUnit mouse = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Mouse/"+enemyInfo.type).GetComponent<MouseUnit>();
         mouse.transform.SetParent(enemyListGo[yIndex].transform);
@@ -367,6 +369,36 @@ public class GameController : MonoBehaviour
         mouse.UpdateRenderLayer(mEnemyList[yIndex].Count);
         mEnemyList[yIndex].Add(mouse);
         return mouse;
+    }
+
+    /// <summary>
+    /// 产生BOSS单位
+    /// </summary>
+    /// <param name="xIndex">格子横坐标</param>
+    /// <param name="yIndex">格子纵坐标</param>
+    /// <param name="enemyInfo">BOSS种类与形态编号信息表，即决定要产生什么BOSS</param>
+    /// <returns></returns>
+    public BossUnit CreateBossUnit(int firstColumn, int firstRow, BaseEnemyGroup.EnemyInfo enemyInfo, float hp, int barNumber)
+    {
+        SetMouseAttribute(GameManager.Instance.attributeManager.GetBossUnitAttribute(enemyInfo.type, enemyInfo.shape));
+        BossUnit boss = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Boss/" + enemyInfo.type + "/" + enemyInfo.shape).GetComponent<BossUnit>();
+        boss.transform.SetParent(enemyListGo[firstRow].transform);
+        boss.MInit();
+        boss.SetMaxHpAndCurrentHp(hp);
+        boss.LoadSeedDict(); // 读取BOSS的种子表
+        boss.SetRandSeedByRowIndex(firstRow); // 设置BOSS的种子生成器
+        boss.transform.position = MapManager.GetGridLocalPosition(firstColumn, firstRow) + new Vector3(Vector2.right.x * MapManager.gridWidth, Vector2.right.y * MapManager.gridHeight) / 2;
+        boss.currentXIndex = firstColumn;
+        boss.currentYIndex = firstRow;
+        boss.UpdateRenderLayer(mEnemyList[firstRow].Count);
+        mEnemyList[firstRow].Add(boss);
+        mProgressController.SetBossHpBarTarget(boss, barNumber); // 将BOSS与血条绑定
+        return boss;
+    }
+
+    public BossUnit CreateBossUnit(int firstRow, BaseEnemyGroup.EnemyInfo enemyInfo, float hp, int barNumber)
+    {
+        return CreateBossUnit(8, firstRow, enemyInfo, hp, barNumber);
     }
 
     /// <summary>
@@ -546,31 +578,6 @@ public class GameController : MonoBehaviour
     }
 
     /// <summary>
-    /// 在GameController协程中，产生一个等待若干帧的指令
-    /// </summary>
-    /// <param name="time"></param>
-    public Coroutine Wait(int time)
-    {
-        //mCurrentWaitIEnumerator = WaitForIEnumerator(time);
-        //return StartCoroutine(mCurrentWaitIEnumerator);
-        return mCurrentStage.StartCoroutine(mCurrentStage.WaitForIEnumerator(time));
-    }
-
-    /// <summary>
-    /// 在GameController协程中，产生一个等待若干帧的IEnumerator
-    /// </summary>
-    /// <returns></returns>
-    public IEnumerator WaitForIEnumerator(int time)
-    {
-        for (int i = 0; i < time; i++)
-        {
-            if (isPause)
-                i--;
-            yield return null;
-        }
-    }
-
-    /// <summary>
     /// 获取当前关卡进行帧
     /// </summary>
     public int GetCurrentStageFrame()
@@ -719,7 +726,7 @@ public class GameController : MonoBehaviour
         {
             foreach (var item in mEnemyList[i])
             {
-                item.ExcuteRecycle();
+                item.ExecuteRecycle();
             }
             mEnemyList[i].Clear();
         }
@@ -735,7 +742,7 @@ public class GameController : MonoBehaviour
         {
             foreach (var item in mAllyList[i])
             {
-                item.ExcuteRecycle();
+                item.ExecuteRecycle();
             }
             mAllyList[i].Clear();
         }
@@ -789,6 +796,23 @@ public class GameController : MonoBehaviour
         taskerList.Clear();
     }
 
+    /// <summary>
+    /// 是否还存在BOSS在场上
+    /// </summary>
+    /// <returns></returns>
+    public bool IsHasBoss()
+    {
+        for (int i = 0; i < mEnemyList.Length; i++)
+        {
+            foreach (var item in mEnemyList[i])
+            {
+                if (item is BossUnit)
+                    return true;
+            }
+        }
+        return false;
+    }
+
     //public NumberManager GetNumberManager()
     //{
     //    return numberManager;
@@ -805,18 +829,12 @@ public class GameController : MonoBehaviour
             }
             return;
         }
-            
 
-        mFrameNum ++; // 先更新游戏帧，以保证Update里面与协程接收到的帧是相同的
-        
-        // mCurrentStage.Update();
+        mFrameNum++; // 先更新游戏帧，以保证Update里面与协程接收到的帧是相同的
 
         // test
-        //if (Input.GetKeyDown(KeyCode.Alpha1))
-        //{
-        //    GameNormalPanel gameNormalPanel = (GameNormalPanel)GameManager.Instance.uiManager.mUIFacade.currentScenePanelDict[StringManager.GameNormalPanel];
-        //    gameNormalPanel.OnShovelSlotTrigger();
-        //}
+        //if (mFrameNum == 2)
+        //    CreateBossUnit(new BaseEnemyGroup.EnemyInfo() { type=20, shape=0 }, 3);
 
         // 各种组件的Update()
         foreach (IGameControllerMember member in MMemberList)
@@ -930,7 +948,7 @@ public class GameController : MonoBehaviour
 
         // 特效帧逻辑
         {
-            
+
             for (int i = 0; i < baseEffectList.Count; i++)
             {
                 BaseEffect unit = baseEffectList[i];
@@ -963,9 +981,14 @@ public class GameController : MonoBehaviour
             }
         }
 
-        // 胜利判定（当前道中已完成且场上不存在敌人）
-        if(mProgressController.IsPathEnd() && !IsHasEnemyInScene())
+        if (mCurrentStage.isWinWhenClearAllBoss && mCurrentStage.bossLeft <= 0)
         {
+            // 胜利判定（消灭了最终BOSS）
+            Win();
+        }
+        else if(mProgressController.IsPathEnd() && !IsHasEnemyInScene())
+        {
+            // 胜利判定（当前道中已完成且场上不存在敌人）
             Win();
         }else if (mProgressController.IsTimeOut())
         {
@@ -1022,5 +1045,40 @@ public class GameController : MonoBehaviour
                 });
             }
         }
+    }
+
+
+    /// <summary>
+    /// 检测某行能否触发攻击（用于友方射手攻击判定）
+    /// </summary>
+    /// <returns></returns>
+    public bool CheckRowCanAttack(int rowIndex)
+    {
+        if (isEnableNoTargetAttackMode)
+            return true;
+        foreach (var m in GetSpecificRowEnemyList(rowIndex))
+        {
+            if (m.CanBeSelectedAsTarget())
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// 添加无目标也能攻击的tag
+    /// </summary>
+    /// <param name="boolModifier"></param>
+    public void AddNoTargetAttackModeModifier(BoolModifier boolModifier)
+    {
+        IsEnableNoTargetAttackModeNumeric.AddDecideModifier(boolModifier);
+    }
+
+    /// <summary>
+    /// 移除无目标也能攻击的tag
+    /// </summary>
+    /// <param name="boolModifier"></param>
+    public void RemoveNoTargetAttackModeModifier(BoolModifier boolModifier)
+    {
+        IsEnableNoTargetAttackModeNumeric.RemoveDecideModifier(boolModifier);
     }
 }

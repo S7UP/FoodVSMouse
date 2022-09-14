@@ -102,13 +102,15 @@ MonoBehaviour:
   mName: 
   mType: 0
   mShape: 0
+  typeAndShapeValue: 0
   currentStateTimer: 0
   rigibody2D: {fileID: 0}
-  mCollider2D: {fileID: 0}
+  mBoxCollider2D: {fileID: 0}
   spriteTrans: {fileID: 0}
   mHertIndex: 0
   currentXIndex: 0
   currentYIndex: 0
+  isBoss: 0
 --- !u!1 &7911401160402135796
 GameObject:
   m_ObjectHideFlags: 0
@@ -202,7 +204,7 @@ Animator:
   m_GameObject: {fileID: 7911401160402135796}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: b9819081e8bfd3946b47653efc1d239e, type: 2}
+  m_Controller: {fileID: 9100000, guid: c25f2ec8376d4b447b5a6c0d6bbd8af6, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0

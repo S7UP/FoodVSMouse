@@ -173,10 +173,10 @@ public class MouseUnit : BaseUnit
     public override void OnGeneralAttack()
     {
         // 切换时的第一帧直接不执行update()，因为下述的info.normalizedTime的值还停留在上一个状态，逻辑会出问题！
-        if (currentStateTimer <= 0)
-        {
-            return;
-        }
+        //if (currentStateTimer <= 0)
+        //{
+        //    return;
+        //}
         // 伤害判定帧应当执行判定
         if (IsDamageJudgment())
         {
@@ -214,7 +214,17 @@ public class MouseUnit : BaseUnit
     /// <returns></returns>
     public virtual bool IsHasTarget()
     {
-        return (isBlock && mBlockUnit.IsAlive());
+        if(isBlock && mBlockUnit.IsAlive())
+        {
+            // 若目标依附于格子，则将目标切换为目标所在格的最高攻击优先级目标
+            BaseGrid g = mBlockUnit.GetGrid();
+            if (g != null)
+            {
+                mBlockUnit = g.GetHighestAttackPriorityUnit();
+            }
+            return true;
+        }
+        return false;
     }
 
     /// <summary>
@@ -231,8 +241,10 @@ public class MouseUnit : BaseUnit
     /// </summary>
     protected virtual void UpdateBlockState()
     {
-        if (mBlockUnit != null && mBlockUnit.IsAlive())
+        if (mBlockUnit != null && mBlockUnit.IsAlive() && mBlockUnit.CanBeSelectedAsTarget())
+        {
             isBlock = true;
+        }
         else
             SetNoCollideAllyUnit();
     }
@@ -264,10 +276,12 @@ public class MouseUnit : BaseUnit
             TakeDamage(GetCurrentTarget());
     }
 
-    // 以下为 IBaseStateImplementor 接口的方法实现
+
     public override void OnIdleState()
     {
         UpdateBlockState();
+        if (!isBlock)
+            SetActionState(new MoveState(this));
     }
 
     public override void OnMoveState()
@@ -303,7 +317,7 @@ public class MouseUnit : BaseUnit
     /// <summary>
     /// 当受伤或者被治疗时，更新单位贴图状态
     /// </summary>
-    protected virtual void UpdateHertMap()
+    public virtual void UpdateHertMap()
     {
         // 要是死了的话就免了吧
         if (isDeathState)
@@ -352,7 +366,7 @@ public class MouseUnit : BaseUnit
     public void FlashWhenHited(CombatAction action)
     {
         // 当存在攻击来源时
-        if (action.Creator != null)
+        // if (action.Creator != null)
         {
             hitBox.OnHit();
         }
@@ -422,6 +436,22 @@ public class MouseUnit : BaseUnit
     }
 
     /// <summary>
+    /// 当友方单位离开时
+    /// </summary>
+    /// <param name="collision"></param>
+    public virtual void OnAllyTriggerExit(Collider2D collision)
+    {
+        if (collision.tag.Equals("Food") || collision.tag.Equals("Character"))
+        {
+            BaseUnit unit = collision.GetComponent<BaseUnit>();
+            if (mBlockUnit == unit)
+            {
+                SetNoCollideAllyUnit();
+            }
+        }
+    }
+
+    /// <summary>
     /// 当与子弹单位发生刚体碰撞判定时
     /// </summary>
     public virtual void OnBulletCollision(BaseBullet bullet)
@@ -444,14 +474,7 @@ public class MouseUnit : BaseUnit
 
     public virtual void OnTriggerExit2D(Collider2D collision)
     {
-        if (collision.tag.Equals("Food") || collision.tag.Equals("Character"))
-        {
-            BaseUnit unit = collision.GetComponent<BaseUnit>();
-            if (mBlockUnit == unit)
-            {
-                SetNoCollideAllyUnit();
-            }
-        }
+        OnAllyTriggerExit(collision);
     }
 
     public override void MUpdate()
@@ -473,10 +496,28 @@ public class MouseUnit : BaseUnit
             spriteRenderer.material.SetFloat("_FlashRate", 0.5f * hitBox.GetPercent());
         }
         // 进家判定
-        if(transform.position.x < MapManager.GetColumnX(-1) - 0.5f * MapManager.gridWidth)
+        if(CanTriggerLoseWhenEnterLoseLine() && transform.position.x < MapManager.GetColumnX(-1) - 0.5f * MapManager.gridWidth)
         {
             GameController.Instance.Lose();
         }
+        else
+        {
+            // 出屏判定
+            if (IsOutOfBound())
+            {
+                DeathEvent();
+            }
+        }
+
+    }
+
+    /// <summary>
+    /// 是否出屏判定
+    /// </summary>
+    /// <returns></returns>
+    public virtual bool IsOutOfBound()
+    {
+        return GetColumnIndex() > MapController.xColumn + 2;
     }
 
     /// <summary>
@@ -787,5 +828,23 @@ public class MouseUnit : BaseUnit
         }
         else
             return 1;
+    }
+
+    /// <summary>
+    /// 在与猫判定时是否能触发猫
+    /// </summary>
+    /// <returns></returns>
+    public virtual bool CanTriggerCat()
+    {
+        return true;
+    }
+
+    /// <summary>
+    /// 在越过失败判定线后是否会触发游戏失败判定
+    /// </summary>
+    /// <returns></returns>
+    public virtual bool CanTriggerLoseWhenEnterLoseLine()
+    {
+        return true;
     }
 }
