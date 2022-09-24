@@ -132,8 +132,8 @@ public class Map_CuminBidge : ChapterMap
         // 1¡¢7Â·
         for (int i = 0; i < 9; i++)
         {
-            GetGrid(i, 0).ChangeMainGridState(new WaterGridState(GetGrid(i, 0)));
-            GetGrid(i, 6).ChangeMainGridState(new WaterGridState(GetGrid(i, 6)));
+            GetGrid(i, 0).AddGridType(GridType.Water, BaseGridType.GetInstance(GridType.Water, 0));
+            GetGrid(i, 6).AddGridType(GridType.Water, BaseGridType.GetInstance(GridType.Water, 0));
         }
     }
 

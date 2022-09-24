@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using System;
 using UnityEngine;
 using UnityEngine.UI;
+using static UnityEditor.ObjectChangeEventStream;
+using static UnityEngine.UI.CanvasScaler;
 
 /// <summary>
 /// 卡片建造器，其绑定者为游戏画面上的卡槽UI
@@ -17,6 +19,13 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
         {FoodNameTypeMap.WoodenDisk, FoodInGridType.WaterVehicle }, // 木盘子
         {FoodNameTypeMap.CottonCandy, FoodInGridType.FloatVehicle }, // 棉花糖
         {FoodNameTypeMap.MelonShield, FoodInGridType.Shield }, // 瓜皮
+        {FoodNameTypeMap.PokerShield, FoodInGridType.Shield }, // 扑克护罩
+        {FoodNameTypeMap.WineBottleBoom, FoodInGridType.Bomb }, // 酒瓶
+        {FoodNameTypeMap.CokeBoom, FoodInGridType.Bomb }, // 可乐
+        {FoodNameTypeMap.WiskyBoom, FoodInGridType.Bomb }, // 威士忌
+        {FoodNameTypeMap.IceBucket, FoodInGridType.Bomb },  // 冰桶
+        {FoodNameTypeMap.BoiledWaterBoom, FoodInGridType.Bomb }, // 开水
+        {FoodNameTypeMap.MushroomDestroyer, FoodInGridType.Bomb }, // 炸炸菇
     };
 
     // 需要本地存储的变量
@@ -136,6 +145,9 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
     private List<Action<BaseCardBuilder>> BeforeDestructeCardListener = new List<Action<BaseCardBuilder>>(); // 在销毁卡片实体前的事件监听
     private List<Action<BaseCardBuilder>> AfterDestructeCardListener = new List<Action<BaseCardBuilder>>(); // 在销毁卡片实体后的事件监听
 
+    // 能否在格子上建造监听器
+    private List<Func<BaseGrid, bool>> CanConstructeInGridListener = new List<Func<BaseGrid, bool>>();
+
     /// <summary>
     /// 初始化
     /// </summary>
@@ -166,6 +178,8 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
         AfterBuildCardListener.Clear();
         BeforeDestructeCardListener.Clear();
         AfterDestructeCardListener.Clear();
+
+        CanConstructeInGridListener.Clear();
     }
 
     /// <summary>
@@ -287,7 +301,8 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
         if (baseGrid != null)
         {
             // 先检查格子状态能否允许造卡
-            
+            if (!JudgeCanConstructeInGrid(baseGrid))
+                return false;
             // 之后检查是否开启快捷放卡设置，如果是则允许放卡， 否则需要再查看是否含有此格子分类的卡片，若没有则允许建造，否则不行
             return (baseGrid.CanBuildCard(GetFoodInGridType()) && (ConfigManager.isEnableQuickReleaseCard || !baseGrid.IsContainTag(GetFoodInGridType()))); 
         }
@@ -311,13 +326,14 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
         BaseGrid overGrid = GameController.Instance.GetOverGrid();
         if (overGrid != null)
         {
-            GameController.Instance.SetFoodAttribute(GameManager.Instance.attributeManager.GetFoodUnitAttribute(mType, mShape));
-            mProduct.MInit();
-            mProduct.SetLevel(mLevel);
-            mProduct.mBuilder = this; // 设置卡片的建造器
-            overGrid.SetFoodUnitInGrid(mProduct); // 将卡片初始化并与种下的格子绑定
-            GameController.Instance.AddFoodUnit(mProduct, overGrid.currentYIndex); // 将这个实体添加到战场上
-            mProductList.Add(mProduct); // 添加到表内
+            //GameController.Instance.SetFoodAttribute(GameManager.Instance.attributeManager.GetFoodUnitAttribute(mType, mShape));
+            //mProduct.MInit();
+            //mProduct.SetLevel(mLevel);
+            //mProduct.mBuilder = this; // 设置卡片的建造器
+            //overGrid.SetFoodUnitInGrid(mProduct); // 将卡片初始化并与种下的格子绑定
+            //GameController.Instance.AddFoodUnit(mProduct, overGrid.currentYIndex); // 将这个实体添加到战场上
+            //mProductList.Add(mProduct); // 添加到表内
+            InitInstance(mProduct, mType, mShape, overGrid, mLevel, this);
         }
         else
         {
@@ -326,6 +342,20 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
             mProduct = null;
             Debug.LogError("在种植卡片时未找到指定的格子！！");
         }
+    }
+
+    public static void InitInstance(FoodUnit unit, int type, int shape, BaseGrid grid, int level, BaseCardBuilder builder)
+    {
+        GameController.Instance.SetFoodAttribute(GameManager.Instance.attributeManager.GetFoodUnitAttribute(type, shape));
+        unit.MInit();
+        unit.SetLevel(level);
+        if (builder != null)
+        {
+            unit.mBuilder = builder; // 设置卡片的建造器
+            builder.mProductList.Add(unit); // 添加到表内
+        }
+        grid.SetFoodUnitInGrid(unit); // 将卡片初始化并与种下的格子绑定
+        GameController.Instance.AddFoodUnit(unit, grid.currentYIndex); // 将这个实体添加到战场上
     }
 
     /// <summary>
@@ -465,6 +495,23 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
     public void ResetCD()
     {
         mCDLeft = 0;
+    }
+
+    /// <summary>
+    /// 设置剩余CD百分比
+    /// </summary>
+    public void SetLeftCDPercent(float percent)
+    {
+        mCDLeft = Mathf.CeilToInt(percent*mCD);
+    }
+
+    /// <summary>
+    /// 增加剩余CD百分比
+    /// </summary>
+    public void AddLeftCDPercent(float percent)
+    {
+        mCDLeft += Mathf.CeilToInt(percent * mCD);
+        mCDLeft = Mathf.Min(mCD, Mathf.Max(0, mCDLeft));
     }
 
     /// <summary>
@@ -652,6 +699,11 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
         OnTrySelectOther = action;
     }
 
+    public void AddCanConstructeInGridList(Func<BaseGrid, bool> func)
+    {
+        CanConstructeInGridListener.Add(func);
+    }
+
     /// <summary>
     /// 触发进入卡槽被选中的事件
     /// </summary>
@@ -679,6 +731,21 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
     {
         if (OnSelectedExit != null)
             OnSelectedExit(this, nextCardBuilder);
+    }
+
+    /// <summary>
+    /// 判断能否在格子上建造卡片
+    /// </summary>
+    /// <param name="grid"></param>
+    /// <returns></returns>
+    public bool JudgeCanConstructeInGrid(BaseGrid grid)
+    {
+        foreach (var item in CanConstructeInGridListener)
+        {
+            if (!item(grid))
+                return false;
+        }
+        return true;
     }
 
     /// <summary>

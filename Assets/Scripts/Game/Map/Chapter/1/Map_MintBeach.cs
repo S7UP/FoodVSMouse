@@ -26,7 +26,9 @@ public class Map_MintBeach : ChapterMap
     /// </summary>
     public override void ProcessingGridList()
     {
-
+        // ≤º÷√…œ’œ∞≠ŒÔ
+        BaseBarrier b = GameController.Instance.CreateItem(6, 5, (int)ItemInGridType.Barrier, 0).GetComponent<BaseBarrier>();
+        b.SetHide(true);
     }
 
     /// <summary>

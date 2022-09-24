@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 2273559529684654033}
   - component: {fileID: 7593310000869414451}
   - component: {fileID: -9187509851625179287}
-  m_Layer: 7
+  m_Layer: 13
   m_Name: 0
   m_TagString: Barrier
   m_Icon: {fileID: 0}
@@ -79,7 +79,7 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 0.4, y: 0.4}
+  m_Size: {x: 0.3, y: 0.3}
   m_EdgeRadius: 0
 --- !u!114 &-9187509851625179287
 MonoBehaviour:
@@ -119,7 +119,7 @@ GameObject:
   - component: {fileID: 5646430216362566483}
   - component: {fileID: 4938161317884803039}
   - component: {fileID: 4636816197262632506}
-  m_Layer: 7
+  m_Layer: 13
   m_Name: SpriteGo
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -135,7 +135,7 @@ Transform:
   m_GameObject: {fileID: 7911401160402135796}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 6560605702601517123}
   m_RootOrder: 0

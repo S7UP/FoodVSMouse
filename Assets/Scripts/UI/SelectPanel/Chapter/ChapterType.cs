@@ -6,4 +6,6 @@ public enum ChapterType
     MeiWei = 0, // ÃÀÎ¶µº
     HouSan = 1, // »ğÉ½µº
     SkyCastle = 2, // ¸¡¿Õµº
+    Fairyland = 3, // °®ÀöË¿µÄÃÎÓÎÏÉ¾³
+    ForgottenIsland = 4, // ÒÅÍüµº
 }

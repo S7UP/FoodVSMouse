@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 /// <summary>
 /// 潜水艇类
@@ -176,5 +174,13 @@ public class SubmarineMouse : MouseUnit, IInWater
         {
             base.ExecuteDamage();
         }
+    }
+
+    /// <summary>
+    /// 潜水艇更倾向于水地形，而非陆地
+    /// </summary>
+    public override void SetGridDangerousWeightDict()
+    {
+        GridDangerousWeightDict[GridType.Water] = GridDangerousWeightDict[GridType.Default] - 1;
     }
 }

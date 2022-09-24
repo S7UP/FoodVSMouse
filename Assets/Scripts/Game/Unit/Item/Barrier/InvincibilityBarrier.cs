@@ -7,15 +7,10 @@ public class InvincibilityBarrier :　BaseBarrier
 
     public override void MInit()
     {
+        leftTime = -1;
         base.MInit();
         // 添加无敌的标签
         NumericBox.AddDecideModifierToBoolDict(StringManager.Invincibility, new BoolModifier(true));
-    }
-
-    public override void OnEnable()
-    {
-        base.OnEnable();
-        leftTime = -1;
     }
 
     /// <summary>

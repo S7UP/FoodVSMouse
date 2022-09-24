@@ -123,4 +123,13 @@ public class BaseItem : BaseUnit
     {
         return spriteRenderer;
     }
+
+    /// <summary>
+    /// 可否被强制移除
+    /// </summary>
+    /// <returns></returns>
+    public virtual bool CanRemove()
+    {
+        return false;
+    }
 }

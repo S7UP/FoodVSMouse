@@ -7,7 +7,7 @@ using DG.Tweening;
 /// </summary>
 public class SelectPanel : BasePanel
 {
-    private Chapter[] ChapterArray = new Chapter[3]; // 目前仅三个章节
+    private Chapter[] ChapterArray = new Chapter[4]; // 目前仅三个章节
     private int chapterIndex = 0; // 章节下标
     private Chapter mChapter; // 当前章节实例（就是画面上的大地图）
     private SelectStageUI mSelectStageUI; // 选关UI面板

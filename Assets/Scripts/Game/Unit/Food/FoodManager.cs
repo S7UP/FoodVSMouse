@@ -1,4 +1,7 @@
 using System.Collections.Generic;
+
+using UnityEngine;
+
 /// <summary>
 /// 美食管理器（静态存储美食相关信息）
 /// </summary>
@@ -30,15 +33,69 @@ public class FoodManager
         { FoodNameTypeMap.MouseCatcher, new List<string>(){"老鼠夹子" } },
         { FoodNameTypeMap.SpicyStringBoom, new List<string>(){"麻辣串炸弹" } },
         { FoodNameTypeMap.SugarGourd, new List<string>(){"糖葫芦炮弹","水果糖葫芦炮弹","七彩糖葫芦炮弹" } },
+        { FoodNameTypeMap.MushroomDestroyer, new List<string>(){ "毒菌破坏者" } },
+        { FoodNameTypeMap.PokerShield, new List<string>(){ "扑克护罩" } },
     };
 
 
     /// <summary>
-    /// 直接获取当前版本所有美食及其转职名
+    /// 直接获取当前版本所有可建造的美食及其转职名
     /// </summary>
     /// <returns></returns>
-    public static Dictionary<FoodNameTypeMap, List<string>> GetAllFoodDict()
+    public static Dictionary<FoodNameTypeMap, List<string>> GetAllBuildableFoodDict()
     {
         return foodNameDict;
+    }
+
+    /// <summary>
+    /// 检测某个美食单位是否是生产类型的单位
+    /// </summary>
+    /// <returns></returns>
+    public static bool IsProductionType(FoodUnit unit)
+    {
+        return unit.mType >= (int)FoodNameTypeMap.SmallStove && unit.mType <= (int)FoodNameTypeMap.BigStove;
+    }
+
+    /// <summary>
+    /// 从一个美食表中取出随机几个美食
+    /// </summary>
+    /// <param name="list">美食表</param>
+    /// <param name="count">取的随机数量</param>
+    /// <returns></returns>
+    public static List<FoodUnit> GetRandomUnitList(List<FoodUnit> list, int count)
+    {
+        List<FoodUnit> randList = new List<FoodUnit>();
+        if (count <= 0 || list==null)
+            return randList;
+
+        // 拷贝一份List，保护原来的List不受影响
+        List<FoodUnit> cp_list = new List<FoodUnit>();
+        foreach (var item in list)
+        {
+            cp_list.Add(item);
+        }
+
+        count = Mathf.Min(count, cp_list.Count);
+
+        for (int i = 0; i < count; i++)
+        {
+            int index = GameController.Instance.GetRandomInt(0, cp_list.Count);
+            randList.Add(cp_list[index]);
+            cp_list.Remove(cp_list[index]);
+        }
+        return randList;
+    }
+
+    /// <summary>
+    /// 为卡片添加炸弹的修饰
+    /// </summary>
+    public static void AddBombModifier(BaseUnit unit)
+    {
+        // 获取100%减伤，以及免疫灰烬秒杀效果
+        unit.NumericBox.Defense.SetBase(1);
+        unit.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, new BoolModifier(true));
+        unit.NumericBox.AddDecideModifierToBoolDict(StringManager.Invincibility, new BoolModifier(true));
+        unit.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozen, new BoolModifier(true));
+        unit.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBacterialInfection, new BoolModifier(true));
     }
 }

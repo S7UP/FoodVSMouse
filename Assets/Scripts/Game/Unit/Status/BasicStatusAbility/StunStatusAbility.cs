@@ -20,7 +20,7 @@ public class StunStatusAbility : StatusAbility
     /// </summary>
     public override void BeforeEffect()
     {
-        // ºÏ≤È «∑Ò√‚“ﬂ∂≥Ω·
+        // ºÏ≤È «∑Ò√‚“ﬂ‘Œ—£
         if (!isForce && master.NumericBox.GetBoolNumericValue(StringManager.IgnoreStun))
         {
             ClearLeftTime();

@@ -17,7 +17,7 @@ public enum MouseNameTypeMap
     NormalWaterMouse = 11, // 基础水军
     SubmarineMouse = 12, // 潜水艇类
     RowboatMouse = 13, // 划艇类
-    PounceMouse = 14, // 突袭类
+    FrogMouse = 14, // 青蛙类
     CatapultMouse = 15, // 投石车类
     Mole = 16, // 鼹鼠类
     PenguinMouse = 17, // 企鹅
@@ -36,4 +36,15 @@ public enum MouseNameTypeMap
     RatTrainHead = 30, // 鼠国列车头
     RatTrainBody = 31, // 鼠国列车车厢
     TrumpetMouse = 32, // 小号鼠
+    WonderLandNormalMouse = 33, // 奇境常规老鼠
+    WonderLandMole = 34, // 奇境鼹鼠
+    WonderLandFairy = 35, // 奇境妖精
+    WonderLandGourmand = 36, // 奇境饕餮
+    WonderLandWitch = 37, // 奇境女巫
+    WonderLandTeapot = 38, // 奇境茶壶
+    WonderLandGiant = 39, // 奇境巨人
+    WonderLandSoldier = 40, // 奇境士兵
+    WonderLandFireflyQueen = 41, // 奇境萤火虫女王
+    WonderLandFirefly = 42, // 奇境萤火虫
+    WonderLandCage = 43, // 奇境鸟笼
 }

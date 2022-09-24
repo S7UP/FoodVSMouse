@@ -37,7 +37,7 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
         // 初始化卡槽信息，需要外部读取赋值，现拟赋值
         List<AvailableCardInfo> selectedCardList = GameManager.Instance.playerData.GetCurrentSelectedCardInfoList();
 
-        CardBuilderManager m = new CardBuilderManager();
+        CardBuilderManager m = CardBuilderManager.GetInstance();
         for (int i = 0; i < selectedCardList.Count; i++)
         {
             // 产生卡片建造器Object实例的同时取得其对应脚本，与UI层作关联
@@ -160,7 +160,7 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
             if (target is FoodUnit)
             {
                 // 添加一个移除特效
-                BaseEffect e = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Effect/ShovelEffect").GetComponent<BaseEffect>();
+                BaseEffect e = BaseEffect.GetInstance("ShovelEffect");
                 e.transform.position = g.transform.position;
                 GameController.Instance.AddEffect(e);
                 target.BeforeDeath();

@@ -52,7 +52,7 @@ public class ConfigCardUI : MonoBehaviour
         }
         cardDict.Clear();
 
-        Dictionary<FoodNameTypeMap, List<string>> dict = FoodManager.GetAllFoodDict();
+        Dictionary<FoodNameTypeMap, List<string>> dict = FoodManager.GetAllBuildableFoodDict();
         foreach (var keyValuePair in dict)
         {
             List<string> l = keyValuePair.Value;
@@ -111,7 +111,7 @@ public class ConfigCardUI : MonoBehaviour
         // 更新最大转职
         Dro_ShapeLimit.ClearOptions();
         List<Dropdown.OptionData> dataList = new List<Dropdown.OptionData>();
-        for (int i = 0; i < FoodManager.GetAllFoodDict()[currentSelectedModel.GetFoodType()].Count; i++)
+        for (int i = 0; i < FoodManager.GetAllBuildableFoodDict()[currentSelectedModel.GetFoodType()].Count; i++)
         {
             dataList.Add(new Dropdown.OptionData(i+""));
         }

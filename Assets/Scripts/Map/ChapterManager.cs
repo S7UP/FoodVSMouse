@@ -8,6 +8,7 @@ public class ChapterManager
         { ChapterNameTypeMap.MeiWei, "美味岛"},
         { ChapterNameTypeMap.HouShan, "火山岛"},
         { ChapterNameTypeMap.SkyCastle, "浮空岛"},
+        { ChapterNameTypeMap.WonderLand, "梦游仙境"},
         { ChapterNameTypeMap.ForgottenIsland, "遗忘岛"},
     };
 
@@ -64,6 +65,17 @@ public class ChapterManager
             { 12, "丁香彩虹（日）"},
             { 13, "丁香彩虹（夜）"},
             { 14, "十三香中心岛"},
+        }},
+        // 梦游仙境
+        { ChapterNameTypeMap.WonderLand, new Dictionary<int, string>(){
+            { 0, "兔子洞（日）"},
+            { 1, "兔子洞（夜）"},
+            { 2, "蘑菇小径（日）"},
+            { 3, "蘑菇小径（夜）"},
+            { 4, "午茶庭院"},
+            { 5, "玫瑰花园（日）"},
+            { 6, "玫瑰花园（夜）"},
+            //{ 7, "悬浮梦境"},
         }},
         // 遗忘岛
         { ChapterNameTypeMap.ForgottenIsland, new Dictionary<int, string>(){

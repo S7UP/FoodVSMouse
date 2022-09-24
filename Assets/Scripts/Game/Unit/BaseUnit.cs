@@ -60,6 +60,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public SkillAbilityManager skillAbilityManager { get; set; } = new SkillAbilityManager(); // 技能管理器
     public StatusAbilityManager statusAbilityManager { get; set; } = new StatusAbilityManager(); // 时效状态（BUFF）管理器
     public Dictionary<EffectType, BaseEffect> effectDict = new Dictionary<EffectType, BaseEffect>(); // 自身持有唯一性特效
+    private bool isHideEffect = false; // 是否隐藏特效
     public AnimatorController animatorController = new AnimatorController(); // 动画播放控制器
     public List<ITask> TaskList = new List<ITask>(); // 自身挂载任务表
     public Dictionary<string, ITask> TaskDict = new Dictionary<string, ITask>(); // 任务字典（仅记录引用不实际执行逻辑，执行逻辑在任务表中）
@@ -73,6 +74,10 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public IBaseActionState mCurrentActionState; //+ 当前动作状态
     public int currentStateTimer = 0; // 当前状态的持续时间（切换状态时会重置）
 
+    // 事件
+    public List<Action<BaseUnit>> BeforeDeathEventList = new List<Action<BaseUnit>>();
+    public List<Action<BaseUnit>> BeforeBurnEventList = new List<Action<BaseUnit>>();
+    public List<Action<BaseUnit>> AfterDeathEventList = new List<Action<BaseUnit>>();
     
 
     protected string jsonPath
@@ -138,6 +143,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         skillAbilityManager.Initialize();
         statusAbilityManager.Initialize();
         effectDict.Clear();
+        isHideEffect = false;
         animatorController.Initialize();
         hitBox.Initialize();
         SpriteOffsetX.Initialize(); SpriteOffsetY.Initialize();
@@ -146,6 +152,10 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         TaskDict.Clear();
 
         CloseCollision();
+
+        BeforeDeathEventList.Clear();
+        BeforeBurnEventList.Clear();
+        AfterDeathEventList.Clear();
     }
 
     // 切换动作状态
@@ -197,6 +207,24 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         return mCurrentHp / mMaxHp;
     }
 
+    /// <summary>
+    /// 获取当前生命值
+    /// </summary>
+    /// <returns></returns>
+    public float GetCurrentHp()
+    {
+        return mCurrentHp;
+    }
+
+    /// <summary>
+    /// 获取已损失生命值
+    /// </summary>
+    /// <returns></returns>
+    public float GetLostHp()
+    {
+        return mMaxHp - mCurrentHp;
+    }
+
     public virtual Vector3 GetPosition()
     {
         return gameObject.transform.position;
@@ -215,14 +243,17 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         // 子类override一下,再判断一下条件，大不了不调用该类下面的方法了，就能救的！
         // TNND,为什么不喝！？都不喝是吧！都怕死是吧！.wav
 
+        // 死亡事件
+        foreach (var item in BeforeDeathEventList)
+        {
+            item(this);
+        }
         // 进入死亡动画状态
         isDeathState = true;
         // 清除技能效果
         skillAbilityManager.TryEndAllSpellingSkillAbility();
         // 清除BUFF效果
         statusAbilityManager.TryEndAllStatusAbility();
-        // 清除特效
-        // RemoveAllEffect();
         SetActionState(new DieState(this));
     }
 
@@ -244,6 +275,10 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         // 再清除特效一次
         RemoveAllEffect();
         AfterDeath();
+        foreach (var item in AfterDeathEventList)
+        {
+            item(this);
+        }
         // 然后安心去世吧
         ExecuteRecycle();
     }
@@ -270,6 +305,12 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     /// </summary>
     public virtual void BeforeBurn()
     {
+        // 死亡事件
+        foreach (var item in BeforeBurnEventList)
+        {
+            item(this);
+        }
+
         // 进入死亡动画状态
         isDeathState = true;
         // 清除技能效果
@@ -315,6 +356,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         skillAbilityManager.Initialize();
         statusAbilityManager.Initialize();
         effectDict.Clear();
+        isHideEffect = false;
         animatorController.Initialize();
         hitBox.Initialize();
         SpriteOffsetX.Initialize(); SpriteOffsetY.Initialize();
@@ -357,6 +399,10 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         SetCollider2DParam();
         // 大小初始化
         SetLocalScale(Vector2.one);
+
+        BeforeDeathEventList.Clear();
+        BeforeBurnEventList.Clear();
+        AfterDeathEventList.Clear();
     }
 
     public virtual void MUpdate()
@@ -1077,6 +1123,10 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         effectDict.Add(t, eff);
         eff.transform.SetParent(transform);
         eff.transform.localPosition = localPosition;
+        if (isHideEffect)
+            eff.Hide(true);
+        else
+            eff.Hide(false);
     }
 
 
@@ -1090,7 +1140,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
             BaseEffect eff = effectDict[t];
             effectDict.Remove(t);
             //GameController.Instance.SetEffectDefaultParentTrans(eff);
-            eff.Recycle();
+            eff.ExecuteDeath();
         }
     }
 
@@ -1107,6 +1157,28 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         foreach (var t in l)
         {
             RemoveEffectFromDict(t);
+        }
+    }
+
+    /// <summary>
+    /// 隐藏全部特效
+    /// </summary>
+    public void HideEffect(bool enable)
+    {
+        isHideEffect = enable;
+        if (enable)
+        {
+            foreach (var keyValuePair in effectDict)
+            {
+                keyValuePair.Value.Hide(true);
+            }
+        }
+        else
+        {
+            foreach (var keyValuePair in effectDict)
+            {
+                keyValuePair.Value.Hide(false);
+            }
         }
     }
 
@@ -1242,6 +1314,37 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public virtual void SetLocalScale(Vector2 scale)
     {
         transform.localScale = scale;
+    }
+
+
+    public void AddBeforeDeathEvent(Action<BaseUnit> action)
+    {
+        BeforeDeathEventList.Add(action);
+    }
+
+    public void RemoveBeforeDeathEvent(Action<BaseUnit> action)
+    {
+        BeforeDeathEventList.Remove(action);
+    }
+
+    public void AddBeforeBurnEvent(Action<BaseUnit> action)
+    {
+        BeforeBurnEventList.Add(action);
+    }
+
+    public void RemoveBeforeBurnEvent(Action<BaseUnit> action)
+    {
+        BeforeBurnEventList.Remove(action);
+    }
+
+    public void AddAfterDeathEvent(Action<BaseUnit> action)
+    {
+        AfterDeathEventList.Add(action);
+    }
+
+    public void RemoveAfterDeathEvent(Action<BaseUnit> action)
+    {
+        AfterDeathEventList.Remove(action);
     }
     // 继续
 }

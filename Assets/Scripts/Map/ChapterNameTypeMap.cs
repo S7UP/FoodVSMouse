@@ -6,5 +6,6 @@ public enum ChapterNameTypeMap
     MeiWei = 0, // ÃÀÎ¶µº
     HouShan = 1, // »ğÉ½µº
     SkyCastle = 2, // ¸¡¿Õµº
-    ForgottenIsland = 3, // ÒÅÍüµº
+    WonderLand = 3, // Ææ¾³
+    ForgottenIsland = 4, // ÒÅÍüµº
 }

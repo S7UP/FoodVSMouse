@@ -26,7 +26,12 @@ public class Map_Rainforest : ChapterMap
     /// </summary>
     public override void ProcessingGridList()
     {
-
+        GetGrid(1, 0).AddGridType(GridType.Water, BaseGridType.GetInstance(GridType.Water, 0));
+        GetGrid(1, 1).AddGridType(GridType.Water, BaseGridType.GetInstance(GridType.Water, 0));
+        GetGrid(6, 1).AddGridType(GridType.Water, BaseGridType.GetInstance(GridType.Water, 0));
+        GetGrid(4, 3).AddGridType(GridType.Water, BaseGridType.GetInstance(GridType.Water, 0));
+        GetGrid(1, 5).AddGridType(GridType.Water, BaseGridType.GetInstance(GridType.Water, 0));
+        GetGrid(6, 5).AddGridType(GridType.Water, BaseGridType.GetInstance(GridType.Water, 0));
     }
 
     /// <summary>

@@ -2,6 +2,8 @@ using System.Collections.Generic;
 
 using UnityEngine;
 
+using static UnityEditor.Progress;
+
 public class FoodUnit : BaseUnit
 {
     // 美食单位的属性
@@ -553,5 +555,10 @@ public class FoodUnit : BaseUnit
     public override SpriteRenderer GetSpriteRenderer()
     {
         return spriteRenderer1;
+    }
+
+    public FoodInGridType GetFoodInGridType()
+    {
+        return BaseCardBuilder.GetFoodInGridType(mType);
     }
 }

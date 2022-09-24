@@ -33,5 +33,8 @@ public enum FoodNameTypeMap
     Octopus = 27,
     CoffeeCan = 28,
     RotatedCoffeeCan = 29,
-    SugarGourd = 30
+    SugarGourd = 30,
+    MushroomDestroyer = 31, // 炸炸菇
+    LuminescentMold = 32, // 发光霉菌
+    PokerShield = 33, // 扑克护罩
 }

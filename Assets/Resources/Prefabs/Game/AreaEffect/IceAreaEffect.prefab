@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 1077297544030361854}
   - component: {fileID: 8542134293540550198}
   - component: {fileID: -558021057974714547}
-  m_Layer: 8
+  m_Layer: 14
   m_Name: IceAreaEffect
   m_TagString: BombAreaEffect
   m_Icon: {fileID: 0}
@@ -28,7 +28,7 @@ Transform:
   m_GameObject: {fileID: 7807539522743697237}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.6125, y: 0.655, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -92,15 +92,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bea97192061f157419cb0b07cf20970a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  resourcePath: 
+  totalTime: 0
+  timeLeft: -1
   foodUnitList: []
   mouseUnitList: []
+  characterList: []
   isAlive: 1
-  creator: {fileID: 0}
-  time: 0
+  isAffectFood: 0
+  isAffectMouse: 0
+  isAffectCharacter: 0
+  isIgnoreHeight: 0
+  affectHeight: 0
   currentRowIndex: 0
   offsetX: 0
   offsetY: 0
   colCount: 0
   rowCount: 0
   boxCollider2D: {fileID: 8542134293540550198}
+  creator: {fileID: 0}
+  time: 0

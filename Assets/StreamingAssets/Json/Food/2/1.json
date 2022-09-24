@@ -1,1 +1,1 @@
-{"baseAttrbute":{"name":"高能火炉","type":2,"shape":1,"baseHP":50.0,"baseAttack":0.0,"baseAttackSpeed":0.0,"attackPercent":0.0,"baseMoveSpeed":0.0,"baseDefense":0.0,"baseRange":0.0,"baseHeight":0},"valueList":[25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9],"foodType":0}
+{"baseAttrbute":{"name":"高能火炉","type":2,"shape":1,"baseHP":50.0,"baseAttack":1.0,"baseAttackSpeed":0.0,"attackPercent":0.0,"baseMoveSpeed":0.0,"baseDefense":0.0,"baseRange":0.0,"baseHeight":0},"valueList":[25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9],"foodType":0}

@@ -28,10 +28,10 @@ public class Map_CocoIsland2 : ChapterMap
     {
         for (int i = 0; i < 2; i++)
             for (int j = 0; j < 9; j++)
-                GetGrid(j, i).ChangeMainGridState(new WaterGridState(GetGrid(j, i)));
+                GetGrid(j, i).AddGridType(GridType.Water, BaseGridType.GetInstance(GridType.Water, 0));
         for (int i = 5; i < 7; i++)
             for (int j = 0; j < 9; j++)
-                GetGrid(j, i).ChangeMainGridState(new WaterGridState(GetGrid(j, i)));
+                GetGrid(j, i).AddGridType(GridType.Water, BaseGridType.GetInstance(GridType.Water, 0));
     }
 
     /// <summary>

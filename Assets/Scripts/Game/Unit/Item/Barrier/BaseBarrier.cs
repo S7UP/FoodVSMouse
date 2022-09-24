@@ -4,10 +4,30 @@ using UnityEngine;
 /// </summary>
 public class BaseBarrier : BaseItem
 {
+    private bool canRemove;
 
-    public override void Awake()
+    public override void MInit()
     {
-        base.Awake();
+        canRemove = false; // 默认为不可移除
+        SetHide(false); // 默认是显示的
+        base.MInit();
+    }
+
+    /// <summary>
+    /// 设置是否可以被强制移除
+    /// </summary>
+    public void SetRemoveAble(bool enable)
+    {
+        canRemove = enable;
+    }
+
+    /// <summary>
+    /// 可否被强制移除
+    /// </summary>
+    /// <returns></returns>
+    public override bool CanRemove()
+    {
+        return canRemove;
     }
 
     /// <summary>
@@ -46,5 +66,16 @@ public class BaseBarrier : BaseItem
     private void OnTriggerStay2D(Collider2D collision)
     {
         OnCollision(collision);
+    }
+
+    /// <summary>
+    /// 隐藏此道具
+    /// </summary>
+    public void SetHide(bool isHide)
+    {
+        if (isHide)
+            spriteRenderer.enabled = false;
+        else
+            spriteRenderer.enabled = true;
     }
 }

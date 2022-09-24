@@ -27,4 +27,7 @@ public enum BossNameTypeMap
     IronMan = 21,
     SpiderMan = 22,
     Hulk = 23,
+    WhiteRabbit = 24,
+    Absolon = 25, // °¢²¼Ë÷Â×
+    CrazyHat = 26
 }

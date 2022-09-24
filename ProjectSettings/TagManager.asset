@@ -28,9 +28,9 @@ TagManager:
   - ItemCollideEnemy
   - ItemCollideAlly
   - BothCollide
-  - 
-  - 
-  - 
+  - ItemCollideBullet
+  - CollideTriple
+  - EnemyAllyGrid
   - 
   - 
   - 

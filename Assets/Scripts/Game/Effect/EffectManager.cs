@@ -12,7 +12,7 @@ public class EffectManager
     {
         if (!u.IsContainEffect(EffectType.HealEffect))
         {
-            BaseEffect eff = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Effect/HealEffect").GetComponent<BaseEffect>();
+            BaseEffect eff = BaseEffect.GetInstance("HealEffect");
             GameController.Instance.AddEffect(eff);
             u.AddEffectToDict(EffectType.HealEffect, eff, Vector2.zero);
         }
@@ -26,7 +26,8 @@ public class EffectManager
     {
         if (!u.IsContainEffect(EffectType.WaterWave))
         {
-            BaseEffect eff = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Effect/WaterWaveEffect").GetComponent<BaseEffect>();
+            BaseEffect eff = BaseEffect.GetInstance("WaterWaveEffect");
+            eff.SetSpriteRendererSorting("Grid", 100);
             GameController.Instance.AddEffect(eff);
             u.AddEffectToDict(EffectType.WaterWave, eff, 0.075f*MapManager.gridHeight*Vector2.down);
         }
@@ -41,6 +42,32 @@ public class EffectManager
         if (u.IsContainEffect(EffectType.WaterWave))
         {
             u.RemoveEffectFromDict(EffectType.WaterWave);
+        }
+    }
+
+    /// <summary>
+    /// 添加毒菌感染特效
+    /// </summary>
+    /// <param name="u"></param>
+    public static void AddMushroomEffectToUnit(BaseUnit u)
+    {
+        if (!u.IsContainEffect(EffectType.MushroomEffect))
+        {
+            BaseEffect eff = BaseEffect.GetInstance("MushroomEffect");
+            GameController.Instance.AddEffect(eff);
+            u.AddEffectToDict(EffectType.MushroomEffect, eff, Vector2.zero);
+        }
+    }
+
+    /// <summary>
+    /// 移除毒菌感染特效
+    /// </summary>
+    /// <param name="u"></param>
+    public static void RemoveMushroomEffectFromUnit(BaseUnit u)
+    {
+        if (u.IsContainEffect(EffectType.MushroomEffect))
+        {
+            u.RemoveEffectFromDict(EffectType.MushroomEffect);
         }
     }
 }

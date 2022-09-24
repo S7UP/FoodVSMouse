@@ -12,8 +12,7 @@ public class IceBombBullet : ParabolaBullet
     public override void TakeDamage(BaseUnit baseUnit)
     {
         // 原地产生一个爆炸效果
-        GameObject instance = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "AreaEffect/IceAreaEffect");
-        IceAreaEffectExecution iceEffect = instance.GetComponent<IceAreaEffectExecution>();
+        IceAreaEffectExecution iceEffect = IceAreaEffectExecution.GetInstance();
         iceEffect.Init(this.mMasterBaseUnit, 600, GetRowIndex(), 3, 3, -0.5f, 0, true, false); // 第二个参数为持续时间（帧）
         iceEffect.isAffectCharacter = true; // 对人有效
         if (baseUnit != null && baseUnit.IsValid())

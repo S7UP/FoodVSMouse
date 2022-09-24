@@ -8,7 +8,7 @@ public class FlyBarrierMouse : MouseUnit, IFlyUnit
     private bool isDropBarrier;
     private int minDropBarrierColumn; // 降落障碍列
     private int maxDropBarrierColumn;
-    private FloatModifier speedRateModifier = new FloatModifier(100.0f); // 飞行状态下1.5倍速
+    private FloatModifier speedRateModifier = new FloatModifier(100.0f); // 飞行状态下2倍速
 
     public override void MInit()
     {
@@ -18,7 +18,7 @@ public class FlyBarrierMouse : MouseUnit, IFlyUnit
         isDropBarrier = false;
         minDropBarrierColumn = 4; // 右五列
         maxDropBarrierColumn = 6; // 右三列
-        NumericBox.MoveSpeed.AddFinalPctAddModifier(speedRateModifier);
+        NumericBox.MoveSpeed.AddPctAddModifier(speedRateModifier);
     }
 
     public override void MUpdate()
@@ -101,8 +101,9 @@ public class FlyBarrierMouse : MouseUnit, IFlyUnit
             mHertRateList[0] = double.MaxValue;
             UpdateHertMap(); // 通过强制改变HertRateList然后强制更新，转变阶段
             // 掉落障碍
-            InvincibilityBarrier b = GameController.Instance.CreateItem(GetColumnIndex(), GetRowIndex(), (int)ItemInGridType.TimelinessBarrier, 0) as InvincibilityBarrier;
+            InvincibilityBarrier b = GameController.Instance.CreateItem(GetColumnIndex(), GetRowIndex(), (int)ItemInGridType.Barrier, 0) as InvincibilityBarrier;
             b.SetLeftTime(900); // 15s
+            b.SetRemoveAble(true);
             // 移除障碍处美食
             if (b.GetGrid() != null)
             {
@@ -157,7 +158,7 @@ public class FlyBarrierMouse : MouseUnit, IFlyUnit
             mHertRateList[0] = double.MaxValue;
             mHertRateList[1] = double.MaxValue;
             UpdateHertMap(); // 通过强制改变HertRateList然后强制更新，转变阶段
-            NumericBox.MoveSpeed.RemoveFinalPctAddModifier(speedRateModifier); // 恢复正常走路速度
+            NumericBox.MoveSpeed.RemovePctAddModifier(speedRateModifier); // 恢复正常走路速度
             // 设为转场状态，该状态下的具体实下如下几个方法
             SetActionState(new TransitionState(this));
             // 如果是位于最后一列降落的，则直接触发猫猫

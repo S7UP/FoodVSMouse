@@ -344,11 +344,10 @@ public class RatTrain2 : BaseRatTrain
                         b.animatorController.Play("BoomDie");
                         b.CloseCollision();
                         // 产生一个爆炸效果
-                        GameObject instance = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "AreaEffect/BombAreaEffect");
-                        BombAreaEffectExecution bombEffect = instance.GetComponent<BombAreaEffectExecution>();
+                        BombAreaEffectExecution bombEffect = BombAreaEffectExecution.GetInstance();
                         bombEffect.Init(b, 3600, b.GetRowIndex(), 3, 3, 0, 0, true, true);
                         bombEffect.transform.position = b.transform.position;
-                        bombEffect.SetEventMouseAction((m)=> m.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(m, 360, false)));
+                        bombEffect.SetOnEnemyEnterAction((m)=> m.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(m, 360, false)));
                         GameController.Instance.AddAreaEffectExecution(bombEffect);
                         return true;
                     }

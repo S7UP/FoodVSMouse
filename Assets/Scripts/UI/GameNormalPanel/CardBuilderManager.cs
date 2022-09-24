@@ -1,10 +1,13 @@
 using System.Collections.Generic;
 using System;
+using static UnityEditor.ObjectChangeEventStream;
 /// <summary>
 /// 卡片建造器管理器（目前主要用来提供静态方法，并枚举事件）
 /// </summary>
 public class CardBuilderManager
 {
+    private static CardBuilderManager Instance;
+    
     private Dictionary<FoodNameTypeMap, Action<BaseCardBuilder>> BeforeBuildActionDict;
     private Dictionary<FoodNameTypeMap, Action<BaseCardBuilder>> AfterBuildActionDict;
     private Dictionary<FoodNameTypeMap, Action<BaseCardBuilder>> BeforeDestructeActionDict;
@@ -13,7 +16,15 @@ public class CardBuilderManager
     private Dictionary<FoodNameTypeMap, Action<BaseCardBuilder>> OnDuringSelectedDict;
     private Dictionary<FoodNameTypeMap, Action<BaseCardBuilder, BaseCardBuilder>> OnSelectedExitDict; 
     private Dictionary<FoodNameTypeMap, Action<BaseCardBuilder>> OnTrySelectDict;
-    private Dictionary<FoodNameTypeMap, Action<BaseCardBuilder, BaseCardBuilder>> OnTrySelectOtherDict; 
+    private Dictionary<FoodNameTypeMap, Action<BaseCardBuilder, BaseCardBuilder>> OnTrySelectOtherDict;
+    private Dictionary<FoodNameTypeMap, Func<BaseGrid, bool>> CanConstructeInGridDict;
+
+    public static CardBuilderManager GetInstance()
+    {
+        if (Instance == null)
+            Instance = new CardBuilderManager();
+        return Instance;
+    }
 
     public CardBuilderManager() 
     {
@@ -33,6 +44,7 @@ public class CardBuilderManager
             Dictionary<FoodNameTypeMap, Action<BaseCardBuilder>> d = AfterBuildActionDict;
             d.Add(FoodNameTypeMap.BigStove, AfterBuildBigFire);
             d.Add(FoodNameTypeMap.WoodenDisk, AfterBuildWoodenDisk);
+            d.Add(FoodNameTypeMap.PokerShield, AfterBuildPokerShield);
         }
 
         /// <summary>
@@ -51,6 +63,7 @@ public class CardBuilderManager
             Dictionary<FoodNameTypeMap, Action<BaseCardBuilder>> d = AfterDestructeActionDict;
             d.Add(FoodNameTypeMap.BigStove, AfterDestructeBigFire);
             d.Add(FoodNameTypeMap.WoodenDisk, AfterDestructeWoodenDisk);
+            d.Add(FoodNameTypeMap.PokerShield, AfterDestructePokerShield);
         }
 
         /// <summary>
@@ -92,6 +105,15 @@ public class CardBuilderManager
         {
             Dictionary<FoodNameTypeMap, Action<BaseCardBuilder, BaseCardBuilder>> d = OnTrySelectOtherDict;
             d.Add(FoodNameTypeMap.IceCream, OnIceCreamTrySelectedOther);
+        }
+
+        /// <summary>
+        /// 可以种在格子上吗
+        /// </summary>
+        CanConstructeInGridDict = new Dictionary<FoodNameTypeMap, Func<BaseGrid, bool>>();
+        {
+            Dictionary<FoodNameTypeMap, Func<BaseGrid, bool>> d = CanConstructeInGridDict;
+            d.Add(FoodNameTypeMap.WoodenDisk, WoodenDiskCanConstructeInGrid);
         }
     }
 
@@ -136,6 +158,10 @@ public class CardBuilderManager
         if (OnTrySelectOtherDict.ContainsKey(type))
         {
             cardBuilder.SetOnTrySelectOtherEvent(OnTrySelectOtherDict[type]);
+        }
+        if (CanConstructeInGridDict.ContainsKey(type))
+        {
+            cardBuilder.AddCanConstructeInGridList(CanConstructeInGridDict[type]);
         }
     }
 
@@ -197,7 +223,7 @@ public class CardBuilderManager
     {
         if (builder.mShape < 2)
         {
-            builder.mCostDict["Fire"] = builder.mCostDict["Fire"] + 25f;
+            builder.mCostDict["Fire"] = builder.mCostDict["Fire"] + 10f;
         }
     }
 
@@ -208,7 +234,39 @@ public class CardBuilderManager
     {
         if (builder.mShape < 2)
         {
-            builder.mCostDict["Fire"] = builder.mCostDict["Fire"] - 25f;
+            builder.mCostDict["Fire"] = builder.mCostDict["Fire"] - 10f;
+        }
+    }
+
+    /// <summary>
+    /// 木盘子是否可以种在格子上
+    /// </summary>
+    /// <param name="grid"></param>
+    /// <returns></returns>
+    private bool WoodenDiskCanConstructeInGrid(BaseGrid grid)
+    {
+        return grid.IsContainGridType(GridType.Water);
+    }
+
+    /// <summary>
+    /// 种植扑克护罩后的增值效果
+    /// </summary>
+    private void AfterBuildPokerShield(BaseCardBuilder builder)
+    {
+        if (builder.mShape < 2)
+        {
+            builder.mCostDict["Fire"] = builder.mCostDict["Fire"] + 100f;
+        }
+    }
+
+    /// <summary>
+    /// 移除扑克护罩后减值效果
+    /// </summary>
+    private void AfterDestructePokerShield(BaseCardBuilder builder)
+    {
+        if (builder.mShape < 2)
+        {
+            builder.mCostDict["Fire"] = builder.mCostDict["Fire"] - 100f;
         }
     }
 }

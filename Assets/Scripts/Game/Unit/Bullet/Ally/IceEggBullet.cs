@@ -17,11 +17,11 @@ public class IceEggBullet : ParabolaBullet
     public override void TakeDamage(BaseUnit baseUnit)
     {
         // 原地产生一个减速效果
-        IceSlowDownAreaEffectExecution iceSlowEffect = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "AreaEffect/IceSlowDownAreaEffect").GetComponent<IceSlowDownAreaEffectExecution>();
+        IceSlowDownAreaEffectExecution iceSlowEffect = IceSlowDownAreaEffectExecution.GetInstance();
         iceSlowEffect.Init(this.mMasterBaseUnit, 120, GetRowIndex(), 3, 3, -0.5f, 0, false, true); // 第二个参数为持续时间（帧）
         iceSlowEffect.SetAffectHeight(0); // 只有地面单位被影响
         // 再产生一个范围伤害效果
-        DamageAreaEffectExecution dmgEffect = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "AreaEffect/DamageAreaEffect").GetComponent<DamageAreaEffectExecution>();
+        DamageAreaEffectExecution dmgEffect = DamageAreaEffectExecution.GetInstance();
         dmgEffect.Init(this.mMasterBaseUnit, CombatAction.ActionType.CauseDamage, 0.25f*GetDamage(), GetRowIndex(), 3, 3, -0.5f, 0, false, true);
         dmgEffect.SetAffectHeight(0);
         if (baseUnit != null && baseUnit.IsValid())

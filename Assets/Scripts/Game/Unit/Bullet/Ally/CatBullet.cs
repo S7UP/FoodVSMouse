@@ -11,12 +11,23 @@ public class CatBullet : BaseBullet
     {
         if(baseUnit is MouseUnit)
         {
+            // 如果目标已被惊吓或者不能被驱赶，则不会产生什么效果
             MouseUnit m = (MouseUnit)baseUnit;
-            if (m.CanDrivenAway())
+            if (!m.NumericBox.GetBoolNumericValue(StringManager.BeFrightened))
             {
-                m.DrivenAway();
+                if (m.CanDrivenAway())
+                {
+                    // 添加一个被惊吓的标签
+                    m.NumericBox.AddDecideModifierToBoolDict(StringManager.BeFrightened, new BoolModifier(true));
+                    m.DrivenAway();
+                    KillThis();
+                }
             }
         }
-        KillThis();
+        else
+        {
+            KillThis();
+        }
+        
     }
 }

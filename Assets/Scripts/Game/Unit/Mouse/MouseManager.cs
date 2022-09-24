@@ -19,7 +19,7 @@ public class MouseManager
         { MouseNameTypeMap.NormalWaterMouse, "基础水军"},
         { MouseNameTypeMap.SubmarineMouse, "潜水艇类"},
         { MouseNameTypeMap.RowboatMouse, "划艇类"},
-    //{ MouseNameTypeMap.PounceMouse, "突袭类"},
+        { MouseNameTypeMap.FrogMouse, "青蛙王子类"},
         { MouseNameTypeMap.CatapultMouse, "投石车类"},
         { MouseNameTypeMap.Mole, "鼹鼠类"},
         { MouseNameTypeMap.PenguinMouse, "企鹅类"},
@@ -34,8 +34,8 @@ public class MouseManager
         { MouseNameTypeMap.SnailMouse, "蜗牛车"},
         { MouseNameTypeMap.NonMainstreamMouse, "非主流"},
         { MouseNameTypeMap.BeeMouse, "机械蜂箱"},
-        { MouseNameTypeMap.CanMouse, "罐头鼠"}
-
+        { MouseNameTypeMap.CanMouse, "罐头鼠"},
+        { MouseNameTypeMap.WonderLandNormalMouse, "奇境普通老鼠"}
     };
 
     private static Dictionary<MouseNameTypeMap, Dictionary<int, string>> mouseShapeNameDict = new Dictionary<MouseNameTypeMap, Dictionary<int, string>>() {
@@ -104,6 +104,11 @@ public class MouseManager
         // 基础水军
         { MouseNameTypeMap.NormalWaterMouse, new Dictionary<int, string>(){
             { 0, "纸船鼠"},
+            { 1, "鸭子球迷鼠"},
+            { 2, "热带鱼铁锅鼠"},
+            { 3, "黄瓜纸船鼠"},
+            { 4, "苹果鸭子鼠"},
+            { 5, "煎蛋热带鱼鼠"},
         }},
         // 潜水艇
         { MouseNameTypeMap.SubmarineMouse, new Dictionary<int, string>(){
@@ -122,6 +127,11 @@ public class MouseManager
             { 3, "僵尸划艇鼠"},
             { 4, "僵尸龙舟鼠"},
             { 5, "僵尸旗舰鼠"},
+        }},
+        // 青蛙王子类
+        { MouseNameTypeMap.FrogMouse, new Dictionary<int, string>(){
+            { 0, "青蛙王子鼠"},
+            { 1, "陈皮王子鼠"},
         }},
         // 鼹鼠
         { MouseNameTypeMap.Mole, new Dictionary<int, string>(){
@@ -200,6 +210,11 @@ public class MouseManager
         { MouseNameTypeMap.CanMouse, new Dictionary<int, string>(){
             { 0, "罐头鼠"},
             { 1, "僵尸罐头鼠"},
+        }},
+        // 奇境普通老鼠
+        { MouseNameTypeMap.WonderLandNormalMouse, new Dictionary<int, string>(){
+            { 0, "三月兔鼠"},
+            { 1, "公爵夫人鼠"},
         }},
     };
 

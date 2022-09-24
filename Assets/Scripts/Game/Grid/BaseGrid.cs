@@ -9,27 +9,13 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     /// </summary>
     public static List<ItemInGridType> NoAllowBuildTagList = new List<ItemInGridType>()
     {
-        ItemInGridType.TimelinessBarrier,
+        ItemInGridType.Barrier,
         ItemInGridType.WindCave, 
     };
 
-    /// <summary>
-    /// 格子类型危险权重表
-    /// </summary>
-    public static Dictionary<GridType, int> GridDangerousWeightDict = new Dictionary<GridType, int>()
-    {
-        { GridType.None, 1},
-        { GridType.Default, 1},
-        { GridType.Water, 3}, // 众所周知水是剧毒的
-        { GridType.Lava, 2},
-    };
-
-
-    public BaseGridState mMainGridState; // 主要地形状态
-    public List<BaseGridState> mOtherGridStateList = new List<BaseGridState>(); // 其它地形状态表（大多是临时的）
+    protected Dictionary<GridType, BaseGridType> mGridTypeDict = new Dictionary<GridType, BaseGridType>(); // 依附于格子的地形状态
     protected List<MouseUnit> mMouseUnitList = new List<MouseUnit>(); //　位于格子上的老鼠单位表
-
-    protected Dictionary<FoodInGridType, FoodUnit> mFoodUnitdict = new Dictionary<FoodInGridType, FoodUnit>(); // 恒定在此格子上的美食（即确实是种下去的而非临时性的）
+    protected Dictionary<FoodInGridType, FoodUnit> mFoodUnitDict = new Dictionary<FoodInGridType, FoodUnit>(); // 恒定在此格子上的美食（即确实是种下去的而非临时性的）
     protected Dictionary<ItemInGridType, BaseUnit> mItemUnitDict = new Dictionary<ItemInGridType, BaseUnit>(); // 在此格子上的道具
     protected CharacterUnit characterUnit; // 所持有的人物单位（如果有）
 
@@ -39,19 +25,20 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     public bool isHeightLimit = true; // 地形效果是否只作用于特定高度
     public float mHeight = 0;
 
+    private BoxCollider2D mBoxCollider2D;
+
     public GridActionPointManager gridActionPointManager = new GridActionPointManager();
 
     private void Awake()
     {
-
+        mBoxCollider2D = GetComponent<BoxCollider2D>();
     }
 
     public void MInit()
     {
-        mMainGridState = new BaseGridState(this);
-        mOtherGridStateList.Clear();
+        mGridTypeDict.Clear();
         mMouseUnitList.Clear();
-        mFoodUnitdict.Clear();
+        mFoodUnitDict.Clear();
         mItemUnitDict.Clear();
         characterUnit = null;
         canBuild = true;
@@ -60,6 +47,13 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         isHeightLimit = true;
         mHeight = 0;
         gridActionPointManager.Initialize();
+        SetBoxCollider2D(Vector2.zero, new Vector2(MapManager.gridWidth, MapManager.gridHeight));
+    }
+
+    public void SetBoxCollider2D(Vector2 offset, Vector2 size)
+    {
+        mBoxCollider2D.offset = offset;
+        mBoxCollider2D.size = size;
     }
 
     /// <summary>
@@ -93,46 +87,25 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         return true;
     }
 
-    // 地形状态操作
-    public void ChangeMainGridState(BaseGridState state)
+    /// <summary>
+    /// 添加一个地形类型在该格子上
+    /// </summary>
+    public void AddGridType(GridType type, BaseGridType t)
     {
-        if (mMainGridState != null)
-        {
-            mMainGridState.OnExit();
-        }
-        mMainGridState = state;
-        state.OnEnter();
+        if (mGridTypeDict.ContainsKey(type))
+            RemoveGridType(type);
+        mGridTypeDict.Add(type, t);
+        t.transform.SetParent(transform);
+        t.transform.localPosition = Vector3.zero;
+        t.MInit();
     }
 
-    public void AddGridState(BaseGridState state)
+    public BaseGridType RemoveGridType(GridType type)
     {
-        mOtherGridStateList.Add(state);
-        state.OnEnter();
-    }
-
-    public void RemoveGridState(BaseGridState state)
-    {
-        mOtherGridStateList.Remove(state);
-        state.OnExit();
-    }
-
-
-    public void OnUnitEnter(BaseUnit unit)
-    {
-        mMainGridState.OnUnitEnter(unit);
-        foreach (var item in mOtherGridStateList)
-        {
-            item.OnUnitEnter(unit);
-        }
-    }
-
-    public void OnUnitExit(BaseUnit unit)
-    {
-        mMainGridState.OnUnitExit(unit);
-        foreach (var item in mOtherGridStateList)
-        {
-            item.OnUnitExit(unit);
-        }
+        BaseGridType t = mGridTypeDict[type];
+        mGridTypeDict.Remove(type);
+        t.MDestory();
+        return t;
     }
 
     /// <summary>
@@ -222,14 +195,14 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         // 需要剔除并销毁上一个与自己相同标签的卡，这种情况会在开启快捷放卡设置后出现
         if (IsContainTag(t))
         {
-            mFoodUnitdict[t].DeathEvent();
-            RemoveFoodUnit(mFoodUnitdict[t]);
+            mFoodUnitDict[t].ExecuteDeath();
+            // ExecuteDeath里已经包括RemoveFoodUnit了，这段注释请别删除！
+            //RemoveFoodUnit(mFoodUnitDict[t]);
         }
         // 之后再把自身加入
         gridActionPointManager.TriggerActionPoint(GridActionPointType.BeforeSetFoodUnit, new GridAction(food, this));
-        mFoodUnitdict.Add(t, food);
+        mFoodUnitDict.Add(t, food);
         gridActionPointManager.TriggerActionPoint(GridActionPointType.AfterSetFoodUnit, new GridAction(food, this));
-        OnUnitEnter(food);
     }
 
     /// <summary>
@@ -238,8 +211,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     public void RemoveFoodUnit(FoodUnit food)
     {
         gridActionPointManager.TriggerActionPoint(GridActionPointType.BeforeRemoveFoodUnit, new GridAction(food, this));
-        mFoodUnitdict.Remove(BaseCardBuilder.GetFoodInGridType(food.mType));
-        OnUnitExit(food);
+        mFoodUnitDict.Remove(BaseCardBuilder.GetFoodInGridType(food.mType));
         gridActionPointManager.TriggerActionPoint(GridActionPointType.AfterRemoveFoodUnit, new GridAction(food, this));
     }
 
@@ -251,7 +223,6 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     {
         gridActionPointManager.TriggerActionPoint(GridActionPointType.BeforeMouseUnitEnter, new GridAction(mouse, this));
         mMouseUnitList.Add(mouse);
-        OnUnitEnter(mouse);
         gridActionPointManager.TriggerActionPoint(GridActionPointType.AfterMouseUnitEnter, new GridAction(mouse, this));
     }
 
@@ -262,7 +233,6 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     {
         gridActionPointManager.TriggerActionPoint(GridActionPointType.BeforeMouseUnitExit, new GridAction(mouse, this));
         mMouseUnitList.Remove(mouse);
-        OnUnitExit(mouse);
         gridActionPointManager.TriggerActionPoint(GridActionPointType.AfterMouseUnitExit, new GridAction(mouse, this));
     }
 
@@ -273,7 +243,6 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     {
         gridActionPointManager.TriggerActionPoint(GridActionPointType.BeforeRemoveItemUnit, new GridAction(unit, this));
         mItemUnitDict.Add((ItemInGridType)unit.mType, unit);
-        OnUnitEnter(unit);
         gridActionPointManager.TriggerActionPoint(GridActionPointType.AfterRemoveItemUnit, new GridAction(unit, this));
     }
 
@@ -287,7 +256,6 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         if (mItemUnitDict.ContainsKey((ItemInGridType)unit.mType))
         {
             old = mItemUnitDict[(ItemInGridType)unit.mType];
-            OnUnitExit(old);
             mItemUnitDict.Remove((ItemInGridType)unit.mType);
         }
         gridActionPointManager.TriggerActionPoint(GridActionPointType.AfterRemoveItemUnit, new GridAction(unit, this));
@@ -300,7 +268,6 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     public void AddCharacterUnit(CharacterUnit c)
     {
         characterUnit = c;
-        OnUnitEnter(c);
     }
 
     /// <summary>
@@ -310,7 +277,6 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     {
         CharacterUnit c = characterUnit;
         characterUnit = null;
-        OnUnitExit(c);
         return c;
     }
 
@@ -320,7 +286,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     public virtual List<FoodUnit> GetFoodUnitList()
     {
         List<FoodUnit> l = new List<FoodUnit>();
-        foreach (var item in mFoodUnitdict)
+        foreach (var item in mFoodUnitDict)
         {
             l.Add(item.Value);
         }
@@ -357,7 +323,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     /// <returns></returns>
     public bool IsContainTag(FoodInGridType foodInGridType)
     {
-        return mFoodUnitdict.ContainsKey(foodInGridType);
+        return mFoodUnitDict.ContainsKey(foodInGridType);
     }
 
     public bool IsContainTag(ItemInGridType itemInGridType)
@@ -372,16 +338,36 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     {
         if (IsContainTag(FoodInGridType.Shield))
         {
-            return mFoodUnitdict[FoodInGridType.Shield];
+            return mFoodUnitDict[FoodInGridType.Shield];
         }
         else if (IsContainTag(FoodInGridType.Default))
         {
-            return mFoodUnitdict[FoodInGridType.Default];
+            return mFoodUnitDict[FoodInGridType.Default];
         }else if (characterUnit != null)
         {
             return characterUnit;
         }
+        else if (IsContainTag(FoodInGridType.Bomb))
+        {
+            return mFoodUnitDict[FoodInGridType.Bomb];
+        }
         return null;
+    }
+
+    public FoodUnit GetFoodByTag(FoodInGridType type)
+    {
+        if (IsContainTag(type))
+            return mFoodUnitDict[type];
+        else
+            return null;
+    }
+
+    public BaseUnit GetItemByTag(ItemInGridType type)
+    {
+        if (IsContainTag(type))
+            return mItemUnitDict[type];
+        else
+            return null;
     }
 
     /// <summary>
@@ -392,19 +378,23 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     {
         if (IsContainTag(FoodInGridType.Shield))
         {
-            return mFoodUnitdict[FoodInGridType.Shield];
+            return mFoodUnitDict[FoodInGridType.Shield];
         }
         else if (IsContainTag(FoodInGridType.Default))
         {
-            return mFoodUnitdict[FoodInGridType.Default];
+            return mFoodUnitDict[FoodInGridType.Default];
         }
         else if (characterUnit != null)
         {
             return characterUnit;
         }
+        else if (IsContainTag(FoodInGridType.Bomb))
+        {
+            return mFoodUnitDict[FoodInGridType.Bomb];
+        }
         else if (IsContainTag(FoodInGridType.WaterVehicle))
         {
-            return mFoodUnitdict[FoodInGridType.WaterVehicle];
+            return mFoodUnitDict[FoodInGridType.WaterVehicle];
         }
         return null;
     }
@@ -414,14 +404,18 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     /// </summary>
     /// <returns></returns>
     public BaseUnit GetHighestRemovePriorityUnit()
-    {
-        if (IsContainTag(FoodInGridType.Shield))
+    {   
+        if (IsContainTag(FoodInGridType.Bomb))
         {
-            return mFoodUnitdict[FoodInGridType.Shield];
+            return mFoodUnitDict[FoodInGridType.Bomb];
+        }
+        else if (IsContainTag(FoodInGridType.Shield))
+        {
+            return mFoodUnitDict[FoodInGridType.Shield];
         }
         else if (IsContainTag(FoodInGridType.Default))
         {
-            return mFoodUnitdict[FoodInGridType.Default];
+            return mFoodUnitDict[FoodInGridType.Default];
         }
         else if (characterUnit != null)
         {
@@ -429,7 +423,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         }
         else if (IsContainTag(FoodInGridType.WaterVehicle))
         {
-            return mFoodUnitdict[FoodInGridType.WaterVehicle];
+            return mFoodUnitDict[FoodInGridType.WaterVehicle];
         }
         return null;
     }
@@ -443,11 +437,11 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         List<FoodUnit> list = new List<FoodUnit>();
         if (IsContainTag(FoodInGridType.Shield))
         {
-            list.Add(mFoodUnitdict[FoodInGridType.Shield]);
+            list.Add(mFoodUnitDict[FoodInGridType.Shield]);
         }
         if (IsContainTag(FoodInGridType.Default))
         {
-            list.Add(mFoodUnitdict[FoodInGridType.Default]);
+            list.Add(mFoodUnitDict[FoodInGridType.Default]);
         }
         return list;
     }
@@ -461,15 +455,15 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         List<FoodUnit> list = new List<FoodUnit>();
         if (IsContainTag(FoodInGridType.Shield))
         {
-            list.Add(mFoodUnitdict[FoodInGridType.Shield]);
+            list.Add(mFoodUnitDict[FoodInGridType.Shield]);
         }
         if (IsContainTag(FoodInGridType.Default))
         {
-            list.Add(mFoodUnitdict[FoodInGridType.Default]);
+            list.Add(mFoodUnitDict[FoodInGridType.Default]);
         }
         if (IsContainTag(FoodInGridType.WaterVehicle))
         {
-            list.Add(mFoodUnitdict[FoodInGridType.WaterVehicle]);
+            list.Add(mFoodUnitDict[FoodInGridType.WaterVehicle]);
         }
         return list;
     }
@@ -543,7 +537,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
 
         // 检查单位存活
         List<FoodInGridType> f_List = new List<FoodInGridType>();
-        foreach (var item in mFoodUnitdict)
+        foreach (var item in mFoodUnitDict)
         {
             FoodUnit u = item.Value;
             if (!u.IsAlive())
@@ -553,7 +547,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         }
         foreach (var item in f_List)
         {
-            mFoodUnitdict.Remove(item);
+            mFoodUnitDict.Remove(item);
         }
 
         // 老鼠
@@ -586,26 +580,26 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
             mItemUnitDict.Remove(item);
         }
 
-        mMainGridState.OnUpdate();
-        foreach (var item in mOtherGridStateList)
+        // 依附于格子的地形更新
+        foreach (var keyValuePair in mGridTypeDict)
         {
-            item.OnUpdate();
+            keyValuePair.Value.MUpdate();
         }
     }
 
     public void MPause()
     {
-        throw new System.NotImplementedException();
+        
     }
 
     public void MResume()
     {
-        throw new System.NotImplementedException();
+        
     }
 
     public void MDestory()
     {
-        throw new System.NotImplementedException();
+        
     }
 
     public virtual void MPauseUpdate()
@@ -634,25 +628,37 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     /// </summary>
     public GridType GetGridType()
     {
-        if (mMainGridState != null)
-            return mMainGridState.gridType;
-        else
-            return GridType.None;
+        return GridType.NotBuilt;
     }
 
     /// <summary>
-    /// 获取本格子的默认危险权重
+    /// 是否包含某种地形
     /// </summary>
     /// <returns></returns>
-    public int GetDefaultDangerousWeight()
+    public bool IsContainGridType(GridType type)
     {
-        if (GridDangerousWeightDict.ContainsKey(GetGridType()))
+        foreach (var keyValuePair in mGridTypeDict)
         {
-            return GridDangerousWeightDict[GetGridType()];
+            if (keyValuePair.Key == type)
+                return true;
         }
-        else
+        return false;
+    }
+
+    /// <summary>
+    /// 获取该格子附带的所有地形
+    /// </summary>
+    /// <returns></returns>
+    public List<GridType> GetAllGridType()
+    {
+        List<GridType> list = new List<GridType>();
+        foreach (var keyValuePair in mGridTypeDict)
         {
-            return 1;
+            list.Add(keyValuePair.Key);
         }
+        // 如果什么地形也没包含那就是默认的
+        if (list.Count <= 0)
+            list.Add(GridType.Default);
+        return list;
     }
 }

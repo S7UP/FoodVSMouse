@@ -12,8 +12,7 @@ public class BombBullet : ParabolaBullet
     public override void TakeDamage(BaseUnit baseUnit)
     {
         // 原地产生一个爆炸效果
-        GameObject instance = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "AreaEffect/BombAreaEffect");
-        BombAreaEffectExecution bombEffect = instance.GetComponent<BombAreaEffectExecution>();
+        BombAreaEffectExecution bombEffect = BombAreaEffectExecution.GetInstance();
         bombEffect.Init(this.mMasterBaseUnit, 900, GetRowIndex(), 3, 3, 0, 0, true, false);
         if (baseUnit != null && baseUnit.IsValid())
         {

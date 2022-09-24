@@ -4,6 +4,7 @@
 public enum FoodInGridType
 {
     Default, // 默认的一类，不重叠
+    Bomb, // 炸弹类
     WaterVehicle, // 水载具类，盘子
     FloatVehicle, // 空载类，棉花糖
     Shield, // 屏障类，如瓜皮

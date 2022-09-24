@@ -49,6 +49,7 @@ public class GameController : MonoBehaviour
     public bool isPause;
     public bool isEnableNoTargetAttackMode{ get { return IsEnableNoTargetAttackModeNumeric.Value; } } // 是否开启无目标的攻击模式
     private BoolNumeric IsEnableNoTargetAttackModeNumeric = new BoolNumeric();
+    public System.Random rand;
 
     // 所有需要放到GameController管理Init、Update的东西
     protected List<IGameControllerMember> MMemberList;
@@ -139,6 +140,9 @@ public class GameController : MonoBehaviour
     {
         Debug.Log("GameController Awake!");
         _instance = this;
+
+        // 随机数生成器
+        rand = new System.Random();
 
         //AbilityManager.Instance.LoadAll();
 
@@ -348,6 +352,23 @@ public class GameController : MonoBehaviour
         food.UpdateRenderLayer(mAllyList[yIndex].Count);
         mAllyList[yIndex].Add(food);
         return food;
+    }
+
+    /// <summary>
+    /// 手动产生美食单位（非玩家操作）
+    /// </summary>
+    /// <returns></returns>
+    public FoodUnit CreateFoodUnit(FoodNameTypeMap type, int shape, int level, BaseGrid grid)
+    {
+        if(grid!=null && grid.isActiveAndEnabled)
+        {
+            FoodUnit unit = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Food/" + (int)type).GetComponent<FoodUnit>();
+            unit.mType = (int)type;
+            unit.mShape = shape;
+            BaseCardBuilder.InitInstance(unit, (int)type, shape, grid, level, null);
+            return unit;
+        }
+        return null;
     }
 
     /// <summary>
@@ -1080,5 +1101,25 @@ public class GameController : MonoBehaviour
     public void RemoveNoTargetAttackModeModifier(BoolModifier boolModifier)
     {
         IsEnableNoTargetAttackModeNumeric.RemoveDecideModifier(boolModifier);
+    }
+
+    /// <summary>
+    /// 生成随机浮点数（左开右闭）
+    /// </summary>
+    /// <param name="min"></param>
+    /// <param name="max"></param>
+    /// <returns></returns>
+    public float GetRandomFloat(float min, float max)
+    {
+        return min + (float)rand.NextDouble()*(max-min);
+    }
+
+    /// <summary>
+    /// 生成随机整数（左开右闭）
+    /// </summary>
+    /// <returns></returns>
+    public int GetRandomInt(int min, int max)
+    {
+        return rand.Next(min, max);
     }
 }

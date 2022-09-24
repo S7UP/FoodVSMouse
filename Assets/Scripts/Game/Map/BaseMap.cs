@@ -62,6 +62,14 @@ public class BaseMap : MonoBehaviour, IGameControllerMember
     {
 
     }
+
+    /// <summary>
+    /// 其他加工
+    /// </summary>
+    public virtual void OtherProcessing()
+    {
+
+    }
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void MInit()
@@ -76,6 +84,8 @@ public class BaseMap : MonoBehaviour, IGameControllerMember
 
         ProcessingGridList();
         ProcessingGridGroupList();
+
+        OtherProcessing();
     }
 
     /// <summary>

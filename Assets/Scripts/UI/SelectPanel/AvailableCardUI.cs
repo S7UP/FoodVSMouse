@@ -58,7 +58,7 @@ public class AvailableCardUI : MonoBehaviour
         else
         {
             // 否则读取全部卡片
-            Dictionary<FoodNameTypeMap, List<string>> dict = FoodManager.GetAllFoodDict();
+            Dictionary<FoodNameTypeMap, List<string>> dict = FoodManager.GetAllBuildableFoodDict();
             foreach (var keyValuePair in dict)
             {
                 List<string> l = keyValuePair.Value;

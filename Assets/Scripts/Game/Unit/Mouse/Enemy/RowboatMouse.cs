@@ -1,8 +1,6 @@
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
-using static UnityEngine.GraphicsBuffer;
+using UnityEngine;
 /// <summary>
 /// 划艇鼠
 /// </summary>
@@ -187,5 +185,13 @@ public class RowboatMouse : MouseUnit, IInWater
     public void OnExitWater()
     {
         
+    }
+
+    /// <summary>
+    /// 划艇鼠完全不能离开水啊
+    /// </summary>
+    public override void SetGridDangerousWeightDict()
+    {
+        GridDangerousWeightDict[GridType.Water] = GridDangerousWeightDict[GridType.Default] - 1;
     }
 }

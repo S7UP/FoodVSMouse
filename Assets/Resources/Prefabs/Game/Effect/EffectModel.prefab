@@ -94,7 +94,7 @@ Animator:
   m_GameObject: {fileID: 1767066577570658997}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 67a078e411e88f649ae461e3804570ba, type: 2}
+  m_Controller: {fileID: 9100000, guid: 929057cb31db80142a1a63c7868b32b1, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -116,6 +116,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   animator: {fileID: 3800654182179047421}
+  AppearClipName: 
   clipName: 
+  DisappearClipName: 
   resName: EffectModel
   isCycle: 0

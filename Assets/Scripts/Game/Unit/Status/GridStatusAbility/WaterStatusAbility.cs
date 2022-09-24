@@ -8,6 +8,7 @@ using UnityEngine;
 public class WaterStatusAbility : StatusAbility
 {
     private FloatModifier slowDownFloatModifier; // 当前提供减速效果的修饰器
+    private FloatModifier decAttackSpeedModifier = new FloatModifier(-20); // 减攻速效果修饰器
     private BoolModifier waterStatusBoolModifier; // 溺水状态标志
     private ITask mInWaterTask;
     private const string TaskKey = StringManager.IgnoreWaterGridState;
@@ -68,6 +69,8 @@ public class WaterStatusAbility : StatusAbility
             master.NumericBox.MoveSpeed.RemoveFinalPctAddModifier(slowDownFloatModifier);
             slowDownFloatModifier = null;
         }
+        // 移除减攻速
+        master.NumericBox.AttackSpeed.RemoveFinalPctAddModifier(decAttackSpeedModifier);
         if (waterStatusBoolModifier != null)
         {
             master.NumericBox.RemoveDecideModifierToBoolDict(StringManager.WaterGridState, waterStatusBoolModifier);
@@ -85,9 +88,11 @@ public class WaterStatusAbility : StatusAbility
         {
             // 添加水地形减速效果，具体减速效果值通过读取当前关卡预设值
             // slowDownFloatModifier = new FloatModifier(GameController.Instance.GetNumberManager().GetValue(StringManager.WaterSlowDown));
-            slowDownFloatModifier = new FloatModifier(-25);
+            slowDownFloatModifier = new FloatModifier(-20);
             master.NumericBox.MoveSpeed.AddFinalPctAddModifier(slowDownFloatModifier);
         }
+        // 减攻速
+        master.NumericBox.AttackSpeed.AddFinalPctAddModifier(decAttackSpeedModifier);
         if(waterStatusBoolModifier == null)
         {
             waterStatusBoolModifier = new BoolModifier(true);
@@ -107,11 +112,11 @@ public class WaterStatusAbility : StatusAbility
             InWater.OnStayWater();
         }
 
-        // 无来源的持续伤害
+        // 无来源的持续伤害 （每秒造成 1%已损失生命值伤害（最小值为2））
         if (triggerDamgeTimeLeft == 0)
         {
             // float percentDamgePerSeconds = GameController.Instance.GetNumberManager().GetValue(StringManager.WaterPerCentDamge);
-            new DamageAction(CombatAction.ActionType.CauseDamage, null, master, 10 + master.mCurrentHp * 0.02f).ApplyAction();
+            new DamageAction(CombatAction.ActionType.CauseDamage, null, master, Mathf.Max(2, master.GetLostHp() * 0.01f)).ApplyAction();
             triggerDamgeTimeLeft = TotalTime;
         }else if(triggerDamgeTimeLeft > 0)
             triggerDamgeTimeLeft--;
@@ -166,7 +171,8 @@ public class WaterStatusAbility : StatusAbility
     /// </summary>
     public void LetMasterExitWater()
     {
-        mInWaterTask.OnExit();
+        InWaterTask t = (InWaterTask)mInWaterTask;
+        t.OnExitWater();
         SetEffectEnable(false);
     }
 
@@ -240,7 +246,10 @@ public class WaterStatusAbility : StatusAbility
             }
         }
 
-        public void OnExit()
+        /// <summary>
+        /// 离开水，但是任务还在
+        /// </summary>
+        public void OnExitWater()
         {
             // 检测目标是否有下水接口，如果有则额外调用对应方法
             if (typeof(IInWater).IsAssignableFrom(unit.GetType()))
@@ -258,6 +267,15 @@ public class WaterStatusAbility : StatusAbility
                 }
                 EffectManager.RemoveWaterWaveEffectFromUnit(unit);
             }
+        }
+
+        /// <summary>
+        /// 当该任务被移除时（触发时机基本只有该对象被回收了）
+        /// </summary>
+        public void OnExit()
+        {
+            // 恢复剪切掉的部分
+            SetCutRateFunc(0);
         }
 
         public void DieInWater()

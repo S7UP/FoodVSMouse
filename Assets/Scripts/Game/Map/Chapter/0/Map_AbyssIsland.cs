@@ -28,7 +28,7 @@ public class Map_AbyssIsland : ChapterMap
     {
         for (int i = 2; i < 5; i++)
             for (int j = 0; j < 9; j++)
-                GetGrid(j, i).ChangeMainGridState(new WaterGridState(GetGrid(j, i)));
+                GetGrid(j, i).AddGridType(GridType.Water, BaseGridType.GetInstance(GridType.Water, 0));
     }
 
     /// <summary>

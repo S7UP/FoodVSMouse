@@ -1,3 +1,4 @@
+
 public class FloatNumeric
 {
     // ×îÖÕÊýÖµ
@@ -51,7 +52,8 @@ public class FloatNumeric
     }
     public void AddFinalPctAddModifier(FloatModifier modifier)
     {
-        finalPctAdd = FinalPctAddCollector.AddModifier(modifier);
+        FinalPctAddCollector.AddModifier(modifier);
+        finalPctAdd = UnityEngine.Mathf.Max(-95, FinalPctAddCollector.GetMin());
         Update();
     }
     public void RemoveAddModifier(FloatModifier modifier)
@@ -71,7 +73,8 @@ public class FloatNumeric
     }
     public void RemoveFinalPctAddModifier(FloatModifier modifier)
     {
-        finalPctAdd = FinalPctAddCollector.RemoveModifier(modifier);
+        FinalPctAddCollector.RemoveModifier(modifier);
+        finalPctAdd = UnityEngine.Mathf.Max(-95, FinalPctAddCollector.GetMin());
         Update();
     }
 

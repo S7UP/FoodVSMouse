@@ -129,7 +129,12 @@ public class Map_CuminBidge2 : ChapterMap
     /// </summary>
     public override void ProcessingGridList()
     {
-
+        // 1¡¢7Â·
+        for (int i = 0; i < 9; i++)
+        {
+            GetGrid(i, 0).AddGridType(GridType.Water, BaseGridType.GetInstance(GridType.Water, 0));
+            GetGrid(i, 6).AddGridType(GridType.Water, BaseGridType.GetInstance(GridType.Water, 0));
+        }
     }
 
     /// <summary>

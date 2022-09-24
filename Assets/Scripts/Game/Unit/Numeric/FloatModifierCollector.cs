@@ -14,6 +14,32 @@ public class FloatModifierCollector
         Update();
     }
 
+    public float GetMax()
+    {
+        if (Modifiers.Count <= 0)
+            return 0;
+        float max = Modifiers[0].Value;
+        foreach (var item in Modifiers)
+        {
+            if (item.Value > max)
+                max = item.Value;
+        }
+        return max;
+    }
+
+    public float GetMin()
+    {
+        if (Modifiers.Count <= 0)
+            return 0;
+        float min = Modifiers[0].Value;
+        foreach (var item in Modifiers)
+        {
+            if (item.Value < min)
+                min = item.Value;
+        }
+        return min;
+    }
+
     public float AddModifier(FloatModifier modifier)
     {
         Modifiers.Add(modifier);

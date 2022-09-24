@@ -26,9 +26,17 @@ public class Map_CheeseCastle : ChapterMap
     /// </summary>
     public override void ProcessingGridList()
     {
+        // 铺上水格子
         for (int i = 0; i < 7; i++)
             for (int j = 0; j < 9; j++)
-                GetGrid(j, i).ChangeMainGridState(new WaterGridState(GetGrid(j, i)));
+                GetGrid(j, i).AddGridType(GridType.Water, BaseGridType.GetInstance(GridType.Water, 0));
+        // 铺上障碍
+        BaseBarrier b = GameController.Instance.CreateItem(6, 1, (int)ItemInGridType.Barrier, 0).GetComponent<BaseBarrier>();
+        b.SetHide(true);
+        b.HideEffect(true);
+        b = GameController.Instance.CreateItem(6, 5, (int)ItemInGridType.Barrier, 0).GetComponent<BaseBarrier>();
+        b.SetHide(true);
+        b.HideEffect(true);
     }
 
     /// <summary>

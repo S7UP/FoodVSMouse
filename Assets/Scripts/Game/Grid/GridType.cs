@@ -3,8 +3,8 @@
 /// </summary>
 public enum GridType
 {
-    None = 0, // 空，等于无格子，不允许放置卡片
-    Default = 1, // 普通格子
-    Water = 2, // 水地形格子
-    Lava = 3, // 岩浆地形格子
+    Default = -1, // 默认，即什么地形也没有时为这个
+    NotBuilt = 0, // 不允许放置卡片
+    Water = 1, // 水地形格子
+    Lava = 2, // 岩浆地形格子
 }

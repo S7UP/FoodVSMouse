@@ -347,11 +347,11 @@ public class CaptainAmerica : BossUnit
                     if (animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime()>0.5f)
                     {
                         // 特效
-                        BaseEffect effect = BaseEffect.CreateInstance(GameManager.Instance.GetRuntimeAnimatorController("Boss/20/Strike"), "StrikeEffect", false);
+                        BaseEffect effect = BaseEffect.CreateInstance(GameManager.Instance.GetRuntimeAnimatorController("Boss/20/Strike"), null, "StrikeEffect", null, false);
                         effect.transform.position = transform.position;
                         GameController.Instance.AddEffect(effect);
                         // 对前方两格卡片造成900点伤害
-                        DamageAreaEffectExecution dmgEffect = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "AreaEffect/DamageAreaEffect").GetComponent<DamageAreaEffectExecution>();
+                        DamageAreaEffectExecution dmgEffect = DamageAreaEffectExecution.GetInstance();
                         dmgEffect.Init(this, CombatAction.ActionType.CauseDamage, 900, GetRowIndex(), 2, 1, -1.5f, 0, true, false);
                         dmgEffect.transform.position = transform.position;
                         GameController.Instance.AddAreaEffectExecution(dmgEffect);
