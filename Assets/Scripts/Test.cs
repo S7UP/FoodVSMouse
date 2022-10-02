@@ -1,5 +1,4 @@
 using UnityEngine;
-
 public class Test
 {
     public static string TestStageName = "151"; // "singleMouseText"

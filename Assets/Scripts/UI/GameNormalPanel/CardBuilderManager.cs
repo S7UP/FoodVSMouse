@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System;
-using static UnityEditor.ObjectChangeEventStream;
 /// <summary>
 /// 卡片建造器管理器（目前主要用来提供静态方法，并枚举事件）
 /// </summary>
@@ -45,6 +44,7 @@ public class CardBuilderManager
             d.Add(FoodNameTypeMap.BigStove, AfterBuildBigFire);
             d.Add(FoodNameTypeMap.WoodenDisk, AfterBuildWoodenDisk);
             d.Add(FoodNameTypeMap.PokerShield, AfterBuildPokerShield);
+            d.Add(FoodNameTypeMap.CottonCandy, AfterBuildCottonCandy);
         }
 
         /// <summary>
@@ -64,6 +64,7 @@ public class CardBuilderManager
             d.Add(FoodNameTypeMap.BigStove, AfterDestructeBigFire);
             d.Add(FoodNameTypeMap.WoodenDisk, AfterDestructeWoodenDisk);
             d.Add(FoodNameTypeMap.PokerShield, AfterDestructePokerShield);
+            d.Add(FoodNameTypeMap.CottonCandy, AfterDestructeCottonCandy);
         }
 
         /// <summary>
@@ -114,6 +115,7 @@ public class CardBuilderManager
         {
             Dictionary<FoodNameTypeMap, Func<BaseGrid, bool>> d = CanConstructeInGridDict;
             d.Add(FoodNameTypeMap.WoodenDisk, WoodenDiskCanConstructeInGrid);
+            d.Add(FoodNameTypeMap.CottonCandy, CottonCandyCanConstructeInGrid);
         }
     }
 
@@ -221,7 +223,7 @@ public class CardBuilderManager
     /// </summary>
     private void AfterBuildWoodenDisk(BaseCardBuilder builder)
     {
-        if (builder.mShape < 2)
+        if (builder.mShape < 1)
         {
             builder.mCostDict["Fire"] = builder.mCostDict["Fire"] + 10f;
         }
@@ -232,7 +234,7 @@ public class CardBuilderManager
     /// </summary>
     private void AfterDestructeWoodenDisk(BaseCardBuilder builder)
     {
-        if (builder.mShape < 2)
+        if (builder.mShape < 1)
         {
             builder.mCostDict["Fire"] = builder.mCostDict["Fire"] - 10f;
         }
@@ -268,5 +270,31 @@ public class CardBuilderManager
         {
             builder.mCostDict["Fire"] = builder.mCostDict["Fire"] - 100f;
         }
+    }
+
+    /// <summary>
+    /// 种植棉花糖后的增值效果
+    /// </summary>
+    private void AfterBuildCottonCandy(BaseCardBuilder builder)
+    {
+        builder.mCostDict["Fire"] = builder.mCostDict["Fire"] + 50f;
+    }
+
+    /// <summary>
+    /// 移除棉花糖后减值效果
+    /// </summary>
+    private void AfterDestructeCottonCandy(BaseCardBuilder builder)
+    {
+        builder.mCostDict["Fire"] = builder.mCostDict["Fire"] - 50f;
+    }
+
+    /// <summary>
+    /// 棉花糖是否可以种在格子上
+    /// </summary>
+    /// <param name="grid"></param>
+    /// <returns></returns>
+    private bool CottonCandyCanConstructeInGrid(BaseGrid grid)
+    {
+        return grid.IsContainGridType(GridType.Lava);
     }
 }

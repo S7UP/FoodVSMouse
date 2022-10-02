@@ -65,7 +65,13 @@ public class Map_SpiceSpaceship : ChapterMap
     /// </summary>
     public override void ProcessingGridList()
     {
-
+        // 添加云层
+        for (int i = 1; i < 8; i++)
+            for (int j = 0; j < 2; j++)
+            {
+                GetGrid(i, j).AddGridType(GridType.Sky, BaseGridType.GetInstance(GridType.Sky, 0));
+                GetGrid(i, 5 + j).AddGridType(GridType.Sky, BaseGridType.GetInstance(GridType.Sky, 0));
+            }
     }
 
     /// <summary>
@@ -74,5 +80,38 @@ public class Map_SpiceSpaceship : ChapterMap
     public override void ProcessingGridGroupList()
     {
 
+    }
+
+    /// <summary>
+    /// 其他加工
+    /// </summary>
+    public override void OtherProcessing()
+    {
+        {
+            // 为全图添加黑夜BUFF
+            ShadeAreaEffectExecution e = ShadeAreaEffectExecution.GetInstance(11, 7, new UnityEngine.Vector2(MapManager.GetColumnX(4), MapManager.GetRowY(3)));
+            GameController.Instance.AddAreaEffectExecution(e);
+        }
+
+
+        {
+            // 添加云层
+            for (int i = 0; i <= 1; i++)
+            {
+                Item_Cloud.GetCloudGroup(0, new Vector2(MapManager.GetColumnX(3.75f), MapManager.GetRowY(i)), 10);
+                Item_Cloud.GetCloudGroup(0, new Vector2(MapManager.GetColumnX(3.75f), MapManager.GetRowY(5+i)), 10);
+            }
+
+            // 添加风域
+            for (int i = 0; i <= 5; i+=5)
+            {
+                for (int j = 0; j <= 1; j++)
+                {
+                    WindAreaEffectExecution e = WindAreaEffectExecution.GetInstance(9, 1, new Vector2(MapManager.GetColumnX(4f), MapManager.GetRowY(i + j)));
+                    WindAreaEffectExecution.SetClassicalWindAreaEffectMode(e, 1, 300, 120, 540, true); // 等待时间、速度变化时间、匀速时间
+                    GameController.Instance.AddAreaEffectExecution(e);
+                }
+            }
+        }
     }
 }

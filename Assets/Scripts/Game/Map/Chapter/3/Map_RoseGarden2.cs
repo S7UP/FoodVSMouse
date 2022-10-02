@@ -1,6 +1,3 @@
-using System.Collections.Generic;
-
-using UnityEngine;
 /// <summary>
 /// 玫瑰花园（夜）
 /// </summary>
@@ -38,5 +35,15 @@ public class Map_RoseGarden2 : ChapterMap
     public override void ProcessingGridGroupList()
     {
 
+    }
+
+    /// <summary>
+    /// 其他加工
+    /// </summary>
+    public override void OtherProcessing()
+    {
+        // 为全图添加黑夜BUFF
+        ShadeAreaEffectExecution e = ShadeAreaEffectExecution.GetInstance(11, 7, new UnityEngine.Vector2(MapManager.GetColumnX(4), MapManager.GetRowY(3)));
+        GameController.Instance.AddAreaEffectExecution(e);
     }
 }

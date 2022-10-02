@@ -17,6 +17,8 @@ public class ParabolaMovePresetTasker: PresetTasker
     private float sY; // y方向上的位移 
     private FloatModifier f = new FloatModifier(0);
 
+    private Vector3 lastPos;
+
     /// <summary>
     /// 构造方法
     /// </summary>
@@ -31,7 +33,8 @@ public class ParabolaMovePresetTasker: PresetTasker
             rotationY = Vector2.down;
         else
             rotationY = Vector2.up;
-        baseUnit.transform.position = new Vector3(firstPosition.x, targetPosition.y, 0);
+        // baseUnit.transform.position = new Vector3(firstPosition.x, targetPosition.y, 0);
+        lastPos = baseUnit.transform.position;
         totalTimer = Mathf.CeilToInt(Mathf.Abs(targetPosition.x - baseUnit.transform.position.x) / velocityX);
         // 计算得出加速度
         acc = -8 * height / (totalTimer * totalTimer);
@@ -49,9 +52,10 @@ public class ParabolaMovePresetTasker: PresetTasker
     {
         sY += velocityY;
         velocityY += acc;
-        Vector2 vx = Vector2.Lerp(firstPosition, targetPosition, (float)currentTimer / totalTimer);
+        Vector3 pos = Vector3.Lerp(firstPosition, targetPosition, (float)currentTimer / totalTimer);
         // 横向为判定坐标移动
-        targerUnit.SetPosition(vx);
+        targerUnit.SetPosition(targerUnit.GetPosition()+(pos-lastPos));
+        lastPos = pos;
         // 纵向为贴图相对坐标移动（纵向判定坐标不变）
         targerUnit.RemoveSpriteOffsetY(f);
         f.Value = rotationY.y * sY;

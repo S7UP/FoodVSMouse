@@ -1,9 +1,6 @@
-using System.Collections;
 using System.Collections.Generic;
 using System;
 using UnityEngine;
-using static UnityEditor.Progress;
-using static UnityEngine.UI.CanvasScaler;
 /// <summary>
 /// 发光霉菌
 /// </summary>
@@ -19,7 +16,9 @@ public class LuminescentMold : FoodUnit
         {
             DamageAction dmgAction = action as DamageAction;
             // 对1格内的攻击者造成10%最大生命值的无来源伤害,并施加1.5s的晕眩效果
-            if (dmgAction.Creator != null && (dmgAction.Creator.transform.position - dmgAction.Target.transform.position).magnitude <= MapManager.gridWidth)
+            if (dmgAction.Creator != null 
+            && (dmgAction.Creator.transform.position - dmgAction.Target.transform.position).magnitude <= MapManager.gridWidth
+            && !(dmgAction.Creator is MouseUnit && dmgAction.Creator.mType == (int)MouseNameTypeMap.WonderLandMole)) // 奇境鼹鼠免疫这个效果
             {
                 new DamageAction(CombatAction.ActionType.CauseDamage, null, dmgAction.Creator, 0.10f*dmgAction.Creator.mMaxHp).ApplyAction();
                 dmgAction.Creator.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(dmgAction.Creator, 90, true));
@@ -99,7 +98,7 @@ public class LuminescentMold : FoodUnit
         }
     }
 
-    public override void OnBurnDamage(float dmg)
+    public override void OnBombBurnDamage(float dmg)
     {
         if(dmg > 0)
             ExecuteBurn();

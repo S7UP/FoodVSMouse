@@ -2,8 +2,6 @@ using System.Collections.Generic;
 
 using UnityEngine;
 
-using static UnityEditor.Progress;
-
 public class FoodUnit : BaseUnit
 {
     // 美食单位的属性
@@ -21,7 +19,6 @@ public class FoodUnit : BaseUnit
     protected FoodUnit.Attribute attr;
     private SpriteRenderer spriteRenderer1;
     private SpriteRenderer spriteRenderer2;
-    public Material defaultMaterial;
     public BoxCollider2D mBoxCollider2D;
     public Transform spriteTrans;
 
@@ -40,9 +37,9 @@ public class FoodUnit : BaseUnit
     {
         base.Awake();
         spriteTrans = transform.Find("Ani_Food");
-        animator = transform.Find("Ani_Food").gameObject.GetComponent<Animator>();
+        animator = spriteTrans.GetComponent<Animator>();
         rankAnimator = transform.Find("Ani_Rank").gameObject.GetComponent<Animator>();
-        spriteRenderer1 = transform.Find("Ani_Food").gameObject.GetComponent<SpriteRenderer>();
+        spriteRenderer1 = spriteTrans.GetComponent<SpriteRenderer>();
         spriteRenderer2 = transform.Find("Ani_Rank").gameObject.GetComponent<SpriteRenderer>();
         mBoxCollider2D = transform.GetComponent<BoxCollider2D>();
     }
@@ -334,6 +331,38 @@ public class FoodUnit : BaseUnit
         if (_Threshold >= 1.0)
         {
             ResumeCurrentAnimatorState(boolModifier);
+            DeathEvent();
+        }
+    }
+
+    /// <summary>
+    /// 摔落死亡瞬间
+    /// </summary>
+    public override void OnDropStateEnter()
+    {
+        // 从当前格子中移除引用
+        RemoveFromGrid();
+        // 屏蔽星级特效
+        spriteRenderer2.enabled = false;
+        // 禁止播放动画
+        PauseCurrentAnimatorState(boolModifier);
+    }
+
+    /// <summary>
+    /// 摔落死亡过程
+    /// </summary>
+    public override void OnDropState(float r)
+    {
+        SetAlpha(1 - r);
+        spriteRenderer1.transform.localPosition = spriteRenderer1.transform.localPosition + 0.25f*MapManager.gridHeight*r*Vector3.down;
+        spriteRenderer1.transform.localScale = Vector3.one * (1-r);
+        // 超过1就可以回收了
+        if (r >= 1.0)
+        {
+            ResumeCurrentAnimatorState(boolModifier);
+            SetAlpha(1);
+            spriteRenderer1.transform.localPosition = Vector3.zero;
+            spriteRenderer1.transform.localScale = Vector3.one;
             DeathEvent();
         }
     }

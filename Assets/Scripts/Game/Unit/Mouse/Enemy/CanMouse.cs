@@ -14,8 +14,11 @@ public class CanMouse : MouseUnit
 
     private bool isReinstallState; // 是否为重装态
 
+    private bool isDroping; // 是否在扔装备然后晕眩的过程中
+
     public override void MInit()
     {
+        isDroping = false;
         base.MInit();
         isReinstallState = false; // 只是初始化，不用担心，而且不这么做后面的方法会失效
         // 初始态为重装态
@@ -26,10 +29,10 @@ public class CanMouse : MouseUnit
     /// 受到灰烬伤害时
     /// </summary>
     /// <param name="dmg"></param>
-    public override void OnBurnDamage(float dmg)
+    public override void OnBombBurnDamage(float dmg)
     {
         // 原先的伤害执行
-        base.OnBurnDamage(dmg);
+        base.OnBombBurnDamage(dmg);
         // 处于重装状态但不能是飞行动画期间
         if (isReinstallState && !(mCurrentActionState is TransitionState))
         {
@@ -106,17 +109,26 @@ public class CanMouse : MouseUnit
         OpenCollision();
     }
 
+    public override bool CanBlock(BaseUnit unit)
+    {
+        return !isDroping && base.CanBlock(unit);
+    }
+
     public override void OnCastStateEnter()
     {
         animatorController.Play("Drop");
+        isDroping = true;
     }
 
     public override void OnCastState()
     {
-        if (currentStateTimer == 0)
-            return;
         if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
             SetActionState(new MoveState(this));
+    }
+
+    public override void OnCastStateExit()
+    {
+        isDroping = false;
     }
 
     /// <summary>

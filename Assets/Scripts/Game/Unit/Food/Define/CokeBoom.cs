@@ -1,4 +1,3 @@
-using UnityEngine;
 public class CokeBoom : FoodUnit
 {
     public override void MInit()

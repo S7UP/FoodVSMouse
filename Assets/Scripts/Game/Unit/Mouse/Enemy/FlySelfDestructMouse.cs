@@ -8,6 +8,7 @@ public class FlySelfDestructMouse : MouseUnit, IFlyUnit
     private BoolModifier IgnoreFrozen = new BoolModifier(true); // 免疫冻结
     private Vector2 start_position; // 起始坠机点
     private Vector2 target_position; // 目标落点
+    private Vector3 last_pos;
 
     public override void MInit()
     {
@@ -61,6 +62,7 @@ public class FlySelfDestructMouse : MouseUnit, IFlyUnit
             {
                 target_position = new Vector2(MapManager.GetColumnX(0), target_position.y);
             }
+            last_pos = start_position;
             // 设为转场状态
             SetActionState(new MoveState(this));
         }
@@ -71,7 +73,6 @@ public class FlySelfDestructMouse : MouseUnit, IFlyUnit
         if (isDrop)
         {
             animatorController.Play("Move1");
-            float t = animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime();
         }
         else
         {
@@ -84,7 +85,9 @@ public class FlySelfDestructMouse : MouseUnit, IFlyUnit
         if (isDrop && !isDeathState)
         {
             float t = animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime();
-            rigibody2D.MovePosition(Vector2.Lerp(start_position, target_position, t));
+            Vector3 pos = Vector3.Lerp(start_position, target_position, t);
+            SetPosition(GetPosition()+(pos - last_pos));
+            last_pos = pos;
             // 这种情况下表明已坠落，执行死亡
             if (t >= 1)
             {
@@ -109,7 +112,7 @@ public class FlySelfDestructMouse : MouseUnit, IFlyUnit
             BaseUnit unit = grid.GetHighestAttackPriorityUnit();
             if (unit != null && unit.tag!="Character")
             {
-                new BurnDamageAction(CombatAction.ActionType.CauseDamage, this, unit, float.MaxValue).ApplyAction();
+                new BombDamageAction(CombatAction.ActionType.CauseDamage, this, unit, float.MaxValue).ApplyAction();
             }
         }
     }

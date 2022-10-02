@@ -75,6 +75,9 @@ public class Mole : MouseUnit
 
         isAppear = true;
         this.isMoveLeft = isMoveLeft;
+        // 改朝向
+        //if(isMoveLeft)
+        //    SetLocalScale(new Vector2(-1, 1));
         SetActionState(new TransitionState(this));
         // 不再免疫冻结状态
         NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreFrozen, IgnoreFrozen);
@@ -103,9 +106,9 @@ public class Mole : MouseUnit
         {
             if (isMoveLeft)
             {
-                SetMoveRoate(Vector2.left);
                 // 改朝向
                 SetLocalScale(new Vector2(-1, 1));
+                SetMoveRoate(Vector2.left);
             }
             else
             {

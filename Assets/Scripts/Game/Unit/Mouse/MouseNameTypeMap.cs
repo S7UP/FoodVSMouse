@@ -37,7 +37,7 @@ public enum MouseNameTypeMap
     RatTrainBody = 31, // 鼠国列车车厢
     TrumpetMouse = 32, // 小号鼠
     WonderLandNormalMouse = 33, // 奇境常规老鼠
-    WonderLandMole = 34, // 奇境鼹鼠
+    WonderLandMole = 34, // 奇境刺猬
     WonderLandFairy = 35, // 奇境妖精
     WonderLandGourmand = 36, // 奇境饕餮
     WonderLandWitch = 37, // 奇境女巫

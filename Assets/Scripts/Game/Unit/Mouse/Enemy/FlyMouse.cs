@@ -33,7 +33,7 @@ public class FlyMouse : MouseUnit, IFlyUnit
     /// </summary>
     private bool IsMeetDropCondition()
     {
-        return (GetColumnIndex() <= dropColumn && !isDrop);
+        return (transform.position.x <= MapManager.GetColumnX(dropColumn+0.4f) && !isDrop);
     }
 
     /// <summary>

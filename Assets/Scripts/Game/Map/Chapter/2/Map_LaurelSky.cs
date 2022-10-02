@@ -103,7 +103,9 @@ public class Map_LaurelSky : ChapterMap
     /// </summary>
     public override void ProcessingGridList()
     {
-
+        for (int i = 2; i < 7; i++)
+            for (int j = 2; j < 5; j++)
+                GetGrid(i, j).AddGridType(GridType.Sky, BaseGridType.GetInstance(GridType.Sky, 0));
     }
 
     /// <summary>
@@ -112,5 +114,21 @@ public class Map_LaurelSky : ChapterMap
     public override void ProcessingGridGroupList()
     {
 
+    }
+
+    public override void OtherProcessing()
+    {
+        {
+            // 添加云层
+            for (int i = 2; i < 5; i++)
+            {
+                Item_Cloud.GetCloudGroup(0, new Vector2(MapManager.GetColumnX(4f), MapManager.GetRowY(i)), 8);
+            }
+
+            // 添加风域
+            WindAreaEffectExecution e = WindAreaEffectExecution.GetInstance(9, 3, new Vector2(MapManager.GetColumnX(4f), MapManager.GetRowY(3)));
+            WindAreaEffectExecution.SetClassicalWindAreaEffectMode(e, 1, 420, 120, 630, true); // 等待时间、速度变化时间、匀速时间
+            GameController.Instance.AddAreaEffectExecution(e);
+        }
     }
 }

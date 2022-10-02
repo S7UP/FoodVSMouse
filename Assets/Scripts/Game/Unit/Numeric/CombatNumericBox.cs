@@ -13,6 +13,8 @@ public class CombatNumericBox
     public FloatNumeric AttackSpeed = new FloatNumeric();
     // 伤害减免(取值为0-100)
     public FloatNumeric Defense = new FloatNumeric();
+    // 伤害比率
+    public MultiplyFloatModifierCollector DamageRate = new MultiplyFloatModifierCollector();
     // 移动速度(格/秒)
     public FloatNumeric MoveSpeed = new FloatNumeric();
     // 射程（格）
@@ -38,6 +40,7 @@ public class CombatNumericBox
         Range.Initialize();
         Shield.Initialize();
         IsDisableSkill.Initialize();
+        DamageRate.Clear();
 
         IntDict.Clear();
         FloatDict.Clear();

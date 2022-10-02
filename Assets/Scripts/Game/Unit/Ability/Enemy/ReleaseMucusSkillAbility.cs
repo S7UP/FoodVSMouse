@@ -26,7 +26,7 @@ public class ReleaseMucusSkillAbility : SkillAbility
     {
         master.SetActionState(new CastState(master));
         // 产生粘液实体
-        TimelinessShiftZone t = (TimelinessShiftZone)GameController.Instance.CreateItem((Vector2)master.transform.position - master.moveRotate*MapManager.gridWidth, (int)ItemInGridType.ShiftZone, 0);
+        TimelinessShiftZone t = (TimelinessShiftZone)GameController.Instance.CreateItem((Vector2)master.transform.position - master.moveRotate*MapManager.gridWidth, (int)ItemNameTypeMap.ShiftZone, 0);
         t.SetLeftTime(1800); // 持续30s
         t.SetChangePercent(100.0f); // 增加当前100%基础移速
         t.SetActionState(new IdleState(t));

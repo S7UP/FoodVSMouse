@@ -1,5 +1,3 @@
-using UnityEngine;
-using UnityEngine.UI;
 /// <summary>
 /// ´ó»ðÂ¯
 /// </summary>

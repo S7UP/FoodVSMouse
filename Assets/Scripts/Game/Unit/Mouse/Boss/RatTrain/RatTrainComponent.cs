@@ -211,12 +211,12 @@ public class RatTrainComponent : MouseUnit
         }
     }
 
-    public override void OnBurnDamage(float dmg)
+    public override void OnBombBurnDamage(float dmg)
     {
         // boss本体取代受伤
         if (master != null)
         {
-            master.OnBurnDamage(burnDmgRate * dmg);
+            master.OnBombBurnDamage(burnDmgRate * dmg);
             master.UpdateHertMap();
         }
     }

@@ -28,17 +28,18 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
 
     // 管理的变量
     public UnitType mUnitType;
-    public float mBaseHp { get { return NumericBox.Hp.baseValue; } } //+ 基础生命值
-    public float mMaxHp { get { return NumericBox.Hp.Value; } } //+ 最大生命值
-    public float mCurrentHp; //+ 当前生命值
-    public float mBaseAttack { get { return NumericBox.Attack.baseValue; } } //+ 基础攻击力
-    public float mCurrentAttack { get { return NumericBox.Attack.Value; } } //+ 当前攻击力
-    public float mBaseAttackSpeed { get { return NumericBox.AttackSpeed.baseValue; } } //+ 基础攻击速度
-    public float mCurrentAttackSpeed { get { return NumericBox.AttackSpeed.Value; } } //+ 当前攻击速度
-    public float mCurrentDefense { get { return NumericBox.Defense.Value; } } // 防御
+    public float mBaseHp { get { return NumericBox.Hp.baseValue; } } // 基础生命值
+    public float mMaxHp { get { return NumericBox.Hp.Value; } } // 最大生命值
+    public float mCurrentHp; // 当前生命值
+    public float mBaseAttack { get { return NumericBox.Attack.baseValue; } } // 基础攻击力
+    public float mCurrentAttack { get { return NumericBox.Attack.Value; } } // 当前攻击力
+    public float mBaseAttackSpeed { get { return NumericBox.AttackSpeed.baseValue; } } // 基础攻击速度
+    public float mCurrentAttackSpeed { get { return NumericBox.AttackSpeed.Value; } } // 当前攻击速度
+    public float mCurrentDefense { get { return NumericBox.Defense.Value; } } //防御
     public float mCurrentRange { get { return NumericBox.Range.Value; } } //射程
     public float mBaseMoveSpeed { get { return NumericBox.MoveSpeed.baseValue; } } // 基础移动速度
     public float mCurrentMoveSpeed { get { return NumericBox.MoveSpeed.Value; } } // 当前移动速度
+    public float mDamgeRate { get { return NumericBox.DamageRate.TotalValue; } } // 伤害比率
 
     //public float mCurrentTotalShieldValue { get { return NumericBox.Shield.Value; } } // 当前护盾值之和
     public float mCurrentTotalShieldValue;
@@ -162,7 +163,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public void SetActionState(IBaseActionState state)
     {
         // 若当前状态为死亡状态，则不能通过此方法再切换成别的状态
-        if (mCurrentActionState!=null && (mCurrentActionState is DieState || mCurrentActionState is BurnState))
+        if (mCurrentActionState!=null && (mCurrentActionState is DieState || mCurrentActionState is BurnState || mCurrentActionState is DropState))
             return;
 
         if(state is FrozenState)
@@ -227,13 +228,13 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
 
     public virtual Vector3 GetPosition()
     {
-        return gameObject.transform.position;
+        return transform.position;
     }
 
     // 设置位置
     public virtual void SetPosition(Vector3 V3)
     {
-        gameObject.transform.position = V3;
+        transform.position = V3;
     }
 
     // 濒死（可能是用来给你抢救的）
@@ -281,6 +282,8 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         }
         // 然后安心去世吧
         ExecuteRecycle();
+        if (GetSpriteRenderer() != null)
+            GetSpriteRenderer().sprite = null;
     }
 
     /// <summary>
@@ -332,6 +335,49 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     /// </summary>
     /// <param name="_Threshold"></param>
     public virtual void DuringBurn(float _Threshold)
+    {
+
+    }
+
+    /// <summary>
+    /// 摔落死亡瞬间
+    /// </summary>
+    public virtual void OnDropStateEnter()
+    {
+
+    }
+
+
+    /// <summary>
+    /// 掉落前
+    /// </summary>
+    public virtual void BeforeDrop()
+    {        // 死亡事件
+        foreach (var item in BeforeBurnEventList)
+        {
+            item(this);
+        }
+        // 进入死亡动画状态
+        isDeathState = true;
+        // 清除技能效果
+        skillAbilityManager.TryEndAllSpellingSkillAbility();
+        // 清除BUFF效果
+        statusAbilityManager.TryEndAllStatusAbility();
+        SetActionState(new DropState(this));
+    }
+
+    /// <summary>
+    /// 摔落死亡过程
+    /// </summary>
+    public virtual void OnDropState(float r)
+    {
+
+    }
+
+    /// <summary>
+    /// 摔落死亡结束
+    /// </summary>
+    public virtual void OnDropStateExit()
     {
 
     }
@@ -555,6 +601,14 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     }
 
     /// <summary>
+    /// 执行摔落
+    /// </summary>
+    public void ExecuteDrop()
+    {
+        BeforeDrop();
+    }
+
+    /// <summary>
     /// 受到伤害时结算伤害
     /// </summary>
     /// <param name="dmg"></param>
@@ -565,7 +619,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
             return;
 
         // 先计算抗性减免后的伤害
-        dmg = Mathf.Max(0, dmg * (1 - mCurrentDefense));
+        dmg = Mathf.Max(0, dmg * (1 - mCurrentDefense) * mDamgeRate);
         // 然后计算护盾吸收的伤害
         dmg = Mathf.Max(0, NumericBox.DamageShield(dmg));
         // 最后扣除本体生命值
@@ -587,9 +641,26 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
             return;
 
         // 先计算抗性减免后的伤害
-        dmg = Mathf.Max(0, dmg * (1 - mCurrentDefense));
-        // 最后扣除本体生命值
+        dmg = Mathf.Max(0, dmg * (1 - mCurrentDefense) * mDamgeRate);
+        // 直接扣除本体生命值
         mCurrentHp -= dmg;
+        if (mCurrentHp <= 0)
+        {
+            ExecuteDeath();
+        }
+    }
+
+    /// <summary>
+    /// 受到真实伤害
+    /// </summary>
+    public virtual void OnRealDamage(float dmg)
+    {
+        // 如果目标含有无敌标签，则直接跳过伤害判定
+        if (NumericBox.GetBoolNumericValue(StringManager.Invincibility))
+            return;
+
+        // 扣除本体生命值
+        mCurrentHp -= dmg * mDamgeRate;
         if (mCurrentHp <= 0)
         {
             ExecuteDeath();
@@ -613,6 +684,15 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         {
             ExecuteBurn();
         }
+    }
+
+    /// <summary>
+    /// 受到来自炸弹的灰烬伤害
+    /// </summary>
+    /// <param name="dmg"></param>
+    public virtual void OnBombBurnDamage(float dmg)
+    {
+        OnBurnDamage(dmg);
     }
 
     /// <summary>
@@ -641,17 +721,21 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public void ReceiveDamage(CombatAction combatAction)
     {
         var damageAction = combatAction as DamageAction;
-        OnDamage(damageAction.DamageValue);
+        // 如果伤害类型为灰烬伤害则执行灰烬伤害
+        if(damageAction.mActionType == CombatAction.ActionType.BurnDamage)
+            OnBurnDamage(damageAction.DamageValue);
+        else
+            OnDamage(damageAction.DamageValue);
     }
 
     /// <summary>
-    /// 接收灰烬伤害
+    /// 接收炸弹灰烬伤害
     /// </summary>
     /// <param name="combatAction"></param>
-    public void ReceiveBurnDamage(CombatAction combatAction)
+    public void ReceiveBombBurnDamage(CombatAction combatAction)
     {
-        var damageAction = combatAction as BurnDamageAction;
-        OnBurnDamage(damageAction.DamageValue);
+        var damageAction = combatAction as BombDamageAction;
+        OnBombBurnDamage(damageAction.DamageValue);
     }
 
     /// <summary>
@@ -1113,6 +1197,18 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
             }
         }
         return false;
+    }
+
+    /// <summary>
+    /// 获取某个特效引用
+    /// </summary>
+    /// <param name="t"></param>
+    /// <returns></returns>
+    public BaseEffect GetEffect(EffectType t)
+    {
+        if (IsContainEffect(t))
+            return effectDict[t];
+        return null;
     }
 
     /// <summary>

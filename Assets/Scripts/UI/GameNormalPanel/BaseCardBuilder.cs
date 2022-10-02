@@ -2,8 +2,6 @@ using System.Collections.Generic;
 using System;
 using UnityEngine;
 using UnityEngine.UI;
-using static UnityEditor.ObjectChangeEventStream;
-using static UnityEngine.UI.CanvasScaler;
 
 /// <summary>
 /// 卡片建造器，其绑定者为游戏画面上的卡槽UI
@@ -17,7 +15,7 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
         {FoodNameTypeMap.CoffeePowder, FoodInGridType.NoAttach }, // 咖啡粉
         {FoodNameTypeMap.IceCream, FoodInGridType.NoAttach }, // 冰淇淋
         {FoodNameTypeMap.WoodenDisk, FoodInGridType.WaterVehicle }, // 木盘子
-        {FoodNameTypeMap.CottonCandy, FoodInGridType.FloatVehicle }, // 棉花糖
+        {FoodNameTypeMap.CottonCandy, FoodInGridType.LavaVehicle }, // 棉花糖
         {FoodNameTypeMap.MelonShield, FoodInGridType.Shield }, // 瓜皮
         {FoodNameTypeMap.PokerShield, FoodInGridType.Shield }, // 扑克护罩
         {FoodNameTypeMap.WineBottleBoom, FoodInGridType.Bomb }, // 酒瓶

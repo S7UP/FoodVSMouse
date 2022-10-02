@@ -70,4 +70,31 @@ public class EffectManager
             u.RemoveEffectFromDict(EffectType.MushroomEffect);
         }
     }
+
+    /// <summary>
+    /// Ìí¼ÓÑÒ½¬ÖË¿¾ÌØÐ§
+    /// </summary>
+    /// <param name="u"></param>
+    public static void AddLavaEffectToUnit(BaseUnit u)
+    {
+        if (!u.IsContainEffect(EffectType.WaterWave))
+        {
+            BaseEffect eff = BaseEffect.CreateInstance(GameManager.Instance.GetRuntimeAnimatorController("Effect/LavaEffect"), null, "Idle", null, true);
+            eff.SetSpriteRendererSorting("Effect", 0);
+            GameController.Instance.AddEffect(eff);
+            u.AddEffectToDict(EffectType.Lava, eff, 0.075f * MapManager.gridHeight * Vector2.down);
+        }
+    }
+
+    /// <summary>
+    /// ÒÆ³ýÑÒ½¬ÖË¿¾ÌØÐ§
+    /// </summary>
+    /// <param name="u"></param>
+    public static void RemoveLavaEffectFromUnit(BaseUnit u)
+    {
+        if (u.IsContainEffect(EffectType.Lava))
+        {
+            u.RemoveEffectFromDict(EffectType.Lava);
+        }
+    }
 }

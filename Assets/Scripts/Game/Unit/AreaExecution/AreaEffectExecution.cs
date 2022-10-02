@@ -21,6 +21,9 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
     public bool isIgnoreHeight; // 是否无视高度
     public float affectHeight; // 目标受影响的高度
 
+    public Dictionary<string, float> FloatDict = new Dictionary<string, float>();
+    public List<string> TagList = new List<string>();
+
     private Action<FoodUnit> OnFoodEnterAction;
     private Action<MouseUnit> OnEnemyEnterAction;
     private Action<CharacterUnit> OnCharacterEnterAction;
@@ -74,6 +77,9 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
         OnGridExitAction = null;
 
         OnDestoryExtraAction = null;
+
+        FloatDict.Clear();
+        TagList.Clear();
     }
 
     /// <summary>
@@ -157,7 +163,7 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
         OnDestoryExtraAction = action;
     }
 
-    public void OnCollision(Collider2D collision)
+    public virtual void OnCollision(Collider2D collision)
     {
         if (isAffectFood && collision.tag.Equals("Food"))
         {
@@ -194,7 +200,6 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
         }
     }
 
-    // rigibody相关
     private void OnTriggerEnter2D(Collider2D collision)
     {
         OnCollision(collision);
@@ -205,7 +210,7 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
         OnCollision(collision);
     }
 
-    private void OnTriggerExit2D(Collider2D collision)
+    public virtual void OnExit(Collider2D collision)
     {
         if (collision.tag.Equals("Food"))
         {
@@ -243,6 +248,11 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
                 OnGridExit(g);
             }
         }
+    }
+
+    private void OnTriggerExit2D(Collider2D collision)
+    {
+        OnExit(collision);
     }
 
     /// <summary>

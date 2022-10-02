@@ -592,7 +592,7 @@ public class RatTrain2 : BaseRatTrain
     private void CreateOil(Vector2 pos)
     {
         // 产生黄油实体
-        TimelinessShiftZone t = (TimelinessShiftZone)GameController.Instance.CreateItem(pos, (int)ItemInGridType.ShiftZone, 0);
+        TimelinessShiftZone t = (TimelinessShiftZone)GameController.Instance.CreateItem(pos, (int)ItemNameTypeMap.ShiftZone, 0);
         t.SetLeftTime(900); // 持续15s
         t.SetChangePercent(100.0f); // 增加当前100%基础移速
         t.SetSkin(1);// 设置为黄油外观加速带

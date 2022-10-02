@@ -1,6 +1,4 @@
-using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.U2D.Path;
 
 using UnityEngine;
 /// <summary>
@@ -31,7 +29,12 @@ public class PokerShield : FoodUnit
     public override void OnDisable()
     {
         base.OnDisable();
-        Spr_Inside.material = defaultMaterial; // ªªªÿ¿¥
+    }
+
+    public override void SetCollider2DParam()
+    {
+        mBoxCollider2D.offset = new Vector2(0, -0.08f * MapManager.gridHeight);
+        mBoxCollider2D.size = new Vector2(0.65f * MapManager.gridWidth, 0.33f * MapManager.gridHeight);
     }
 
     public override void MInit()

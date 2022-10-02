@@ -24,6 +24,11 @@ public class StringManager
     public const string WaterSlowDown = "水地形减速效果";
     public const string WaterPerCentDamge = "水地形百分比伤害";
 
+    public const string BearInSky = "高空承载";
+
+    public const string LavaGridState = "在岩浆里游泳";
+    public const string IgnoreLavaDeBuff = "免疫岩浆负面效果";
+
     public const string BacterialInfection = "毒菌感染";
     public const string IgnoreBacterialInfection = "免疫毒菌感染";
 

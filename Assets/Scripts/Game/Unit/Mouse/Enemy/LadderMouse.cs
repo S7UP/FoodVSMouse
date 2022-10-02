@@ -29,7 +29,7 @@ public class LadderMouse : MouseUnit
     /// </summary>
     public void DefaultPutEvent()
     {
-        BaseLadder l = (BaseLadder)GameController.Instance.CreateItem(targetGrid.GetColumnIndex(), targetGrid.GetRowIndex(), (int)ItemInGridType.Ladder, mShape);
+        BaseLadder l = (BaseLadder)GameController.Instance.CreateItem(targetGrid.GetColumnIndex(), targetGrid.GetRowIndex(), (int)ItemNameTypeMap.Ladder, mShape);
         // …Ë÷√Ã˘ÕºœÚ”“∆´“∆
         //l.SetSpriteLocalPosition(new Vector2(0.5f*MapManager.gridWidth, 0));
         l.AddSpriteOffsetX(new FloatModifier(0.5f * MapManager.gridWidth));

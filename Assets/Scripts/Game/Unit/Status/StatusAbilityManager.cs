@@ -106,11 +106,11 @@ public sealed class StatusAbilityManager
     /// <param name="statusName"></param>
     public void RemoveUniqueStatusAbility(string statusName)
     {
-        if (BeforeRemoveStatusAbilityEventDict.ContainsKey(statusName))
-            BeforeRemoveStatusAbilityEventDict[statusName]();
-
         if (uniqueStatusAbilityDict.ContainsKey(statusName))
         {
+            if (BeforeRemoveStatusAbilityEventDict.ContainsKey(statusName))
+                BeforeRemoveStatusAbilityEventDict[statusName]();
+
             // 层数-1
             uniqueStatusAbilityDict[statusName].DecCount();
             // 若减到0层，则直接移除此效果
@@ -121,10 +121,10 @@ public sealed class StatusAbilityManager
                 statusAbility.EndActivate(); // 手动结束
                 uniqueStatusAbilityDict.Remove(statusName);
             }
-        }
 
-        if (AfterRemoveStatusAbilityEventDict.ContainsKey(statusName))
-            AfterRemoveStatusAbilityEventDict[statusName]();
+            if (AfterRemoveStatusAbilityEventDict.ContainsKey(statusName))
+                AfterRemoveStatusAbilityEventDict[statusName]();
+        }
     }
 
     /// <summary>
@@ -178,16 +178,16 @@ public sealed class StatusAbilityManager
     /// <param name="statusName"></param>
     public void RemoveNoCountUniqueStatusAbility(string statusName)
     {
-        if (BeforeRemoveStatusAbilityEventDict.ContainsKey(statusName))
-            BeforeRemoveStatusAbilityEventDict[statusName]();
-
         if (noCountUniqueStatusAbilityDict.ContainsKey(statusName))
         {
-            noCountUniqueStatusAbilityDict.Remove(statusName);
-        }
+            if (BeforeRemoveStatusAbilityEventDict.ContainsKey(statusName))
+                BeforeRemoveStatusAbilityEventDict[statusName]();
 
-        if (AfterRemoveStatusAbilityEventDict.ContainsKey(statusName))
-            AfterRemoveStatusAbilityEventDict[statusName]();
+            noCountUniqueStatusAbilityDict.Remove(statusName);
+
+            if (AfterRemoveStatusAbilityEventDict.ContainsKey(statusName))
+                AfterRemoveStatusAbilityEventDict[statusName]();
+        }
     }
 
     /// <summary>
@@ -195,15 +195,17 @@ public sealed class StatusAbilityManager
     /// </summary>
     public void EndNoCountUniqueStatusAbility(string statusName)
     {
-        if (BeforeRemoveStatusAbilityEventDict.ContainsKey(statusName))
-            BeforeRemoveStatusAbilityEventDict[statusName]();
-
         StatusAbility s = GetNoCountUniqueStatus(statusName);
-        if(s!=null)
+        if (s != null)
+        {
+            if (BeforeRemoveStatusAbilityEventDict.ContainsKey(statusName))
+                BeforeRemoveStatusAbilityEventDict[statusName]();
+
             s.EndActivate();
 
-        if (AfterRemoveStatusAbilityEventDict.ContainsKey(statusName))
-            AfterRemoveStatusAbilityEventDict[statusName]();
+            if (AfterRemoveStatusAbilityEventDict.ContainsKey(statusName))
+                AfterRemoveStatusAbilityEventDict[statusName]();
+        }
     }
 
     public void TryActivateStatusAbility(int index)

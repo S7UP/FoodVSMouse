@@ -18,7 +18,7 @@ public class FoodManager
         { FoodNameTypeMap.ThreeLinesVine, new List<string>(){"三线酒架","强力三线酒架","终结者酒架" } },
         { FoodNameTypeMap.Heater, new List<string>(){"火盆","电子烤盘","熔岩烤盘" } },
         { FoodNameTypeMap.WoodenDisk, new List<string>(){"木盘子" } },
-        //{ FoodNameTypeMap.CottonCandy, new List<string>(){"棉花糖" } },
+        { FoodNameTypeMap.CottonCandy, new List<string>(){"棉花糖" } },
         { FoodNameTypeMap.IceBucket, new List<string>(){"冰桶炸弹" } },
         { FoodNameTypeMap.MelonShield, new List<string>(){"瓜皮护罩","尖刺瓜皮护罩" } },
         //{ FoodNameTypeMap.LightningBread, new List<string>(){"雷电长棍面包","节能长棍面包","负离子面包" } },

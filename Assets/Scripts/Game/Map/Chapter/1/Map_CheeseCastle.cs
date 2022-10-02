@@ -31,10 +31,10 @@ public class Map_CheeseCastle : ChapterMap
             for (int j = 0; j < 9; j++)
                 GetGrid(j, i).AddGridType(GridType.Water, BaseGridType.GetInstance(GridType.Water, 0));
         // 铺上障碍
-        BaseBarrier b = GameController.Instance.CreateItem(6, 1, (int)ItemInGridType.Barrier, 0).GetComponent<BaseBarrier>();
+        BaseBarrier b = GameController.Instance.CreateItem(6, 1, (int)ItemNameTypeMap.Barrier, 0).GetComponent<BaseBarrier>();
         b.SetHide(true);
         b.HideEffect(true);
-        b = GameController.Instance.CreateItem(6, 5, (int)ItemInGridType.Barrier, 0).GetComponent<BaseBarrier>();
+        b = GameController.Instance.CreateItem(6, 5, (int)ItemNameTypeMap.Barrier, 0).GetComponent<BaseBarrier>();
         b.SetHide(true);
         b.HideEffect(true);
     }
@@ -45,5 +45,15 @@ public class Map_CheeseCastle : ChapterMap
     public override void ProcessingGridGroupList()
     {
 
+    }
+
+    /// <summary>
+    /// 其他加工
+    /// </summary>
+    public override void OtherProcessing()
+    {
+        // 为全图添加黑夜BUFF
+        ShadeAreaEffectExecution e = ShadeAreaEffectExecution.GetInstance(11, 7, new UnityEngine.Vector2(MapManager.GetColumnX(4), MapManager.GetRowY(3)));
+        GameController.Instance.AddAreaEffectExecution(e);
     }
 }

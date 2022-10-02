@@ -101,7 +101,7 @@ public class FlyBarrierMouse : MouseUnit, IFlyUnit
             mHertRateList[0] = double.MaxValue;
             UpdateHertMap(); // 通过强制改变HertRateList然后强制更新，转变阶段
             // 掉落障碍
-            InvincibilityBarrier b = GameController.Instance.CreateItem(GetColumnIndex(), GetRowIndex(), (int)ItemInGridType.Barrier, 0) as InvincibilityBarrier;
+            InvincibilityBarrier b = GameController.Instance.CreateItem(GetColumnIndex(), GetRowIndex(), (int)ItemNameTypeMap.Barrier, 0) as InvincibilityBarrier;
             b.SetLeftTime(900); // 15s
             b.SetRemoveAble(true);
             // 移除障碍处美食
@@ -138,7 +138,7 @@ public class FlyBarrierMouse : MouseUnit, IFlyUnit
     /// </summary>
     private bool IsMeetDropCondition()
     {
-        return (!isDrop && GetColumnIndex() <= dropColumn);
+        return (!isDrop && transform.position.x <= MapManager.GetColumnX(dropColumn + 0.4f));
     }
 
     /// <summary>

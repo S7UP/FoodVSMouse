@@ -276,6 +276,36 @@ public class CharacterUnit : BaseUnit
         DeathEvent();
     }
 
+    private BoolModifier boolModifier = new BoolModifier(true);
+
+    /// <summary>
+    /// 摔落死亡瞬间
+    /// </summary>
+    public override void OnDropStateEnter()
+    {
+        // 禁止播放动画
+        PauseCurrentAnimatorState(boolModifier);
+    }
+
+    /// <summary>
+    /// 摔落死亡过程
+    /// </summary>
+    public override void OnDropState(float r)
+    {
+        SetAlpha(1-r);
+        spriteRenderer.transform.localPosition = spriteRenderer.transform.localPosition + 0.25f * MapManager.gridHeight * r * Vector3.down;
+        spriteRenderer.transform.localScale = Vector3.one * (1 - r);
+        // 超过1就可以回收了
+        if (r >= 1.0)
+        {
+            ResumeCurrentAnimatorState(boolModifier);
+            SetAlpha(1);
+            spriteRenderer.transform.localPosition = Vector3.zero;
+            spriteRenderer.transform.localScale = Vector3.one;
+            DeathEvent();
+        }
+    }
+
     /// <summary>
     /// 根据攻击速度来更新攻击动画的速度
     /// </summary>

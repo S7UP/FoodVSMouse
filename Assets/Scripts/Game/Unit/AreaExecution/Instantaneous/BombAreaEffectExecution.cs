@@ -1,4 +1,3 @@
-using UnityEngine;
 /// <summary>
 /// 炸弹爆破效果
 /// </summary>
@@ -30,11 +29,11 @@ public class BombAreaEffectExecution : RetangleAreaEffectExecution
         // 检测目标是否防止炸弹秒杀效果，如果不防则受到特定的灰烬伤害，否则直接秒杀
         if (unit.NumericBox.GetBoolNumericValue(StringManager.IgnoreBombInstantKill))
         {
-            new BurnDamageAction(CombatAction.ActionType.CauseDamage, creator, unit, damage).ApplyAction();
+            new BombDamageAction(CombatAction.ActionType.CauseDamage, creator, unit, damage).ApplyAction();
         }
         else
         {
-            new BurnDamageAction(CombatAction.ActionType.CauseDamage, creator, unit, unit.mCurrentHp).ApplyAction();
+            new BombDamageAction(CombatAction.ActionType.CauseDamage, creator, unit, unit.mCurrentHp).ApplyAction();
         }
         base.OnEnemyEnter(unit);
     }
@@ -45,11 +44,11 @@ public class BombAreaEffectExecution : RetangleAreaEffectExecution
         // 同上
         if (unit.NumericBox.GetBoolNumericValue(StringManager.IgnoreBombInstantKill))
         {
-            new BurnDamageAction(CombatAction.ActionType.CauseDamage, creator, unit, damage).ApplyAction();
+            new BombDamageAction(CombatAction.ActionType.CauseDamage, creator, unit, damage).ApplyAction();
         }
         else
         {
-            new BurnDamageAction(CombatAction.ActionType.CauseDamage, creator, unit, unit.mCurrentHp).ApplyAction();
+            new BombDamageAction(CombatAction.ActionType.CauseDamage, creator, unit, unit.mCurrentHp).ApplyAction();
         }
     }
 

@@ -27,13 +27,13 @@ public class Map_MintBeach2 : ChapterMap
     public override void ProcessingGridList()
     {
         // 布置上障碍物
-        BaseBarrier b = GameController.Instance.CreateItem(2, 0, (int)ItemInGridType.Barrier, 0).GetComponent<BaseBarrier>();
+        BaseBarrier b = GameController.Instance.CreateItem(2, 0, (int)ItemNameTypeMap.Barrier, 0).GetComponent<BaseBarrier>();
         b.SetHide(true);
-        b = GameController.Instance.CreateItem(1, 3, (int)ItemInGridType.Barrier, 0).GetComponent<BaseBarrier>();
+        b = GameController.Instance.CreateItem(1, 3, (int)ItemNameTypeMap.Barrier, 0).GetComponent<BaseBarrier>();
         b.SetHide(true);
-        b = GameController.Instance.CreateItem(8, 3, (int)ItemInGridType.Barrier, 0).GetComponent<BaseBarrier>();
+        b = GameController.Instance.CreateItem(8, 3, (int)ItemNameTypeMap.Barrier, 0).GetComponent<BaseBarrier>();
         b.SetHide(true);
-        b = GameController.Instance.CreateItem(5, 6, (int)ItemInGridType.Barrier, 0).GetComponent<BaseBarrier>();
+        b = GameController.Instance.CreateItem(5, 6, (int)ItemNameTypeMap.Barrier, 0).GetComponent<BaseBarrier>();
         b.SetHide(true);
     }
 
@@ -43,5 +43,15 @@ public class Map_MintBeach2 : ChapterMap
     public override void ProcessingGridGroupList()
     {
 
+    }
+
+    /// <summary>
+    /// 其他加工
+    /// </summary>
+    public override void OtherProcessing()
+    {
+        // 为全图添加黑夜BUFF
+        ShadeAreaEffectExecution e = ShadeAreaEffectExecution.GetInstance(11, 7, new UnityEngine.Vector2(MapManager.GetColumnX(4), MapManager.GetRowY(3)));
+        GameController.Instance.AddAreaEffectExecution(e);
     }
 }

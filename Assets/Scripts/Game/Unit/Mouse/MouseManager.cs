@@ -35,7 +35,9 @@ public class MouseManager
         { MouseNameTypeMap.NonMainstreamMouse, "非主流"},
         { MouseNameTypeMap.BeeMouse, "机械蜂箱"},
         { MouseNameTypeMap.CanMouse, "罐头鼠"},
-        { MouseNameTypeMap.WonderLandNormalMouse, "奇境普通老鼠"}
+        { MouseNameTypeMap.WonderLandNormalMouse, "奇境普通老鼠"},
+        { MouseNameTypeMap.WonderLandMole, "奇境刺猬" },
+        { MouseNameTypeMap.WonderLandFairy, "奇境妖精鼠" }
     };
 
     private static Dictionary<MouseNameTypeMap, Dictionary<int, string>> mouseShapeNameDict = new Dictionary<MouseNameTypeMap, Dictionary<int, string>>() {
@@ -216,6 +218,14 @@ public class MouseManager
             { 0, "三月兔鼠"},
             { 1, "公爵夫人鼠"},
         }},
+        // 奇境刺猬
+        { MouseNameTypeMap.WonderLandMole, new Dictionary<int, string>(){
+            { 0, "奇境刺猬" },
+        }},
+        // 奇境妖精
+        { MouseNameTypeMap.WonderLandFairy, new Dictionary<int, string>(){
+            { 0, "奇境妖精" },
+        }}
     };
 
 

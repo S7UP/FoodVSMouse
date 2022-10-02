@@ -1,5 +1,3 @@
-using UnityEngine;
-using UnityEngine.UI;
 /// <summary>
 /// ¾Æ±­µÆ
 /// </summary>
@@ -67,7 +65,7 @@ public class CupLight : FoodUnit
         // µÚ60Ö¡Ê±»Ø¸´»ðÃçÊý*44»ð
         if (timer == 60)
         {
-            float replyCount = mCurrentAttack * fireCount * 44;
+            float replyCount = mCurrentAttack * fireCount * 34;
             SmallStove.CreateAddFireEffect(transform.position, replyCount);
         }
         timer++;

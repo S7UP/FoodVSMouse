@@ -22,7 +22,13 @@ public class BaseItem : BaseUnit
         // 动画控制器绑定animator
         animatorController.ChangeAnimator(animator);
         mGrid = null;
+        //SetBoxCollider2DParam(Vector2.zero, new Vector2(0.5f*MapManager.gridWidth, 0.5f*MapManager.gridHeight));
+    }
 
+    public void SetBoxCollider2DParam(Vector2 offset, Vector2 size)
+    {
+        mBoxCollider2D.offset = offset;
+        mBoxCollider2D.size = size;
     }
 
     public override void SetUnitType()
@@ -86,14 +92,38 @@ public class BaseItem : BaseUnit
     /// </summary>
     public override void DuringDeath()
     {
-        // 切换时的第一帧直接不执行update()，因为下述的info.normalizedTime的值还停留在上一个状态，逻辑会出问题！
-        if (currentStateTimer <= 0)
-        {
-            return;
-        }
-
         if(animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
         {
+            DeathEvent();
+        }
+    }
+
+    private BoolModifier boolModifier = new BoolModifier(true);
+
+    /// <summary>
+    /// 摔落死亡瞬间
+    /// </summary>
+    public override void OnDropStateEnter()
+    {
+        // 禁止播放动画
+        PauseCurrentAnimatorState(boolModifier);
+    }
+
+    /// <summary>
+    /// 摔落死亡过程
+    /// </summary>
+    public override void OnDropState(float r)
+    {
+        SetAlpha(1-r);
+        spriteRenderer.transform.localPosition = spriteRenderer.transform.localPosition + 0.25f * MapManager.gridHeight * r * Vector3.down;
+        spriteRenderer.transform.localScale = Vector3.one * (1 - r);
+        // 超过1就可以回收了
+        if (r >= 1.0)
+        {
+            ResumeCurrentAnimatorState(boolModifier);
+            SetAlpha(1);
+            spriteRenderer.transform.localPosition = Vector3.zero;
+            spriteRenderer.transform.localScale = Vector3.one;
             DeathEvent();
         }
     }
@@ -131,5 +161,23 @@ public class BaseItem : BaseUnit
     public virtual bool CanRemove()
     {
         return false;
+    }
+
+    /// <summary>
+    /// 启动判定
+    /// </summary>
+    public override void OpenCollision()
+    {
+        if(mBoxCollider2D!=null)
+            mBoxCollider2D.enabled = true;
+    }
+
+    /// <summary>
+    /// 关闭判定
+    /// </summary>
+    public override void CloseCollision()
+    {
+        if(mBoxCollider2D!=null)
+            mBoxCollider2D.enabled = false;
     }
 }

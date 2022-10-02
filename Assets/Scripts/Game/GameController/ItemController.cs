@@ -34,7 +34,7 @@ public class ItemController : MonoBehaviour, IGameControllerMember
         // ²úÉúÃ¨Ã¨
         for (int i = 0; i < catList.Length; i++)
         {
-            BaseCat cat = (BaseCat)GameController.Instance.CreateItem(new Vector3(MapManager.GetColumnX(-1), MapManager.GetRowY(i), 0), (int)ItemInGridType.Cat, 0);
+            BaseCat cat = (BaseCat)GameController.Instance.CreateItem(new Vector3(MapManager.GetColumnX(-1), MapManager.GetRowY(i), 0), (int)ItemNameTypeMap.Cat, 0);
             cat.SetRowIndex(i);
             catList[i] = cat;
         }

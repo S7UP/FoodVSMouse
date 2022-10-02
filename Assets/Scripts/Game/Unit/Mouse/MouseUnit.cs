@@ -152,10 +152,11 @@ public class MouseUnit : BaseUnit
 
     // 注：一个Collider2D不应该直接使用Transform或者其offset属性来移动它，而是应该使用Rigidbody2D的移动代替之。这样会得到最好的表现和正确的碰撞检测。
     // 因此，操作老鼠移动不应该用上面的transform,而是用下面的rigibody2D
-    public override void SetPosition(Vector3 V3)
-    {
-        rigibody2D.MovePosition(V3);
-    }
+    //public override void SetPosition(Vector3 V3)
+    //{
+    //    //rigibody2D.MovePosition(V3);
+        
+    //}
 
     /// <summary>
     /// 是否满足普通攻击的条件
@@ -181,11 +182,6 @@ public class MouseUnit : BaseUnit
     /// </summary>
     public override void OnGeneralAttack()
     {
-        // 切换时的第一帧直接不执行update()，因为下述的info.normalizedTime的值还停留在上一个状态，逻辑会出问题！
-        //if (currentStateTimer <= 0)
-        //{
-        //    return;
-        //}
         // 伤害判定帧应当执行判定
         if (IsDamageJudgment())
         {
@@ -223,7 +219,7 @@ public class MouseUnit : BaseUnit
     /// <returns></returns>
     public virtual bool IsHasTarget()
     {
-        if(isBlock && mBlockUnit.IsAlive())
+        if(IsBlock())
         {
             // 若目标依附于格子，则将目标切换为目标所在格的最高攻击优先级目标
             BaseGrid g = mBlockUnit.GetGrid();
@@ -404,6 +400,15 @@ public class MouseUnit : BaseUnit
     {
         isBlock = false;
         mBlockUnit = null;
+    }
+
+    /// <summary>
+    /// 是否被阻挡
+    /// </summary>
+    /// <returns></returns>
+    public bool IsBlock()
+    {
+        return isBlock && mBlockUnit!=null && mBlockUnit.IsAlive();
     }
 
     /// <summary>
@@ -618,6 +623,34 @@ public class MouseUnit : BaseUnit
         if (_Threshold >= 1.0)
         {
             ResumeCurrentAnimatorState(boolModifier);
+            DeathEvent();
+        }
+    }
+
+    /// <summary>
+    /// 摔落死亡瞬间
+    /// </summary>
+    public override void OnDropStateEnter()
+    {
+        // 禁止播放动画
+        PauseCurrentAnimatorState(boolModifier);
+    }
+
+    /// <summary>
+    /// 摔落死亡过程
+    /// </summary>
+    public override void OnDropState(float r)
+    {
+        SetAlpha(1-r);
+        spriteRenderer.transform.localPosition = spriteRenderer.transform.localPosition + 0.25f * MapManager.gridHeight * r * Vector3.down;
+        spriteRenderer.transform.localScale = Vector3.one * (1 - r);
+        // 超过1就可以回收了
+        if (r >= 1.0)
+        {
+            ResumeCurrentAnimatorState(boolModifier);
+            SetAlpha(1);
+            spriteRenderer.transform.localPosition = Vector3.zero;
+            spriteRenderer.transform.localScale = Vector3.one;
             DeathEvent();
         }
     }

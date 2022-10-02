@@ -31,7 +31,7 @@ public class Map_MustardHut : ChapterMap
             for (int j = 0; j < 9; j++)
                 GetGrid(j, i).AddGridType(GridType.Water, BaseGridType.GetInstance(GridType.Water, 0));
         // ÆÌÉÏÕÏ°­
-        BaseBarrier b = GameController.Instance.CreateItem(6, 5, (int)ItemInGridType.Barrier, 0).GetComponent<BaseBarrier>();
+        BaseBarrier b = GameController.Instance.CreateItem(6, 5, (int)ItemNameTypeMap.Barrier, 0).GetComponent<BaseBarrier>();
         b.SetHide(true);
         b.HideEffect(true);
     }

@@ -110,7 +110,9 @@ public class Map_FragrantLeafAirport : ChapterMap
     /// </summary>
     public override void ProcessingGridList()
     {
-
+        for (int i = 0; i < 8; i++)
+            for (int j = 0; j < 7; j+=2)
+                GetGrid(i, j).AddGridType(GridType.Sky, BaseGridType.GetInstance(GridType.Sky, 0));
     }
 
     /// <summary>
@@ -118,6 +120,20 @@ public class Map_FragrantLeafAirport : ChapterMap
     /// </summary>
     public override void ProcessingGridGroupList()
     {
+        {
+            // 添加云层
+            for (int i = 0; i < 7; i += 2)
+            {
+                Item_Cloud.GetCloudGroup(0, new Vector2(MapManager.GetColumnX(3.5f), MapManager.GetRowY(i)), 10);
+            }
 
+            // 添加风域
+            for (int i = 0; i < 7; i += 2)
+            {
+                WindAreaEffectExecution e = WindAreaEffectExecution.GetInstance(9, 1, new Vector2(MapManager.GetColumnX(4f), MapManager.GetRowY(i)));
+                WindAreaEffectExecution.SetClassicalWindAreaEffectMode(e, 1, 450, 120, 780, true); // 等待时间、速度变化时间、匀速时间
+                GameController.Instance.AddAreaEffectExecution(e);
+            }
+        }
     }
 }

@@ -1,5 +1,3 @@
-using UnityEngine;
-
 public class IceBucketFoodUnit : FoodUnit
 {
     public override void MInit()

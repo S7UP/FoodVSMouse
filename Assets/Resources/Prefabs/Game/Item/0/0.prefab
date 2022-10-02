@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 2273559529684654033}
   - component: {fileID: 7593310000869414451}
   - component: {fileID: -9187509851625179287}
-  m_Layer: 13
+  m_Layer: 7
   m_Name: 0
   m_TagString: Barrier
   m_Icon: {fileID: 0}
@@ -119,7 +119,7 @@ GameObject:
   - component: {fileID: 5646430216362566483}
   - component: {fileID: 4938161317884803039}
   - component: {fileID: 4636816197262632506}
-  m_Layer: 13
+  m_Layer: 7
   m_Name: SpriteGo
   m_TagString: Untagged
   m_Icon: {fileID: 0}

@@ -4,12 +4,10 @@
 public class NormalWaterMouse : MouseUnit, IInWater
 {
     private bool isEnterWater; // 于TransitionState时使用，判断是播放下水动画还是出水动画
-    private bool isDieInWater; // 是否在水中死亡
 
     public override void MInit()
     {
         isEnterWater = false;
-        isDieInWater = false;
         base.MInit();
         // 免疫水蚀效果
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreWaterGridState, new BoolModifier(true));
@@ -29,18 +27,9 @@ public class NormalWaterMouse : MouseUnit, IInWater
 
     public void OnExitWater()
     {
-        // 出水也要分情况，是有可能死亡后清除DEBUFF效果然后强制出水的
-        if (isDeathState)
-        {
-            isEnterWater = false;
-            isDieInWater = true;
-        }
-        else
-        {
-            isEnterWater = false;
-            SetActionState(new TransitionState(this));
-            EffectManager.RemoveWaterWaveEffectFromUnit(this);
-        }
+        isEnterWater = false;
+        SetActionState(new TransitionState(this));
+        EffectManager.RemoveWaterWaveEffectFromUnit(this);
     }
 
     public override void OnTransitionStateEnter()
@@ -69,7 +58,8 @@ public class NormalWaterMouse : MouseUnit, IInWater
 
     public override void OnDieStateEnter()
     {
-        if (isDieInWater)
+        // 如果自己在水域中且没有被承载就播放特有的淹死动画
+        if (WaterGridType.IsInWater(this) && !WoodenDisk.IsBearing(this))
             animatorController.Play("Die1");
         else
             animatorController.Play("Die0");

@@ -7,16 +7,16 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     /// <summary>
     /// 当格子中存在以下Tag时，不允许放卡
     /// </summary>
-    public static List<ItemInGridType> NoAllowBuildTagList = new List<ItemInGridType>()
+    public static List<ItemNameTypeMap> NoAllowBuildTagList = new List<ItemNameTypeMap>()
     {
-        ItemInGridType.Barrier,
-        ItemInGridType.WindCave, 
+        ItemNameTypeMap.Barrier,
+        ItemNameTypeMap.WindCave, 
     };
 
     protected Dictionary<GridType, BaseGridType> mGridTypeDict = new Dictionary<GridType, BaseGridType>(); // 依附于格子的地形状态
     protected List<MouseUnit> mMouseUnitList = new List<MouseUnit>(); //　位于格子上的老鼠单位表
     protected Dictionary<FoodInGridType, FoodUnit> mFoodUnitDict = new Dictionary<FoodInGridType, FoodUnit>(); // 恒定在此格子上的美食（即确实是种下去的而非临时性的）
-    protected Dictionary<ItemInGridType, BaseUnit> mItemUnitDict = new Dictionary<ItemInGridType, BaseUnit>(); // 在此格子上的道具
+    protected Dictionary<ItemNameTypeMap, BaseUnit> mItemUnitDict = new Dictionary<ItemNameTypeMap, BaseUnit>(); // 在此格子上的道具
     protected CharacterUnit characterUnit; // 所持有的人物单位（如果有）
 
     public bool canBuild;
@@ -164,7 +164,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     {
         BaseUnit old = null; // 原unit
         // Tag检测 有重复Tag的话则取消上一个
-        ItemInGridType tag = (ItemInGridType)unit.mType;
+        ItemNameTypeMap tag = (ItemNameTypeMap)unit.mType;
         if (IsContainTag(tag))
         {
             old = RemoveItemUnit(unit);
@@ -197,7 +197,9 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         {
             mFoodUnitDict[t].ExecuteDeath();
             // ExecuteDeath里已经包括RemoveFoodUnit了，这段注释请别删除！
-            //RemoveFoodUnit(mFoodUnitDict[t]);
+            // 这里再保险处理一次
+            if(IsContainTag(t))
+                RemoveFoodUnit(mFoodUnitDict[t]);
         }
         // 之后再把自身加入
         gridActionPointManager.TriggerActionPoint(GridActionPointType.BeforeSetFoodUnit, new GridAction(food, this));
@@ -242,7 +244,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     public void AddItemUnit(BaseUnit unit)
     {
         gridActionPointManager.TriggerActionPoint(GridActionPointType.BeforeRemoveItemUnit, new GridAction(unit, this));
-        mItemUnitDict.Add((ItemInGridType)unit.mType, unit);
+        mItemUnitDict.Add((ItemNameTypeMap)unit.mType, unit);
         gridActionPointManager.TriggerActionPoint(GridActionPointType.AfterRemoveItemUnit, new GridAction(unit, this));
     }
 
@@ -253,10 +255,10 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     {
         gridActionPointManager.TriggerActionPoint(GridActionPointType.BeforeRemoveItemUnit, new GridAction(unit, this));
         BaseUnit old = null;
-        if (mItemUnitDict.ContainsKey((ItemInGridType)unit.mType))
+        if (mItemUnitDict.ContainsKey((ItemNameTypeMap)unit.mType))
         {
-            old = mItemUnitDict[(ItemInGridType)unit.mType];
-            mItemUnitDict.Remove((ItemInGridType)unit.mType);
+            old = mItemUnitDict[(ItemNameTypeMap)unit.mType];
+            mItemUnitDict.Remove((ItemNameTypeMap)unit.mType);
         }
         gridActionPointManager.TriggerActionPoint(GridActionPointType.AfterRemoveItemUnit, new GridAction(unit, this));
         return old;
@@ -326,7 +328,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         return mFoodUnitDict.ContainsKey(foodInGridType);
     }
 
-    public bool IsContainTag(ItemInGridType itemInGridType)
+    public bool IsContainTag(ItemNameTypeMap itemInGridType)
     {
         return mItemUnitDict.ContainsKey(itemInGridType);
     }
@@ -362,7 +364,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
             return null;
     }
 
-    public BaseUnit GetItemByTag(ItemInGridType type)
+    public BaseUnit GetItemByTag(ItemNameTypeMap type)
     {
         if (IsContainTag(type))
             return mItemUnitDict[type];
@@ -424,6 +426,10 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         else if (IsContainTag(FoodInGridType.WaterVehicle))
         {
             return mFoodUnitDict[FoodInGridType.WaterVehicle];
+        }
+        else if (IsContainTag(FoodInGridType.LavaVehicle))
+        {
+            return mFoodUnitDict[FoodInGridType.LavaVehicle];
         }
         return null;
     }
@@ -563,7 +569,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         }
 
         // 道具
-        List<ItemInGridType> i_List = new List<ItemInGridType>();
+        List<ItemNameTypeMap> i_List = new List<ItemNameTypeMap>();
         foreach (var item in mItemUnitDict)
         {
             

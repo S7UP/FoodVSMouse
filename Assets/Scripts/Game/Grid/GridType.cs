@@ -7,4 +7,5 @@ public enum GridType
     NotBuilt = 0, // 不允许放置卡片
     Water = 1, // 水地形格子
     Lava = 2, // 岩浆地形格子
+    Sky = 3, // 高空格子
 }

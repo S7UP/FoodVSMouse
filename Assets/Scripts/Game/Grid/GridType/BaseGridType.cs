@@ -1,5 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
+
 using UnityEngine;
 /// <summary>
 /// 基础地形类形
@@ -89,12 +89,21 @@ public class BaseGridType : MonoBehaviour, IGameControllerMember
 
     }
 
-    public void OnTriggerEnter2D(Collider2D collision)
+    /// <summary>
+    /// 是否满足进入条件
+    /// </summary>
+    /// <returns></returns>
+    public virtual bool IsMeetingEnterCondition(BaseUnit unit)
     {
-        if(collision.tag.Equals("Food") || collision.tag.Equals("Mouse") || collision.tag.Equals("Character"))
+        return true;
+    }
+
+    public virtual void OnCollision(Collider2D collision)
+    {
+        if (collision.tag.Equals("Food") || collision.tag.Equals("Mouse") || collision.tag.Equals("Character"))
         {
             BaseUnit u = collision.GetComponent<BaseUnit>();
-            if (!unitList.Contains(u))
+            if (!unitList.Contains(u) && IsMeetingEnterCondition(u))
             {
                 unitList.Add(u);
                 OnUnitEnter(u);
@@ -102,7 +111,17 @@ public class BaseGridType : MonoBehaviour, IGameControllerMember
         }
     }
 
-    public void OnTriggerExit2D(Collider2D collision)
+    public void OnTriggerEnter2D(Collider2D collision)
+    {
+        OnCollision(collision);
+    }
+
+    public void OnTriggerStay2D(Collider2D collision)
+    {
+        OnCollision(collision);
+    }
+
+    public virtual void OnTriggerExit2D(Collider2D collision)
     {
         if (collision.tag.Equals("Food") || collision.tag.Equals("Mouse") || collision.tag.Equals("Character"))
         {

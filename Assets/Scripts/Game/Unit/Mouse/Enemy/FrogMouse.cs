@@ -6,7 +6,6 @@ public class FrogMouse : MouseUnit, IInWater
 {
     private bool isJumped; // 是否跳过一次
     private bool isInWater; // 是否位于水中
-    private bool isDieInWater;
     private FloatModifier FrogSpeedModifier = new FloatModifier(200); // 由青蛙带来的移动速度加成
     private FloatModifier FrogInWaterSpeedModifier = new FloatModifier(500); // 由青蛙在水里再带来的移动速度加成（可与上述相加算）
 
@@ -14,7 +13,6 @@ public class FrogMouse : MouseUnit, IInWater
     {
         isJumped = false;
         isInWater = false;
-        isDieInWater = false;
         base.MInit();
         // 初始获得携带青蛙的移动速度
         NumericBox.MoveSpeed.AddPctAddModifier(FrogSpeedModifier);
@@ -82,20 +80,11 @@ public class FrogMouse : MouseUnit, IInWater
 
     public void OnExitWater()
     {
-        // 出水也要分情况，是有可能死亡后清除DEBUFF效果然后强制出水的
-        if (isDeathState)
-        {
-            isInWater = false;
-            isDieInWater = true;
-        }
-        else
-        {
-            SetNoCollideAllyUnit();
-            isInWater = false;
-            // 移除青蛙在水里的那部分移速加成
-            NumericBox.MoveSpeed.RemovePctAddModifier(FrogInWaterSpeedModifier);
-            SetActionState(new TransitionState(this));
-        }
+        SetNoCollideAllyUnit();
+        isInWater = false;
+        // 移除青蛙在水里的那部分移速加成
+        NumericBox.MoveSpeed.RemovePctAddModifier(FrogInWaterSpeedModifier);
+        SetActionState(new TransitionState(this));
         // 移除水波特效
         EffectManager.RemoveWaterWaveEffectFromUnit(this);
     }
@@ -178,7 +167,8 @@ public class FrogMouse : MouseUnit, IInWater
 
     public override void OnDieStateEnter()
     {
-        if (isDieInWater)
+        // 如果自己在水域中且没有被承载就播放特有的淹死动画
+        if (WaterGridType.IsInWater(this) && !WoodenDisk.IsBearing(this))
             animatorController.Play("Die1", true);
         else
             animatorController.Play("Die0", true);

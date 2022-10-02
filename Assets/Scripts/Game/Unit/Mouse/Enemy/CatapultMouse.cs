@@ -76,7 +76,7 @@ public class CatapultMouse : MouseUnit
             ParabolaBullet b = (ParabolaBullet)GameController.Instance.CreateBullet(this, transform.position, Vector2.left, BulletStyle.CatapultMouseBullet);
             b.SetAttribute(24.0f, true, 0.25f, transform.position, new Vector2(u.transform.position.x, transform.position.y), u.GetRowIndex());
             b.SetCanAttackFood(true);
-            b.SetDamage(mBaseAttack);
+            b.SetDamage(mCurrentAttack);
             Animator ani = b.transform.Find("SpriteGo").GetComponent<Animator>();
             ani.runtimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Bullet/6/"+mShape);
             //PandaMouse m = GameController.Instance.CreateMouseUnit(GetRowIndex(), new BaseEnemyGroup.EnemyInfo() { type = 19, shape = mShape }).GetComponent<PandaMouse>();
@@ -99,7 +99,7 @@ public class CatapultMouse : MouseUnit
             ParabolaBullet b = (ParabolaBullet)GameController.Instance.CreateBullet(this, transform.position, Vector2.left, BulletStyle.CatapultMouseBullet);
             b.SetAttribute(v, true, 2.0f, new Vector2(transform.position.x, transform.position.y), new Vector2(targetUnit.transform.position.x, transform.position.y), targetUnit.GetRowIndex());
             b.SetCanAttackFood(true);
-            b.SetDamage(mBaseAttack);
+            b.SetDamage(mCurrentAttack);
             Animator ani = b.transform.Find("SpriteGo").GetComponent<Animator>();
             ani.runtimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Bullet/6/" + mShape);
             //PandaMouse m = GameController.Instance.CreateMouseUnit(GetRowIndex(), new BaseEnemyGroup.EnemyInfo() { type = 19, shape = mShape }).GetComponent<PandaMouse>();

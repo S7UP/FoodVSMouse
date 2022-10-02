@@ -139,11 +139,11 @@ public class CaptainAmerica : BossUnit
     /// 当处于蓄力丢盾牌状态下被炸弹攻击会被击晕3s
     /// </summary>
     /// <param name="dmg"></param>
-    public override void OnBurnDamage(float dmg)
+    public override void OnBombBurnDamage(float dmg)
     {
         if (isPreDrop)
             AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(this, 180, true));
-        base.OnBurnDamage(dmg);
+        base.OnBombBurnDamage(dmg);
     }
 
     /// <summary>

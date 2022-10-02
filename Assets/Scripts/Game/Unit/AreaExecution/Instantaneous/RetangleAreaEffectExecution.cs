@@ -71,10 +71,12 @@ public class RetangleAreaEffectExecution : AreaEffectExecution
             return false;
     }
 
-    public static RetangleAreaEffectExecution GetInstance()
+    public static RetangleAreaEffectExecution GetInstance(Vector2 pos, int currentRowIndex, float colCount, int rowCount, float offsetX, int offsetY)
     {
         RetangleAreaEffectExecution e = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "AreaEffect/RetangleAreaEffectExecution").GetComponent<RetangleAreaEffectExecution>();
         e.MInit();
+        e.Init(currentRowIndex, colCount, rowCount, offsetX, offsetY, false, false);
+        e.transform.position = pos;
         e.SetCollisionLayer("Default");
         return e;
     }

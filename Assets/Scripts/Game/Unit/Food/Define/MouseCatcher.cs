@@ -1,4 +1,3 @@
-using UnityEngine;
 /// <summary>
 /// 老鼠夹子
 /// </summary>
@@ -148,9 +147,9 @@ public class MouseCatcher : FoodUnit
     private void BurnNoBossEnemyUnit(MouseUnit m)
     {
         if(!m.IsBoss())
-            new BurnDamageAction(CombatAction.ActionType.CauseDamage, this, m, m.mCurrentHp).ApplyAction();
+            new BombDamageAction(CombatAction.ActionType.CauseDamage, this, m, m.mCurrentHp).ApplyAction();
         else
             // 对BOSS造成900点灰烬伤害
-            new BurnDamageAction(CombatAction.ActionType.CauseDamage, this, m, 900).ApplyAction();
+            new BombDamageAction(CombatAction.ActionType.CauseDamage, this, m, 900).ApplyAction();
     }
 }

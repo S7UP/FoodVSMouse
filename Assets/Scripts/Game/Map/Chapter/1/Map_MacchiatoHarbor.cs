@@ -38,7 +38,7 @@ public class Map_MacchiatoHarbor : ChapterMap
         foreach (var item in list)
         {
             // Éú³É·ç¶´
-            BaseWindCave c = (BaseWindCave)GameController.Instance.CreateItem((int)item.x, (int)item.y, (int)ItemInGridType.WindCave, 0);
+            BaseWindCave c = (BaseWindCave)GameController.Instance.CreateItem((int)item.x, (int)item.y, (int)ItemNameTypeMap.WindCave, 0);
             c.SetStartTimeAndMaxTime(360, 480);
         }
     }

@@ -15,4 +15,16 @@ public class StatusManager
             unit.statusAbilityManager.EndNoCountUniqueStatusAbility(StringManager.Frozen);
         }  
     }
+
+    /// <summary>
+    /// 移除所有与冰冻有关的效果
+    /// </summary>
+    public static void RemoveAllFrozenDebuff(BaseUnit unit)
+    {
+        if (unit.IsAlive())
+        {
+            unit.statusAbilityManager.EndNoCountUniqueStatusAbility(StringManager.FrozenSlowDown);
+            unit.statusAbilityManager.EndNoCountUniqueStatusAbility(StringManager.Frozen);
+        }
+    }
 }

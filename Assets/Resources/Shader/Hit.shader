@@ -69,7 +69,6 @@ Shader "ChangeColor/Hit"
                 if (_FlashRate > 0) {//ÊÇ·ñ±»¹¥»÷
                     if (tex.rgba.a == 1)
                     {
-                        //tex = tex + _Color*_FlashRate;
                         // ÑÕÉ«¼õµ­£¨ÉÁ°×£©
                         tex.rgb = tex.rgb + (tex.rgb * _Color.rgb * _FlashRate) / (1 - _Color.rgb * _FlashRate);
                     }

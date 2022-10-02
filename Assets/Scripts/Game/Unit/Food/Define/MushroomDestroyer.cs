@@ -1,8 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-
-using static UnityEngine.UI.CanvasScaler;
 /// <summary>
 /// 炸炸菇
 /// </summary>
@@ -89,12 +85,10 @@ public class MushroomDestroyer : FoodUnit
         }
         // 添加对应的判定检测器
         {
-            RetangleAreaEffectExecution e = RetangleAreaEffectExecution.GetInstance();
+            RetangleAreaEffectExecution e = RetangleAreaEffectExecution.GetInstance(transform.position, MapManager.GetYIndex(transform.position.y), 3, 3, 0, 0);
             e.SetCollisionLayer("ItemCollideAlly"); // 设置成只碰撞友方
-            e.Init(MapManager.GetYIndex(transform.position.y), 3, 3, 0, 0, true, false);
             e.SetInstantaneous(); // 设置成立即生效
             e.isAffectFood = true;
-            e.transform.position = transform.position;
             int count = 0;
             e.SetOnFoodEnterAction((unit)=> 
             {

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 /// </summary>
 public class HealMouse:MouseUnit
 {
-    private static List<float> healHpList = new List<float>{200, 400, 600, 800}; // 形态与回复量的映射表，后期可以单独拆成xml文件存储，实现数据与逻辑分离
+    private static List<float> healHpList = new List<float>{20, 40, 60, 80}; // 形态与回复量的映射表，后期可以单独拆成xml文件存储，实现数据与逻辑分离
     private GeneralAttackSkillAbility generalAttackSkillAbility; // 平A技能
     private PreSkillAbility preSkillAbility; // 演奏前置
     private EnemyHealSkillAbility enemyHealSkillAbility; // 演奏 
@@ -70,6 +70,6 @@ public class HealMouse:MouseUnit
     /// <returns></returns>
     public float GetHealValue()
     {
-        return healHpList[mShape];
+        return healHpList[mShape]*mCurrentAttack;
     }
 }

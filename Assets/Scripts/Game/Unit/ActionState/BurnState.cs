@@ -5,7 +5,7 @@ using UnityEngine;
 /// </summary>
 public class BurnState : BaseActionState
 {
-    int totalTime = ConfigManager.fps * 2; // 动画持续时间（帧），数字为秒
+    int totalTime = 120; // 动画持续时间（帧），数字为秒
     int currentTime = 0;
 
     public BurnState(BaseUnit baseUnit) : base(baseUnit)

@@ -168,7 +168,8 @@ public class StraightMovePresetTasker: PresetTasker
 
     private void UnitUpdate()
     {
-        unit_master.transform.position += rot * velocity;
+        // unit_master.transform.position += rot * velocity;
+        unit_master.SetPosition(unit_master.GetPosition() + rot * velocity);
         velocity += acc;
         currentTimer++;
     }

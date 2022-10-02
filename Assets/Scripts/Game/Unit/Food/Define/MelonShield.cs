@@ -24,11 +24,11 @@ public class MelonShield : FoodUnit
     public override void OnDisable()
     {
         base.OnDisable();
-        Spr_Inside.material = defaultMaterial; // 换回来
     }
 
     public override void MInit()
     {
+        mHertIndex = 0;
         base.MInit();
 
         // 在受到伤害结算之后，更新受伤贴图状态
@@ -41,10 +41,10 @@ public class MelonShield : FoodUnit
         Spr_Inside.sprite = GameManager.Instance.GetSprite("Food/" + mType + "/inside/" + mHertIndex);
     }
 
-    public override void OnEnable()
+    public override void SetCollider2DParam()
     {
-        base.OnEnable();
-        mHertIndex = 0;
+        mBoxCollider2D.offset = new Vector2(0, -0.08f * MapManager.gridHeight);
+        mBoxCollider2D.size = new Vector2(0.65f * MapManager.gridWidth, 0.33f * MapManager.gridHeight);
     }
 
     /// <summary>

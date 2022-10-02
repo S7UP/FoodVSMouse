@@ -38,4 +38,14 @@ public class Map_AbyssIsland : ChapterMap
     {
 
     }
+
+    /// <summary>
+    /// 其他加工
+    /// </summary>
+    public override void OtherProcessing()
+    {
+        // 为全图添加黑夜BUFF
+        ShadeAreaEffectExecution e = ShadeAreaEffectExecution.GetInstance(6, 7, new UnityEngine.Vector2(MapManager.GetColumnX(1.5f), MapManager.GetRowY(3)));
+        GameController.Instance.AddAreaEffectExecution(e);
+    }
 }

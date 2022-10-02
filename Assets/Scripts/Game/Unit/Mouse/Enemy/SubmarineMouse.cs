@@ -6,12 +6,10 @@ public class SubmarineMouse : MouseUnit, IInWater
 {
     private bool isEnterWater; // 于TransitionState时使用，判断是播放下水动画还是出水动画
     private FloatModifier SpeedModifier = new FloatModifier(50f); // 加速修饰（当非受伤态时处于水中时获得50%移速加成）
-    private bool isDieInWater; // 是否在水中死亡
 
     public override void MInit()
     {
         isEnterWater = false;
-        isDieInWater = false;
         base.MInit();
         // 免疫灰烬秒杀效果、冰冻减速效果、冰冻效果、水蚀效果
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, new BoolModifier(true));
@@ -46,19 +44,10 @@ public class SubmarineMouse : MouseUnit, IInWater
 
     public void OnExitWater()
     {
-        // 出水也要分情况，是有可能死亡后清除DEBUFF效果然后强制出水的
-        if (isDeathState)
-        {
-            isEnterWater = false;
-            isDieInWater = true;
-        }
-        else
-        {
-            SetNoCollideAllyUnit();
-            isEnterWater = false;
-            NumericBox.MoveSpeed.RemovePctAddModifier(SpeedModifier);
-            SetActionState(new TransitionState(this));
-        }
+        SetNoCollideAllyUnit();
+        isEnterWater = false;
+        NumericBox.MoveSpeed.RemovePctAddModifier(SpeedModifier);
+        SetActionState(new TransitionState(this));
     }
 
     public override void UpdateRuntimeAnimatorController()
@@ -104,13 +93,14 @@ public class SubmarineMouse : MouseUnit, IInWater
     /// <returns></returns>
     public override bool CanBlock(BaseUnit unit)
     {
-        StatusAbility s = unit.GetUniqueStatus(StringManager.WaterGridState);
+        StatusAbility s = GetUniqueStatus(StringManager.WaterGridState);
         return s!=null && base.CanBlock(unit);
     }
 
     public override void OnDieStateEnter()
     {
-        if(isDieInWater)
+        // 如果自己在水域中且没有被承载就播放特有的淹死动画
+        if (WaterGridType.IsInWater(this) && !WoodenDisk.IsBearing(this))
             animatorController.Play("Die1");
         else
             animatorController.Play("Die0");

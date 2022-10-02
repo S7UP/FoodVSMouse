@@ -65,6 +65,9 @@ public enum ActionPointType
     PreReceiveBurnDamage,//承受灰烬伤害前
     PostReceiveBurnDamage,//承受灰烬伤害后
 
+    PreReceiveBombBurnDamage,//承受炸弹伤害前
+    PostReceiveBombBurnDamage,//承受炸弹伤害后
+
     PreReceiveReboundDamage,//承受反弹伤害前
     PostReceiveReboundDamage,//承受反弹伤害后
 

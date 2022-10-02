@@ -251,8 +251,8 @@ public class NinjaMouse : MouseUnit
             {
                 int maxTime = 60;
                 int currentTime = 0;
-                Vector2 startPosition = unit.transform.position;
-                Vector2 endPosition = transform.position + new Vector3(pos.x*MapManager.gridWidth, pos.y*MapManager.gridHeight, 0);
+                // Vector2 startPosition = unit.transform.position;
+                // Vector2 endPosition = transform.position + new Vector3(pos.x*MapManager.gridWidth, pos.y*MapManager.gridHeight, 0);
                 BaseActionState s = new BaseActionState(unit);
                 if(unit is NinjaRetinueMouse)
                 {
@@ -262,7 +262,7 @@ public class NinjaMouse : MouseUnit
                 s.SetUpdateAction(delegate 
                 {
                     currentTime++;
-                    unit.SetPosition(Vector3.Lerp(startPosition, endPosition, Mathf.Sin((float)currentTime/maxTime*Mathf.PI/2)));
+                    // unit.SetPosition(Vector3.Lerp(startPosition, endPosition, Mathf.Sin((float)currentTime/maxTime*Mathf.PI/2)));
                     if (currentTime >= maxTime)
                         unit.SetActionState(new MoveState(unit));
                 });

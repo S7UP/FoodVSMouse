@@ -36,4 +36,14 @@ public class Map_ChampagneIsland : ChapterMap
     {
 
     }
+
+    /// <summary>
+    /// 其他加工
+    /// </summary>
+    public override void OtherProcessing()
+    {
+        // 为全图添加黑夜BUFF
+        ShadeAreaEffectExecution e = ShadeAreaEffectExecution.GetInstance(11, 7, new UnityEngine.Vector2(MapManager.GetColumnX(4), MapManager.GetRowY(3)));
+        GameController.Instance.AddAreaEffectExecution(e);
+    }
 }
