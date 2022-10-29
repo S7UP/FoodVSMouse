@@ -109,8 +109,8 @@ public class ShadeAreaEffectExecution : RetangleAreaEffectExecution
     // 荫蔽任务
     private class ShadeTask : ITask
     {
-        private static FloatModifier attackSpeedModifier = new FloatModifier(20);  // 所有单位增加20%攻速
-        private static FloatModifier foodDamageRate = new FloatModifier(1.5f); // 美食受伤增幅
+        private static FloatModifier attackSpeedModifier = new FloatModifier(25);  // 所有单位增加25%攻速
+        private static FloatModifier foodDamageRate = new FloatModifier(1.25f); // 美食受伤增幅
         private static FloatModifier mouseDamageRate = new FloatModifier(0.8f); // 老鼠减伤
 
         private int count; // 进入的荫蔽数

@@ -93,8 +93,7 @@ public class SubmarineMouse : MouseUnit, IInWater
     /// <returns></returns>
     public override bool CanBlock(BaseUnit unit)
     {
-        StatusAbility s = GetUniqueStatus(StringManager.WaterGridState);
-        return s!=null && base.CanBlock(unit);
+        return WaterGridType.IsInWater(this) && base.CanBlock(unit);
     }
 
     public override void OnDieStateEnter()

@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-
+using System;
 using UnityEngine;
 /// <summary>
 /// 格子管理器（存放静态方法）
@@ -34,5 +34,73 @@ public class GridManager
             cp_list.Remove(cp_list[index]);
         }
         return randList;
+    }
+
+    /// <summary>
+    /// 获取特定范围内的所有格子
+    /// </summary>
+    /// <returns></returns>
+    public static List<BaseGrid> GetSpecificAreaGridList(List<BaseGrid> gridList, float left, float right, float up, float bottom)
+    {
+        List<BaseGrid> l = new List<BaseGrid>();
+        foreach (var g in gridList)
+        {
+            if (g.transform.position.x >= left && g.transform.position.x <= right && g.transform.position.y <= up && g.transform.position.y >= bottom)
+                l.Add(g);
+        }
+        return l;
+    }
+
+    /// <summary>
+    /// 获取达成特定条件 值最小 的格子组
+    /// </summary>
+    /// <param name="ConditionFunc"></param>
+    /// <returns></returns>
+    public static List<BaseGrid> GetGridListWhichHasMinCondition(List<BaseGrid> gridList, Func<BaseGrid, float> ConditionFunc)
+    {
+        List<BaseGrid> l = new List<BaseGrid>();
+        float min = float.MaxValue;
+        foreach (var g in gridList)
+        {
+            float c = ConditionFunc(g);
+            if (c < min)
+            {
+                min = c;
+                l.Clear();
+                l.Add(g);
+            }
+            else if(c == min)
+            {
+                l.Add(g);
+            }
+        }
+        return l;
+    }
+
+
+    /// <summary>
+    /// 获取达成特定条件 值最大 的格子组
+    /// </summary>
+    /// <param name="ConditionFunc"></param>
+    /// <returns></returns>
+    public static List<BaseGrid> GetGridListWhichHasMaxCondition(List<BaseGrid> gridList, Func<BaseGrid, float> ConditionFunc)
+    {
+        List<BaseGrid> l = new List<BaseGrid>();
+        float max = float.MinValue;
+        foreach (var g in gridList)
+        {
+            float c = ConditionFunc(g);
+            if (c > max)
+            {
+                max = c;
+                l.Clear();
+                l.Add(g);
+            }
+            else if (c == max)
+            {
+                l.Add(g);
+            }
+        }
+        return l;
     }
 }

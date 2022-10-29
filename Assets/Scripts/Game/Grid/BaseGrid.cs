@@ -13,17 +13,29 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         ItemNameTypeMap.WindCave, 
     };
 
+    /// <summary>
+    /// 当格子存在以下地形时，不允许放卡
+    /// </summary>
+    public static List<GridType> NoAllowBuildGridType = new List<GridType>() 
+    { 
+        GridType.NotBuilt, 
+        GridType.Teleport
+    };
+
     protected Dictionary<GridType, BaseGridType> mGridTypeDict = new Dictionary<GridType, BaseGridType>(); // 依附于格子的地形状态
     protected List<MouseUnit> mMouseUnitList = new List<MouseUnit>(); //　位于格子上的老鼠单位表
     protected Dictionary<FoodInGridType, FoodUnit> mFoodUnitDict = new Dictionary<FoodInGridType, FoodUnit>(); // 恒定在此格子上的美食（即确实是种下去的而非临时性的）
     protected Dictionary<ItemNameTypeMap, BaseUnit> mItemUnitDict = new Dictionary<ItemNameTypeMap, BaseUnit>(); // 在此格子上的道具
     protected CharacterUnit characterUnit; // 所持有的人物单位（如果有）
+    protected Dictionary<string, BaseUnit> mAttachedUnitDict = new Dictionary<string, BaseUnit>(); // 其他附加在格子上的单位引用（仅作引用，格子本身与该单位无其他关系）
 
     public bool canBuild;
     public int currentXIndex { get; private set; }
     public int currentYIndex { get; private set; }
     public bool isHeightLimit = true; // 地形效果是否只作用于特定高度
     public float mHeight = 0;
+    public List<ITask> TaskList = new List<ITask>(); // 自身挂载任务表
+    public Dictionary<string, ITask> TaskDict = new Dictionary<string, ITask>(); // 任务字典（仅记录引用不实际执行逻辑，执行逻辑在任务表中）
 
     private BoxCollider2D mBoxCollider2D;
 
@@ -40,6 +52,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         mMouseUnitList.Clear();
         mFoodUnitDict.Clear();
         mItemUnitDict.Clear();
+        mAttachedUnitDict.Clear();
         characterUnit = null;
         canBuild = true;
         currentXIndex = 0;
@@ -47,6 +60,8 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         isHeightLimit = true;
         mHeight = 0;
         gridActionPointManager.Initialize();
+        TaskList.Clear();
+        TaskDict.Clear();
         SetBoxCollider2D(Vector2.zero, new Vector2(MapManager.gridWidth, MapManager.gridHeight));
     }
 
@@ -82,6 +97,11 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         foreach (var tag in NoAllowBuildTagList)
         {
             if (IsContainTag(tag))
+                return false;
+        }
+        foreach (var gridType in NoAllowBuildGridType)
+        {
+            if (IsContainGridType(gridType))
                 return false;
         }
         return true;
@@ -475,6 +495,27 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     }
 
     /// <summary>
+    /// 对于投掷来说获取一格内卡片的攻击优先级
+    /// </summary>
+    /// <returns></returns>
+    public BaseUnit GetThrowHighestAttackPriorityUnitInclude()
+    {
+        if (IsContainTag(FoodInGridType.Default))
+        {
+            return mFoodUnitDict[FoodInGridType.Default];
+        }
+        else if (IsContainTag(FoodInGridType.Shield))
+        {
+            return mFoodUnitDict[FoodInGridType.Shield];
+        }
+        else if (characterUnit != null)
+        {
+            return characterUnit;
+        }
+        return null;
+    }
+
+    /// <summary>
     /// 获取本格的人物，如果没有则返回空值
     /// </summary>
     /// <returns></returns>
@@ -591,16 +632,25 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         {
             keyValuePair.Value.MUpdate();
         }
+
+        // 挂载任务更新
+        OnTaskUpdate();
     }
 
     public void MPause()
     {
-        
+        foreach (var keyValuePair in mGridTypeDict)
+        {
+            keyValuePair.Value.MPause();
+        }
     }
 
     public void MResume()
     {
-        
+        foreach (var keyValuePair in mGridTypeDict)
+        {
+            keyValuePair.Value.MResume();
+        }
     }
 
     public void MDestory()
@@ -666,5 +716,127 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         if (list.Count <= 0)
             list.Add(GridType.Default);
         return list;
+    }
+
+
+    /// <summary>
+    /// 添加unit引用
+    /// </summary>
+    /// <param name="unit"></param>
+    public void AddUnitToDict(string key, BaseUnit unit)
+    {
+        mAttachedUnitDict.Add(key, unit);
+    }
+
+    /// <summary>
+    /// 移除unit引用
+    /// </summary>
+    /// <param name="key"></param>
+    public void RemoveUnitFromDict(string key)
+    {
+        mAttachedUnitDict.Remove(key);
+    }
+
+    /// <summary>
+    /// 获取引用的单位（必须存活）
+    /// </summary>
+    /// <param name="key"></param>
+    public BaseUnit GetUnitFromDict(string key)
+    {
+        if (mAttachedUnitDict.ContainsKey(key))
+        {
+            BaseUnit unit = mAttachedUnitDict[key];
+            if (unit.IsAlive())
+                return unit;
+            else
+                mAttachedUnitDict.Remove(key);
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// 添加唯一性任务
+    /// </summary>
+    public void AddUniqueTask(string key, ITask t)
+    {
+        if (!TaskDict.ContainsKey(key))
+        {
+            TaskDict.Add(key, t);
+            AddTask(t);
+        }
+    }
+
+    /// <summary>
+    /// 添加一个任务
+    /// </summary>
+    /// <param name="t"></param>
+    public void AddTask(ITask t)
+    {
+        TaskList.Add(t);
+        t.OnEnter();
+    }
+
+    /// <summary>
+    /// 移除唯一性任务
+    /// </summary>
+    public void RemoveUniqueTask(string key)
+    {
+        if (TaskDict.ContainsKey(key))
+        {
+            RemoveTask(TaskDict[key]);
+            TaskDict.Remove(key);
+        }
+    }
+
+    /// <summary>
+    /// 移除一个任务
+    /// </summary>
+    /// <param name="t"></param>
+    public void RemoveTask(ITask t)
+    {
+        TaskList.Remove(t);
+        t.OnExit();
+    }
+
+    /// <summary>
+    /// 获取某个标记为key的任务
+    /// </summary>
+    /// <param name="key"></param>
+    /// <returns></returns>
+    public ITask GetTask(string key)
+    {
+        if (TaskDict.ContainsKey(key))
+            return TaskDict[key];
+        return null;
+    }
+
+    /// <summary>
+    /// Task组更新
+    /// </summary>
+    private void OnTaskUpdate()
+    {
+        List<string> deleteKeyList = new List<string>();
+        foreach (var keyValuePair in TaskDict)
+        {
+            ITask t = keyValuePair.Value;
+            if (t.IsMeetingExitCondition())
+                deleteKeyList.Add(keyValuePair.Key);
+        }
+        foreach (var key in deleteKeyList)
+        {
+            RemoveUniqueTask(key);
+        }
+        List<ITask> deleteTask = new List<ITask>();
+        foreach (var t in TaskList)
+        {
+            if (t.IsMeetingExitCondition())
+                deleteTask.Add(t);
+            else
+                t.OnUpdate();
+        }
+        foreach (var t in deleteTask)
+        {
+            RemoveTask(t);
+        }
     }
 }

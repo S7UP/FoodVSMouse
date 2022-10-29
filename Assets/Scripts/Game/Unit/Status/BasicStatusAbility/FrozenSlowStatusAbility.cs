@@ -61,7 +61,7 @@ public class FrozenSlowStatusAbility : StatusAbility
         if(slowDownFloatModifier == null)
         {
             // 实际减速效果应用
-            slowDownFloatModifier = new FloatModifier(-50);
+            slowDownFloatModifier = new FloatModifier(-35);
             master.NumericBox.MoveSpeed.AddFinalPctAddModifier(slowDownFloatModifier);
         }
         // 添加变色效果

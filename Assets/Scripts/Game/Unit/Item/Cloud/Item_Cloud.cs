@@ -240,9 +240,8 @@ public class Item_Cloud : BaseItem
     /// <returns></returns>
     public static RetangleAreaEffectExecution GetCloudGroup(int type, Vector2 pos, int count)
     {
-        RetangleAreaEffectExecution e = RetangleAreaEffectExecution.GetInstance(pos, MapManager.GetYIndex(pos.y), count, 1, 0, 0);
+        RetangleAreaEffectExecution e = RetangleAreaEffectExecution.GetInstance(pos, count, 1, "Enemy"); // 碰撞层设为等同于老鼠碰撞层
         e.SetBoxCollider2D(Vector2.zero, new Vector2(count * MapManager.gridWidth, 0.5f* 1 * MapManager.gridHeight));
-        e.SetCollisionLayer("Enemy"); // 碰撞层设为等同于老鼠碰撞层
         e.FloatDict.Add("offsetX", 0); // 用于给 风域 处理偏移量的变量
         GameController.Instance.AddAreaEffectExecution(e);
 

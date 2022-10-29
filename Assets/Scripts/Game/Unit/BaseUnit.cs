@@ -61,6 +61,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public SkillAbilityManager skillAbilityManager { get; set; } = new SkillAbilityManager(); // 技能管理器
     public StatusAbilityManager statusAbilityManager { get; set; } = new StatusAbilityManager(); // 时效状态（BUFF）管理器
     public Dictionary<EffectType, BaseEffect> effectDict = new Dictionary<EffectType, BaseEffect>(); // 自身持有唯一性特效
+    public Dictionary<string, BaseEffect> effectDict2 = new Dictionary<string, BaseEffect>(); // 自身持有唯一性特效（但是是用string作为key的）
     private bool isHideEffect = false; // 是否隐藏特效
     public AnimatorController animatorController = new AnimatorController(); // 动画播放控制器
     public List<ITask> TaskList = new List<ITask>(); // 自身挂载任务表
@@ -74,12 +75,17 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
 
     public IBaseActionState mCurrentActionState; //+ 当前动作状态
     public int currentStateTimer = 0; // 当前状态的持续时间（切换状态时会重置）
+    public bool disableMove = false; // 禁止移动
 
     // 事件
     public List<Action<BaseUnit>> BeforeDeathEventList = new List<Action<BaseUnit>>();
     public List<Action<BaseUnit>> BeforeBurnEventList = new List<Action<BaseUnit>>();
     public List<Action<BaseUnit>> AfterDeathEventList = new List<Action<BaseUnit>>();
-    
+
+    public List<Func<BaseUnit, BaseUnit, bool>> CanBlockFuncList = new List<Func<BaseUnit, BaseUnit, bool>>(); // 两个单位能否互相阻挡的额外判断事件
+    public List<Func<BaseUnit, BaseBullet, bool>> CanHitFuncList = new List<Func<BaseUnit, BaseBullet, bool>>(); // 单位与子弹能否相互碰撞的额外判断事件
+    public List<Func<BaseUnit, bool>> CanBeSelectedAsTargetFuncList = new List<Func<BaseUnit, bool>>(); // 能否被选取作为目标
+
 
     protected string jsonPath
     {
@@ -144,6 +150,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         skillAbilityManager.Initialize();
         statusAbilityManager.Initialize();
         effectDict.Clear();
+        effectDict2.Clear();
         isHideEffect = false;
         animatorController.Initialize();
         hitBox.Initialize();
@@ -157,6 +164,10 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         BeforeDeathEventList.Clear();
         BeforeBurnEventList.Clear();
         AfterDeathEventList.Clear();
+
+        CanBlockFuncList.Clear();
+        CanHitFuncList.Clear();
+        CanBeSelectedAsTargetFuncList.Clear();
     }
 
     // 切换动作状态
@@ -387,21 +398,13 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     /// </summary>
     public virtual void MInit()
     {
-        BaseUnit.Attribute attr = GameController.Instance.GetBaseAttribute();
-        if (jsonPath == null)
-        {
-            attr = new BaseUnit.Attribute();
-        }
-        else
-        {
-            attr = GameController.Instance.GetBaseAttribute();
-        }
         // 几个管理器初始化
         NumericBox.Initialize();
         actionPointManager.Initialize();
         skillAbilityManager.Initialize();
         statusAbilityManager.Initialize();
         effectDict.Clear();
+        effectDict2.Clear();
         isHideEffect = false;
         animatorController.Initialize();
         hitBox.Initialize();
@@ -409,26 +412,32 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         SetSpriteLocalPosition(Vector2.zero);
         TaskList.Clear();
         TaskDict.Clear();
-        // 种类
-        mType = attr.type;
-        mShape = attr.shape;
+
         typeAndShapeValue = 0; // 图层
         SetUnitType();
-        // 血量
-        NumericBox.Hp.SetBase((float)attr.baseHP);
-        mCurrentHp = mMaxHp;
-        // 攻击力
-        NumericBox.Attack.SetBase((float)attr.baseAttack);
-        // 攻击速度与攻击间隔
-        NumericBox.AttackSpeed.SetBase((float)attr.baseAttackSpeed);
-        NumericBox.MoveSpeed.SetBase(TransManager.TranToVelocity((float)attr.baseMoveSpeed));
-        NumericBox.Defense.SetBase((float)attr.baseDefense);
-        attackPercent = (float)attr.attackPercent; // 攻击动画播放进度到attackPercent以上时允许出真正的攻击
+
         mAttackFlag = true; // 作用于一次攻击能否打出来的flag
-        // 高度
-        mHeight = attr.baseHeight;
+        if (mType >= 0)
+        {
+            BaseUnit.Attribute attr = GameController.Instance.GetBaseAttribute();
+            if (jsonPath == null)
+                attr = new BaseUnit.Attribute();
+            else
+                attr = GameController.Instance.GetBaseAttribute();
+            // 种类
+            mType = attr.type;
+            mShape = attr.shape;
+
+            SetBaseAttribute((float)attr.baseHP, (float)attr.baseAttack, (float)attr.baseAttackSpeed, (float)attr.baseMoveSpeed, (float)attr.baseDefense, (float)attr.attackPercent, attr.baseHeight);
+        }
+        else
+        {
+            SetBaseAttribute(100, 10, 1, 1, 0, 0.5f, 0);
+        }
+
         // 死亡状态
         isDeathState = false;
+        disableMove = false;
 
         // 初始化当前动作状态
         mCurrentActionState = null;
@@ -449,6 +458,13 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         BeforeDeathEventList.Clear();
         BeforeBurnEventList.Clear();
         AfterDeathEventList.Clear();
+
+        CanBlockFuncList.Clear();
+        CanHitFuncList.Clear();
+        CanBeSelectedAsTargetFuncList.Clear();
+
+        // 初始化透明度
+        SetAlpha(1);
     }
 
     public virtual void MUpdate()
@@ -800,6 +816,11 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         return statusAbilityManager.GetUniqueStatus(statusName);
     }
 
+    public StatusAbility GetNoCountUniqueStatus(string statusName)
+    {
+        return statusAbilityManager.GetNoCountUniqueStatus(statusName);
+    }
+
     public void AddUniqueStatusAbility(string statusName, StatusAbility statusAbility)
     {
         statusAbilityManager.AddUniqueStatusAbility(statusName, statusAbility);
@@ -1095,8 +1116,8 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     /// <returns></returns>
     public virtual float GetMoveSpeed()
     {
-        // 被冰冻则返回0移速
-        if (NumericBox.GetBoolNumericValue(StringManager.Frozen))
+        // 被冰冻 或 禁用移动 则返回0移速
+        if (NumericBox.GetBoolNumericValue(StringManager.Frozen) || disableMove)
             return 0;
         // 否则返回默认移速
         return mCurrentMoveSpeed;
@@ -1173,6 +1194,11 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     /// <returns></returns>
     public virtual bool CanBeSelectedAsTarget()
     {
+        foreach (var func in CanBeSelectedAsTargetFuncList)
+        {
+            if (!func(this))
+                return false;
+        }
         return true;
     }
 
@@ -1199,6 +1225,23 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         return false;
     }
 
+    public bool IsContainEffect(string t)
+    {
+        if (effectDict2.ContainsKey(t))
+        {
+            if (!effectDict2[t].IsValid())
+            {
+                effectDict2.Remove(t);
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /// <summary>
     /// 获取某个特效引用
     /// </summary>
@@ -1208,6 +1251,13 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     {
         if (IsContainEffect(t))
             return effectDict[t];
+        return null;
+    }
+
+    public BaseEffect GetEffect(string t)
+    {
+        if (IsContainEffect(t))
+            return effectDict2[t];
         return null;
     }
 
@@ -1225,6 +1275,16 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
             eff.Hide(false);
     }
 
+    public void AddEffectToDict(string t, BaseEffect eff, Vector2 localPosition)
+    {
+        effectDict2.Add(t, eff);
+        eff.transform.SetParent(transform);
+        eff.transform.localPosition = localPosition;
+        if (isHideEffect)
+            eff.Hide(true);
+        else
+            eff.Hide(false);
+    }
 
     /// <summary>
     /// 移除某个特效引用
@@ -1235,6 +1295,17 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         {
             BaseEffect eff = effectDict[t];
             effectDict.Remove(t);
+            //GameController.Instance.SetEffectDefaultParentTrans(eff);
+            eff.ExecuteDeath();
+        }
+    }
+
+    public void RemoveEffectFromDict(string t)
+    {
+        if (IsContainEffect(t))
+        {
+            BaseEffect eff = effectDict2[t];
+            effectDict2.Remove(t);
             //GameController.Instance.SetEffectDefaultParentTrans(eff);
             eff.ExecuteDeath();
         }
@@ -1254,6 +1325,16 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         {
             RemoveEffectFromDict(t);
         }
+
+        List<string> l2 = new List<string>();
+        foreach (var item in effectDict2)
+        {
+            l2.Add(item.Key);
+        }
+        foreach (var t in l2)
+        {
+            RemoveEffectFromDict(t);
+        }
     }
 
     /// <summary>
@@ -1268,10 +1349,18 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
             {
                 keyValuePair.Value.Hide(true);
             }
+            foreach (var keyValuePair in effectDict2)
+            {
+                keyValuePair.Value.Hide(true);
+            }
         }
         else
         {
             foreach (var keyValuePair in effectDict)
+            {
+                keyValuePair.Value.Hide(false);
+            }
+            foreach (var keyValuePair in effectDict2)
             {
                 keyValuePair.Value.Hide(false);
             }
@@ -1441,6 +1530,64 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public void RemoveAfterDeathEvent(Action<BaseUnit> action)
     {
         AfterDeathEventList.Remove(action);
+    }
+
+    public void AddCanBlockFunc(Func<BaseUnit, BaseUnit, bool> action)
+    {
+        CanBlockFuncList.Add(action);
+    }
+
+    public void RemoveCanBlockFunc(Func<BaseUnit, BaseUnit, bool> action)
+    {
+        CanBlockFuncList.Remove(action);
+    }
+
+    public void AddCanHitFunc(Func<BaseUnit, BaseBullet, bool> action)
+    {
+        CanHitFuncList.Add(action);
+    }
+
+    public void RemoveCanHitFunc(Func<BaseUnit, BaseBullet, bool> action)
+    {
+        CanHitFuncList.Remove(action);
+    }
+
+    public void AddCanBeSelectedAsTargetFunc(Func<BaseUnit, bool> action)
+    {
+        CanBeSelectedAsTargetFuncList.Add(action);
+    }
+
+    public void RemoveCanBeSelectedAsTargetFunc(Func<BaseUnit, bool> action)
+    {
+        CanBeSelectedAsTargetFuncList.Remove(action);
+    }
+
+    /// <summary>
+    /// 禁用移动，默认为false,当设为true时处于移动状态时不再更新移动所改变的坐标
+    /// </summary>
+    /// <param name="disable"></param>
+    public void DisableMove(bool disable)
+    {
+        disableMove = disable;
+    }
+
+    /// <summary>
+    /// 设置基础属性
+    /// </summary>
+    public void SetBaseAttribute(float maxHp, float attack, float attackSpeed, float standardMoveSpeed, float defence, float attackPercent, int height)
+    {
+        // 血量
+        NumericBox.Hp.SetBase(maxHp);
+        mCurrentHp = mMaxHp;
+        // 攻击力
+        NumericBox.Attack.SetBase(attack);
+        // 攻击速度与攻击间隔
+        NumericBox.AttackSpeed.SetBase(attackSpeed);
+        NumericBox.MoveSpeed.SetBase(TransManager.TranToVelocity(standardMoveSpeed));
+        NumericBox.Defense.SetBase(defence);
+        this.attackPercent = attackPercent; // 攻击动画播放进度到attackPercent以上时允许出真正的攻击
+                              // 高度
+        mHeight = height;
     }
     // 继续
 }

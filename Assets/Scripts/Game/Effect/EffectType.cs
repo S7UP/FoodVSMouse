@@ -9,4 +9,5 @@ public enum EffectType
     MushroomEffect = 2, // ¶¾¾ú¼ÄÉú
     Conceal = 3, // ÒşÄä
     Lava = 4, // ÑÒ½¬
+    Hidden = 5, // ÒşÄä
 }

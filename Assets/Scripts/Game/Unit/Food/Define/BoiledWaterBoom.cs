@@ -8,6 +8,14 @@ public class BoiledWaterBoom : FoodUnit
     }
 
     /// <summary>
+    /// 炸弹掉落等效于正常死亡
+    /// </summary>
+    public override void BeforeDrop()
+    {
+        base.BeforeDeath();
+    }
+
+    /// <summary>
     /// 判断是否有有效的攻击目标
     /// </summary>
     /// <returns></returns>

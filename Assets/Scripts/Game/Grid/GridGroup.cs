@@ -53,17 +53,17 @@ public class GridGroup : MonoBehaviour, IGameControllerMember
 
     public void MPause()
     {
-        throw new System.NotImplementedException();
+        
     }
 
     public void MResume()
     {
-        throw new System.NotImplementedException();
+       
     }
 
     public void MDestory()
     {
-        throw new System.NotImplementedException();
+        
     }
 
     public void MPauseUpdate()

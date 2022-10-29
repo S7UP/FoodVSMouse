@@ -12,6 +12,14 @@ public class MushroomDestroyer : FoodUnit
     }
 
     /// <summary>
+    /// 炸弹掉落等效于正常死亡
+    /// </summary>
+    public override void BeforeDrop()
+    {
+        base.BeforeDeath();
+    }
+
+    /// <summary>
     /// 判断是否有有效的攻击目标
     /// </summary>
     /// <returns></returns>
@@ -85,8 +93,7 @@ public class MushroomDestroyer : FoodUnit
         }
         // 添加对应的判定检测器
         {
-            RetangleAreaEffectExecution e = RetangleAreaEffectExecution.GetInstance(transform.position, MapManager.GetYIndex(transform.position.y), 3, 3, 0, 0);
-            e.SetCollisionLayer("ItemCollideAlly"); // 设置成只碰撞友方
+            RetangleAreaEffectExecution e = RetangleAreaEffectExecution.GetInstance(transform.position, 3, 3, "ItemCollideAlly");
             e.SetInstantaneous(); // 设置成立即生效
             e.isAffectFood = true;
             int count = 0;

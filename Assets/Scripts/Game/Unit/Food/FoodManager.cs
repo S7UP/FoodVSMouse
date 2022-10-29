@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-
+using System;
 using UnityEngine;
 
 /// <summary>
@@ -17,7 +17,7 @@ public class FoodManager
         { FoodNameTypeMap.WaterPipe, new List<string>(){"双向水管","控温双向水管","合金水管" } },
         { FoodNameTypeMap.ThreeLinesVine, new List<string>(){"三线酒架","强力三线酒架","终结者酒架" } },
         { FoodNameTypeMap.Heater, new List<string>(){"火盆","电子烤盘","熔岩烤盘" } },
-        { FoodNameTypeMap.WoodenDisk, new List<string>(){"木盘子" } },
+        { FoodNameTypeMap.WoodenDisk, new List<string>(){"木盘子" ,"友情木盘子"} },
         { FoodNameTypeMap.CottonCandy, new List<string>(){"棉花糖" } },
         { FoodNameTypeMap.IceBucket, new List<string>(){"冰桶炸弹" } },
         { FoodNameTypeMap.MelonShield, new List<string>(){"瓜皮护罩","尖刺瓜皮护罩" } },
@@ -96,6 +96,203 @@ public class FoodManager
         unit.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, new BoolModifier(true));
         unit.NumericBox.AddDecideModifierToBoolDict(StringManager.Invincibility, new BoolModifier(true));
         unit.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozen, new BoolModifier(true));
+        unit.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, new BoolModifier(true));
         unit.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBacterialInfection, new BoolModifier(true));
+    }
+
+    /// <summary>
+    /// 获取特定行中最左边的可攻击友方单位
+    /// </summary>
+    /// <param name="rowIndex">行下标</param>
+    /// <param name="start_temp_x">起始比较横坐标（位于该坐标右侧的单位会被忽略掉）</param>
+    /// <returns>返回最靠左的可攻击的友方单位，若为空则没有目标</returns>
+    public static BaseUnit GetSpecificRowFarthestLeftCanTargetedAlly(int rowIndex, float start_temp_x)
+    {
+        BaseUnit targetUnit = null;
+        List<BaseUnit> list = GameController.Instance.GetSpecificRowAllyList(rowIndex);
+        float temp_x = start_temp_x;
+        foreach (var item in list)
+        {
+            // 三个基础条件：可被选取、是美食或者人物单位、必须存活
+            // 外加一个比较条件，就是单位横坐标比当前比较横坐标小
+            if (item.CanBeSelectedAsTarget() && (item is FoodUnit || item is CharacterUnit) && item.IsAlive() && item.transform.position.x < temp_x)
+            {
+                // 如果目标是美食单位，则需要判断目标必须为默认类型卡片或者护罩类型卡片，否则不能作为选取目标
+                if(item is FoodUnit)
+                {
+                    FoodUnit f = item as FoodUnit;
+                    if (!f.GetFoodInGridType().Equals(FoodInGridType.Default) && !f.GetFoodInGridType().Equals(FoodInGridType.Shield))
+                        continue;
+                }
+                temp_x = item.transform.position.x;
+                targetUnit = item;
+            }
+        }
+        return targetUnit;
+    }
+
+
+    /// <summary>
+    /// 获取特定行中最右边的可攻击友方单位
+    /// </summary>
+    /// <param name="rowIndex">行下标</param>
+    /// <param name="start_temp_x">起始比较横坐标（位于该坐标左侧的单位会被忽略掉）</param>
+    /// <returns>返回最靠右的可攻击的友方单位，若为空则没有目标</returns>
+    public static BaseUnit GetSpecificRowFarthestRightCanTargetedAlly(int rowIndex, float start_temp_x)
+    {
+        BaseUnit targetUnit = null;
+        List<BaseUnit> list = GameController.Instance.GetSpecificRowAllyList(rowIndex);
+        float temp_x = start_temp_x;
+        foreach (var item in list)
+        {
+            // 三个基础条件：可被选取、是美食或者人物单位、必须存活
+            // 外加一个比较条件，就是单位横坐标比当前比较横坐标大
+            if (item.CanBeSelectedAsTarget() && (item is FoodUnit || item is CharacterUnit) && item.IsAlive() && item.transform.position.x > temp_x)
+            {
+                // 如果目标是美食单位，则需要判断目标必须为默认类型卡片或者护罩类型卡片，否则不能作为选取目标
+                if (item is FoodUnit)
+                {
+                    FoodUnit f = item as FoodUnit;
+                    if (!f.GetFoodInGridType().Equals(FoodInGridType.Default) && !f.GetFoodInGridType().Equals(FoodInGridType.Shield))
+                        continue;
+                }
+                temp_x = item.transform.position.x;
+                targetUnit = item;
+            }
+        }
+        return targetUnit;
+    }
+
+    /// <summary>
+    /// 获取 <符合一定条件> 的友方单位数量 最多 的行
+    /// </summary>
+    /// <returns></returns>
+    public static List<int> GetRowListWhichHasMaxConditionAllyCount(Func<BaseUnit, bool> ConditionFunc)
+    {
+        List<int> list = new List<int>();
+        int max = 0;
+        for (int rowIndex = 0; rowIndex < GameController.Instance.mAllyList.Length; rowIndex++)
+        {
+            int count = 0;
+            foreach (var unit in GameController.Instance.mAllyList[rowIndex])
+            {
+                // 如果目标在传入的条件判断中为真，则计数+1
+                if (ConditionFunc(unit))
+                    count++;
+            }
+            if (count == max)
+            {
+                list.Add(rowIndex);
+            }
+            else if (count > max)
+            {
+                list.Clear();
+                list.Add(rowIndex);
+                max = count;
+            }
+        }
+        return list;
+    }
+
+    /// <summary>
+    /// 获取 <符合一定条件> 的友方单位数量 最少 的行
+    /// </summary>
+    /// <returns></returns>
+    public static List<int> GetRowListWhichHasMinConditionAllyCount(Func<BaseUnit, bool> ConditionFunc)
+    {
+        List<int> list = new List<int>();
+        int min = int.MaxValue;
+        for (int rowIndex = 0; rowIndex < GameController.Instance.mAllyList.Length; rowIndex++)
+        {
+            int count = 0;
+            foreach (var unit in GameController.Instance.mAllyList[rowIndex])
+            {
+                // 如果目标在传入的条件判断中为真，则计数+1
+                if (ConditionFunc(unit))
+                    count++;
+            }
+            if (count == min)
+            {
+                list.Add(rowIndex);
+            }
+            else if (count < min)
+            {
+                list.Clear();
+                list.Add(rowIndex);
+                min = count;
+            }
+        }
+        return list;
+    }
+
+    /// <summary>
+    /// 判断方法：当前目标是否是可以被作为目标的友方单位
+    /// </summary>
+    private static Func<BaseUnit, bool> IsCanTargetedAlly = (unit) => 
+    {
+        if (unit is FoodUnit)
+        {
+            FoodUnit f = unit as FoodUnit;
+            FoodInGridType t = f.GetFoodInGridType();
+            if (t.Equals(FoodInGridType.Default) || t.Equals(FoodInGridType.Shield))
+                return true;
+        }
+        return false;
+    };
+
+    /// <summary>
+    /// 获取 可作为攻击目标的友方单位 最多 的行
+    /// </summary>
+    /// <returns></returns>
+    public static List<int> GetRowListWhichHasMaxCanTargetedAllyCount()
+    {
+        return GetRowListWhichHasMaxConditionAllyCount(IsCanTargetedAlly);
+    }
+
+    /// <summary>
+    /// 获取 可作为攻击目标的友方单位 最少 的行
+    /// </summary>
+    /// <returns></returns>
+    public static List<int> GetRowListWhichHasMinCanTargetedAllyCount()
+    {
+        return GetRowListWhichHasMinConditionAllyCount(IsCanTargetedAlly);
+    }
+
+
+    /// <summary>
+    /// 获取 特定 的行
+    /// 1、取出有<符合特定条件>的卡中最靠左侧的，作为该行的代表
+    /// 2、在所有代表中取出最靠右侧的代表，把这些代表的对应行作为结果行返回出去
+    /// </summary>
+    /// <returns></returns>
+    public static List<int> GetRowListBySpecificConditions(Func<BaseUnit, BaseUnit, bool> RowCompareFunc, Func<BaseUnit, BaseUnit, int> LastCompareFunc)
+    {
+        List<int> list = new List<int>();
+        BaseUnit compareUnit = null; // 当前作为评价标准的单位
+        for (int rowIndex = 0; rowIndex < GameController.Instance.mAllyList.Length; rowIndex++)
+        {
+            BaseUnit rowStandUnit = null; // 当前行代表单位
+            foreach (var unit in GameController.Instance.mAllyList[rowIndex])
+            {
+                // 如果目标在传入的条件判断中为真，则用unit来取代当前代表unit
+                if (RowCompareFunc(rowStandUnit, unit))
+                    rowStandUnit = unit;
+            }
+            // 如果比较结果为1（大于），则清空List，然后把当前比较行加入表中，重置评价标准的单位为当前传入比较者
+            // 如果比较结果为0（等于），则只把当前比较行加入表中
+            // 如果比较结果为-1（小于）（或者其他值），则什么也不发生
+            int result = LastCompareFunc(compareUnit, rowStandUnit);
+            if (result > 0)
+            {
+                list.Clear();
+                list.Add(rowIndex);
+                compareUnit = rowStandUnit;
+            }
+            else if(result == 0)
+            {
+                list.Add(rowIndex);
+            }
+        }
+        return list;
     }
 }

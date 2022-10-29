@@ -218,6 +218,8 @@ public class NinjaMouse : MouseUnit
     /// </summary>
     public override float GetMoveSpeed()
     {
+        if (disableMove)
+            return 0;
         return tempMoveSpeed;
     }
 

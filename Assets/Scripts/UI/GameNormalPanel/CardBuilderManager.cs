@@ -227,6 +227,10 @@ public class CardBuilderManager
         {
             builder.mCostDict["Fire"] = builder.mCostDict["Fire"] + 10f;
         }
+        else
+        {
+            builder.mCostDict["Fire"] = builder.mCostDict["Fire"] + 5f;
+        }
     }
 
     /// <summary>
@@ -237,6 +241,10 @@ public class CardBuilderManager
         if (builder.mShape < 1)
         {
             builder.mCostDict["Fire"] = builder.mCostDict["Fire"] - 10f;
+        }
+        else
+        {
+            builder.mCostDict["Fire"] = builder.mCostDict["Fire"] - 5f;
         }
     }
 

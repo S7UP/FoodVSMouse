@@ -246,4 +246,25 @@ public class MouseManager
     {
         return mouseShapeNameDict[type];
     }
+
+    /// <summary>
+    /// 获取一只可能是用来挨炸的工具老鼠
+    /// </summary>
+    /// <returns></returns>
+    public static MouseUnit GetBombedToolMouse()
+    {
+        MouseUnit m = GameController.Instance.CreateMouseUnit(0, new BaseEnemyGroup.EnemyInfo { type = 0, shape = 0 }).GetComponent<MouseUnit>();
+        m.AddCanHitFunc((unit, bullet) =>
+        {
+            return false;
+        });
+        m.AddCanBlockFunc((u1, u2) =>
+        {
+            return false;
+        });
+        m.NumericBox.MoveSpeed.SetBase(0);
+        m.SetAlpha(0);
+        m.HideEffect(true);
+        return m;
+    }
 }

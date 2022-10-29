@@ -8,6 +8,14 @@ public class IceBucketFoodUnit : FoodUnit
     }
 
     /// <summary>
+    /// 炸弹掉落等效于正常死亡
+    /// </summary>
+    public override void BeforeDrop()
+    {
+        base.BeforeDeath();
+    }
+
+    /// <summary>
     /// 根据等级表和等级来更新对应数据
     /// </summary>
     public override void UpdateAttributeByLevel()

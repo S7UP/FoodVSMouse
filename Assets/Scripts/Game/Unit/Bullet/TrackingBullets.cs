@@ -62,11 +62,6 @@ public class TrackingBullets : BaseBullet
         SearchTarget();
         if (target != null)
         {
-            // Debug.Log("dangle = " + TransManager.Angle_360(transform.position, target.transform.position));
-            // currentRotate = transform.eulerAngles.z + Vector3.Angle(transform.position, target.transform.position) * 0.05f;
-            // currentRotate = TransManager.Angle_360(transform.position, target.transform.position);
-            // Debug.Log("currentRotate = " + currentRotate);
-            // mRotate = new Vector2(Mathf.Cos(currentRotate * Mathf.PI / 180), Mathf.Sin(currentRotate * Mathf.PI / 180));
             mRotate = (target.transform.position - transform.position).normalized;
         }
         base.OnFlyState();
@@ -79,7 +74,7 @@ public class TrackingBullets : BaseBullet
     /// <returns></returns>
     public override bool CanHit(BaseUnit unit)
     {
-        return base.CanHit(unit) && unit == target;
+        return base.CanHit(unit) && (target == null || target == unit);
     }
 
     /// <summary>
@@ -90,12 +85,22 @@ public class TrackingBullets : BaseBullet
     {
         base.SetRotate(v);
         currentRotate = 180*Mathf.Acos(mRotate.x)/Mathf.PI;
-        Debug.Log("currentRotate = " + currentRotate);
     }
 
 
     ////////////////////////////////////////////////////////////////以下为私有方法/////////////////////////////////////////////
 
+
+    private bool UnitCanHit(BaseUnit u)
+    {
+        // 只要有一个不满足条件就返回false
+        foreach (var func in u.CanHitFuncList)
+        {
+            if (!func(u, this))
+                return false;
+        }
+        return true;
+    }
 
     /// <summary>
     /// 索敌方法
@@ -108,7 +113,7 @@ public class TrackingBullets : BaseBullet
         if(isSearchEnemy)
             foreach (var item in GameController.Instance.GetEachEnemy())
             {
-                if(CompareFunc(target, item))
+                if(UnitCanHit(item) && CompareFunc(target, item))
                 {
                     target = item;
                 }
@@ -117,7 +122,7 @@ public class TrackingBullets : BaseBullet
         if (isSearchAlly)
             foreach (var item in GameController.Instance.GetEachEnemy())
             {
-                if (CompareFunc(target, item))
+                if (UnitCanHit(item) && CompareFunc(target, item))
                 {
                     target = item;
                 }
@@ -128,8 +133,8 @@ public class TrackingBullets : BaseBullet
     /// 检测target是否有效
     /// </summary>
     private void CheckTargetValid()
-    {
-        if(target == null || !target.IsAlive() || !target.CanBeSelectedAsTarget() || target.GetHeight() != mHeight)
+{
+        if(target == null || !target.IsAlive() || !target.CanBeSelectedAsTarget() || target.GetHeight() != mHeight || !UnitCanHit(target))
         {
             target = null;
         }

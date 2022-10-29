@@ -16,6 +16,14 @@ public class MouseCatcher : FoodUnit
         base.MInit();
     }
 
+    /// <summary>
+    /// 炸弹掉落等效于正常死亡
+    /// </summary>
+    public override void BeforeDrop()
+    {
+        base.BeforeDeath();
+    }
+
     public override void OnIdleStateEnter()
     {
         if (IsFinishPrepare())

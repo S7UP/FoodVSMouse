@@ -17,7 +17,8 @@ public class Tasker : MonoBehaviour
     /// </summary>
     public void StartTask(Action InitAction, Action UpdateAciton, Func<bool> EndCondition, Action EndEvent)
     {
-        InitAction();
+        if(InitAction!=null)
+            InitAction();
         this.UpdateAciton = UpdateAciton;
         this.EndCondition = EndCondition;
         this.EndEvent = EndEvent;

@@ -11,6 +11,7 @@ public class BossUnit : MouseUnit
     private System.Random rand; // 随机数生成器
     private Dictionary<int, int> seedDict = new Dictionary<int, int>(); // 作用于本随机数生成器的种子字典，key表示初始行，value表示对应种子号
     private Stack<Vector2> nextGridStack = new Stack<Vector2>(); // 下一个格子坐标栈，如果栈为空则让随机数生成器生成一个值并进栈 
+    protected Dictionary<string, float[]> BossParamArrayDict = new Dictionary<string, float[]>(); // boss参数字典
 
     private BoolModifier BossNoTargetAttackModeModifier = new BoolModifier(true); // BOSS无限攻击tag
 
@@ -26,7 +27,10 @@ public class BossUnit : MouseUnit
         rand = null;
         seedDict.Clear();
         nextGridStack.Clear();
+        BossParamArrayDict.Clear();
+        InitBossParam(); // 初始化BOSS参数字典，由具体的BOSS类内部实现
         base.MInit();
+        InitHertRateList();
         isBoss = true;
         // 免疫控制效果
         AddBossIgnoreDebuffEffect(this);
@@ -127,6 +131,15 @@ public class BossUnit : MouseUnit
     }
 
     /// <summary>
+    /// 获取BOSS自身随机数发射器的下一个随机数(左开右闭)
+    /// </summary>
+    /// <returns></returns>
+    public int GetRandomNext(int min, int max)
+    {
+        return rand.Next(min, max);
+    }
+
+    /// <summary>
     /// 自动更新贴图
     /// </summary>
     /// <param name="collision"></param>
@@ -154,27 +167,25 @@ public class BossUnit : MouseUnit
     /// 技能初始化模板（勿删）
     /// </summary>
     /// <param name="info"></param>
-    //private void SkillModelInit(SkillAbility.SkillAbilityInfo info)
+    //private CompoundSkillAbility PharaohCurseInit(SkillAbility.SkillAbilityInfo info)
     //{
-    //    CustomizationSkillAbility c = new CustomizationSkillAbility(info);
-    //    TeleportSkill = c;
-    //    skillAbilityManager.AddSkillAbility(c);
+    //    CompoundSkillAbility c = new CompoundSkillAbility(this, info);
+    //    Skill_PharaohCurse = c;
     //    // 实现
-    //    c.IsMeetSkillConditionFunc = delegate { return false; };
+    //    c.IsMeetSkillConditionFunc = delegate { return true; };
     //    c.BeforeSpellFunc = delegate
     //    {
 
     //    };
-    //    c.OnSpellingFunc = delegate
     //    {
+    //        c.AddSpellingFunc(delegate {
+    //            return true;
+    //        });
 
-    //    };
+    //    }
     //    c.OnNoSpellingFunc = delegate { };
-    //    c.IsMeetCloseSpellingConditionFunc = delegate { return true; };
-    //    c.AfterSpellFunc = delegate
-    //    {
-
-    //    };
+    //    c.AfterSpellFunc = delegate { };
+    //    return c;
     //}
 
     /// <summary>
@@ -212,5 +223,63 @@ public class BossUnit : MouseUnit
     public override bool CanTriggerLoseWhenEnterLoseLine()
     {
         return false;
+    }
+
+    /// <summary>
+    /// 初始化BOSS的参数
+    /// </summary>
+    public virtual void InitBossParam()
+    {
+        // 切换阶段血量百分比
+        AddParamArray("hpRate", new float[] { 0.5f, 0.2f });
+    }
+
+    /// <summary>
+    /// 根据给定的hpRate的值来设置BOSS切换阶段点
+    /// </summary>
+    private void InitHertRateList()
+    {
+        mHertRateList.Clear();
+        float[] hpRate = BossParamArrayDict["hpRate"];
+        foreach (var item in hpRate)
+        {
+            mHertRateList.Add(item);
+        }
+    }
+
+    /// <summary>
+    /// 添加一个参数
+    /// </summary>
+    public void AddParamArray(string key, float[] arr)
+    {
+        if (!BossParamArrayDict.ContainsKey(key))
+            BossParamArrayDict.Add(key, arr);
+        else
+        {
+            Debug.LogWarning("BOSS中已存在名为“" + key + "”的参数！传进来的新参数数组会覆盖原来的数组！");
+            BossParamArrayDict[key] = arr;
+        }
+    }
+
+    /// <summary>
+    /// 获取参数值
+    /// </summary>
+    /// <param name="key"></param>
+    /// <returns>如果没有key或者其中的数组为0，则返回0且报warning，如果有且没有越界，则正常返回，否则返回数组最后一位</returns>
+    public float GetParamValue(string key, int stage)
+    {
+        if (BossParamArrayDict.ContainsKey(key) && BossParamArrayDict[key].Length>0)
+        {
+            float[] arr = BossParamArrayDict[key];
+            if (stage < arr.Length)
+                return arr[stage];
+            else
+                return arr[arr.Length-1];
+        }
+        else
+        {
+            Debug.LogWarning("BOSS中未发现名为“"+key+"”的参数！");
+            return 0;
+        }
     }
 }

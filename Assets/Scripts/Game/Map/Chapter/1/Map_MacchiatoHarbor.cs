@@ -35,11 +35,12 @@ public class Map_MacchiatoHarbor : ChapterMap
             new Vector2(8, 1), new Vector2(6, 2), new Vector2(8, 3), new Vector2(6, 4), new Vector2(8, 5)
         };
 
-        foreach (var item in list)
+        foreach (var v in list)
         {
             // Éú³É·ç¶´
-            BaseWindCave c = (BaseWindCave)GameController.Instance.CreateItem((int)item.x, (int)item.y, (int)ItemNameTypeMap.WindCave, 0);
-            c.SetStartTimeAndMaxTime(360, 480);
+            TeleportGridType tg = BaseGridType.GetInstance(GridType.Teleport, 0).GetComponent<TeleportGridType>();
+            GetGrid((int)v.x, (int)v.y).AddGridType(GridType.Teleport, tg);
+            tg.SetStartTimeAndMaxTime(360, 480);
         }
     }
 

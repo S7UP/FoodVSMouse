@@ -1,3 +1,5 @@
+using System;
+
 using UnityEngine;
 /// <summary>
 /// 投掷小老鼠
@@ -74,9 +76,22 @@ public class ThrowLittleMouseSkillAbility : SkillAbility
             m.SetActionState(new TransitionState(m));
             // 添加一个弹起的任务，任务结束后切换为步行状态
             Tasker t = GameController.Instance.AddTasker(new ParabolaMovePresetTasker(m, 24.0f, 1.2f, m.transform.position, targetPosition, false));
-            m.CloseCollision();
-            t.AddOtherEndEvent(delegate { m.OpenCollision(); });
-        }
+            //m.CloseCollision();
+            // 跳跃期间不可被阻挡也不能被常规子弹击中
+            Func<BaseUnit, BaseUnit, bool> noBlockFunc = delegate { return false; };
+            Func<BaseUnit, BaseBullet, bool> noHitFunc = delegate { return false; };
+            m.AddCanBlockFunc(noBlockFunc);
+            m.AddCanHitFunc(noHitFunc);
+
+
+            m.DisableMove(true); // 暂时禁用移动
+            t.AddOtherEndEvent(delegate 
+            {
+                m.RemoveCanBlockFunc(noBlockFunc);
+                m.RemoveCanHitFunc(noHitFunc);
+                //m.OpenCollision();
+                m.DisableMove(false); });
+            }
     }
 
     /// <summary>

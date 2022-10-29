@@ -69,7 +69,8 @@ public class KangarooMouse : MouseUnit
             // 添加一个弹起任务，跳一格
             isJumping = true;
             Tasker t = GameController.Instance.AddTasker(new ParabolaMovePresetTasker(this, 12.0f, 0.8f, transform.position, transform.position + (Vector3)moveRotate * jumpDistance * MapManager.gridWidth, false));
-            t.AddOtherEndEvent(delegate { isJumping = false; });
+            DisableMove(true);
+            t.AddOtherEndEvent(delegate { isJumping = false; DisableMove(false); });
         }
     }
 

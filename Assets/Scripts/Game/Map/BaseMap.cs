@@ -133,7 +133,14 @@ public class BaseMap : MonoBehaviour, IGameControllerMember
 
     public void MPause()
     {
-        
+        foreach (var item in mGridList)
+        {
+            item.MPause();
+        }
+        foreach (var item in gridGroupList)
+        {
+            item.MPause();
+        }
     }
 
     public void MPauseUpdate()
@@ -153,7 +160,14 @@ public class BaseMap : MonoBehaviour, IGameControllerMember
 
     public void MResume()
     {
-        
+        foreach (var item in mGridList)
+        {
+            item.MResume();
+        }
+        foreach (var item in gridGroupList)
+        {
+            item.MResume();
+        }
     }
 
     public void MDestory()

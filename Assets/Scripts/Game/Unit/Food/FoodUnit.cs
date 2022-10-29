@@ -372,10 +372,6 @@ public class FoodUnit : BaseUnit
     /// </summary>
     private void UpdateAttackAnimationSpeed()
     {
-        //float time = AnimatorManager.GetClipTime(animator, "Attack"); // 1倍情况下，一次攻击的默认时间 秒
-        //float interval = 1/NumericBox.AttackSpeed.Value; // 攻击间隔  秒
-        //float rate = Mathf.Max(1, time / interval);
-        //AnimatorManager.SetClipSpeed(animator, "Attack", rate);
         AnimatorStateRecorder a = animatorController.GetAnimatorStateRecorder("Attack");
         float time = a.aniTime; // 一倍速下一次攻击动画的播放时间（帧）
         float interval = 1 / NumericBox.AttackSpeed.Value * 60;  // 攻击间隔（帧）
@@ -552,7 +548,7 @@ public class FoodUnit : BaseUnit
     /// <returns></returns>
     public override bool CanBeSelectedAsTarget()
     {
-        return mBoxCollider2D.enabled;
+        return mBoxCollider2D.enabled && base.CanBeSelectedAsTarget();
     }
 
     public override void MPause()

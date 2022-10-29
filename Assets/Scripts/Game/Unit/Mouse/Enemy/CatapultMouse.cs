@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 
 using UnityEngine;
 /// <summary>
@@ -42,18 +41,7 @@ public class CatapultMouse : MouseUnit
         {
             if(transform.position.x < MapManager.GetColumnX(MapController.xColumn - 1))
             {
-                List<BaseUnit> list = GameController.Instance.GetSpecificRowAllyList(GetRowIndex());
-                float temp_x = transform.position.x;
-                foreach (var item in list)
-                {
-                    if (!item.CanBeSelectedAsTarget())
-                        continue;
-                    if (item.transform.position.x < temp_x && item.IsAlive())
-                    {
-                        temp_x = item.transform.position.x;
-                        targetUnit = item;
-                    }
-                }
+                targetUnit = FoodManager.GetSpecificRowFarthestLeftCanTargetedAlly(GetRowIndex(), transform.position.x);
                 if (targetUnit != null)
                 {
                     return true;
@@ -69,51 +57,41 @@ public class CatapultMouse : MouseUnit
     /// </summary>
     public override void ExecuteDamage()
     {
+        RuntimeAnimatorController run = GameManager.Instance.GetRuntimeAnimatorController("Bullet/6/" + mShape);
+
         // 阻挡优先级大于远程攻击优先级
         if (IsHasTarget())
         {
             BaseUnit u = GetCurrentTarget();
-            ParabolaBullet b = (ParabolaBullet)GameController.Instance.CreateBullet(this, transform.position, Vector2.left, BulletStyle.CatapultMouseBullet);
-            b.SetAttribute(24.0f, true, 0.25f, transform.position, new Vector2(u.transform.position.x, transform.position.y), u.GetRowIndex());
-            b.SetCanAttackFood(true);
-            b.SetDamage(mCurrentAttack);
-            Animator ani = b.transform.Find("SpriteGo").GetComponent<Animator>();
-            ani.runtimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Bullet/6/"+mShape);
-            //PandaMouse m = GameController.Instance.CreateMouseUnit(GetRowIndex(), new BaseEnemyGroup.EnemyInfo() { type = 19, shape = mShape }).GetComponent<PandaMouse>();
-            //m.transform.position = new Vector3(transform.position.x, u.transform.position.y, transform.position.z);
-            ////m.transform.position = master.transform.position;
-            //// 空中滑翔时无判定
-            //m.CloseCollision();
-            ////m.PlayFlyClip();
-            //// 使用抛物线移动状态
-            //ParabolaMoveState s = new ParabolaMoveState(m, 24.0f, 1.2f, m.transform.position, u.transform.position, false);
-            //s.SetExitAction(delegate {
-            //    m.OpenCollision();
-            //});
-            //m.SetActionState(s);
+            EnemyBullet b = EnemyBullet.GetInstance(run, this, mCurrentAttack);
+            // 修改攻击优先级，这种投掷攻击优先攻击护罩里的东西
+            b.GetTargetFunc = (unit) => {
+                BaseGrid g = unit.GetGrid();
+                if (g != null)
+                {
+                    return g.GetThrowHighestAttackPriorityUnitInclude();
+                }
+                return unit;
+            };
+            TaskManager.AddParabolaTask(b, TransManager.TranToVelocity(24f), 0.25f, transform.position, new Vector2(u.transform.position.x, transform.position.y), false);
+            GameController.Instance.AddBullet(b);
+
         }
         else if(targetUnit != null &&  targetUnit.IsAlive())
         {
-            //BaseUnit u = targetUnit;
             float v = TransManager.TranToStandardVelocity(Mathf.Abs(targetUnit.transform.position.x - transform.position.x)/90f);
-            ParabolaBullet b = (ParabolaBullet)GameController.Instance.CreateBullet(this, transform.position, Vector2.left, BulletStyle.CatapultMouseBullet);
-            b.SetAttribute(v, true, 2.0f, new Vector2(transform.position.x, transform.position.y), new Vector2(targetUnit.transform.position.x, transform.position.y), targetUnit.GetRowIndex());
-            b.SetCanAttackFood(true);
-            b.SetDamage(mCurrentAttack);
-            Animator ani = b.transform.Find("SpriteGo").GetComponent<Animator>();
-            ani.runtimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Bullet/6/" + mShape);
-            //PandaMouse m = GameController.Instance.CreateMouseUnit(GetRowIndex(), new BaseEnemyGroup.EnemyInfo() { type = 19, shape = mShape }).GetComponent<PandaMouse>();
-            //m.transform.position = new Vector3(transform.position.x, u.transform.position.y, transform.position.z);
-            ////m.transform.position = master.transform.position;
-            //// 空中滑翔时无判定
-            //m.CloseCollision();
-            ////m.PlayFlyClip();
-            //// 使用抛物线移动状态
-            //ParabolaMoveState s = new ParabolaMoveState(m, 24.0f, 1.2f, m.transform.position, u.transform.position, false);
-            //s.SetExitAction(delegate {
-            //    m.OpenCollision();
-            //});
-            //m.SetActionState(s);
+            EnemyBullet b = EnemyBullet.GetInstance(run, this, mCurrentAttack);
+            // 修改攻击优先级，这种投掷攻击优先攻击护罩里的东西
+            b.GetTargetFunc = (unit) => {
+                BaseGrid g = unit.GetGrid();
+                if (g != null)
+                {
+                    return g.GetThrowHighestAttackPriorityUnitInclude();
+                }
+                return unit;
+            };
+            TaskManager.AddParabolaTask(b, TransManager.TranToVelocity(v), 2.0f, transform.position, new Vector2(targetUnit.transform.position.x, transform.position.y), false);
+            GameController.Instance.AddBullet(b);
         }
     }
 }

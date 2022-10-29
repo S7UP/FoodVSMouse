@@ -6,9 +6,9 @@ public class RetangleAreaEffectExecution : AreaEffectExecution
 {
     public int currentRowIndex; // 当前行下标
     public float offsetX;
-    public int offsetY;
+    public float offsetY;
     public float colCount; // 受影响列数
-    public int rowCount; // 受影响行数
+    public float rowCount; // 受影响行数
     public BoxCollider2D boxCollider2D;
 
     public override void Awake()
@@ -17,7 +17,7 @@ public class RetangleAreaEffectExecution : AreaEffectExecution
         boxCollider2D = GetComponent<BoxCollider2D>();
     }
 
-    public void Init(int currentRowIndex, float colCount, int rowCount, float offsetX, int offsetY, bool isAffectFood, bool isAffectMouse)
+    public void Init(int currentRowIndex, float colCount, float rowCount, float offsetX, float offsetY, bool isAffectFood, bool isAffectMouse)
     {
         this.currentRowIndex = currentRowIndex;
         this.rowCount = rowCount;
@@ -57,27 +57,28 @@ public class RetangleAreaEffectExecution : AreaEffectExecution
     /// </summary>
     /// <param name="baseUnit"></param>
     /// <returns></returns>
-    public override bool IsMeetingCondition(BaseUnit baseUnit)
+    public override bool IsMeetingCondition(BaseUnit unit)
     {
-        if (baseUnit.isDeathState)
+        if (unit.isDeathState)
             return false;
-        int c = (rowCount - 1) / 2;
-        int startIndex = Mathf.Max(0, currentRowIndex - c - offsetY);
-        int endIndex = Mathf.Min(MapController.yRow - 1, currentRowIndex + c - offsetY);
-        int index = baseUnit.GetRowIndex();
-        if (index >= startIndex && index <= endIndex)
-            return true;
-        else
-            return false;
+        //int c = (rowCount - 1) / 2;
+        //int startIndex = Mathf.Max(0, currentRowIndex - c - offsetY);
+        //int endIndex = Mathf.Min(MapController.yRow - 1, currentRowIndex + c - offsetY);
+        //int index = baseUnit.GetRowIndex();
+        //if (index >= startIndex && index <= endIndex)
+        //    return true;
+        //else
+        //    return false;
+        return true;
     }
 
-    public static RetangleAreaEffectExecution GetInstance(Vector2 pos, int currentRowIndex, float colCount, int rowCount, float offsetX, int offsetY)
+    public static RetangleAreaEffectExecution GetInstance(Vector2 pos, float colCount, int rowCount, string CollisionLayer)
     {
         RetangleAreaEffectExecution e = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "AreaEffect/RetangleAreaEffectExecution").GetComponent<RetangleAreaEffectExecution>();
         e.MInit();
-        e.Init(currentRowIndex, colCount, rowCount, offsetX, offsetY, false, false);
+        e.Init(MapManager.GetYIndex(pos.y), colCount, rowCount, 0, 0, false, false);
         e.transform.position = pos;
-        e.SetCollisionLayer("Default");
+        e.SetCollisionLayer(CollisionLayer);
         return e;
     }
 

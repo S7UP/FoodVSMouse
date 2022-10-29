@@ -70,10 +70,6 @@ public class ParabolaBullet : BaseBullet
         {
             TakeDamage(null);
         }
-        //else if(currentTimer >= totalTimer - 4)
-        //{
-        //    OpenCollision();
-        //}
         velocityVertical -= g;
         Vector2 vx = Vector2.Lerp(firstPosition, targetPosition, (float)currentTimer/totalTimer);
         r2D.MovePosition(new Vector2(vx.x, transform.position.y) + Vector2.up * GetVerticalVelocity());
@@ -108,25 +104,13 @@ public class ParabolaBullet : BaseBullet
             if (canAttackFood)
             {
                 FoodUnit u = collision.GetComponent<FoodUnit>();
-                if (u.GetRowIndex() == currentRow)
+                if (u.GetRowIndex() == currentRow && UnitManager.CanBulletHit(u, this))
                 {
                     TakeDamage(u);
                 }
             }
         }
-            //}else if (collision.tag.Equals("Mouse"))
-            //{
-            //    if (canAttackMouse)
-            //    {
-            //        MouseUnit u = collision.GetComponent<MouseUnit>();
-            //        if (u.GetRowIndex() == currentRow)
-            //        {
-            //            TakeDamage(u);
-            //        }
-            //    }
-            //}
-
-        }
+    }
 
     public override void OnTriggerEnter2D(Collider2D collision)
     {

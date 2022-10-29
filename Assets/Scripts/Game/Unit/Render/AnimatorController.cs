@@ -131,7 +131,8 @@ public class AnimatorController
             a.isCycle = isCycle;
             currentTask = a;
             currentTask.isPlaying = true;
-            animator.Play(a.aniName, -1, normalizedTime);
+            a.SetNormalizedTime(normalizedTime);
+            animator.Play(a.aniName, -1, a.GetNormalizedTime());
             UpdateSpeed();
         }
     }

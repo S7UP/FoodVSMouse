@@ -10,14 +10,17 @@ public class BaseGridType : MonoBehaviour, IGameControllerMember
     public int mShape;
 
     public BoxCollider2D mBoxCollider2D;
-    public SpriteRenderer mSpriteRenderer;
+    public SpriteRenderer spriteRenderer;
+    public Animator animator;
+    public AnimatorController animatorController = new AnimatorController();
 
     public List<BaseUnit> unitList = new List<BaseUnit>();
 
-    public void Awake()
+    public virtual void Awake()
     {
         mBoxCollider2D = GetComponent<BoxCollider2D>();
-        mSpriteRenderer = GetComponent<SpriteRenderer>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        animator = GetComponent<Animator>();
     }
 
     public void SetBoxCollider2D(Vector2 offset, Vector2 size)
@@ -28,13 +31,28 @@ public class BaseGridType : MonoBehaviour, IGameControllerMember
 
     public virtual void MInit()
     {
+        animator.runtimeAnimatorController = null;
+        spriteRenderer.sprite = null;
+        animatorController.Initialize();
+        animatorController.ChangeAnimator(animator);
         SetBoxCollider2D(Vector2.zero, new Vector2(0.51f*MapManager.gridWidth, 0.51f*MapManager.gridHeight));
         unitList.Clear();
     }
 
     public virtual void MUpdate()
     {
+        List<BaseUnit> delList = new List<BaseUnit>();
+        foreach (var item in unitList)
+        {
+            if (!item.IsAlive())
+                delList.Add(item);
+        }
+        foreach (var item in delList)
+        {
+            unitList.Remove(item);
+        }
 
+        animatorController.Update();
     }
 
     public virtual void MDestory()
@@ -49,7 +67,7 @@ public class BaseGridType : MonoBehaviour, IGameControllerMember
 
     public virtual void MPause()
     {
-        
+        animatorController.Pause();
     }
 
     public virtual void MPauseUpdate()
@@ -59,7 +77,7 @@ public class BaseGridType : MonoBehaviour, IGameControllerMember
 
     public virtual void MResume()
     {
-        
+        animatorController.Resume();
     }
 
     /// <summary>

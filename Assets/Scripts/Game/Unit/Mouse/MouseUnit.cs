@@ -15,16 +15,21 @@ public class MouseUnit : BaseUnit
     // Awake里Find一次的组件
     public Rigidbody2D rigibody2D;
     public BoxCollider2D mBoxCollider2D;
-    private SpriteRenderer spriteRenderer;
+    public SpriteRenderer spriteRenderer;
     protected Animator animator;
     public Transform spriteTrans;
 
     // 其他属性
-    protected List<double> mHertRateList; // 切换贴图时的受伤比率（高->低)
+    protected List<double> mHertRateList = new List<double>(); // 切换贴图时的受伤比率（高->低)
     public int mHertIndex; // 受伤贴图阶段
     public int currentXIndex; // 当前地标X下标
     public int currentYIndex; // 当前地标Y下标
     public bool isBoss; // 是否是BOSS单位
+
+    public string AttackClipName;
+    public string IdleClipName;
+    public string MoveClipName;
+    public string DieClipName;
 
     // 索敌相关
     protected bool isBlock { get; set; } // 是否被阻挡
@@ -40,22 +45,36 @@ public class MouseUnit : BaseUnit
     /// </summary>
     public override void MInit()
     {
+        isBlock = false; // 是否被阻挡
+        mBlockUnit = null; // 阻挡者
+        isBoss = false;
+
+        AttackClipName = "Attack";
+        IdleClipName = "Idle";
+        MoveClipName = "Move";
+        DieClipName = "Die";
+
         base.MInit();
 
         // 动画控制器绑定animator
         animatorController.ChangeAnimator(animator);
+
+        mHertRateList.Clear();
         // 从Json中读取的属性以及相关的初始化
-        MouseUnit.Attribute attr = GameController.Instance.GetMouseAttribute();
-        mHertRateList = new List<double>();
-        foreach (var item in attr.hertRateList)
+        if(mType >= 0)
         {
-            mHertRateList.Add(item);
+            MouseUnit.Attribute attr = GameController.Instance.GetMouseAttribute();
+            foreach (var item in attr.hertRateList)
+            {
+                mHertRateList.Add(item);
+            }
         }
+
         mHertIndex = 0;
         currentXIndex = 0;
         currentYIndex = 0;
         moveRotate = Vector2.left;
-        isBoss = false;
+
         // 初始化
         GridDangerousWeightDict = new Dictionary<GridType, int>()
         {
@@ -63,6 +82,8 @@ public class MouseUnit : BaseUnit
             { GridType.NotBuilt, 10},
             { GridType.Water, 12}, // 众所周知水是剧毒的
             { GridType.Lava, 11},
+            { GridType.Sky, 13}, // 老鼠更恐高
+            { GridType.Teleport, 10 }, // 传送装置？太cool了！！
         };
 
         // 初始为移动状态
@@ -110,20 +131,6 @@ public class MouseUnit : BaseUnit
         spriteRenderer = gameObject.transform.Find("Ani_Mouse").gameObject.GetComponent<SpriteRenderer>();
         mBoxCollider2D = gameObject.GetComponent<BoxCollider2D>();
         spriteTrans = transform.Find("Ani_Mouse");
-    }
-
-    /// <summary>
-    /// 单位被对象池回收时触发，主要是用来将各种属性再初始化回去
-    /// </summary>
-    public override void OnDisable()
-    {
-        base.OnDisable();
-        // 其他属性
-        mHertRateList = null;
-
-        // 索敌相关
-        isBlock = false; // 是否被阻挡
-        mBlockUnit = null; // 阻挡者
     }
 
     /// <summary>
@@ -442,7 +449,7 @@ public class MouseUnit : BaseUnit
     {
         // 检测本格美食最高受击优先级单位
         BaseUnit target = unit.GetGrid().GetHighestAttackPriorityUnit();
-        if (!isBlock && UnitManager.CanBlock(this, target)) // 检测双方能否互相阻挡
+        if (target!=null && !isBlock && UnitManager.CanBlock(this, target)) // 检测双方能否互相阻挡
         {
             isBlock = true;
             mBlockUnit = target;
@@ -537,15 +544,15 @@ public class MouseUnit : BaseUnit
     /// <summary>
     /// 根据攻击速度来更新攻击动画的速度
     /// </summary>
-    private void UpdateAttackAnimationSpeed()
+    protected void UpdateAttackAnimationSpeed()
     {
-        AnimatorStateRecorder a = animatorController.GetAnimatorStateRecorder("Attack");
+        AnimatorStateRecorder a = animatorController.GetAnimatorStateRecorder(AttackClipName);
         if (a != null)
         {
             float time = a.aniTime; // 一倍速下一次攻击动画的播放时间（帧）
             float interval = 1 / NumericBox.AttackSpeed.Value * 60;  // 攻击间隔（帧）
             float speed = Mathf.Max(1, time / interval); // 计算动画实际播放速度
-            animatorController.SetSpeed("Attack", speed);
+            animatorController.SetSpeed(AttackClipName, speed);
         }
     }
 
@@ -554,24 +561,24 @@ public class MouseUnit : BaseUnit
     /// </summary>
     public override void OnIdleStateEnter()
     {
-        animatorController.Play("Idle", true);
+        animatorController.Play(IdleClipName, true);
     }
 
     public override void OnMoveStateEnter()
     {
-        animatorController.Play("Move", true);
+        animatorController.Play(MoveClipName, true);
     }
 
     public override void OnAttackStateEnter()
     {
         // 每次攻击时，最好根据攻速来计算一下播放速度，然后改变播放速度
         UpdateAttackAnimationSpeed();
-        animatorController.Play("Attack");
+        animatorController.Play(AttackClipName);
     }
 
     public override void OnDieStateEnter()
     {
-        animatorController.Play("Die");
+        animatorController.Play(DieClipName);
     }
 
     public override void OnAttackStateContinue()
@@ -653,33 +660,6 @@ public class MouseUnit : BaseUnit
             spriteRenderer.transform.localScale = Vector3.one;
             DeathEvent();
         }
-    }
-
-
-    public static void SaveNewMouseInfo()
-    {
-        MouseUnit.Attribute attr = new MouseUnit.Attribute()
-        {
-            baseAttrbute = new BaseUnit.Attribute()
-            {
-                name = "僵尸魔笛鼠", // 单位的具体名称
-                type = 5, // 单位属于的分类
-                shape = 3, // 单位在当前分类的变种编号
-
-                baseHP = 1700, // 基础血量
-                baseAttack = 10, // 基础攻击
-                baseAttackSpeed = 1.0, // 基础攻击速度
-                attackPercent = 0.6,
-                baseDefense = 0,
-                baseMoveSpeed = 1.0,
-                baseHeight = 0, // 基础高度
-            },
-            hertRateList = new double[] { }
-        };
-
-        Debug.Log("开始存档老鼠信息！");
-        JsonManager.Save(attr, "Mouse/" + attr.baseAttrbute.type + "/" + attr.baseAttrbute.shape + "");
-        Debug.Log("老鼠信息存档完成！");
     }
 
     /// <summary>

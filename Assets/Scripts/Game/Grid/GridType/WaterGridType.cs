@@ -5,6 +5,7 @@ using UnityEngine;
 public class WaterGridType : BaseGridType
 {
     private const string TaskName = "WaterTask";
+    public const string NoDrop = "在水里不下降"; // 有此标记的单位在水里不会有上升和下降的动画表现
 
     /// <summary>
     /// 是否满足进入条件
@@ -69,7 +70,6 @@ public class WaterGridType : BaseGridType
     /// <param name="unit"></param>
     public override void OnUnitExit(BaseUnit unit)
     {
-        // unit.RemoveUniqueStatusAbility(StringManager.WaterGridState);
         if (unit.GetTask(TaskName) != null)
         {
             WaterTask t = unit.GetTask(TaskName) as WaterTask;
@@ -110,6 +110,8 @@ public class WaterGridType : BaseGridType
         // private float descendGridCount; // 下降格数
         private float minPos; // 下降最低高度
         private float maxPos; // 上升最高高度
+        private float sprite_pivot_y;
+        private float sprite_rect_height;
         // 每秒伤害系列
         private const int TotalTime = 60;
         private int triggerDamageTimeLeft; // 触发伤害剩余时间 若为-1则永远不触发伤害
@@ -162,6 +164,17 @@ public class WaterGridType : BaseGridType
                     break;
             }
             Initial();
+
+            Sprite sprite;
+            if (unit.GetSpriteList() == null)
+                sprite = unit.GetSpirte();
+            else
+                sprite = unit.GetSpriteList()[0];
+            if (sprite != null)
+            {
+                sprite_pivot_y = sprite.pivot.y;
+                sprite_rect_height = sprite.rect.height;
+            }
         }
 
         private void Initial()
@@ -219,7 +232,7 @@ public class WaterGridType : BaseGridType
 
 
             // 动画表现
-            if (currentTime < totalTime)
+            if (currentTime < totalTime && !unit.NumericBox.GetBoolNumericValue(NoDrop))
             {
                 currentTime++;
                 float r = ((float)currentTime) / totalTime;
@@ -296,16 +309,11 @@ public class WaterGridType : BaseGridType
                 {
                     EffectManager.AddWaterWaveEffectToUnit(unit); // 添加下水特效
                     // 沉下去！
-                    Sprite sprite;
-                    if (unit.GetSpriteList() == null)
-                        sprite = unit.GetSpirte();
-                    else
-                        sprite = unit.GetSpriteList()[0];
                     currentTime = 0;
                     offsetY = EnterWaterSpriteOffsetY.Value;
                     offsetYEnd = minPos;
                     cutRate = currentCutRate; // 裁剪高度
-                    cutRateEnd = (sprite.pivot.y - TransManager.WorldToTex(offsetYEnd)) / sprite.rect.height;
+                    cutRateEnd = (sprite_pivot_y - TransManager.WorldToTex(offsetYEnd)) / sprite_rect_height;
                 }
             }
         }
@@ -341,11 +349,6 @@ public class WaterGridType : BaseGridType
                 else
                 {
                     // 浮起来！
-                    Sprite sprite;
-                    if (unit.GetSpriteList() == null)
-                        sprite = unit.GetSpirte();
-                    else
-                        sprite = unit.GetSpriteList()[0];
                     currentTime = 0;
                     offsetY = EnterWaterSpriteOffsetY.Value;
                     offsetYEnd = maxPos;
@@ -361,17 +364,12 @@ public class WaterGridType : BaseGridType
             // 如果这家伙是非水上接口单位 且 在水域 且 没有载具的时候 且 死了 就沉下去
             if (!typeof(IInWater).IsAssignableFrom(unit.GetType()) && !isDieInWater && count > 0 && !hasVehicle)
             {
-                Sprite sprite;
-                if (unit.GetSpriteList() == null)
-                    sprite = unit.GetSpirte();
-                else
-                    sprite = unit.GetSpriteList()[0];
                 currentTime = 0;
                 totalTime = 120;
                 offsetY = EnterWaterSpriteOffsetY.Value;
                 offsetYEnd = -MapManager.gridHeight;  // 下降1格
                 cutRate = currentCutRate; // 裁剪高度
-                cutRateEnd = (sprite.pivot.y - TransManager.WorldToTex(offsetYEnd)) / sprite.rect.height;
+                cutRateEnd = (sprite_pivot_y - TransManager.WorldToTex(offsetYEnd)) / sprite_rect_height;
                 SetCutRateFunc(cutRate);
             }
             isDieInWater = true; // 只执行一次

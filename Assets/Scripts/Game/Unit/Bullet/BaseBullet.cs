@@ -10,7 +10,7 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     // 引用
     public Animator animator;
     public CircleCollider2D mCircleCollider2D;
-    private SpriteRenderer spriteRenderer;
+    public SpriteRenderer spriteRenderer;
 
     // 自身属性
     public float mVelocity;
@@ -24,6 +24,7 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     public BulletStyle style;
     private Action<BaseBullet, BaseUnit> HitAction; // 中弹后的事件（由外部添加）
     public bool isnKillSelf;
+    public List<ITask> TaskList = new List<ITask>();
 
     // 外界给的标签
     public Dictionary<string, int> TagDict = new Dictionary<string, int>();
@@ -51,12 +52,14 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
         mAccelerateTime = 0;
         mMovetime = 0;
         mRotate = Vector2.zero;
+        transform.right = Vector2.right;
         mDamage = 0;
         mHeight = 0;
         isDeathState = false;
         isnKillSelf = false;
         HitAction = null;
         TagDict.Clear();
+        TaskList.Clear();
         SetCollision(true);
         SetActionState(new BulletFlyState(this));
     }
@@ -187,6 +190,19 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
 
     public virtual void MUpdate()
     {
+        List<ITask> deleteTask = new List<ITask>();
+        foreach (var t in TaskList)
+        {
+            if (t.IsMeetingExitCondition())
+                deleteTask.Add(t);
+            else
+                t.OnUpdate();
+        }
+        foreach (var t in deleteTask)
+        {
+            RemoveTask(t);
+        }
+
         // 单位动作状态由状态机决定（如移动、攻击、待机、死亡）
         mCurrentActionState.OnUpdate();
         animatorController.Update();
@@ -389,6 +405,31 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     {
         if (HitAction != null)
             HitAction(this, hitedUnit);
+    }
+
+    /// <summary>
+    /// 添加一个任务
+    /// </summary>
+    /// <param name="t"></param>
+    public void AddTask(ITask t)
+    {
+        TaskList.Add(t);
+        t.OnEnter();
+    }
+
+    /// <summary>
+    /// 移除一个任务
+    /// </summary>
+    /// <param name="t"></param>
+    public void RemoveTask(ITask t)
+    {
+        TaskList.Remove(t);
+        t.OnExit();
+    }
+
+    public bool IsAlive()
+    {
+        return !isDeathState && isActiveAndEnabled;
     }
 }
 

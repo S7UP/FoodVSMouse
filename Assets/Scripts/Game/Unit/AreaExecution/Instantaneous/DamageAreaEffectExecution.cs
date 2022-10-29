@@ -1,3 +1,4 @@
+using UnityEngine;
 /// <summary>
 /// ·¶Î§ÉËº¦Ð§¹û
 /// </summary>
@@ -7,7 +8,7 @@ public class DamageAreaEffectExecution : RetangleAreaEffectExecution
     public float damage;
     public CombatAction.ActionType actionType;
 
-    public void Init(BaseUnit creator, CombatAction.ActionType actionType, float damage, int currentRowIndex, float colCount, int rowCount, float offsetX, int offsetY, bool isAffectFood, bool isAffectMouse)
+    public void Init(BaseUnit creator, CombatAction.ActionType actionType, float damage, int currentRowIndex, float colCount, float rowCount, float offsetX, float offsetY, bool isAffectFood, bool isAffectMouse)
     {
         this.creator = creator;
         this.actionType = actionType;
@@ -63,6 +64,15 @@ public class DamageAreaEffectExecution : RetangleAreaEffectExecution
         {
             new DamageAction(actionType, creator, unit, damage).ApplyAction();
         }
+    }
+
+    public static DamageAreaEffectExecution GetInstance(BaseUnit creator, Vector3 pos, float colCount, float rowCount, CombatAction.ActionType actionType, float dmg)
+    {
+        DamageAreaEffectExecution e = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "AreaEffect/DamageAreaEffect").GetComponent<DamageAreaEffectExecution>();
+        e.MInit();
+        e.transform.position = pos;
+        e.Init(creator, actionType, dmg, MapManager.GetYIndex(pos.y), colCount, rowCount, 0, 0, false, false);
+        return e;
     }
 
     public static DamageAreaEffectExecution GetInstance()

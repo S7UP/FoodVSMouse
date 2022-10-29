@@ -387,9 +387,18 @@ public class GameController : MonoBehaviour
         mouse.transform.position = MapManager.GetGridLocalPosition(xIndex, yIndex) + new Vector3(Vector2.right.x * MapManager.gridWidth, Vector2.right.y * MapManager.gridHeight) / 2;
         mouse.currentXIndex = xIndex;
         mouse.currentYIndex = yIndex;
+        AddMouseUnit(mouse);
+        return mouse;
+    }
+
+    /// <summary>
+    /// 把一个老鼠单位加入战场
+    /// </summary>
+    public void AddMouseUnit(MouseUnit mouse)
+    {
+        int yIndex = mouse.GetRowIndex();
         mouse.UpdateRenderLayer(mEnemyList[yIndex].Count);
         mEnemyList[yIndex].Add(mouse);
-        return mouse;
     }
 
     /// <summary>
@@ -450,9 +459,18 @@ public class GameController : MonoBehaviour
         bullet.ChangeAnimatorWithoutChangeStyle(style); // 更新一下子弹样式，因为是从对象池取出来的
         bullet.SetRotate(rotate);
         bullet.transform.position = position;
+        AddBullet(bullet);
+        return bullet;
+    }
+
+    /// <summary>
+    /// 把一个子弹加入战场
+    /// </summary>
+    /// <param name="bullet"></param>
+    public void AddBullet(BaseBullet bullet)
+    {
         mBulletList.Add(bullet);
         bullet.UpdateRenderLayer(mBulletList.Count);
-        return bullet;
     }
 
     /// <summary>

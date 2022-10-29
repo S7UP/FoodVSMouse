@@ -10,6 +10,7 @@ public sealed class SkillQueueAbilityManager
     private List<SkillAbility> skillList = new List<SkillAbility>();
     private int index;
     private SkillAbility currentSkillAbility; // 当前在使用的技能
+    private SkillAbility nextSkillAbility; // 下一个技能（由外部给定，在当前技能用完后优先取下一个技能而非队列里的技能，除非下个技能为空，不影响下标前进）
 
     public SkillQueueAbilityManager(BaseUnit unit)
     {
@@ -33,10 +34,19 @@ public sealed class SkillQueueAbilityManager
         if(currentSkillAbility==null || !currentSkillAbility.isSpelling)
         {
             master.skillAbilityManager.RemoveSkillAbility(currentSkillAbility);
-            // 下标后移，然后取余
-            index++;
-            index = index % skillList.Count;
-            currentSkillAbility = skillList[index];
+            // 如果有下一个技能则优先取下一个技能，然后将下个技能置空，否则按队列的顺序来
+            if (nextSkillAbility != null)
+            {
+                currentSkillAbility = nextSkillAbility;
+                nextSkillAbility = null;
+            }
+            else
+            {
+                // 下标后移，然后取余
+                index++;
+                index = index % skillList.Count;
+                currentSkillAbility = skillList[index];
+            }
             master.skillAbilityManager.AddSkillAbility(currentSkillAbility);
             currentSkillAbility.FullCurrentEnergy();
         }
@@ -64,6 +74,15 @@ public sealed class SkillQueueAbilityManager
         currentSkillAbility = skill;
         master.skillAbilityManager.AddSkillAbility(currentSkillAbility);
         currentSkillAbility.FullCurrentEnergy();
+    }
+
+    /// <summary>
+    /// 设置下一个技能
+    /// </summary>
+    /// <param name="skill"></param>
+    public void SetNextSkill(SkillAbility skill)
+    {
+        nextSkillAbility = skill;
     }
 
     /// <summary>

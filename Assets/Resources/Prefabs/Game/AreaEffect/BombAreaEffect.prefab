@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 8417413935101055737}
   - component: {fileID: 1077297544030361854}
   - component: {fileID: 8542134293540550198}
-  m_Layer: 14
+  m_Layer: 15
   m_Name: BombAreaEffect
   m_TagString: BombAreaEffect
   m_Icon: {fileID: 0}
@@ -50,12 +50,18 @@ MonoBehaviour:
   foodUnitList: []
   mouseUnitList: []
   characterList: []
+  gridList: []
+  excludeFoodUnitList: []
+  excludeMouseUnitList: []
+  excludeCharacterList: []
+  excludeGridList: []
   isAlive: 1
   isAffectFood: 0
   isAffectMouse: 0
   isAffectCharacter: 0
   isIgnoreHeight: 0
   affectHeight: 0
+  TagList: []
   currentRowIndex: 0
   offsetX: 0
   offsetY: 0

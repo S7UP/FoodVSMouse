@@ -105,7 +105,7 @@ MonoBehaviour:
   mShape: 0
   typeAndShapeValue: 0
   currentStateTimer: 0
-  defaultMaterial: {fileID: 0}
+  disableMove: 0
   mBoxCollider2D: {fileID: 0}
   spriteTrans: {fileID: 0}
   mFoodType: 0
@@ -206,7 +206,7 @@ Animator:
   m_GameObject: {fileID: 8116370559772073301}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 4f10b2dc488ef9e46b0f4bd7cc24eb85, type: 2}
+  m_Controller: {fileID: 9100000, guid: afb489dfb068a7c43b1d3f46a089177d, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0

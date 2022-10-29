@@ -104,6 +104,7 @@ MonoBehaviour:
   mShape: 0
   typeAndShapeValue: 0
   currentStateTimer: 0
+  disableMove: 0
   rigibody2D: {fileID: 0}
   mBoxCollider2D: {fileID: 0}
   spriteTrans: {fileID: 0}
@@ -188,7 +189,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 2.09, y: 2.08}
+  m_Size: {x: 0.99, y: 2.38}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 0

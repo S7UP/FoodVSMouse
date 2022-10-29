@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 /// <summary>
 /// 青蛙王子鼠
 /// </summary>
@@ -7,7 +8,7 @@ public class FrogMouse : MouseUnit, IInWater
     private bool isJumped; // 是否跳过一次
     private bool isInWater; // 是否位于水中
     private FloatModifier FrogSpeedModifier = new FloatModifier(200); // 由青蛙带来的移动速度加成
-    private FloatModifier FrogInWaterSpeedModifier = new FloatModifier(500); // 由青蛙在水里再带来的移动速度加成（可与上述相加算）
+    private FloatModifier FrogInWaterSpeedModifier = new FloatModifier(200); // 由青蛙在水里再带来的移动速度加成（可与上述相加算）
 
     public override void MInit()
     {
@@ -39,16 +40,26 @@ public class FrogMouse : MouseUnit, IInWater
             // 添加一个弹起任务
             isJumped = true;
             // 进入不可选取状态
-            CloseCollision();
+            // CloseCollision();
             // 跳跃格子数等于 0.5*当前移动速度标准值
             float dist = 0.5f * TransManager.TranToStandardVelocity(GetMoveSpeed());
             Tasker t = GameController.Instance.AddTasker(new ParabolaMovePresetTasker(this, 12.0f, 0.8f, transform.position, transform.position + (Vector3)moveRotate * dist * MapManager.gridWidth, false));
+            // 跳跃期间不可被阻挡也不能被常规子弹击中
+            Func<BaseUnit, BaseUnit, bool> noBlockFunc = delegate { return false; };
+            Func<BaseUnit, BaseBullet, bool> noHitFunc = delegate { return false; };
+            AddCanBlockFunc(noBlockFunc);
+            AddCanHitFunc(noHitFunc);
+
+            DisableMove(true);
             t.AddOtherEndEvent(delegate 
-            { 
-                OpenCollision();
+            {
+                //OpenCollision();
+                RemoveCanBlockFunc(noBlockFunc);
+                RemoveCanHitFunc(noHitFunc);
                 // 结束后青蛙消失，失去青蛙带来的所有移动速度加成
                 NumericBox.MoveSpeed.RemovePctAddModifier(FrogSpeedModifier);
                 NumericBox.MoveSpeed.RemovePctAddModifier(FrogInWaterSpeedModifier);
+                DisableMove(false);
             });
         }
         else

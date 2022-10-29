@@ -1,3 +1,4 @@
+using UnityEngine;
 /// <summary>
 /// ¿§à¬µº(Ò¹)
 /// </summary>
@@ -45,7 +46,43 @@ public class Map_CurryIsland2 : ChapterMap
     public override void OtherProcessing()
     {
         // ÎªÈ«Í¼Ìí¼ÓºÚÒ¹BUFF
-        ShadeAreaEffectExecution e = ShadeAreaEffectExecution.GetInstance(11, 7, new UnityEngine.Vector2(MapManager.GetColumnX(4), MapManager.GetRowY(3)));
-        GameController.Instance.AddAreaEffectExecution(e);
+        {
+            ShadeAreaEffectExecution e = ShadeAreaEffectExecution.GetInstance(11, 7, new Vector2(MapManager.GetColumnX(4), MapManager.GetRowY(3)));
+            GameController.Instance.AddAreaEffectExecution(e);
+        }
+
+
+        // Ìí¼ÓÃÔÎí
+        // Â½µØ
+        for (int i = 6; i > 0; i -= 4)
+        {
+            for (int j = 0; j <= 5; j+=5)
+            {
+                // 2*2¾ØÕó
+                for (int k = 0; k < 2; k++)
+                {
+                    for (int l = 0; l < 2; l++)
+                    {
+                        FogAreaEffectExecution e = FogAreaEffectExecution.GetInstance(new Vector2(MapManager.GetColumnX(i+k), MapManager.GetRowY(j+l)));
+                        e.SetOpen();
+                        GameController.Instance.AddAreaEffectExecution(e);
+                    }
+                }
+            }
+        }
+        // Ë®ÉÏ
+        for (int i = 0; i < 7; i += 4)
+        {
+            // 2*3¾ØÕó
+            for (int j = 0; j < 2; j ++)
+            {
+                for (int k = 2; k < 5; k++)
+                {
+                    FogAreaEffectExecution e = FogAreaEffectExecution.GetInstance(new Vector2(MapManager.GetColumnX(i + j), MapManager.GetRowY(k)));
+                    e.SetOpen();
+                    GameController.Instance.AddAreaEffectExecution(e);
+                }
+            }
+        }
     }
 }

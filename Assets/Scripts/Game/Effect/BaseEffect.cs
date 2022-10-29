@@ -38,7 +38,8 @@ public class BaseEffect : MonoBehaviour, IGameControllerMember
             animatorController.Play(AppearClipName);
         else
         {
-            animatorController.Play(clipName, isCycle);
+            if(clipName!=null)
+                animatorController.Play(clipName, isCycle);
             state = 1;
         }
     }
@@ -53,7 +54,7 @@ public class BaseEffect : MonoBehaviour, IGameControllerMember
     {
         animatorController.Update();
 
-        if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
+        if (animatorController.GetCurrentAnimatorStateRecorder()!=null && animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
         {
             if (state == 0)
             {
@@ -135,6 +136,19 @@ public class BaseEffect : MonoBehaviour, IGameControllerMember
         e.clipName = clipName;
         e.DisappearClipName = DisappearClipName;
         e.isCycle = isCycle;
+        e.MInit();
+        return e;
+    }
+
+    public static BaseEffect CreateInstance(Sprite sprite)
+    {
+        BaseEffect e = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Effect/EffectModel").GetComponent<BaseEffect>();
+        e.animator.runtimeAnimatorController = null;
+        e.AppearClipName = null;
+        e.clipName = null;
+        e.DisappearClipName = null;
+        e.isCycle = true;
+        e.spriteRenderer.sprite = sprite;
         e.MInit();
         return e;
     }

@@ -72,31 +72,6 @@ public class WoodenDisk : FoodUnit, IInWater
 
             if (!unitList.Contains(unit))
             {
-                // unit.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreWaterGridState, IgnoreWaterModifier);
-                //// 使目标强制出水（强制出水的方法里包含了使水蚀失效）
-                //StatusAbility s = unit.GetUniqueStatus(StringManager.WaterGridState);
-                //if (s != null && s is WaterStatusAbility)
-                //{
-                //    WaterStatusAbility s2 = s as WaterStatusAbility;
-                //    s2.LetMasterExitWater();
-                //}
-                //// 提供 悬浮提供者 效果
-                //ITask task = GetFloatTask(unit);
-                //FloatTask floatTask = null;
-                //if(task != null && task is FloatTask)
-                //{
-                //    floatTask = task as FloatTask;
-                //}
-                //else
-                //{
-                //    float h = 0.2f;
-                //    if (unit is FoodUnit || unit is CharacterUnit)
-                //        h = 0.2f;
-                //    floatTask = new FloatTask(unit, h);
-                //    unit.AddUniqueTask(TaskKey, floatTask);
-                //}
-                //floatTask.AddMaster(this);
-
                 // 使目标的木盘子承载数+1
                 if (!unit.NumericBox.IntDict.ContainsKey(Tag))
                     unit.NumericBox.IntDict.Add(Tag, new IntNumeric());
@@ -121,14 +96,6 @@ public class WoodenDisk : FoodUnit, IInWater
     {
         if (unitList.Contains(unit))
         {
-            // unit.NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreWaterGridState, IgnoreWaterModifier);
-            //// 移除当前 悬浮提供者 效果
-            //ITask task = GetFloatTask(unit);
-            //if (task != null && task is FloatTask)
-            //{
-            //    FloatTask floatTask = task as FloatTask;
-            //    floatTask.RemoveMaster(this);
-            //}
             // 使目标的木盘子承载数-1
             if (!unit.NumericBox.IntDict.ContainsKey(Tag))
                 unit.NumericBox.IntDict.Add(Tag, new IntNumeric());
@@ -195,124 +162,4 @@ public class WoodenDisk : FoodUnit, IInWater
         // 是否含有承载tag且承载数必须大于0
         return unit.NumericBox.IntDict.ContainsKey(Tag) && unit.NumericBox.IntDict[Tag].Value > 0;
     }
-
-
-    ////////////////////////////////////////////////////////////以下是内部类的定义///////////////////////
-
-    /// <summary>
-    /// 悬浮任务
-    /// </summary>
-    //public class FloatTask : ITask
-    //{
-    //    private List<BaseUnit> masterList = new List<BaseUnit>(); // 提供悬浮的对象 
-    //    private BaseUnit unit;
-    //    private FloatModifier EnterWaterSpriteOffsetY = new FloatModifier(0); // 下水时的贴图Y总偏移量
-    //    private float offsetY;
-    //    private int lastTime;
-    //    private int currentTime = 0;
-    //    private int totalTime = 30;
-    //    private bool isHasVehicle;
-
-    //    public FloatTask(BaseUnit unit, float offsetY)
-    //    {
-    //        this.unit = unit;
-    //        this.offsetY = offsetY;
-    //    }
-
-    //    private FloatTask()
-    //    {
-
-    //    }
-
-    //    private void Initial()
-    //    {
-    //        lastTime = 0;
-    //        currentTime = 0;
-    //        totalTime = 30;
-    //        isHasVehicle = true;
-    //    }
-
-    //    /// <summary>
-    //    /// 添加一个提供悬浮的对象
-    //    /// </summary>
-    //    public void AddMaster(BaseUnit master)
-    //    {
-    //        masterList.Add(master);
-    //    }
-
-    //    /// <summary>
-    //    /// 移除一个提供悬浮的对象
-    //    /// </summary>
-    //    /// <param name="master"></param>
-    //    public void RemoveMaster(BaseUnit master)
-    //    {
-    //        masterList.Remove(master);
-    //    }
-
-    //    public void OnEnter()
-    //    {
-    //        Initial();
-    //    }
-
-    //    public void OnExit()
-    //    {
-    //        // 如果还存在水状态，使目标再次入水
-    //        //StatusAbility s = unit.GetUniqueStatus(StringManager.WaterGridState);
-    //        //if (s != null && s is WaterStatusAbility)
-    //        //{
-    //        //    WaterStatusAbility s2 = s as WaterStatusAbility;
-    //        //    s2.LetMasterEnterWater();
-    //        //}
-    //    }
-
-    //    public void OnUpdate()
-    //    {
-    //        // 检测悬浮对象的有效性，并剔除无效的对象
-    //        List<BaseUnit> delList = new List<BaseUnit>();
-    //        foreach (var item in masterList)
-    //        {
-    //            if(!item.IsValid())
-    //                delList.Add(item);
-    //        }
-    //        foreach (var item in delList)
-    //        {
-    //            masterList.Remove(item);
-    //        }
-    //        // 再检测是否还有提供悬浮对象（载具）
-    //        if (masterList.Count > 0)
-    //            isHasVehicle = true;
-    //        else
-    //            isHasVehicle = false;
-
-    //        // 根据是否还存在载具决定上浮还是下沉
-    //        if (isHasVehicle)
-    //        {
-    //            if (currentTime < totalTime)
-    //                currentTime++;
-    //        }
-    //        else
-    //        {
-    //            if (currentTime > 0)
-    //                currentTime--;
-    //        }
-    //        if (lastTime != currentTime)
-    //        {
-    //            float r = ((float)currentTime) / totalTime;
-    //            unit.RemoveSpriteOffsetY(EnterWaterSpriteOffsetY);
-    //            EnterWaterSpriteOffsetY.Value = offsetY * r;
-    //            unit.AddSpriteOffsetY(EnterWaterSpriteOffsetY);
-    //        }
-    //        lastTime = currentTime;
-    //    }
-
-    //    /// <summary>
-    //    /// 当载具消失且沉到最深时
-    //    /// </summary>
-    //    /// <returns></returns>
-    //    public bool IsMeetingExitCondition()
-    //    {
-    //        return !isHasVehicle && currentTime==0;
-    //    }
-    //}
-
 }

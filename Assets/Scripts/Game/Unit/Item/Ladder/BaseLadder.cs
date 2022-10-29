@@ -41,8 +41,22 @@ public class BaseLadder : BaseItem
                 return;
             // 添加一个弹起的动任务
             Tasker t = GameController.Instance.AddTasker(new ParabolaMovePresetTasker(m, 24.0f, 1.2f, m.transform.position, m.transform.position + (Vector3)m.moveRotate * moveDistance, false));
-            m.CloseCollision();
-            t.AddOtherEndEvent(delegate { m.OpenCollision(); });
+            //m.CloseCollision();
+            // 跳跃期间不可被阻挡也不能被常规子弹击中
+            Func<BaseUnit, BaseUnit, bool> noBlockFunc = delegate { return false; };
+            Func<BaseUnit, BaseBullet, bool> noHitFunc = delegate { return false; };
+            AddCanBlockFunc(noBlockFunc);
+            AddCanHitFunc(noHitFunc);
+
+
+            m.DisableMove(true);
+            t.AddOtherEndEvent(delegate 
+            {
+                RemoveCanBlockFunc(noBlockFunc);
+                RemoveCanHitFunc(noHitFunc);
+                //m.OpenCollision(); 
+                m.DisableMove(false);
+            });
         }
     }
 

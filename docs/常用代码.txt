@@ -1,3 +1,3 @@
 造成伤害：new DamageAction(CombatAction.ActionType.CauseDamage, creator, target, mCurrentAttack).ApplyAction();
 为单为施加buff：unit.AddStatusAbility(new FrozenStatusAbility(unit, 600));
-施加晕眩：AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(this, 180, true));
+施加晕眩：AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(this, 180, false));

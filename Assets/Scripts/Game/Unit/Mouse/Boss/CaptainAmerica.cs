@@ -51,6 +51,7 @@ public class CaptainAmerica : BossUnit
         DropWaitTimeLeft = 0;
         ShieldMovementTimeLeft = 0;
         SheildBullet.gameObject.SetActive(false);
+        SheildBullet.isAffectCharacter = false; // 不影响人
         base.MInit();
     }
 
@@ -84,18 +85,12 @@ public class CaptainAmerica : BossUnit
 
     public override void OnIdleStateEnter()
     {
-        if (isHasShield)
-            animatorController.Play("Idle0", true);
-        else
-            animatorController.Play("Idle1", true);
+
     }
 
     public override void OnMoveStateEnter()
     {
-        if(isHasShield)
-            animatorController.Play("PreMove0");
-        else
-            animatorController.Play("PreMove1");
+        
     }
 
     /// <summary>
@@ -128,11 +123,6 @@ public class CaptainAmerica : BossUnit
     {
         if (StandTimeLeft > 0)
             StandTimeLeft--;
-    }
-
-    public override void OnAttackStateEnter()
-    {
-        animatorController.Play("Attack");
     }
 
     /// <summary>
@@ -185,8 +175,11 @@ public class CaptainAmerica : BossUnit
         // 实现
         c.IsMeetSkillConditionFunc = delegate { return true; };
         c.BeforeSpellFunc = delegate 
-        { 
-            SetActionState(new MoveState(this));
+        {
+            if (isHasShield)
+                animatorController.Play("PreMove0");
+            else
+                animatorController.Play("PreMove1");
             CloseCollision();
         };
         {
@@ -215,8 +208,11 @@ public class CaptainAmerica : BossUnit
         c.OnNoSpellingFunc = delegate { };
         c.AfterSpellFunc = delegate 
         {
+            if (isHasShield)
+                animatorController.Play("Idle0", true);
+            else
+                animatorController.Play("Idle1", true);
             OpenCollision();
-            SetActionState(new IdleState(this));
         };
         return c;
     }
@@ -303,7 +299,10 @@ public class CaptainAmerica : BossUnit
                 if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
                 {
                     isHasShield = true;
-                    SetActionState(new IdleState(this));
+                    if (isHasShield)
+                        animatorController.Play("Idle0", true);
+                    else
+                        animatorController.Play("Idle1", true);
                     return true;
                 }
                 return false;
@@ -337,7 +336,7 @@ public class CaptainAmerica : BossUnit
                 c.AddSpellingFunc(delegate {
                     if (!TeleportSkill.isSpelling)
                     {
-                        SetActionState(new AttackState(this));
+                        animatorController.Play("Attack");
                         return true;
                     }
                     return false;
@@ -364,7 +363,10 @@ public class CaptainAmerica : BossUnit
                     if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
                     {
                         c.ActivateChildAbility(new IdleSkillAbility(this, StrikeWaitTimeArray[mHertIndex]));
-                        // SetActionState(new IdleState(this));
+                        if (isHasShield)
+                            animatorController.Play("Idle0", true);
+                        else
+                            animatorController.Play("Idle1", true);
                         return true;
                     }
                     return false;
@@ -494,6 +496,7 @@ public class CaptainAmerica : BossUnit
             // 圆盾子弹出现
             SheildBullet.gameObject.SetActive(true);
             SheildBullet.MInit();
+            SheildBullet.isAffectCharacter = false; // 不影响人
             SheildBullet.isnKillSelf = true;
             SheildBullet.SetDamage(900);
             SheildBullet.animatorController.Play("Fly", true);

@@ -61,7 +61,7 @@ public class IceSpoonCrossbowGun : BaseWeapons
             float v = TransManager.TranToStandardVelocity(MapManager.gridWidth / 30f);
             IceEggBullet iceEggBullet = GameController.Instance.CreateBullet(master, master.transform.position, Vector2.right, BulletStyle.IceEgg) as IceEggBullet;
             iceEggBullet.SetAttribute(v, false, 0.2f, iceEggBullet.transform.position, targetPosition, GetRowIndex());
-            iceEggBullet.SetDamage(100);
+            iceEggBullet.SetDamage(20);
         }
         else
         {
@@ -69,7 +69,7 @@ public class IceSpoonCrossbowGun : BaseWeapons
             float v = TransManager.TranToStandardVelocity(d / 90f);
             IceEggBullet iceEggBullet = GameController.Instance.CreateBullet(master, master.transform.position, Vector2.right, BulletStyle.IceEgg) as IceEggBullet;
             iceEggBullet.SetAttribute(v, false, 2.0f, iceEggBullet.transform.position, targetPosition, GetRowIndex());
-            iceEggBullet.SetDamage(100);
+            iceEggBullet.SetDamage(20);
         }
     }
 

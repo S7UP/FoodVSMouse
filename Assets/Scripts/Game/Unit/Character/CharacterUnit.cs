@@ -470,7 +470,7 @@ public class CharacterUnit : BaseUnit
     /// <returns></returns>
     public override bool CanBeSelectedAsTarget()
     {
-        return mBoxCollider2D.enabled;
+        return mBoxCollider2D.enabled && base.CanBeSelectedAsTarget();
     }
 
     public override void MPause()

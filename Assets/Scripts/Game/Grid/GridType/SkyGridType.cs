@@ -47,6 +47,13 @@ public class SkyGridType : BaseGridType
             if (m.IsBoss())
                 return false;
         }
+
+        // 人物单位也不受高影响
+        if(unit is CharacterUnit)
+        {
+            return false;
+        }
+
         // 空军也不受影响
         return unit.GetHeight()<=0;
     }
@@ -117,8 +124,9 @@ public class SkyGridType : BaseGridType
 
         public void OnUpdate()
         {
-            // 如果目标没有被空载那么直接摔死吧
-            if(!unit.NumericBox.IntDict.ContainsKey(StringManager.BearInSky) || unit.NumericBox.IntDict[StringManager.BearInSky].Value <= 0)
+            // 如果目标 没有被空载 且 不免疫摔落 那么直接摔死吧
+            if((!unit.NumericBox.IntDict.ContainsKey(StringManager.BearInSky) || unit.NumericBox.IntDict[StringManager.BearInSky].Value <= 0)
+                && !unit.NumericBox.GetBoolNumericValue(StringManager.IgnoreDropFromSky))
             {
                 unit.ExecuteDrop();
             }

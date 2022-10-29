@@ -104,6 +104,7 @@ MonoBehaviour:
   mShape: 0
   typeAndShapeValue: 0
   currentStateTimer: 0
+  disableMove: 0
   rigibody2D: {fileID: 0}
   mBoxCollider2D: {fileID: 0}
   spriteTrans: {fileID: 0}
@@ -188,7 +189,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1.63, y: 1.36}
+  m_Size: {x: 1.04, y: 1.03}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 0
@@ -204,7 +205,7 @@ Animator:
   m_GameObject: {fileID: 7911401160402135796}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 13edab492884dfc4daaa772b13a05263, type: 2}
+  m_Controller: {fileID: 9100000, guid: a76462f7f89ac684bb5c17f7e3e39504, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0

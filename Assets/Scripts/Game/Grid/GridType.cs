@@ -8,4 +8,5 @@ public enum GridType
     Water = 1, // 水地形格子
     Lava = 2, // 岩浆地形格子
     Sky = 3, // 高空格子
+    Teleport = 4, // 传送格子
 }

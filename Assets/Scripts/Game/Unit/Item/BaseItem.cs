@@ -134,7 +134,7 @@ public class BaseItem : BaseUnit
     /// <returns></returns>
     public override bool CanBeSelectedAsTarget()
     {
-        return mBoxCollider2D.enabled;
+        return mBoxCollider2D.enabled && base.CanBeSelectedAsTarget();
     }
 
     /// <summary>

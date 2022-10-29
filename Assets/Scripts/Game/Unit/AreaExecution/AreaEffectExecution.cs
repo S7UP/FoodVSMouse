@@ -14,10 +14,23 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
     public List<MouseUnit> mouseUnitList = new List<MouseUnit>();
     public List<CharacterUnit> characterList = new List<CharacterUnit>();
     public List<BaseGrid> gridList = new List<BaseGrid>();
+    public List<BaseBullet> bulletList = new List<BaseBullet>();
+
+    /// <summary>
+    /// 排除表，在表中的单位会被排斥
+    /// </summary>
+    public List<FoodUnit> excludeFoodUnitList = new List<FoodUnit>();
+    public List<MouseUnit> excludeMouseUnitList = new List<MouseUnit>();
+    public List<CharacterUnit> excludeCharacterList = new List<CharacterUnit>();
+    public List<BaseGrid> excludeGridList = new List<BaseGrid>();
+    public List<BaseBullet> excludeBulletList = new List<BaseBullet>();
+
     public bool isAlive = true;
     public bool isAffectFood;
     public bool isAffectMouse;
     public bool isAffectCharacter;
+    public bool isAffectGrid;
+    public bool isAffectBullet;
     public bool isIgnoreHeight; // 是否无视高度
     public float affectHeight; // 目标受影响的高度
 
@@ -28,18 +41,24 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
     private Action<MouseUnit> OnEnemyEnterAction;
     private Action<CharacterUnit> OnCharacterEnterAction;
     private Action<BaseGrid> OnGridEnterAction;
+    private Action<BaseBullet> OnBulletEnterAction;
 
     private Action<FoodUnit> OnFoodStayAction;
     private Action<MouseUnit> OnEnemyStayAction;
     private Action<CharacterUnit> OnCharacterStayAction;
     private Action<BaseGrid> OnGridStayAction;
+    private Action<BaseBullet> OnBulletStayAction;
 
     private Action<FoodUnit> OnFoodExitAction;
     private Action<MouseUnit> OnEnemyExitAction;
     private Action<CharacterUnit> OnCharacterExitAction;
     private Action<BaseGrid> OnGridExitAction;
+    private Action<BaseBullet> OnBulletExitAction;
 
     private Action<AreaEffectExecution> OnDestoryExtraAction;
+
+    public List<ITask> TaskList = new List<ITask>(); // 自身挂载任务表
+    public Dictionary<string, ITask> TaskDict = new Dictionary<string, ITask>(); // 任务字典（仅记录引用不实际执行逻辑，执行逻辑在任务表中）
 
     public virtual void Awake()
     {
@@ -54,10 +73,21 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
         foodUnitList.Clear();
         mouseUnitList.Clear();
         characterList.Clear();
+        gridList.Clear();
+        bulletList.Clear();
+
+        excludeFoodUnitList.Clear();
+        excludeMouseUnitList.Clear();
+        excludeCharacterList.Clear();
+        excludeGridList.Clear();
+        excludeBulletList.Clear();
+
         isAlive = true;
         isAffectFood = false;
         isAffectMouse = false;
         isAffectCharacter = false;
+        isAffectGrid = false;
+        isAffectBullet = false;
         isIgnoreHeight = true; // 默认情况下无视高度
         affectHeight = 0;
 
@@ -65,21 +95,27 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
         OnEnemyEnterAction = null;
         OnCharacterEnterAction = null;
         OnGridEnterAction = null;
+        OnBulletEnterAction = null;
 
         OnFoodStayAction = null;
         OnEnemyStayAction = null;
         OnCharacterStayAction = null;
         OnGridStayAction = null;
+        OnBulletStayAction = null;
 
         OnFoodExitAction = null;
         OnEnemyExitAction = null;
         OnCharacterExitAction = null;
         OnGridExitAction = null;
+        OnBulletExitAction = null;
 
         OnDestoryExtraAction = null;
 
         FloatDict.Clear();
         TagList.Clear();
+
+        TaskList.Clear();
+        TaskDict.Clear();
     }
 
     /// <summary>
@@ -119,6 +155,11 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
         OnGridEnterAction = action;
     }
 
+    public void SetOnBulletEnterAction(Action<BaseBullet> action)
+    {
+        OnBulletEnterAction = action;
+    }
+
     public void SetOnFoodStayAction(Action<FoodUnit> action)
     {
         OnFoodStayAction = action;
@@ -139,6 +180,11 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
         OnGridStayAction = action;
     }
 
+    public void SetOnBulletStayAction(Action<BaseBullet> action)
+    {
+        OnBulletStayAction = action;
+    }
+
     public void SetOnFoodExitAction(Action<FoodUnit> action)
     {
         OnFoodExitAction = action;
@@ -157,6 +203,10 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
     {
         OnGridExitAction = action;
     }
+    public void SetOnBulletExitAction(Action<BaseBullet> action)
+    {
+        OnBulletExitAction = action;
+    }
 
     public void SetOnDestoryExtraAction(Action<AreaEffectExecution> action)
     {
@@ -168,7 +218,7 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
         if (isAffectFood && collision.tag.Equals("Food"))
         {
             FoodUnit food = collision.GetComponent<FoodUnit>();
-            if (!foodUnitList.Contains(food) && IsMeetingCondition(food) && (isIgnoreHeight || food.GetHeight() == affectHeight))
+            if (!foodUnitList.Contains(food) && !excludeFoodUnitList.Contains(food) && IsMeetingCondition(food) && (isIgnoreHeight || food.GetHeight() == affectHeight))
             {
                 foodUnitList.Add(food);
                 OnFoodEnter(food);
@@ -176,7 +226,7 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
         }else if (isAffectMouse && collision.tag.Equals("Mouse"))
         {
             MouseUnit mouse = collision.GetComponent<MouseUnit>();
-            if (!mouseUnitList.Contains(mouse) && IsMeetingCondition(mouse) && (isIgnoreHeight || mouse.GetHeight() == affectHeight))
+            if (!mouseUnitList.Contains(mouse) && !excludeMouseUnitList.Contains(mouse) && IsMeetingCondition(mouse) && (isIgnoreHeight || mouse.GetHeight() == affectHeight))
             {
                 mouseUnitList.Add(mouse);
                 OnEnemyEnter(mouse);
@@ -184,18 +234,27 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
         }else if (isAffectCharacter && collision.tag.Equals("Character"))
         {
             CharacterUnit c = collision.GetComponent<CharacterUnit>();
-            if (!characterList.Contains(c) && IsMeetingCondition(c) && (isIgnoreHeight || c.GetHeight() == affectHeight))
+            if (!characterList.Contains(c) && !excludeCharacterList.Contains(c) && IsMeetingCondition(c) && (isIgnoreHeight || c.GetHeight() == affectHeight))
             {
                 characterList.Add(c);
                 OnCharacterEnter(c);
             }
-        }else if (collision.tag.Equals("Grid"))
+        }else if (isAffectGrid && collision.tag.Equals("Grid"))
         {
             BaseGrid g = collision.GetComponent<BaseGrid>();
-            if(!gridList.Contains(g) && IsMeetingCondition(g))
+            if(!gridList.Contains(g) && !excludeGridList.Contains(g) && IsMeetingCondition(g))
             {
                 gridList.Add(g);
                 OnGridEnter(g);
+            }
+        }
+        else if (isAffectBullet && collision.tag.Equals("Bullet"))
+        {
+            BaseBullet b = collision.GetComponent<BaseBullet>();
+            if (!bulletList.Contains(b) && !excludeBulletList.Contains(b) && IsMeetingCondition(b))
+            {
+                bulletList.Add(b);
+                OnBulletEnter(b);
             }
         }
     }
@@ -248,6 +307,15 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
                 OnGridExit(g);
             }
         }
+        else if (collision.tag.Equals("Bullet"))
+        {
+            BaseBullet b = collision.GetComponent<BaseBullet>();
+            if (bulletList.Contains(b))
+            {
+                bulletList.Remove(b);
+                OnBulletExit(b);
+            }
+        }
     }
 
     private void OnTriggerExit2D(Collider2D collision)
@@ -271,6 +339,16 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
     /// <param name="grid"></param>
     /// <returns></returns>
     public virtual bool IsMeetingCondition(BaseGrid grid)
+    {
+        return true;
+    }
+
+    /// <summary>
+    /// 是否满足事件条件（子弹）
+    /// </summary>
+    /// <param name="grid"></param>
+    /// <returns></returns>
+    public virtual bool IsMeetingCondition(BaseBullet bullet)
     {
         return true;
     }
@@ -309,6 +387,12 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
             OnGridEnterAction(unit);
     }
 
+    public virtual void OnBulletEnter(BaseBullet unit)
+    {
+        if (OnBulletEnterAction != null)
+            OnBulletEnterAction(unit);
+    }
+
     /// <summary>
     /// 美食单位的持续事件
     /// </summary>
@@ -343,6 +427,12 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
             OnGridStayAction(unit);
     }
 
+    public virtual void OnBulletStay(BaseBullet unit)
+    {
+        if (OnBulletStayAction != null)
+            OnBulletStayAction(unit);
+    }
+
     /// <summary>
     /// 美食单位的离开事件
     /// </summary>
@@ -375,6 +465,12 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
     {
         if (OnGridExitAction != null)
             OnGridExitAction(unit);
+    }
+
+    public virtual void OnBulletExit(BaseBullet unit)
+    {
+        if (OnBulletExitAction != null)
+            OnBulletExitAction(unit);
     }
 
     public bool IsValid()
@@ -451,6 +547,21 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
                 gridList.Remove(item);
             }
 
+            List<BaseBullet> b_delList = new List<BaseBullet>();
+            foreach (var item in bulletList)
+            {
+                if (item.isActiveAndEnabled)
+                    OnBulletStay(item);
+                else
+                    b_delList.Add(item);
+            }
+            foreach (var item in b_delList)
+            {
+                bulletList.Remove(item);
+            }
+
+            OnTaskUpdate();
+
             if (timeLeft > 0)
                 timeLeft--;
         }
@@ -499,6 +610,16 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
             OnCharacterExit(item);
         }
         characterList.Clear();
+        foreach (var item in gridList)
+        {
+            OnGridExit(item);
+        }
+        gridList.Clear();
+        foreach (var item in bulletList)
+        {
+            OnBulletExit(item);
+        }
+        bulletList.Clear();
         if (OnDestoryExtraAction != null)
             OnDestoryExtraAction(this);
         ExecuteRecycle();
@@ -507,5 +628,161 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
     public void SetCollisionLayer(string layerName)
     {
         gameObject.layer = LayerMask.NameToLayer(layerName);
+    }
+
+    /// <summary>
+    /// 添加需要被排除的美食单位
+    /// </summary>
+    /// <param name="unit"></param>
+    public void AddExcludeFoodUnit(FoodUnit unit)
+    {
+        excludeFoodUnitList.Add(unit);
+        if (foodUnitList.Contains(unit))
+        {
+            OnFoodExit(unit);
+            foodUnitList.Remove(unit);
+        }
+    }
+
+    /// <summary>
+    /// 添加需要被排除的老鼠单位
+    /// </summary>
+    /// <param name="unit"></param>
+    public void AddExcludeMouseUnit(MouseUnit unit)
+    {
+        excludeMouseUnitList.Add(unit);
+        if (mouseUnitList.Contains(unit))
+        {
+            OnEnemyExit(unit);
+            mouseUnitList.Remove(unit);
+        }
+    }
+
+    /// <summary>
+    /// 添加需要被排除的人物单位
+    /// </summary>
+    /// <param name="unit"></param>
+    public void AddExcludeCharacterUnit(CharacterUnit unit)
+    {
+        excludeCharacterList.Add(unit);
+        if (characterList.Contains(unit))
+        {
+            OnCharacterExit(unit);
+            characterList.Remove(unit);
+        }
+    }
+
+    /// <summary>
+    /// 添加需要被排除的格子单位
+    /// </summary>
+    /// <param name="unit"></param>
+    public void AddExcludeGrid(BaseGrid g)
+    {
+        excludeGridList.Add(g);
+        if (gridList.Contains(g))
+        {
+            OnGridExit(g);
+            gridList.Remove(g);
+        }
+    }
+
+    /// <summary>
+    /// 添加需要被排除的子弹单位
+    /// </summary>
+    /// <param name="unit"></param>
+    public void AddExcludeBullet(BaseBullet b)
+    {
+        excludeBulletList.Add(b);
+        if (bulletList.Contains(b))
+        {
+            OnBulletExit(b);
+            bulletList.Remove(b);
+        }
+    }
+
+    /// <summary>
+    /// 添加唯一性任务
+    /// </summary>
+    public void AddUniqueTask(string key, ITask t)
+    {
+        if (!TaskDict.ContainsKey(key))
+        {
+            TaskDict.Add(key, t);
+            AddTask(t);
+        }
+    }
+
+    /// <summary>
+    /// 添加一个任务
+    /// </summary>
+    /// <param name="t"></param>
+    public void AddTask(ITask t)
+    {
+        TaskList.Add(t);
+        t.OnEnter();
+    }
+
+    /// <summary>
+    /// 移除唯一性任务
+    /// </summary>
+    public void RemoveUniqueTask(string key)
+    {
+        if (TaskDict.ContainsKey(key))
+        {
+            RemoveTask(TaskDict[key]);
+            TaskDict.Remove(key);
+        }
+    }
+
+    /// <summary>
+    /// 移除一个任务
+    /// </summary>
+    /// <param name="t"></param>
+    public void RemoveTask(ITask t)
+    {
+        TaskList.Remove(t);
+        t.OnExit();
+    }
+
+    /// <summary>
+    /// 获取某个标记为key的任务
+    /// </summary>
+    /// <param name="key"></param>
+    /// <returns></returns>
+    public ITask GetTask(string key)
+    {
+        if (TaskDict.ContainsKey(key))
+            return TaskDict[key];
+        return null;
+    }
+
+    /// <summary>
+    /// Task组更新
+    /// </summary>
+    private void OnTaskUpdate()
+    {
+        List<string> deleteKeyList = new List<string>();
+        foreach (var keyValuePair in TaskDict)
+        {
+            ITask t = keyValuePair.Value;
+            if (t.IsMeetingExitCondition())
+                deleteKeyList.Add(keyValuePair.Key);
+        }
+        foreach (var key in deleteKeyList)
+        {
+            RemoveUniqueTask(key);
+        }
+        List<ITask> deleteTask = new List<ITask>();
+        foreach (var t in TaskList)
+        {
+            if (t.IsMeetingExitCondition())
+                deleteTask.Add(t);
+            else
+                t.OnUpdate();
+        }
+        foreach (var t in deleteTask)
+        {
+            RemoveTask(t);
+        }
     }
 }

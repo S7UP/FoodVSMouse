@@ -39,8 +39,9 @@ public class CanMouse : MouseUnit
             // 起飞咯！！！！
             SetActionState(new TransitionState(this));
             Tasker t = GameController.Instance.AddTasker(new ParabolaMovePresetTasker(this, 24.0f, 0.75f, transform.position, transform.position + (Vector3)moveRotate*3*MapManager.gridWidth, false));
+            DisableMove(true);
             // 飞行结束时切换成丢装备且晕眩状态
-            t.AddOtherEndEvent(delegate { SetActionState(new CastState(this)); });
+            t.AddOtherEndEvent(delegate { SetActionState(new CastState(this)); DisableMove(false); });
         }
     }
 

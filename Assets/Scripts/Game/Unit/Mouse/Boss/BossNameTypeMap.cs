@@ -5,7 +5,7 @@ public enum BossNameTypeMap
 {
     DongJun = 0,
     ANuo = 1,
-    pharaoh1 = 2,
+    Pharaoh1 = 2,
     IceSlag = 3,
     Thundered = 4,
     PinkPaul = 5,

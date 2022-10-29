@@ -194,6 +194,7 @@ public class RainAreaEffectExecution : RetangleAreaEffectExecution
         e.Init(0, 3, 3, 0, 0, true, true);
         e.SetBoxCollider2D(Vector2.zero, new Vector2(0.95f * 3 * MapManager.gridWidth, 0.95f* 3 * MapManager.gridHeight));
         e.isAffectCharacter = true;
+        e.isAffectGrid = true;
         e.SetAffectHeight(0);
         return e;
     }
