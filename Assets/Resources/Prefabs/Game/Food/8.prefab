@@ -105,7 +105,9 @@ MonoBehaviour:
   mShape: 0
   typeAndShapeValue: 0
   currentStateTimer: 0
-  defaultMaterial: {fileID: 0}
+  disableMove: 0
+  aliveTime: 0
+  lastPosition: {x: 0, y: 0}
   mBoxCollider2D: {fileID: 0}
   spriteTrans: {fileID: 0}
   mFoodType: 0

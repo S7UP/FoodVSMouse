@@ -33,8 +33,9 @@ public class MelonShield : FoodUnit
 
         // 在受到伤害结算之后，更新受伤贴图状态
         AddActionPointListener(ActionPointType.PostReceiveDamage, delegate { UpdateHertMap(); });
+        AddActionPointListener(ActionPointType.PostReceiveReboundDamage, delegate { UpdateHertMap(); });
         // 一转后在受到伤害结算之前计算反伤
-        if(mShape>0)
+        if (mShape>0)
             AddActionPointListener(ActionPointType.PreReceiveDamage, ReBoundDamage);
         // 在接收治疗结算之后，更新受伤贴图状态
         AddActionPointListener(ActionPointType.PostReceiveCure, delegate { UpdateHertMap(); });
@@ -117,8 +118,9 @@ public class MelonShield : FoodUnit
             // 添加对应的判定检测器
             {
                 DamageAreaEffectExecution dmgEffect = DamageAreaEffectExecution.GetInstance();
-                // 反弹伤害不应该超过自身当前生命值
-                dmgEffect.Init(this, CombatAction.ActionType.ReboundDamage, Mathf.Min(dmgAction.DamageValue, mCurrentHp), GetRowIndex(), 3, 3, 0, 0, false, true);
+                // 反弹伤害不应该超过自身当前生命值（划去）
+                // 现在没了，上面那个注释别吊它！
+                dmgEffect.Init(this, CombatAction.ActionType.ReboundDamage, dmgAction.DamageValue * mCurrentAttack/10, GetRowIndex(), 3, 3, 0, 0, false, true);
                 dmgEffect.transform.position = this.GetPosition();
                 GameController.Instance.AddAreaEffectExecution(dmgEffect);
             }
@@ -145,7 +147,7 @@ public class MelonShield : FoodUnit
             // 添加对应的判定检测器
             {
                 DamageAreaEffectExecution dmgEffect = DamageAreaEffectExecution.GetInstance();
-                dmgEffect.Init(this, CombatAction.ActionType.ReboundDamage, mCurrentHp, GetRowIndex(), 3, 3, 0, 0, false, true);
+                dmgEffect.Init(this, CombatAction.ActionType.ReboundDamage, Mathf.Max(0, mCurrentHp) * mCurrentAttack / 10, GetRowIndex(), 3, 3, 0, 0, false, true);
                 dmgEffect.transform.position = this.GetPosition();
                 GameController.Instance.AddAreaEffectExecution(dmgEffect);
             }

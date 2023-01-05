@@ -18,7 +18,7 @@ public class NonMainstreamMouse : MouseUnit
     public override void MInit()
     {
         base.MInit();
-        defenceValue = 0.9f;
+        defenceValue = 0.5f;
         addAttackPercentValue = 0;
         NumericBox.MoveSpeed.AddPctAddModifier(floatModifier);  // 直接获得移动速度加成
         defenceModifier = new FloatModifier(defenceValue); // 初始获得90%减伤
@@ -76,7 +76,16 @@ public class NonMainstreamMouse : MouseUnit
     /// <returns></returns>
     public override bool CanHit(BaseBullet baseBullet)
     {
-        return !dodgeSpikesSkillAbility.isSpelling;
+        return (IsBlock() || isFrozenState) && base.CanHit(baseBullet);
+    }
+
+    /// <summary>
+    /// 只有被阻挡或者冰冻晕眩时才会被视为攻击目标
+    /// </summary>
+    /// <returns></returns>
+    public override bool CanBeSelectedAsTarget(BaseUnit otherUnit)
+    {
+        return (IsBlock() || isFrozenState) && base.CanBeSelectedAsTarget(otherUnit);
     }
 
     public override void OnCastStateEnter()
@@ -112,8 +121,8 @@ public class NonMainstreamMouse : MouseUnit
     /// </summary>
     private void SkillEndEvent()
     {
-        defenceValue = Mathf.Max(0, defenceValue - 0.1f);
-        addAttackPercentValue = Mathf.Min(1900, addAttackPercentValue + 200);
+        defenceValue = Mathf.Max(0, defenceValue - 0.25f);
+        addAttackPercentValue = Mathf.Min(100, addAttackPercentValue + 50);
         // 减伤数值标签替换
         NumericBox.Defense.RemoveAddModifier(defenceModifier);
         if (defenceValue > 0)

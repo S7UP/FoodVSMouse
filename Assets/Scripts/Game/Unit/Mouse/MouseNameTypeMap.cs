@@ -47,4 +47,7 @@ public enum MouseNameTypeMap
     WonderLandFireflyQueen = 41, // 奇境萤火虫女王
     WonderLandFirefly = 42, // 奇境萤火虫
     WonderLandCage = 43, // 奇境鸟笼
+    MagicianMouse = 44, // 魔术师鼠
+    GhostMouse = 45, // 幽灵鼠
+    CaoNiMaMouse = 46, // 草泥马骑士鼠
 }

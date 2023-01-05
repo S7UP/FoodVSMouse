@@ -5,6 +5,27 @@ using UnityEngine;
 public class SkyGridType : BaseGridType
 {
     private const string TaskName = "SkyTask";
+    public const string NoAffect = "NoAffectSky";
+
+    /// <summary>
+    /// 为某个单位添加完全不受天空影响的效果
+    /// </summary>
+    /// <param name="unit"></param>
+    public static void AddNoAffectBySky(BaseUnit unit, BoolModifier boolModifier)
+    {
+        unit.NumericBox.AddDecideModifierToBoolDict(NoAffect, boolModifier); 
+        unit.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreDropFromSky, boolModifier); 
+    }
+
+    /// <summary>
+    /// 为某个单位移除完全不受天空影响的效果
+    /// </summary>
+    /// <param name="unit"></param>
+    public static void RemoveNoAffectBySky(BaseUnit unit, BoolModifier boolModifier)
+    {
+        unit.NumericBox.RemoveDecideModifierToBoolDict(NoAffect, boolModifier); 
+        unit.NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreDropFromSky, boolModifier); 
+    }
 
     public override void OnCollision(Collider2D collision)
     {
@@ -54,8 +75,8 @@ public class SkyGridType : BaseGridType
             return false;
         }
 
-        // 空军也不受影响
-        return unit.GetHeight()<=0;
+        // 空军和地鼠也不受影响
+        return unit.GetHeight()==0;
     }
 
     /// <summary>

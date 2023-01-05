@@ -123,14 +123,7 @@ public class BombAreaEffectExecution : RetangleAreaEffectExecution
     /// <returns>对目标造成的实际伤害</returns>
     private float BombDamageUnit(BaseUnit unit)
     {
-        float hp0 = unit.GetCurrentHp();
-        // 检测目标是否防止炸弹秒杀效果，如果不防则受到特定的灰烬伤害，否则直接秒杀
-        if (unit.NumericBox.GetBoolNumericValue(StringManager.IgnoreBombInstantKill))
-            new BombDamageAction(CombatAction.ActionType.CauseDamage, creator, unit, damage).ApplyAction();
-        else
-            new BombDamageAction(CombatAction.ActionType.CauseDamage, creator, unit, unit.mCurrentHp).ApplyAction();
-        float hp1 = Math.Max(0, unit.GetCurrentHp());
-        return hp0 - hp1;
+        return CombatActionManager.BombBurnDamageUnit(creator, unit, damage);
     }
 
     public override void OnEnemyEnter(MouseUnit unit)
@@ -178,7 +171,7 @@ public class BombAreaEffectExecution : RetangleAreaEffectExecution
     /// <param name="colCount"></param>
     /// <param name="rowCount"></param>
     /// <returns></returns>
-    public static BombAreaEffectExecution GetInstance(BaseUnit creator, float damage, Vector3 pos, float colCount, int rowCount)
+    public static BombAreaEffectExecution GetInstance(BaseUnit creator, float damage, Vector3 pos, float colCount, float rowCount)
     {
         BombAreaEffectExecution e = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "AreaEffect/BombAreaEffect").GetComponent<BombAreaEffectExecution>();
         e.MInit();

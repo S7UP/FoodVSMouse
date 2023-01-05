@@ -126,8 +126,8 @@ public class Map_LaurelSky : ChapterMap
             }
 
             // 添加风域
-            WindAreaEffectExecution e = WindAreaEffectExecution.GetInstance(9, 3, new Vector2(MapManager.GetColumnX(4f), MapManager.GetRowY(3)));
-            WindAreaEffectExecution.SetClassicalWindAreaEffectMode(e, 1, 420, 120, 630, true); // 等待时间、速度变化时间、匀速时间
+            WindAreaEffectExecution e = WindAreaEffectExecution.GetInstance(8.6f, 3, new Vector2(MapManager.GetColumnX(4f), MapManager.GetRowY(3)));
+            WindAreaEffectExecution.SetClassicalWindAreaEffectMode(e, 1, 420, 120, 630); // 等待时间、速度变化时间、匀速时间
             GameController.Instance.AddAreaEffectExecution(e);
         }
     }

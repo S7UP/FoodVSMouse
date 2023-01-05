@@ -1,6 +1,4 @@
 using System.Collections.Generic;
-
-using UnityEngine;
 /// <summary>
 /// 菠萝爆炸面包
 /// </summary>
@@ -21,6 +19,7 @@ public class PineappleBreadBoom : FoodUnit
 
         // 在受到伤害结算之后，更新受伤贴图状态
         AddActionPointListener(ActionPointType.PostReceiveDamage, delegate { UpdateHertMap(); AddPctAttackWhenHited(); });
+        AddActionPointListener(ActionPointType.PostReceiveReboundDamage, delegate { UpdateHertMap(); AddPctAttackWhenHited(); });
         // 在接收治疗结算之后，更新受伤贴图状态
         AddActionPointListener(ActionPointType.PostReceiveCure, delegate { UpdateHertMap(); });
     }
@@ -40,6 +39,7 @@ public class PineappleBreadBoom : FoodUnit
 
     public override void OnDieStateEnter()
     {
+        base.OnDieStateEnter(); // 移除引用
         animatorController.Play("Die");
     }
 
@@ -127,7 +127,7 @@ public class PineappleBreadBoom : FoodUnit
         // 原地产生一个爆炸伤害判定效果
         {
             BombAreaEffectExecution bombEffect = BombAreaEffectExecution.GetInstance();
-            Debug.Log("当前爆炸可造成伤害：" + mCurrentAttack * (1 + pctAddValue / 100));
+            //Debug.Log("当前爆炸可造成伤害：" + mCurrentAttack * (1 + pctAddValue / 100));
             bombEffect.Init(this, mCurrentAttack*(1 + pctAddValue/100), GetRowIndex(), 4, 3, -0.5f, 0, false, true);
             bombEffect.transform.position = this.GetPosition();
             GameController.Instance.AddAreaEffectExecution(bombEffect);

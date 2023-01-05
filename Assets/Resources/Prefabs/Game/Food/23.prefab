@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 8116370559506349390}
   - component: {fileID: 8116370559506349385}
   - component: {fileID: 3540355836451500175}
-  - component: {fileID: 5795687795657931664}
   m_Layer: 6
   m_Name: 23
   m_TagString: Food
@@ -84,7 +83,9 @@ MonoBehaviour:
   mShape: 0
   typeAndShapeValue: 0
   currentStateTimer: 0
-  defaultMaterial: {fileID: 0}
+  disableMove: 0
+  aliveTime: 0
+  lastPosition: {x: 0, y: 0}
   mBoxCollider2D: {fileID: 0}
   spriteTrans: {fileID: 0}
   mFoodType: 0
@@ -92,27 +93,6 @@ MonoBehaviour:
   mLevel: 0
   typeAndShapeToLayer: 0
   isUseSingleGrid: 0
---- !u!50 &5795687795657931664
-Rigidbody2D:
-  serializedVersion: 4
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8116370559506349391}
-  m_BodyType: 1
-  m_Simulated: 1
-  m_UseFullKinematicContacts: 0
-  m_UseAutoMass: 0
-  m_Mass: 1
-  m_LinearDrag: 0
-  m_AngularDrag: 0.05
-  m_GravityScale: 1
-  m_Material: {fileID: 0}
-  m_Interpolate: 0
-  m_SleepingMode: 1
-  m_CollisionDetection: 0
-  m_Constraints: 0
 --- !u!1 &8116370559772073301
 GameObject:
   m_ObjectHideFlags: 0

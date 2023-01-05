@@ -2,8 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-using UnityEngine;
-
 [Serializable]
 public class BaseRound
 {
@@ -23,8 +21,11 @@ public class BaseRound
         public int interval; // 组与组之间的间隔
         public int endTime; // 结尾处等待时间
         public RoundMode roundMode; // 当前轮刷怪模式
+        public bool isShowBigWaveRound; // 当前轮是否要提示为一大波老鼠
         public bool isBossRound; // 是否为BOSS轮次
         public List<BaseEnemyGroup> bossList; // BOSS列表
+        public string musicRefenceName; // BGM的引用名
+
 
         /// <summary>
         /// 获取本轮总持续时间
@@ -54,6 +55,30 @@ public class BaseRound
             if (isBossRound && bossList != null)
                 count += bossList.Count;
             return count;
+        }
+
+        /// <summary>
+        /// 前序遍历当前轮
+        /// </summary>
+        /// <returns></returns>
+        public List<RoundInfo> PreorderTraversal()
+        {
+            List<RoundInfo> list = new List<RoundInfo>();
+            // 先加入自己（因为是先执行自己）
+            list.Add(this);
+            // 对每小轮都进行前序遍历，
+            if (roundInfoList != null)
+            {
+                foreach (var roundInfo in roundInfoList)
+                {
+                    // 将结果集依次加入
+                    foreach (var info in roundInfo.PreorderTraversal())
+                    {
+                        list.Add(info);
+                    }
+                }
+            }
+            return list;
         }
     }
 
@@ -92,11 +117,20 @@ public class BaseRound
         else if(mRoundInfo.roundMode.Equals(RoundMode.HalfRandom))
             GameController.Instance.mCurrentStage.PushRandomToRowOffsetStack();
 
+        // 判断是否要显示一大波，以及，显示的内容
+        if (mRoundInfo.isShowBigWaveRound)
+        {
+            bool isLastWave = GameController.Instance.mCurrentStage.IsNextBigWaveIsLastWave();
+            GameController.Instance.mGameNormalPanel.ShowBigWave(isLastWave);
+        }
+
+        // 播放BGM
+        GameManager.Instance.audioSourceManager.PlayBGMusic(mRoundInfo.musicRefenceName);
+
         // 先执行自己的刷怪组的内容
         if (mRoundInfo.isBossRound)
         {
             // 如果是BOSS轮次
-            Debug.Log("当前轮为BOSS轮次，轮：" + mRoundInfo.name + "，开始刷怪！");
             for (int i = 0; i < mRoundInfo.bossList.Count; i++)
             {
                 // 获取当前组
@@ -104,7 +138,7 @@ public class BaseRound
                 // 获取最终实际刷怪位置表
                 BaseEnemyGroup.RealEnemyList realEnemyList = mCurrentEnemyGroup.TransFormToRealEnemyGroup();
                 // 通知GameController刷怪啦
-                CreateBoss(realEnemyList, mCurrentEnemyGroup.mHp);
+                CreateBoss(realEnemyList, mCurrentEnemyGroup.mHp, mCurrentEnemyGroup.GetEnemyAttribute());
                 // 没有间隔，BOSS是同时刷新的
             }
 
@@ -134,7 +168,6 @@ public class BaseRound
         else
         {
             // 小怪轮次
-            Debug.Log("当前轮为：" + mRoundInfo.name + "，开始刷怪！");
             for (int i = 0; i < mRoundInfo.baseEnemyGroupList.Count; i++)
             {
                 // 获取当前组
@@ -142,7 +175,7 @@ public class BaseRound
                 // 获取最终实际刷怪位置表
                 BaseEnemyGroup.RealEnemyList realEnemyList = mCurrentEnemyGroup.TransFormToRealEnemyGroup();
                 // 通知GameController刷怪啦
-                CreateEnemies(realEnemyList);
+                CreateEnemies(realEnemyList, mCurrentEnemyGroup.GetEnemyAttribute());
 
                 // 间隔若干帧后刷新下一组
                 yield return GameController.Instance.mCurrentStage.StartCoroutine(GameController.Instance.mCurrentStage.WaitForIEnumerator(mRoundInfo.interval));
@@ -159,18 +192,22 @@ public class BaseRound
         yield return GameController.Instance.mCurrentStage.StartCoroutine(GameController.Instance.mCurrentStage.WaitForIEnumerator(mRoundInfo.endTime));
 
         GameController.Instance.mCurrentStage.PopRowOffsetStack();
-
-        Debug.Log("本轮刷怪完成！");
     }
 
     /// <summary>
     /// 根据实际刷怪位置表来刷怪
     /// </summary>
-    private void CreateEnemies(BaseEnemyGroup.RealEnemyList realEnemyList)
+    private void CreateEnemies(BaseEnemyGroup.RealEnemyList realEnemyList, BaseEnemyGroup.EnemyAttribute enemyAttribute)
     {
         for (int i = 0; i < realEnemyList.GetSize(); i++)
         {
-            GameController.Instance.CreateMouseUnit(realEnemyList.Get(i), realEnemyList.enemyInfo);
+            MouseUnit m = GameController.Instance.CreateMouseUnit(realEnemyList.Get(i), realEnemyList.enemyInfo);
+            m.SetMaxHpAndCurrentHp(m.mMaxHp * enemyAttribute.HpRate); // 对老鼠最大生命值进行修正
+            m.NumericBox.MoveSpeed.SetBase(m.NumericBox.MoveSpeed.baseValue*enemyAttribute.MoveSpeedRate); // 对老鼠移动速度修正
+            m.NumericBox.Attack.SetBase(m.mBaseAttack * enemyAttribute.AttackRate); // 对老鼠攻击力修正
+            m.NumericBox.Defense.SetBase(enemyAttribute.Defence); // 对老鼠减伤修正
+
+            // TODO：覆盖特殊参数
         }
     }
 
@@ -178,13 +215,41 @@ public class BaseRound
     /// 根据实际刷怪位置表来刷BOSS
     /// </summary>
     /// <param name="realEnemyList"></param>
-    private void CreateBoss(BaseEnemyGroup.RealEnemyList realEnemyList, float hp)
+    private void CreateBoss(BaseEnemyGroup.RealEnemyList realEnemyList, float hp, BaseEnemyGroup.EnemyAttribute enemyAttribute)
     {
         for (int i = 0; i < realEnemyList.GetSize(); i++)
         {
-            // GameController.Instance.CreateMouseUnit(realEnemyList.Get(i), realEnemyList.enemyInfo);
             BossUnit b = GameController.Instance.CreateBossUnit(realEnemyList.Get(i), realEnemyList.enemyInfo, hp, -1);
-            
+            b.SetMaxHpAndCurrentHp(b.mMaxHp * enemyAttribute.HpRate); // 对老鼠最大生命值进行修正
+            // 要是把上面那行注释了，然后把下面这个语句块取消注释，就能还原原版的卡暴击方法
+            // 认真的吗？原版的BUG也还原给你看
+            //{
+            //    int timeLeft = 60;
+            //    CustomizationTask t = new CustomizationTask();
+            //    t.AddTaskFunc(delegate {
+            //        if (timeLeft > 0)
+            //            timeLeft--;
+            //        else
+            //        {
+            //            b.SetMaxHpAndCurrentHp(b.mMaxHp * enemyAttribute.HpRate); // 对老鼠最大生命值进行修正
+            //            return true;
+            //        }
+            //        return false;
+            //    });
+            //}
+
+            b.NumericBox.MoveSpeed.SetBase(b.NumericBox.MoveSpeed.baseValue * enemyAttribute.MoveSpeedRate); // 对老鼠移动速度修正
+            b.NumericBox.Attack.SetBase(b.mBaseAttack * enemyAttribute.AttackRate); // 对老鼠攻击力修正
+            b.NumericBox.Defense.SetBase(enemyAttribute.Defence); // 对老鼠减伤修正
+
+            //Debug.Log("开始覆盖特殊参数");
+            // 覆盖特殊参数
+            foreach (var keyValuePair in enemyAttribute.ParamDict)
+            {
+                //Debug.Log("Key="+ keyValuePair.Key);
+                b.AddParamArray(keyValuePair.Key, keyValuePair.Value);
+            }
+            //Debug.Log("覆盖特殊参数结束");
         }
     }
 

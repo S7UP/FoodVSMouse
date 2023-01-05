@@ -3,6 +3,8 @@ using System.Collections.Generic;
 
 using UnityEngine;
 
+using static BaseRound;
+
 public class BaseStage : MonoBehaviour
 {
     /// <summary>
@@ -47,7 +49,6 @@ public class BaseStage : MonoBehaviour
         public int cardCount; // 卡片数量
 
         public List<BaseRound.RoundInfo> roundInfoList; // 关卡轮数表
-        public List<int> waveIndexList; // 一大波标志下标表
         public StageMode defaultMode; // 默认关卡模式
         /// <summary>
         /// 分路表，第一层List表明分支，第二层List表明每个分支包含路的编号
@@ -56,6 +57,10 @@ public class BaseStage : MonoBehaviour
         /// </summary>
         public List<List<int>> apartList;
         public int perpareTime; // 出怪前的准备时间
+
+        public bool isEnableStartCard; // 是否提供初始卡片
+        public List<AvailableCardInfo>[][] startCardInfoList; // 提供初始卡片相关信息表
+        public string startBGMRefence; // 初始BGM引用
         
 
         /// <summary>
@@ -89,6 +94,25 @@ public class BaseStage : MonoBehaviour
                 }
             }
         }
+
+        /// <summary>
+        /// 获取轮信息顺序表（就是真正的出怪轮的执行顺序）
+        /// </summary>
+        /// <returns></returns>
+        public List<BaseRound.RoundInfo> GetRoundInfoSequenceList()
+        {
+            List<RoundInfo> list = new List<RoundInfo>();
+            // 对每大轮都进行前序遍历，
+            foreach (var roundInfo in roundInfoList)
+            {
+                // 将结果集依次加入
+                foreach (var info in roundInfo.PreorderTraversal())
+                {
+                    list.Add(info);
+                }
+            }
+            return list;
+        }
     }
 
 
@@ -101,6 +125,8 @@ public class BaseStage : MonoBehaviour
     private List<Stack<int>> apartRowOffsetStackList; // 当前分路组对应行偏移量
     public bool isWinWhenClearAllBoss; // 在击败所有BOSS后是否判定为胜利 如果是，则只要击败最后一个BOSS就算胜利，否则需要消灭场上所有老鼠才算胜利
     public int bossLeft; // 全关剩余BOSS数，在游戏开始时会先统计有多少个BOSS
+    
+    private Queue<BoolModifier> waveQueue; // 每次出队的元素布尔值决定当前游戏画面显示是使用“一大波”提示还是“最后一波”提示
 
     /// <summary>
     /// 开始关卡
@@ -120,6 +146,8 @@ public class BaseStage : MonoBehaviour
         {
             if (GameController.Instance.isPause)
                 i--;
+            else if (!GameController.Instance.IsHasEnemyInScene())
+                break; // 如果场上没有敌人了则跳过等待，提早下一轮
             yield return null;
         }
     }
@@ -135,9 +163,19 @@ public class BaseStage : MonoBehaviour
         mCurrentRoundTimer = 0;
         // 先等一帧，第一帧要放人
         yield return StartCoroutine(WaitForIEnumerator(1));
-        Debug.Log("游戏开始了！现在是第"+GameController.Instance.GetCurrentStageFrame()+"帧");
-        yield return StartCoroutine(WaitForIEnumerator(mStageInfo.perpareTime));
-        Debug.Log("开始出怪了！现在是第" + GameController.Instance.GetCurrentStageFrame() + "帧");
+        //Debug.Log("游戏开始了！现在是第"+GameController.Instance.GetCurrentStageFrame()+"帧");
+        // 然后是初始生成卡片
+        ConstructeStartCard();
+        // 播放BGM
+        GameManager.Instance.audioSourceManager.PlayBGMusic(mStageInfo.startBGMRefence);
+        // yield return StartCoroutine(WaitForIEnumerator(mStageInfo.perpareTime));
+        for (int i = 0; i < mStageInfo.perpareTime; i++)
+        {
+            if (GameController.Instance.isPause)
+                i--;
+            yield return null;
+        }
+        //Debug.Log("开始出怪了！现在是第" + GameController.Instance.GetCurrentStageFrame() + "帧");
         for (int i = 0; i < mRoundList.Count; i++)
         {
             mCurrentRound = mRoundList[i];
@@ -151,7 +189,7 @@ public class BaseStage : MonoBehaviour
             yield return StartCoroutine(mCurrentRound.Execute());
             PopRowOffsetStack();
         }
-        Debug.Log("出怪完毕！");
+        //Debug.Log("出怪完毕！");
     }
 
     /// <summary>
@@ -168,9 +206,9 @@ public class BaseStage : MonoBehaviour
     /// <param name="stageInfo"></param>
     public static void Save(StageInfo stageInfo)
     {
-        Debug.Log("开始存档关卡信息！");
+        //Debug.Log("开始存档关卡信息！");
         JsonManager.Save(stageInfo, "Stage/Chapter/"+stageInfo.chapterIndex+"/"+stageInfo.sceneIndex+"/"+stageInfo.stageIndex);
-        Debug.Log("关卡信息存档完成！");
+        //Debug.Log("关卡信息存档完成！");
     }
 
     /// <summary>
@@ -179,15 +217,19 @@ public class BaseStage : MonoBehaviour
     /// <param name="stageInfo"></param>
     public static void Delete(StageInfo stageInfo)
     {
-        Debug.Log("开始删除关卡信息！");
+        //Debug.Log("开始删除关卡信息！");
         JsonManager.Delete("Stage/Chapter/" + stageInfo.chapterIndex + "/" + stageInfo.sceneIndex + "/" + stageInfo.stageIndex);
-        Debug.Log("关卡信息删除成功！");
+        //Debug.Log("关卡信息删除成功！");
     }
 
     public void Load()
     {
-        ChapterStageValue values = GameManager.Instance.playerData.GetCurrentChapterStageValue();
-        mStageInfo = Load("Chapter/"+ values.chapterIndex + "/" + values.sceneIndex + "/" + values.stageIndex);
+        mStageInfo = PlayerData.GetInstance().GetCurrentStageInfo();
+    }
+
+    public static StageInfo Load(int chapterIndex, int sceneIndex, int stageIndex)
+    {
+        return Load("Chapter/" + chapterIndex + "/" + sceneIndex + "/" + stageIndex);
     }
 
     public static StageInfo Load(string path)
@@ -218,7 +260,7 @@ public class BaseStage : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("无法找到当前关卡的RoundInfo信息！");
+            //Debug.LogWarning("无法找到当前关卡的RoundInfo信息！");
         }
 
         // 行偏移量初始化
@@ -238,6 +280,28 @@ public class BaseStage : MonoBehaviour
             isWinWhenClearAllBoss = true;
         else
             isWinWhenClearAllBoss = false;
+
+        // 计算本关一大波的显示情况队列
+        waveQueue = new Queue<BoolModifier>(); // 当实际游戏读取到需要显示一大波怪时，该队列出队值决定是显示“一大波”，还是“最后一波”
+        BoolModifier lastModifier = null;
+        foreach (var roundInfo in mStageInfo.GetRoundInfoSequenceList())
+        {
+            // 每轮遍历过去，如果遇到有旗子的轮则添加一面旗子进去并且暂时记住这面旗子为当前上一个旗子
+            // 其中当前布尔修饰器的意思是：true表示使用最后一波显示，false表示使用一大波显示，默认为false
+            if (roundInfo.isShowBigWaveRound)
+            {
+                BoolModifier b = new BoolModifier(false);
+                waveQueue.Enqueue(b);
+                lastModifier = b;
+            }
+
+            // 如果当前轮是BOSS轮，则强制设置上一面旗子显示为“最后一波”，即置为true
+            if (roundInfo.isBossRound && lastModifier != null)
+                lastModifier.Value = true;
+        }
+        // 当遍历完后，强制设置上一面旗子显示为“最后一波”，即置为true
+        if (lastModifier != null)
+            lastModifier.Value = true;
     }
 
     /// <summary>
@@ -368,5 +432,48 @@ public class BaseStage : MonoBehaviour
     public void DecBossCount()
     {
         bossLeft--;
+    }
+
+    /// <summary>
+    /// 获取下一大波是否显示为最后一波
+    /// </summary>
+    /// <returns></returns>
+    public bool IsNextBigWaveIsLastWave()
+    {
+        if(waveQueue.Count > 0)
+        {
+            return waveQueue.Dequeue().Value;
+        }
+        else
+        {
+            //Debug.LogWarning("当前一大波队列已为空！默认当前大波显示为“一大波”");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 初始生成卡片
+    /// </summary>
+    private void ConstructeStartCard()
+    {
+        // 写一个保险机制，主要是用于兼容老版本但未在编辑器里再次打开过的关卡
+        // 因为 startCardInfoList 是在v0.26版本新加的字段，因此老版本关卡读取不到，为空
+        // 在编辑器中，只要打开过这个关卡的编辑面板，系统会自动为其生成一个 startCardInfoList
+        if (mStageInfo.startCardInfoList == null)
+            return;
+
+        BaseCardController c = GameController.Instance.mCardController;
+        // 初始生成卡片状态信息依据当前关卡的卡片制造器
+        for (int i = 0; i < 9; i++)
+        {
+            for (int j = 0; j < 7; j++)
+            {
+                BaseGrid g = GameController.Instance.mMapController.GetGrid(i, j);
+                foreach (var info in mStageInfo.startCardInfoList[i][j])
+                {
+                    c.ConstructeByCardType(info.type, g);
+                };
+            }
+        }
     }
 }

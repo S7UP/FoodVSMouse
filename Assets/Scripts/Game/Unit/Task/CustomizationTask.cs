@@ -9,7 +9,7 @@ public class CustomizationTask : ITask
     private Queue<Func<bool>> TaskQueue = new Queue<Func<bool>>();
     private Func<bool> currentTask;
     public Action OnExitFunc;
-
+    private bool isEnd;
 
     public void OnEnter()
     {
@@ -40,10 +40,16 @@ public class CustomizationTask : ITask
     {
         if (OnExitFunc != null)
             OnExitFunc();
+        isEnd = true;
     }
 
     public void AddTaskFunc(Func<bool> func)
     {
         TaskQueue.Enqueue(func);
+    }
+
+    public bool IsEnd()
+    {
+        return isEnd;
     }
 }

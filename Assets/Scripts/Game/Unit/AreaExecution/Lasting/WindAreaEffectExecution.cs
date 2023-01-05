@@ -128,7 +128,7 @@ public class WindAreaEffectExecution : RetangleAreaEffectExecution
         velocity = v;
     }
 
-    public static WindAreaEffectExecution GetInstance(int col, int row, Vector2 position)
+    public static WindAreaEffectExecution GetInstance(float col, float row, Vector2 position)
     {
         WindAreaEffectExecution e = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "AreaEffect/WindAreaEffect").GetComponent<WindAreaEffectExecution>();
         e.MInit();
@@ -147,11 +147,15 @@ public class WindAreaEffectExecution : RetangleAreaEffectExecution
     /// <param name="ChangeTime">加减速时间</param>
     /// <param name="UniformTime">匀速时间</param>
     /// <param name="isLeftStart">是否从左向移动开始</param>
-    public static void SetClassicalWindAreaEffectMode(WindAreaEffectExecution e, int startState, int StayTime, int ChangeTime, int UniformTime, bool isLeftStart)
+    public static void SetClassicalWindAreaEffectMode(WindAreaEffectExecution e, int startState, int StayTime, int ChangeTime, int UniformTime, bool isMoveRightStart)
     {
         // 风域方向变化周期
         int state = 0; // 阶段 0等待，1加速 2匀速 3减速
-        int rotate_x = -1;
+        int rotate_x;
+        if (isMoveRightStart)
+            rotate_x = 1;
+        else
+            rotate_x = -1;
         int timeLeft = 0;
         GameController.Instance.AddTasker(
             //Action InitAction, 
@@ -228,6 +232,11 @@ public class WindAreaEffectExecution : RetangleAreaEffectExecution
 
             }
             );
+    }
+
+    public static void SetClassicalWindAreaEffectMode(WindAreaEffectExecution e, int startState, int StayTime, int ChangeTime, int UniformTime)
+    {
+        SetClassicalWindAreaEffectMode(e, startState, StayTime, ChangeTime, UniformTime, false);
     }
 
     public override void ExecuteRecycle()

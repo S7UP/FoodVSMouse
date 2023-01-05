@@ -113,10 +113,6 @@ public class ArsonMouse : MouseUnit
 
     public override void OnCastState()
     {
-        if (currentStateTimer <= 0)
-        {
-            return;
-        }
         // 先等待技能是否有完成预警动作，完成后才能执行后面的投掷时机判定逻辑
         if (!throwBombSkillAbility.IsFinishPreCast())
             return;
@@ -158,7 +154,7 @@ public class ArsonMouse : MouseUnit
         {
             foreach (var item in list)
             {
-                if (!item.CanBeSelectedAsTarget())
+                if (!UnitManager.CanBeSelectedAsTarget(this, item))
                     continue;
                 int temp = item.GetColumnIndex();
                 if (temp < minColumnIndex)
@@ -184,7 +180,7 @@ public class ArsonMouse : MouseUnit
             {
                 foreach (var item in list)
                 {
-                    if (!item.CanBeSelectedAsTarget())
+                    if (!UnitManager.CanBeSelectedAsTarget(this, item))
                         continue;
                     int temp = item.GetColumnIndex();
                     if (temp < minColumnIndex)
@@ -203,7 +199,7 @@ public class ArsonMouse : MouseUnit
             {
                 foreach (var item in list)
                 {
-                    if (!item.CanBeSelectedAsTarget())
+                    if (!UnitManager.CanBeSelectedAsTarget(this, item))
                         continue;
                     int temp = item.GetColumnIndex();
                     if (temp < minColumnIndex)

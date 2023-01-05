@@ -8,6 +8,7 @@ public sealed class StatusAbilityManager
 {
     public List<StatusAbility> statusAbilityList = new List<StatusAbility>();
     public List<StatusAbility> removeList = new List<StatusAbility>();
+
     // 唯一性buff（可以有多个施加源，但效果与一次相同，且所有施加源消失时buff才会失效）
     public class UniqueStatusAbility
     {
@@ -339,5 +340,10 @@ public sealed class StatusAbilityManager
     public void RemoveAfterRemoveStatusAbilityEvent(string statusName)
     {
         AfterRemoveStatusAbilityEventDict.Remove(statusName);
+    }
+
+    public List<StatusAbility> GetAllStatusAbility()
+    {
+        return statusAbilityList;
     }
 }

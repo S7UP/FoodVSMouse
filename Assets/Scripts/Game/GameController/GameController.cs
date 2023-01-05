@@ -20,7 +20,7 @@ public class GameController : MonoBehaviour
     public Camera mCamera;
 
     // 引用
-    private GameObject[] enemyListGo; // 用于存放敌对单位的父对象
+    private Transform enemyListTrans; // 用于存放敌对单位的父对象
     private GameObject[] allyListGo; // 用于存放友方单位的父对象
     private Transform effectListTrans; // 用于存放特效的
 
@@ -31,12 +31,13 @@ public class GameController : MonoBehaviour
     public BaseProgressController mProgressController; // 游戏进度控制器
     public MapController mMapController; // 格子控制器
     public ItemController mItemController; // 道具控制器
-    public List<BaseUnit>[] mEnemyList; // 存活的敌方单位表
+    public List<BaseUnit> mEnemyList; // 存活的敌方单位表
     public Dictionary<BaseUnit, int> mEnemyChangeRowDict; // 敌人换行字典，int值为原行数，新行数可以读取key当前行数
     public List<BaseUnit>[] mAllyList; // 存活的友方单位表
     
     public CharacterController mCharacterController; // 当前角色控制器
     public List<BaseBullet> mBulletList; // 存活的子弹表
+    public List<BaseLaser> mLaserList; // 存活的激光表
     public List<AreaEffectExecution> areaEffectExecutionList; // 存活的能力执行体（对象）
     public List<BaseEffect> baseEffectList; // 存活的特效表
     public List<Tasker> taskerList; // 存活的任务执行器表
@@ -77,10 +78,7 @@ public class GameController : MonoBehaviour
         // 敌方单位暂停
         foreach (var item in mEnemyList)
         {
-            for (int i = 0; i < item.Count; i++)
-            {
-                item[i].MPause();
-            }
+            item.MPause();
         }
         // 子弹暂停
         foreach (var item in mBulletList)
@@ -97,6 +95,8 @@ public class GameController : MonoBehaviour
         {
             item.MPause();
         }
+        // BGM暂停
+        GameManager.Instance.audioSourceManager.PauseAllMusic();
     }
 
     // 解除暂停的方法
@@ -114,10 +114,7 @@ public class GameController : MonoBehaviour
         // 敌方单位解除暂停
         foreach (var item in mEnemyList)
         {
-            for (int i = 0; i < item.Count; i++)
-            {
-                item[i].MResume();
-            }
+            item.MResume();
         }
         // 特效解除暂停
         foreach (var item in baseEffectList)
@@ -134,11 +131,13 @@ public class GameController : MonoBehaviour
         {
             item.MResume();
         }
+        // BGM停止暂停
+        GameManager.Instance.audioSourceManager.ResumeAllMusic();
     }
 
     private void Awake()
     {
-        Debug.Log("GameController Awake!");
+        //Debug.Log("GameController Awake!");
         _instance = this;
 
         // 随机数生成器
@@ -165,15 +164,8 @@ public class GameController : MonoBehaviour
         effectListTrans = GameObject.Find("EffectList").transform;
 
         // 敌方表相关
-        mEnemyList = new List<BaseUnit>[MapController.yRow];
-        enemyListGo = new GameObject[mEnemyList.Length];
-        for (int i = 0; i < mEnemyList.Length; i++)
-        {
-            mEnemyList[i] = new List<BaseUnit>();
-            GameObject go = new GameObject("i");
-            enemyListGo[i] = go;
-            go.transform.SetParent(GameObject.Find("EnemyList").transform);
-        }
+        mEnemyList = new List<BaseUnit>();
+        enemyListTrans = GameObject.Find("EnemyList").transform;
         mEnemyChangeRowDict = new Dictionary<BaseUnit, int>();
         // 友方表相关
         mAllyList = new List<BaseUnit>[MapController.yRow];
@@ -187,6 +179,8 @@ public class GameController : MonoBehaviour
         }
         // 子弹表相关
         mBulletList = new List<BaseBullet>();
+        // 激光相关
+        mLaserList = new List<BaseLaser>();
         // 范围效果表相关
         areaEffectExecutionList = new List<AreaEffectExecution>();
         // 特效表相关
@@ -222,7 +216,7 @@ public class GameController : MonoBehaviour
             Destroy(mCurrentStage);
         mCurrentStage = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Stage/Stage").GetComponent<BaseStage>();
         // mCurrentStage.Save();
-        //mCurrentStage.DemoLoad();
+        // mCurrentStage.DemoLoad();
         mCurrentStage.Load();
         mCurrentStage.Init();
 
@@ -248,8 +242,6 @@ public class GameController : MonoBehaviour
         // 自身属性初始化
         Init();
         // 关卡的刷怪逻辑使用协程
-        //StartCoroutine(mCurrentStage.Start());
-        //StopAllCoroutines();
         mCurrentStage.StartStage();
     }
 
@@ -382,7 +374,6 @@ public class GameController : MonoBehaviour
     {
         SetMouseAttribute(GameManager.Instance.attributeManager.GetMouseUnitAttribute(enemyInfo.type, enemyInfo.shape));
         MouseUnit mouse = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Mouse/"+enemyInfo.type).GetComponent<MouseUnit>();
-        mouse.transform.SetParent(enemyListGo[yIndex].transform);
         mouse.MInit();
         mouse.transform.position = MapManager.GetGridLocalPosition(xIndex, yIndex) + new Vector3(Vector2.right.x * MapManager.gridWidth, Vector2.right.y * MapManager.gridHeight) / 2;
         mouse.currentXIndex = xIndex;
@@ -396,9 +387,9 @@ public class GameController : MonoBehaviour
     /// </summary>
     public void AddMouseUnit(MouseUnit mouse)
     {
-        int yIndex = mouse.GetRowIndex();
-        mouse.UpdateRenderLayer(mEnemyList[yIndex].Count);
-        mEnemyList[yIndex].Add(mouse);
+        mouse.UpdateRenderLayer(mEnemyList.Count);
+        mouse.transform.SetParent(enemyListTrans);
+        mEnemyList.Add(mouse);
     }
 
     /// <summary>
@@ -412,7 +403,7 @@ public class GameController : MonoBehaviour
     {
         SetMouseAttribute(GameManager.Instance.attributeManager.GetBossUnitAttribute(enemyInfo.type, enemyInfo.shape));
         BossUnit boss = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Boss/" + enemyInfo.type + "/" + enemyInfo.shape).GetComponent<BossUnit>();
-        boss.transform.SetParent(enemyListGo[firstRow].transform);
+        boss.transform.SetParent(enemyListTrans);
         boss.MInit();
         boss.SetMaxHpAndCurrentHp(hp);
         boss.LoadSeedDict(); // 读取BOSS的种子表
@@ -420,8 +411,8 @@ public class GameController : MonoBehaviour
         boss.transform.position = MapManager.GetGridLocalPosition(firstColumn, firstRow) + new Vector3(Vector2.right.x * MapManager.gridWidth, Vector2.right.y * MapManager.gridHeight) / 2;
         boss.currentXIndex = firstColumn;
         boss.currentYIndex = firstRow;
-        boss.UpdateRenderLayer(mEnemyList[firstRow].Count);
-        mEnemyList[firstRow].Add(boss);
+        boss.UpdateRenderLayer(mEnemyList.Count);
+        mEnemyList.Add(boss);
         mProgressController.SetBossHpBarTarget(boss, barNumber); // 将BOSS与血条绑定
         return boss;
     }
@@ -471,6 +462,22 @@ public class GameController : MonoBehaviour
     {
         mBulletList.Add(bullet);
         bullet.UpdateRenderLayer(mBulletList.Count);
+    }
+
+    public void RemoveBullet(BaseBullet bullet)
+    {
+        mBulletList.Remove(bullet);
+    }
+
+    public void AddLaser(BaseLaser laser)
+    {
+        mLaserList.Add(laser);
+        laser.laserRenderer.UpdateRenderLayer(mLaserList.Count);
+    }
+
+    public void RemoveLaser(BaseLaser laser)
+    {
+        mLaserList.Remove(laser);
     }
 
     /// <summary>
@@ -549,11 +556,23 @@ public class GameController : MonoBehaviour
     /// 产生角色单位（依附于格子）
     /// </summary>
     /// <returns></returns>
-    public CharacterUnit CreateCharacter(int type, int shape)
+    public CharacterUnit CreateCharacter(int type)
     {
-        //SetCharacterAttribute(JsonManager.Load<BaseUnit.Attribute>("Character/" + type + "/" + shape + "")); // 准备先持有要创建实例的初始化信息
-        SetCharacterAttribute(GameManager.Instance.attributeManager.GetCharacterUnitAttribute(type, shape)); // 准备先持有要创建实例的初始化信息
-        CharacterUnit c = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Character/" + type + "/" + shape).GetComponent<CharacterUnit>();
+        SetCharacterAttribute(new BaseUnit.Attribute() {
+            name = "玩家",
+            type = type, 
+            shape = 0,
+
+            baseHP = 1200,
+            baseAttack = 10,
+            baseAttackSpeed = 1,
+            attackPercent = 0.5f,
+            baseMoveSpeed = 1.0f,
+            baseDefense = 0,
+            baseRange = 0,
+            baseHeight = 0
+        }); // 准备先持有要创建实例的初始化信息
+        CharacterUnit c = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Character/CharacterModel").GetComponent<CharacterUnit>();
         c.MInit();
         return c;
     }
@@ -624,15 +643,6 @@ public class GameController : MonoBehaviour
         return mFrameNum;
     }
 
-    /// <summary>
-    /// 获取当前场景敌人表
-    /// </summary>
-    /// <returns></returns>
-    public List<BaseUnit>[] GetEnemyList()
-    {
-        return mEnemyList;
-    }
-
 
     /// <summary>
     /// 获取特定行的敌人
@@ -640,7 +650,17 @@ public class GameController : MonoBehaviour
     /// <returns></returns>
     public List<BaseUnit> GetSpecificRowEnemyList(int i)
     {
-        return mEnemyList[i];
+        if (i < 0)
+            i = 0;
+        if (i >= 7)
+            i = 6;
+        List<BaseUnit> list = new List<BaseUnit>();
+        foreach (var unit in mEnemyList)
+        {
+            if (unit.GetRowIndex() == i)
+                list.Add(unit);
+        }
+        return list;
     }
 
     /// <summary>
@@ -649,15 +669,7 @@ public class GameController : MonoBehaviour
     /// <returns></returns>
     public List<BaseUnit> GetEachEnemy()
     {
-        List<BaseUnit> list = new List<BaseUnit>();
-        for (int i = 0; i < mEnemyList.Length; i++)
-        {
-            foreach (var item in GetSpecificRowEnemyList(i))
-            {
-                list.Add(item);
-            }
-        }
-        return list;
+        return mEnemyList;
     }
 
     /// <summary>
@@ -666,14 +678,7 @@ public class GameController : MonoBehaviour
     /// <returns></returns>
     public bool IsHasEnemyInScene()
     {
-        for (int i = 0; i < mEnemyList.Length; i++)
-        {
-            foreach (var item in GetSpecificRowEnemyList(i))
-            {
-                return true;
-            }
-        }
-        return false;
+        return mEnemyList.Count > 0;
     }
 
     /// <summary>
@@ -761,14 +766,11 @@ public class GameController : MonoBehaviour
     /// </summary>
     public void ClearAllEnemy()
     {
-        for (int i = 0; i < mEnemyList.Length; i++)
+        foreach (var item in mEnemyList)
         {
-            foreach (var item in mEnemyList[i])
-            {
-                item.ExecuteRecycle();
-            }
-            mEnemyList[i].Clear();
+            item.ExecuteRecycle();
         }
+        mEnemyList.Clear();
         mEnemyChangeRowDict.Clear();
     }
 
@@ -797,6 +799,18 @@ public class GameController : MonoBehaviour
             item.ExecuteRecycle();
         }
         mBulletList.Clear();
+    }
+
+    /// <summary>
+    /// 清理所有激光
+    /// </summary>
+    public void ClearAllLaser()
+    {
+        foreach (var item in mLaserList)
+        {
+            item.ExecuteRecycle();
+        }
+        mLaserList.Clear();
     }
 
     /// <summary>
@@ -841,13 +855,10 @@ public class GameController : MonoBehaviour
     /// <returns></returns>
     public bool IsHasBoss()
     {
-        for (int i = 0; i < mEnemyList.Length; i++)
+        foreach (var unit in mEnemyList)
         {
-            foreach (var item in mEnemyList[i])
-            {
-                if (item is BossUnit)
-                    return true;
-            }
+            if (unit is BossUnit)
+                return true;
         }
         return false;
     }
@@ -896,39 +907,32 @@ public class GameController : MonoBehaviour
             }
         }
 
-
+        List<BaseUnit> enemyUpdateList = new List<BaseUnit>();
         // 敌人帧逻辑
-        foreach (var item in mEnemyList)
+        for (int i = 0; i < mEnemyList.Count; i++)
         {
-            bool flag = false;
-            for (int i = 0; i < item.Count; i++)
+            BaseUnit unit = mEnemyList[i];
+            if (unit.IsValid())
             {
-                BaseUnit unit = item[i];
-                if (unit.IsValid())
-                {
-                    unit.MUpdate();
-                }
-                else
-                {
-                    i--;
-                    item.Remove(unit);
-                    flag = true;
-                }
+                enemyUpdateList.Add(unit);
             }
-            if (flag)
-                for (int i = 0; i < item.Count; i++)
-                {
-                    BaseUnit unit = item[i];
-                    unit.UpdateRenderLayer(i);
-                }
+            else
+            {
+                i--;
+                mEnemyList.Remove(unit);
+            }
         }
-        // 敌人换行
+        foreach (var unit in enemyUpdateList)
+        {
+            unit.MUpdate();
+        }
+
+        // 敌人换行更新图层
         foreach (var item in mEnemyChangeRowDict)
         {
             BaseUnit unit = item.Key;
-            GetSpecificRowEnemyList(item.Value).Remove(unit);
-            GetSpecificRowEnemyList(unit.GetRowIndex()).Add(unit);
-            unit.transform.SetParent(enemyListGo[unit.GetRowIndex()].transform);
+            // GetSpecificRowEnemyList(item.Value).Remove(unit);
+            // GetSpecificRowEnemyList(unit.GetRowIndex()).Add(unit);
             unit.UpdateRenderLayer(GetSpecificRowEnemyList(unit.GetRowIndex()).Count);
         }
         mEnemyChangeRowDict.Clear();
@@ -985,6 +989,34 @@ public class GameController : MonoBehaviour
             }
         }
 
+        // 激光帧逻辑
+        {
+            bool flag = false;
+            for (int i = 0; i < mLaserList.Count; i++)
+            {
+                BaseLaser unit = mLaserList[i];
+                if (unit.isActiveAndEnabled)
+                {
+                    unit.MUpdate();
+                }
+                else
+                {
+                    i--;
+                    mLaserList.Remove(unit);
+                    flag = true;
+                }
+            }
+            if (flag)
+            {
+                for (int i = 0; i < mLaserList.Count; i++)
+                {
+                    BaseLaser unit = mLaserList[i];
+                    unit.laserRenderer.UpdateRenderLayer(i);
+                }
+            }
+        }
+
+
         // 特效帧逻辑
         {
 
@@ -1032,7 +1064,37 @@ public class GameController : MonoBehaviour
         }else if (mProgressController.IsTimeOut())
         {
             // 超时判定
-            Lose();
+            if (mCurrentStage.isWinWhenClearAllBoss)
+            {
+                // 击败BOSS的情况
+                int currentSenceBossCount = 0;
+                foreach (var unit in GetEachEnemy())
+                {
+                    if(unit is MouseUnit)
+                    {
+                        MouseUnit m = unit as MouseUnit;
+                        if (m.IsBoss())
+                        {
+                            // boss还活着就输了
+                            if (m.IsAlive())
+                                Lose();
+                            currentSenceBossCount++;
+                        }
+                    }
+                }
+                // 比较剩余BOSS与场上的BOSS数，如果一致且它们都处于死亡状态，则不会判输
+                if (currentSenceBossCount < mCurrentStage.bossLeft)
+                    Lose();
+            }
+            else
+            {
+                // 击败全部小兵的情况
+                foreach (var unit in GetEachEnemy())
+                {
+                    if (unit.IsAlive())
+                        Lose();
+                }
+            }
         }
 
         // 将缓冲池的游戏对象放回到对象池
@@ -1045,10 +1107,13 @@ public class GameController : MonoBehaviour
     /// </summary>
     public void RecycleAndDestoryAllInstance()
     {
+        // 停用BGM
+        GameManager.Instance.audioSourceManager.StopAllMusic();
         // 回收场上所有对象 && 自身表引用初始化
         ClearAllEnemy();
         ClearAllAlly();
         ClearAllBullet();
+        ClearAllLaser();
         ClearAllAreaEffectExecution();
         ClearAllEffect();
         ClearAllTasker();
@@ -1079,7 +1144,7 @@ public class GameController : MonoBehaviour
                 }
                 mKeyBoardSetting.AddAction((KeyCode)c, delegate { 
                     mCardController.mCardBuilderList[j].OnClick();
-                    if (GameController.Instance.mCardController.isSelectCard)
+                    if (GameController.Instance.mCardController.isSelectCard && GameManager.Instance.configManager.mConfig.isEnableQuickReleaseCard)
                         GameController.Instance.mCardController.OnMouseLeftDownWhenSelectedCard();
                 });
             }
@@ -1091,13 +1156,13 @@ public class GameController : MonoBehaviour
     /// 检测某行能否触发攻击（用于友方射手攻击判定）
     /// </summary>
     /// <returns></returns>
-    public bool CheckRowCanAttack(int rowIndex)
+    public bool CheckRowCanAttack(BaseUnit unit, int rowIndex)
     {
         if (isEnableNoTargetAttackMode)
             return true;
         foreach (var m in GetSpecificRowEnemyList(rowIndex))
         {
-            if (m.CanBeSelectedAsTarget())
+            if (UnitManager.CanBeSelectedAsTarget(unit, m))
                 return true;
         }
         return false;

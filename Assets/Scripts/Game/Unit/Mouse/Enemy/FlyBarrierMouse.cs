@@ -72,7 +72,7 @@ public class FlyBarrierMouse : MouseUnit, IFlyUnit
             {
                 foreach (var item in g.GetAttackableFoodUnitList())
                 {
-                    if (item.CanBeSelectedAsTarget())
+                    if (UnitManager.CanBeSelectedAsTarget(this, item))
                     {
                         return true;
                     }
@@ -109,7 +109,7 @@ public class FlyBarrierMouse : MouseUnit, IFlyUnit
             {
                 foreach (var item in b.GetGrid().GetAttackableFoodUnitList())
                 {
-                    if (!item.NumericBox.GetBoolNumericValue(StringManager.Invincibility) && !item.tag.Equals("Character") && item.CanBeSelectedAsTarget())
+                    if (!item.NumericBox.GetBoolNumericValue(StringManager.Invincibility) && !item.tag.Equals("Character") && UnitManager.CanBeSelectedAsTarget(this, item))
                     {
                         item.ExecuteDeath();
                     }
@@ -181,9 +181,9 @@ public class FlyBarrierMouse : MouseUnit, IFlyUnit
         return !(mCurrentActionState is TransitionState) && base.CanHit(bullet);
     }
 
-    public override bool CanBeSelectedAsTarget()
+    public override bool CanBeSelectedAsTarget(BaseUnit otherUnit)
     {
-        return !(mCurrentActionState is TransitionState) && base.CanBeSelectedAsTarget();
+        return !(mCurrentActionState is TransitionState) && base.CanBeSelectedAsTarget(otherUnit);
     }
 
     /// <summary>

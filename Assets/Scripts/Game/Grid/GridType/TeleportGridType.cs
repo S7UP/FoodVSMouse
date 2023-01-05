@@ -6,12 +6,15 @@ using UnityEngine;
 /// </summary>
 public class TeleportGridType : BaseGridType
 {
+    private static RuntimeAnimatorController Tp_AnimatorController;
     private int maxTime;
     private int timeLeft;
     private bool isPlayTpClip; // 是否在播放TP动画
 
     public override void Awake()
     {
+        if (Tp_AnimatorController == null)
+            Tp_AnimatorController = GameManager.Instance.GetRuntimeAnimatorController("GridType/Teleport/0");
         base.Awake();
         animator = GetComponent<Animator>();
     }
@@ -22,6 +25,7 @@ public class TeleportGridType : BaseGridType
         maxTime = 480;
         timeLeft = maxTime;
         base.MInit();
+        animator.runtimeAnimatorController = Tp_AnimatorController;
     }
 
     /// <summary>
@@ -37,8 +41,8 @@ public class TeleportGridType : BaseGridType
             if (m.IsBoss())
                 return false;
         }
-        // 只允许高度为0的单位通过
-        return unit.GetHeight()==0;
+        // 只允许高度为0 且 可被选取的单位通过
+        return unit.GetHeight()==0 && UnitManager.CanBeSelectedAsTarget(null, unit);
     }
 
     /// <summary>
@@ -73,6 +77,7 @@ public class TeleportGridType : BaseGridType
     /// </summary>
     private void ExecuteTp()
     {
+        animatorController.Play("TP");
         for (int i = 0; i < unitList.Count; i++)
         {
             BaseUnit m = unitList[i];
@@ -106,7 +111,7 @@ public class TeleportGridType : BaseGridType
                 m.RemoveCanBlockFunc(noBlockFunc);
                 m.RemoveCanHitFunc(noHitFunc);
                 m.DisableMove(false); // 解除禁用移动
-                m.AddUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(m, 180, false)); // 目标在落地后晕眩3秒
+                m.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(m, 180, false)); // 目标在落地后晕眩3秒
             });
         }
         isPlayTpClip = true;

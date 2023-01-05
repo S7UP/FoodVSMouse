@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6560605702601517123}
   - component: {fileID: 2273559529684654033}
   - component: {fileID: 5078748746679819126}
-  m_Layer: 7
+  m_Layer: 10
   m_Name: 1
   m_TagString: Ladder
   m_Icon: {fileID: 0}
@@ -77,6 +77,9 @@ MonoBehaviour:
   mShape: 0
   typeAndShapeValue: 0
   currentStateTimer: 0
+  disableMove: 0
+  aliveTime: 0
+  lastPosition: {x: 0, y: 0}
   mGrid: {fileID: 0}
   spriteRenderer: {fileID: 0}
   animator: {fileID: 0}
@@ -93,7 +96,7 @@ GameObject:
   - component: {fileID: 4938161317884803039}
   - component: {fileID: 4636816197262632506}
   - component: {fileID: 4109746488507613573}
-  m_Layer: 7
+  m_Layer: 10
   m_Name: SpriteGo
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -154,7 +157,7 @@ SpriteRenderer:
   m_SortingLayerID: 481756845
   m_SortingLayer: 5
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: 3d2862ed9bae76445b3322067f7f69eb, type: 3}
+  m_Sprite: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -162,7 +165,7 @@ SpriteRenderer:
   m_Size: {x: 2.09, y: 2.08}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!95 &4636816197262632506

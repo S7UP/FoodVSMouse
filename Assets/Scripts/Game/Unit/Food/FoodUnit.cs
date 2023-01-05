@@ -121,7 +121,9 @@ public class FoodUnit : BaseUnit
         {
             if (item.skillType == SkillAbility.Type.GeneralAttack)
             {
-                skillAbilityManager.AddSkillAbility(new GeneralAttackSkillAbility(this, item));
+                GeneralAttackSkillAbility s = new GeneralAttackSkillAbility(this, item);
+                skillAbilityManager.AddSkillAbility(s);
+                s.FullCurrentEnergy(); // 现在上来也可以直接攻击了，而非等第一轮攻击CD
             }
         }
     }
@@ -187,7 +189,8 @@ public class FoodUnit : BaseUnit
     /// </summary>
     public override void AfterGeneralAttack()
     {
-
+        mAttackFlag = true;
+        SetActionState(new IdleState(this));
     }
 
     /// <summary>
@@ -260,7 +263,7 @@ public class FoodUnit : BaseUnit
     {
         if(unit is MouseUnit)
         {
-            return GetRowIndex() == unit.GetRowIndex();
+            return GetRowIndex() == unit.GetRowIndex() && IsAlive();
         }
         return false; // 别的单位暂时默认不能阻挡
     }
@@ -272,7 +275,7 @@ public class FoodUnit : BaseUnit
     /// <returns></returns>
     public override bool CanHit(BaseBullet bullet)
     {
-        return GetRowIndex() == bullet.GetRowIndex();
+        return IsAlive();
     }
 
     /// <summary>
@@ -370,13 +373,18 @@ public class FoodUnit : BaseUnit
     /// <summary>
     /// 根据攻击速度来更新攻击动画的速度
     /// </summary>
-    private void UpdateAttackAnimationSpeed()
+    protected virtual void UpdateAttackAnimationSpeed()
     {
-        AnimatorStateRecorder a = animatorController.GetAnimatorStateRecorder("Attack");
+        UpdateAnimationSpeedByAttackSpeed("Attack");
+    }
+
+    protected void UpdateAnimationSpeedByAttackSpeed(string attackClipName)
+    {
+        AnimatorStateRecorder a = animatorController.GetAnimatorStateRecorder(attackClipName);
         float time = a.aniTime; // 一倍速下一次攻击动画的播放时间（帧）
         float interval = 1 / NumericBox.AttackSpeed.Value * 60;  // 攻击间隔（帧）
         float speed = Mathf.Max(1, time / interval); // 计算动画实际播放速度
-        animatorController.SetSpeed("Attack", speed);
+        animatorController.SetSpeed(attackClipName, speed);
     }
 
     public static void SaveNewFoodInfo()
@@ -402,9 +410,9 @@ public class FoodUnit : BaseUnit
             foodType = FoodType.Shooter
         };
 
-        Debug.Log("开始存档美食信息！");
+        //Debug.Log("开始存档美食信息！");
         JsonManager.Save(attr, "Food/" + attr.baseAttrbute.type + "/" + attr.baseAttrbute.shape + "");
-        Debug.Log("美食信息存档完成！");
+        //Debug.Log("美食信息存档完成！");
     }
 
     /// <summary>
@@ -546,9 +554,9 @@ public class FoodUnit : BaseUnit
     /// 可否被选择为目标
     /// </summary>
     /// <returns></returns>
-    public override bool CanBeSelectedAsTarget()
+    public override bool CanBeSelectedAsTarget(BaseUnit otherUnit)
     {
-        return mBoxCollider2D.enabled && base.CanBeSelectedAsTarget();
+        return mBoxCollider2D.enabled && IsAlive() && base.CanBeSelectedAsTarget(otherUnit);
     }
 
     public override void MPause()

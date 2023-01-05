@@ -1,4 +1,3 @@
-using System;
 /// <summary>
 /// 处理游戏单位的管理者
 /// </summary>
@@ -12,6 +11,9 @@ public class UnitManager
     /// <returns></returns>
     public static bool CanBlock(BaseUnit u1, BaseUnit u2)
     {
+        if (u1 == null || u2 == null)
+            return false;
+
         foreach (var func in u1.CanBlockFuncList)
         {
             if (!func(u1, u2))
@@ -31,10 +33,18 @@ public class UnitManager
     /// <returns></returns>
     public static bool CanBulletHit(BaseUnit u, BaseBullet b)
     {
+        if (u == null || b == null)
+            return false;
+
         // 只要有一个不满足条件就返回false
         foreach (var func in u.CanHitFuncList)
         {
             if (!func(u, b))
+                return false;
+        }
+        foreach (var func in b.CanHitFuncList)
+        {
+            if (!func(b, u))
                 return false;
         }
 
@@ -42,47 +52,22 @@ public class UnitManager
     }
 
 
-    // 禁止被弹幕攻击方法
-    private static Func<BaseUnit, BaseBullet, bool> noHitFunc = delegate
-    {
-        return false;
-    };
     /// <summary>
-    /// 为单位添加不会被常规子弹命中的效果（请和下面的方法配套使用）
+    /// u1能否把u2作为攻击目标选择
     /// </summary>
-    /// <param name="u"></param>
-    public static void AddNoHitFunc(BaseUnit u)
+    /// <param name="u1">可以为空，若为空则仅用来判定能否作为攻击目标</param>
+    /// <param name="u2">不能为空，若为空一定返回false</param>
+    /// <returns></returns>
+    public static bool CanBeSelectedAsTarget(BaseUnit u1, BaseUnit u2)
     {
-        u.AddCanHitFunc(noHitFunc);
-    }
-    /// <summary>
-    /// 为单位移除不被常规子弹命中的效果（请和上面的方法配套使用）
-    /// </summary>
-    /// <param name="u"></param>
-    public static void RemoveNoHitFunc(BaseUnit u)
-    {
-        u.RemoveCanHitFunc(noHitFunc);
-    }
+        if (u2 == null)
+            return false;
 
-    // 禁止阻挡方法
-    private static Func<BaseUnit, BaseUnit, bool> noBlockFunc = delegate
-    {
-        return false;
-    };
-    /// <summary>
-    /// 为单位添加不会被阻挡的效果（请和下面的方法配套使用）
-    /// </summary>
-    /// <param name="u"></param>
-    public static void AddNoBlockFunc(BaseUnit u)
-    {
-        u.AddCanBlockFunc(noBlockFunc);
-    }
-    /// <summary>
-    /// 为单位移除不会被阻挡的效果（请和上面的方法配套使用）
-    /// </summary>
-    /// <param name="u"></param>
-    public static void RemoveNoBlockFunc(BaseUnit u)
-    {
-        u.RemoveCanBlockFunc(noBlockFunc);
+        foreach (var func in u2.CanBeSelectedAsTargetFuncList)
+        {
+            if (!func(u2, u1))
+                return false;
+        }
+        return u2.CanBeSelectedAsTarget(u1);
     }
 }

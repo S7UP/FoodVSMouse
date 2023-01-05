@@ -356,7 +356,7 @@ public class Thundered : BossUnit
                             BaseGrid g = unit.GetGrid();
                             if (g != null)
                             {
-                                return g.GetThrowHighestAttackPriorityUnitInclude();
+                                return g.GetThrowHighestAttackPriorityUnitInclude(this);
                             }
                             return unit;
                         };
@@ -397,7 +397,7 @@ public class Thundered : BossUnit
                                 BaseGrid g = unit.GetGrid();
                                 if (g != null)
                                 {
-                                    return g.GetThrowHighestAttackPriorityUnitInclude();
+                                    return g.GetThrowHighestAttackPriorityUnitInclude(this);
                                 }
                                 return unit;
                             };
@@ -440,7 +440,7 @@ public class Thundered : BossUnit
                                 BaseGrid g = unit.GetGrid();
                                 if (g != null)
                                 {
-                                    return g.GetThrowHighestAttackPriorityUnitInclude();
+                                    return g.GetThrowHighestAttackPriorityUnitInclude(this);
                                 }
                                 return unit;
                             };

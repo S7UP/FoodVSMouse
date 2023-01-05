@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Xml.Linq;
 
 using UnityEngine;
 [System.Serializable]
@@ -9,36 +10,47 @@ using UnityEngine;
 public class PlayerData
 {
     public static string path = "PlayerData";
-    public static string filepath = Application.streamingAssetsPath + "/Json/" + path + ".json";
+    private static PlayerData _Instance; // 玩家存档实例
 
     /// <summary>
     /// 主线玩家携带卡片组信息
     /// </summary>
-    public Dictionary<int, Dictionary<int, Dictionary<int, List<List<AvailableCardInfo>>>>> ChapterCardGroupDict;
-    public Dictionary<int, Dictionary<int, Dictionary<int, List<List<char>>>>> ChapterKeyGroupDict;
-
+    public int version = 0; // 当前存档版本号
+    public Dictionary<int, Dictionary<int, Dictionary<int, List<List<AvailableCardInfo>>>>> ChapterCardGroupDict = new Dictionary<int, Dictionary<int, Dictionary<int, List<List<AvailableCardInfo>>>>>();
+    public Dictionary<int, Dictionary<int, Dictionary<int, List<List<char>>>>> ChapterKeyGroupDict = new Dictionary<int, Dictionary<int, Dictionary<int, List<List<char>>>>>();
+    public string name = "不知名的冒险家"; // 玩家名
+    public float currentExp = 0; // 玩家当前经验值
+    public int level = 1; // 玩家当前等级
+    public int weapons = 0; // 玩家武器
+    public int suit = 0; // 玩家套装种类
+    public int[] jewelArray = new int[3] { -1, -1, -1 }; // 宝石（3个）
+    public int difficult = 0; // 难度(0,1,2,3)
+    
     // 以下是非序列化内容
-    private BaseStage.ChapterStageValue currentChapterStageValue;
+    private BaseStage.StageInfo currentStageInfo;
     private List<AvailableCardInfo> currentSelectedCardInfoList = new List<AvailableCardInfo>(); // 当前携带的卡片组（选卡场景与关卡场景对接）
     private List<char> currentCardKeyList = new List<char>(); // 当前键位控制表
-    private WeaponsInfo currentWeaponsInfo;
-    private CharacterInfo currentCharacterInfo;
+
 
     /// <summary>
     /// 从本地加载玩家存档数据
     /// </summary>
-    public static PlayerData LoadPlayerData()
+    public static PlayerData GetInstance()
     {
-        if (!File.Exists(filepath))
+        if(_Instance == null)
         {
-            // 如果不存在存档，则新建一个存档
-            JsonManager.Save<PlayerData>(new PlayerData(), path);
+            PlayerData data = null;
+            if (!JsonManager.TryLoadFromLocal(path, out data))
+            {
+                // 如果不存在存档，则新建一个存档
+                data = new PlayerData();
+                data.Save();
+            }
+            // 检测并修复存档信息的完整性
+            CheckAndFixPlayerData(data);
+            _Instance = data;
         }
-        // 然后读取存档
-        PlayerData data = JsonManager.Load<PlayerData>(path);
-        // 检测并修复存档信息的完整性
-        CheckAndFixPlayerData(data);
-        return data;
+        return _Instance;
     }
 
     /// <summary>
@@ -46,12 +58,12 @@ public class PlayerData
     /// </summary>
     private static void CheckAndFixPlayerData(PlayerData data)
     {
-        if (data.ChapterCardGroupDict == null)
-            data.ChapterCardGroupDict = new Dictionary<int, Dictionary<int, Dictionary<int, List<List<AvailableCardInfo>>>>>();
-        if (data.ChapterKeyGroupDict == null)
-            data.ChapterKeyGroupDict = new Dictionary<int, Dictionary<int, Dictionary<int, List<List<char>>>>>();
-        // 转存
-        data.Save();
+        if(data.version < PlayerManager.version)
+        {
+            data.version = PlayerManager.version;
+            // 转存
+            data.Save();
+        }
     }
 
     /// <summary>
@@ -134,7 +146,7 @@ public class PlayerData
     /// </summary>
     public void Save()
     {
-        JsonManager.Save<PlayerData>(this, path);
+        JsonManager.SaveOnLocal(this, path);
     }
 
     /// <summary>
@@ -174,42 +186,73 @@ public class PlayerData
     }
 
     /// <summary>
-    /// 设置当前所在的关卡相关值
+    /// 设置当前关卡
     /// </summary>
     /// <param name="chapterIndex"></param>
     /// <param name="sceneIndex"></param>
     /// <param name="stageIndex"></param>
-    public void SetCurrentChapterStageValue(int chapterIndex, int sceneIndex, int stageIndex)
+    public void SetCurrentStageInfo(int chapterIndex, int sceneIndex, int stageIndex)
     {
-        currentChapterStageValue = new BaseStage.ChapterStageValue() { chapterIndex = chapterIndex, sceneIndex = sceneIndex, stageIndex = stageIndex };
+        currentStageInfo = BaseStage.Load(chapterIndex, sceneIndex, stageIndex);
+    }
+
+    public void SetCurrentStageInfo(BaseStage.StageInfo stageInfo)
+    {
+        currentStageInfo = stageInfo;
     }
 
     /// <summary>
-    /// 获取当前关卡相关值
+    /// 获取当前关卡信息
     /// </summary>
     /// <returns></returns>
-    public BaseStage.ChapterStageValue GetCurrentChapterStageValue()
+    public BaseStage.StageInfo GetCurrentStageInfo()
     {
-        return currentChapterStageValue;
+        if (currentStageInfo == null)
+            SetCurrentStageInfo(0, 0, 0);
+        return currentStageInfo;
     }
 
-    public void SetWeaponsInfo(WeaponsInfo info)
+    /// <summary>
+    /// 设置当前使用武器的编号
+    /// </summary>
+    /// <param name="type"></param>
+    public void SetWeapons(int type)
     {
-        currentWeaponsInfo = info;
+        weapons = type;
     }
 
-    public WeaponsInfo GetWeaponsInfo()
+    /// <summary>
+    /// 获取当前使用的武器的编号
+    /// </summary>
+    /// <returns></returns>
+    public int GetWeapons()
     {
-        return currentWeaponsInfo;
+        return weapons;
     }
 
-    public void SetCharacterInfo(CharacterInfo info)
+    /// <summary>
+    /// 获取当前使用的套装编号
+    /// </summary>
+    /// <returns></returns>
+    public int GetCharacter()
     {
-        currentCharacterInfo = info;
+        return suit;
     }
 
-    public CharacterInfo GetCharacterInfo()
+    /// <summary>
+    /// 获取当前游戏难度
+    /// </summary>
+    /// <returns></returns>
+    public int GetDifficult()
     {
-        return currentCharacterInfo;
+        return difficult;
+    }
+
+    /// <summary>
+    /// 设置当前游戏难度
+    /// </summary>
+    public void SetDifficult(int diff)
+    {
+        difficult = diff;
     }
 }

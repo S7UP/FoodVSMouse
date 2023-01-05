@@ -13,7 +13,8 @@ public class CaptainAmerica : BossUnit
     private CustomizationSkillAbility SummonSoldiers; // 召唤士兵
 
     // 盾牌子弹
-    private EnemyBullet SheildBullet;
+    private EnemyBullet ShieldBullet;
+    private static RuntimeAnimatorController ShieldBulletAnimaotrController;
 
     // 其他状态
     private bool isHasShield; // 是否持有盾牌
@@ -40,8 +41,10 @@ public class CaptainAmerica : BossUnit
 
     public override void Awake()
     {
+        if (ShieldBulletAnimaotrController == null)
+            ShieldBulletAnimaotrController = GameManager.Instance.GetRuntimeAnimatorController("Boss/20/ShieldBullet");
         base.Awake();
-        SheildBullet = transform.Find("ShieldBullet").GetComponent<EnemyBullet>();
+        ShieldBullet = transform.Find("ShieldBullet").GetComponent<EnemyBullet>();
     }
 
     public override void MInit()
@@ -50,8 +53,9 @@ public class CaptainAmerica : BossUnit
         isPreDrop = false;
         DropWaitTimeLeft = 0;
         ShieldMovementTimeLeft = 0;
-        SheildBullet.gameObject.SetActive(false);
-        SheildBullet.isAffectCharacter = false; // 不影响人
+        ShieldBullet.gameObject.SetActive(false);
+        ShieldBullet.isnKillSelf = true;
+        ShieldBullet.isAffectCharacter = false; // 不影响人
         base.MInit();
     }
 
@@ -150,7 +154,7 @@ public class CaptainAmerica : BossUnit
     /// </summary>
     public override void BeforeDeath()
     {
-        RecycleSheildBullet();
+        RecycleShieldBullet();
         base.BeforeDeath();
     }
 
@@ -159,7 +163,7 @@ public class CaptainAmerica : BossUnit
     /// </summary>
     public override void ExecuteRecycle()
     {
-        RecycleSheildBullet();
+        RecycleShieldBullet();
         base.ExecuteRecycle();
     }
 
@@ -269,7 +273,7 @@ public class CaptainAmerica : BossUnit
             c.AddSpellingFunc(delegate {
                 if (animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime()>=0.5f)
                 {
-                    DropSheildBullet();
+                    DropShieldBullet();
                     return true;
                 }
                 return false;
@@ -473,7 +477,7 @@ public class CaptainAmerica : BossUnit
     /// <summary>
     /// 扔出圆盾
     /// </summary>
-    private void DropSheildBullet()
+    private void DropShieldBullet()
     {
         float s = 0;
         for (int i = 1; i < pathList.Count; i++)
@@ -494,16 +498,12 @@ public class CaptainAmerica : BossUnit
         task.OnEnterFunc = delegate 
         {
             // 圆盾子弹出现
-            SheildBullet.gameObject.SetActive(true);
-            SheildBullet.MInit();
-            SheildBullet.isAffectCharacter = false; // 不影响人
-            SheildBullet.isnKillSelf = true;
-            SheildBullet.SetDamage(900);
-            SheildBullet.animatorController.Play("Fly", true);
+            CreateShieldBullet();
             // 设置位置为自身前方一格
-            SheildBullet.transform.localPosition = MapManager.gridWidth * Vector2.left;
+            ShieldBullet.transform.localPosition = MapManager.gridWidth * Vector2.left;
             // 
-            SheildBullet.transform.SetParent(GameController.Instance.transform);
+            ShieldBullet.transform.SetParent(GameController.Instance.transform);
+            GameController.Instance.AddBullet(ShieldBullet);
         };
         for (int i = 0; i < rotList.Count; i++)
         {
@@ -512,7 +512,7 @@ public class CaptainAmerica : BossUnit
             int t = 0;
             task.AddTaskFunc(delegate 
             {
-                SheildBullet.transform.position += v * rot;
+                ShieldBullet.transform.position += v * rot;
                 t++;
                 if (t >= time)
                 {
@@ -523,19 +523,34 @@ public class CaptainAmerica : BossUnit
         }
         task.OnExitFunc = delegate 
         {
-            RecycleSheildBullet();
+            RecycleShieldBullet();
         };
         AddTask(task);
     }
 
     /// <summary>
+    /// 创建圆盾子弹
+    /// </summary>
+    private void CreateShieldBullet()
+    {
+        ShieldBullet.gameObject.SetActive(true);
+        ShieldBullet.MInit();
+        ShieldBullet.SetRuntimeAnimatorController(ShieldBulletAnimaotrController);
+        ShieldBullet.isAffectCharacter = false; // 不影响人
+        ShieldBullet.isnKillSelf = true;
+        ShieldBullet.SetDamage(900);
+        ShieldBullet.animatorController.Play("Fly", true);
+    }
+
+    /// <summary>
     /// 回收圆盾子弹
     /// </summary>
-    private void RecycleSheildBullet()
+    private void RecycleShieldBullet()
     {
-        SheildBullet.gameObject.SetActive(false);
-        SheildBullet.transform.SetParent(transform);
-        SheildBullet.transform.localPosition = Vector3.zero;
+        ShieldBullet.gameObject.SetActive(false);
+        ShieldBullet.transform.SetParent(transform);
+        ShieldBullet.transform.localPosition = Vector3.zero;
+        GameController.Instance.RemoveBullet(ShieldBullet);
     }
 
     /// <summary>

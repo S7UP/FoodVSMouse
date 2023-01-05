@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 7807539521256197922}
   - component: {fileID: 7807539521256197921}
   - component: {fileID: 7807539521256197920}
-  m_Layer: 8
+  m_Layer: 17
   m_Name: SpriteGo
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -77,7 +77,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 0.69, y: 0.58}
+  m_Size: {x: 0.45, y: 0.13}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 0
@@ -93,7 +93,7 @@ Animator:
   m_GameObject: {fileID: 7807539521256197935}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: c160c6e91aec854448274de7a9f9782a, type: 2}
+  m_Controller: {fileID: 9100000, guid: c2cff969c218b0943a8c35fee0e5c038, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -114,7 +114,7 @@ GameObject:
   - component: {fileID: 4819940198141852507}
   - component: {fileID: -2150492074292307414}
   - component: {fileID: -2461842842271423552}
-  m_Layer: 8
+  m_Layer: 17
   m_Name: EnemyBullet
   m_TagString: EnemyBullet
   m_Icon: {fileID: 0}
@@ -194,8 +194,16 @@ MonoBehaviour:
   mAccelerateTime: 0
   mMovetime: 0
   mRotate: {x: 0, y: 0}
+  isIgnoreHeight: 0
   mHeight: 0
   mDamage: 0
   isDeathState: 0
   style: 0
   isnKillSelf: 0
+  isnUseHitEffect: 0
+  aliveTime: 0
+  isnDelOutOfBound: 0
+  mAngle: 0
+  isNavi: 0
+  isAffectCharacter: 0
+  isAffectFood: 0

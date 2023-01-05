@@ -27,7 +27,7 @@ public class UIManager
     {
         foreach (var item in currentScenePanelDict)
         {
-            Debug.Log(item.Value.name);
+            // Debug.Log(item.Value.name);
             PushUIPanel(item.Value.name.Substring(0, item.Value.name.Length - 7), item.Value);
         }
         currentScenePanelDict.Clear();

@@ -149,6 +149,36 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
     }
 
     /// <summary>
+    /// 根据美食的种类来造卡（该方法用于系统自动下卡，不扣除费用和CD）
+    /// </summary>
+    /// <param name="type"></param>
+    public void ConstructeByCardType(int type, BaseGrid g)
+    {
+        // 寻找合适的cardBuilder
+        BaseCardBuilder cardBuilder = null;
+        foreach (var c in mCardBuilderList)
+        {
+            if(type == c.attr.type)
+            {
+                cardBuilder = c;
+                break;
+            }
+        }
+        // 如果没有则什么也不会发生，等于说即使系统给你初始卡了但如果你没带就不会给
+        if (cardBuilder == null)
+            return;
+
+        // 接下来依旧要判断能否下卡，能的话才会真正下卡，否则什么也不会发生
+        if(cardBuilder.CanConstructe(g))
+        {
+            cardBuilder.TriggerBeforeBuildAction();
+            cardBuilder.Constructe(); // 产生实体
+            cardBuilder.InitInstance(g); // 初始化实体信息
+            cardBuilder.TriggerAfterBuildAction();
+        }
+    }
+
+    /// <summary>
     /// 进行卡片移除，移除顺序默认按照被攻击顺序移除
     /// </summary>
     public bool Destructe()
@@ -191,12 +221,12 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
 
         if (Constructe()) // 这一步是把卡放下去，如果放成功了则取消卡片选择
         {
-            Debug.Log("您放下了卡");
+            //Debug.Log("您放下了卡");
             CancelSelectCard();
         }
         else
         {
-            Debug.Log("放卡失败，请选择合适位置放卡！");
+            //Debug.Log("放卡失败，请选择合适位置放卡！");
         }
     }
 
@@ -207,11 +237,11 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
     {
         if (Destructe()) // 执行一次移除操作
         {
-            Debug.Log("您移除了卡");
+            //Debug.Log("您移除了卡");
         }
         else
         {
-            Debug.Log("移除失败，请选择合适位置放卡！");
+            //Debug.Log("移除失败，请选择合适位置放卡！");
         }
         CancelSelectShovel();
     }
@@ -250,7 +280,7 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
                 OnMouseLeftDownWhenSelectedCard();
             }
             else if(Input.GetMouseButtonDown(1)){ // 右键直接取消
-                Debug.Log("您取消了放卡");
+                //Debug.Log("您取消了放卡");
                 CancelSelectCard();
             }
         }else if (isSelectShovel)
@@ -263,7 +293,7 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
             else if (Input.GetMouseButtonDown(1))
             { 
                 // 右键直接取消
-                Debug.Log("您取消了移除卡");
+                //Debug.Log("您取消了移除卡");
                 CancelSelectShovel();
             }
         }

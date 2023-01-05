@@ -1,1 +1,1 @@
-{"baseAttrbute":{"name":"麻辣串炸弹","type":23,"shape":0,"baseHP":250.0,"baseAttack":0.0,"baseAttackSpeed":0.0,"attackPercent":0.0,"baseMoveSpeed":0.0,"baseDefense":0.0,"baseRange":0.0,"baseHeight":0},"valueList":[],"foodType":5}
+{"baseAttrbute":{"name":"麻辣串炸弹","type":23,"shape":0,"baseHP":200.0,"baseAttack":10.0,"baseAttackSpeed":1.0,"attackPercent":0.0,"baseMoveSpeed":0.0,"baseDefense":0.0,"baseRange":0.0,"baseHeight":0},"valueList":[],"foodType":5}

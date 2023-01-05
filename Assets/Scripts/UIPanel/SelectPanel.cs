@@ -11,8 +11,6 @@ public class SelectPanel : BasePanel
     private int chapterIndex = 0; // 章节下标
     private Chapter mChapter; // 当前章节实例（就是画面上的大地图）
     private SelectStageUI mSelectStageUI; // 选关UI面板
-    private StageInfoUI mStageInfoUI; // 关卡信息显示面板
-    private SelectEquipmentUI mSelectEquipmentUI; // 卡片与装备选择面板
     private Button Btn_LastChapter;
     private Button Btn_NextChapter;
     private Image Mask;
@@ -21,17 +19,12 @@ public class SelectPanel : BasePanel
     private Button Btn_ReturnToMain;
 
     private List<BaseStage.StageInfo> currentSceneStageList; // 当前场景的关卡列表
-    private BaseStage.StageInfo currentSelectedStageInfo; // 当前被选中的关卡
 
     protected override void Awake()
     {
         base.Awake();
         mSelectStageUI = transform.Find("SelectStageUI").GetComponent<SelectStageUI>();
         mSelectStageUI.SetSelectPanel(this);
-        mStageInfoUI = transform.Find("StageInfoUI").GetComponent<StageInfoUI>();
-        mStageInfoUI.SetSelectPanel(this);
-        mSelectEquipmentUI = transform.Find("SelectEquipmentUI").GetComponent<SelectEquipmentUI>();
-        mSelectEquipmentUI.SetSelectPanel(this);
         Btn_LastChapter = transform.Find("Btn_LastChapter").GetComponent<Button>();
         Btn_NextChapter = transform.Find("Btn_NextChapter").GetComponent<Button>();
         Btn_ReturnToMain = transform.Find("Btn_ReturnToMain").GetComponent<Button>();
@@ -59,34 +52,17 @@ public class SelectPanel : BasePanel
         UpdateChapterButtonState();
         ChangeCurrentChapter();
         mSelectStageUI.Hide();
-        mStageInfoUI.Hide();
-        mSelectEquipmentUI.Hide();
+        //mStageInfoUI.Hide();
+        //mSelectEquipmentUI.Hide();
         mChapter.gameObject.SetActive(true);
 
         mChapter.Initial();
         mSelectStageUI.Initial();
-        mStageInfoUI.Initial();
-        mSelectEquipmentUI.Initial();
+        //mStageInfoUI.Initial();
+        //mSelectEquipmentUI.Initial();
 
         currentSceneStageList = null;
         MaskTween2.Restart();
-    }
-
-    /// <summary>
-    /// 设置当前被选中的关卡信息
-    /// </summary>
-    public void SetCurrentSelectedStageInfo(int index)
-    {
-        currentSelectedStageInfo = currentSceneStageList[index];
-    }
-
-    /// <summary>
-    /// 获取当前选中关卡信息
-    /// </summary>
-    /// <returns></returns>
-    public BaseStage.StageInfo GetCurrentSelectedStageInfo()
-    {
-        return currentSelectedStageInfo;
     }
 
     /// <summary>
@@ -122,8 +98,6 @@ public class SelectPanel : BasePanel
         MaskTween2.Pause();
         MaskTween1.Restart();
         mSelectStageUI.Show();
-        mStageInfoUI.Show();
-        mSelectEquipmentUI.Hide();
     }
 
     /// <summary>
@@ -134,21 +108,8 @@ public class SelectPanel : BasePanel
         MaskTween1.Pause();
         MaskTween2.Restart();
         mSelectStageUI.Hide();
-        mStageInfoUI.Hide();
-        mSelectEquipmentUI.Hide();
         // 重置选关面板
         mSelectStageUI.Initial();
-    }
-
-    /// <summary>
-    /// 进入配置选择
-    /// </summary>
-    public void EnterSelectEquipmentUI()
-    {
-        mSelectStageUI.Show();
-        mStageInfoUI.Show();
-        mSelectEquipmentUI.Show();
-        // UpdateUIByChangeStage(); // 根据当前选中关更新配置
     }
 
     /// <summary>
@@ -156,34 +117,9 @@ public class SelectPanel : BasePanel
     /// </summary>
     public void UpdateUIByChangeStage()
     {
-        mSelectEquipmentUI.LoadAndFixUI(); // 根据当前选中关更新配置
-        mStageInfoUI.UpdateInfo(); // 更新右侧关卡信息
+        //mSelectEquipmentUI.LoadAndFixUI(); // 根据当前选中关更新配置
+        //mStageInfoUI.UpdateInfo(); // 更新右侧关卡信息
     }
-
-    /// <summary>
-    /// 进入战斗场景（开始游戏）
-    /// </summary>
-    public void EnterComBatScene()
-    {
-        GameManager.Instance.EnterComBatScene();
-    }
-
-    //public override void EnterPanel()
-    //{
-
-    //}
-
-    //public override void ExitPanel()
-    //{
-
-    //}
-
-
-
-    //public override void UpdatePanel()
-    //{
-
-    //}
 
     public void EnterLastChapter()
     {
@@ -232,9 +168,10 @@ public class SelectPanel : BasePanel
     {
         // 暂时用浮空岛的地图，后续需要读取其它地方的接口来确定加载的是哪个章节
         Chapter c = GameManager.Instance.GetGameObjectResource(FactoryType.UIFactory, "SelectPanel/Chapter/" + ((int)t)).GetComponent<Chapter>();
+        Vector2 size = c.transform.localScale;
         c.transform.SetParent(transform);
         c.transform.SetAsFirstSibling();
-        c.transform.localScale = Vector3.one;
+        c.transform.localScale = size;
         c.SetInfo(this, t);
         c.gameObject.SetActive(false);
         return c;

@@ -132,9 +132,9 @@ public class BaseItem : BaseUnit
     /// 可否被选择为目标
     /// </summary>
     /// <returns></returns>
-    public override bool CanBeSelectedAsTarget()
+    public override bool CanBeSelectedAsTarget(BaseUnit otherUnit)
     {
-        return mBoxCollider2D.enabled && base.CanBeSelectedAsTarget();
+        return mBoxCollider2D.enabled && base.CanBeSelectedAsTarget(otherUnit);
     }
 
     /// <summary>

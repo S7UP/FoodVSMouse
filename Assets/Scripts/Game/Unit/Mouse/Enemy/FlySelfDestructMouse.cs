@@ -18,8 +18,8 @@ public class FlySelfDestructMouse : MouseUnit, IFlyUnit
         // 初始免疫炸弹秒杀效果
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, IgnoreBombInstantKill);
         // 在受到伤害结算之后，直接判定为击坠状态
-        AddActionPointListener(ActionPointType.PostReceiveDamage, delegate { ExecuteDrop(); });
-        AddActionPointListener(ActionPointType.PostReceiveReboundDamage, delegate { ExecuteDrop(); });
+        AddActionPointListener(ActionPointType.PostReceiveDamage, delegate { ExecuteDestruct(); });
+        AddActionPointListener(ActionPointType.PostReceiveReboundDamage, delegate { ExecuteDestruct(); });
     }
 
     public override void MUpdate()
@@ -27,7 +27,7 @@ public class FlySelfDestructMouse : MouseUnit, IFlyUnit
         base.MUpdate();
         if (IsMeetDropCondition())
         {
-            ExecuteDrop();
+            ExecuteDestruct();
         }
     }
 
@@ -42,10 +42,13 @@ public class FlySelfDestructMouse : MouseUnit, IFlyUnit
     /// <summary>
     /// 执行降落，仅一次
     /// </summary>
-    public void ExecuteDrop()
+    public void ExecuteDestruct()
     {
         if (!isDrop)
         {
+            // 设置为不可选取，以及不可击中
+            AddCanBeSelectedAsTargetFunc(delegate { return false; });
+            AddCanHitFunc(delegate { return false; });
             // 标记已坠机，此后该实例一些行为会发生变化
             isDrop = true; 
             // 移除免疫炸弹秒杀效果
@@ -109,10 +112,10 @@ public class FlySelfDestructMouse : MouseUnit, IFlyUnit
         BaseGrid grid = GameController.Instance.mMapController.GetGrid(GetColumnIndex(), GetRowIndex());
         if (grid != null)
         {
-            BaseUnit unit = grid.GetHighestAttackPriorityUnit();
+            BaseUnit unit = grid.GetHighestAttackPriorityUnit(this);
             if (unit != null && unit.tag!="Character")
             {
-                new BombDamageAction(CombatAction.ActionType.CauseDamage, this, unit, float.MaxValue).ApplyAction();
+                new BombDamageAction(CombatAction.ActionType.CauseDamage, this, unit, unit.mCurrentHp).ApplyAction();
             }
         }
     }
@@ -121,13 +124,13 @@ public class FlySelfDestructMouse : MouseUnit, IFlyUnit
     /// 是否能被作为目标选中
     /// </summary>
     /// <returns></returns>
-    public override bool CanBeSelectedAsTarget()
+    public override bool CanBeSelectedAsTarget(BaseUnit otherUnit)
     {
         // 如果在坠机状态则不可被选为目标
         if (isDrop)
             return false;
         else
-            return base.CanBeSelectedAsTarget();
+            return base.CanBeSelectedAsTarget(otherUnit);
     }
 
     /// <summary>

@@ -16,7 +16,6 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
     public Transform mShovelSlot2Trans; // 铲子堆放处
     public ShovelModel mShovelModel; // 铲子模型
     public Text Tex_Pause; // 暂停文本
-    public GameObject Mask; // 黑色遮罩
     public GameObject MenuUI; // 菜单
     public GameObject Img_Hp; // 血量实例
     private Text Tex_Hp; // 血量文本
@@ -24,6 +23,12 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
     private Animator Ani_Win;
     private GameObject LosePanel;
     private Animator Ani_Lose;
+    private GameObject Img_BigWave;
+    private Animator Ani_BigWave;
+    private GameObject PauseUI;
+    private GameObject PutCharacterUI;
+    // private GameObject Prefab_Tex_DamageNumber;
+
 
     public bool IsInCharacterConstructMode; // 是否在角色放置模式
 
@@ -36,7 +41,6 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
         mShovelSlot2Trans = mCardControllerUI.transform.Find("ShovelSlot2");
         mShovelModel = mCardControllerUI.transform.Find("Emp_ShovelModel").gameObject.GetComponent<ShovelModel>();
         Tex_Pause = transform.Find("Btn_Pause").Find("Text").GetComponent<Text>();
-        Mask = transform.Find("Mask").gameObject;
         MenuUI = transform.Find("MenuUI").gameObject;
         Img_Hp = transform.Find("Img_Hp").gameObject;
         Tex_Hp = transform.Find("Img_Hp").Find("Text").GetComponent<Text>();
@@ -45,18 +49,26 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
         Ani_Win = WinPanel.transform.Find("Img_Win").GetComponent<Animator>();
         LosePanel = transform.Find("LosePanel").gameObject;
         Ani_Lose = LosePanel.transform.Find("Img_Lose").GetComponent<Animator>();
+        Img_BigWave = transform.Find("Img_BigWave").gameObject;
+        Ani_BigWave = Img_BigWave.GetComponent<Animator>();
+        PauseUI = transform.Find("PauseUI").gameObject;
+        PutCharacterUI = transform.Find("PutCharacterUI").gameObject;
+        // Prefab_Tex_DamageNumber = GameManager.Instance.GetGameObjectResource(FactoryType.UIFactory, "GameNormalPanel/Tex_DamageNumber");
     }
 
     public void InitPanel()
     {
-        Debug.Log("InitPanel()");
+        // 停止所有BGM
+        GameManager.Instance.audioSourceManager.StopAllMusic();
         mShovelModel.transform.position = mShovelSlot2Trans.transform.position; // 铲子归位
         Tex_Pause.text = "暂停游戏";
-        Mask.SetActive(false);
         MenuUI.SetActive(false);
         Img_Hp.SetActive(false);
         WinPanel.SetActive(false);
         LosePanel.SetActive(false);
+        Img_BigWave.SetActive(false);
+        PauseUI.SetActive(false);
+        PutCharacterUI.SetActive(false);
         IsInCharacterConstructMode = false;
     }
 
@@ -87,7 +99,9 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
             // 如果是暂停状态，则解除暂停
             GameController.Instance.Resume();
             // 设置文字
-            Tex_Pause.text = "暂停游戏";
+            Tex_Pause.text = "暂 停";
+            // 移除遮罩
+            PauseUI.SetActive(false);
         }
         else
         {
@@ -95,6 +109,8 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
             GameController.Instance.Pause();
             // 设置文字
             Tex_Pause.text = "解除暂停";
+            // 显示遮罩
+            PauseUI.SetActive(true);
         }
     }
 
@@ -146,11 +162,11 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
     /// </summary>
     private void SetMenuEnable(bool enable)
     {
-        Mask.SetActive(enable);
-        MenuUI.SetActive(enable);
         // 在人物放置阶段不执行后续逻辑
         if (IsInCharacterConstructMode)
             return;
+
+        MenuUI.SetActive(enable);
 
         if (enable)
             GameController.Instance.Pause();
@@ -210,6 +226,7 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
         mCardModel.ShowCardModel(CardModel.DisplayMode.SetCharacter);
         Img_Hp.SetActive(false);
         IsInCharacterConstructMode = true;
+        PutCharacterUI.SetActive(true);
     }
 
     /// <summary>
@@ -220,6 +237,7 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
         mCardModel.HideCardModel();
         Img_Hp.SetActive(true);
         IsInCharacterConstructMode = false;
+        PutCharacterUI.SetActive(false);
     }
 
     /// <summary>
@@ -299,6 +317,30 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
         Ani_Win.Play("lose", 0, 0);
     }
 
+    /// <summary>
+    /// 显示一大波
+    /// </summary>
+    public void ShowBigWave(bool isLastWave)
+    {
+        Img_BigWave.SetActive(true);
+        Sprite s;
+        if (isLastWave)
+        {
+            s = GameManager.Instance.GetSprite("UI/LastWave");
+            Img_BigWave.GetComponent<Image>().sprite = s;
+            Img_BigWave.GetComponent<Image>().SetNativeSize();
+            Ani_BigWave.Play("LastWave");
+        }
+        else
+        {
+            s = GameManager.Instance.GetSprite("UI/BigWave");
+            Img_BigWave.GetComponent<Image>().sprite = s;
+            Img_BigWave.GetComponent<Image>().SetNativeSize();
+            Ani_BigWave.Play("BigWave");
+        }
+            
+    }
+
     public void EnterPanel()
     {
         throw new System.NotImplementedException();
@@ -311,7 +353,7 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
 
     public void UpdatePanel()
     {
-        throw new System.NotImplementedException();
+        
     }
 
     private void OnDestroy()

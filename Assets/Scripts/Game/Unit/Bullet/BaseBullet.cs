@@ -11,6 +11,7 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     public Animator animator;
     public CircleCollider2D mCircleCollider2D;
     public SpriteRenderer spriteRenderer;
+    private Transform Trans_Sprite;
 
     // 自身属性
     public float mVelocity;
@@ -18,13 +19,26 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     public int mAccelerateTime;
     public int mMovetime;
     public Vector2 mRotate;
+    public bool isIgnoreHeight; // 是否无视高度限制
     public float mHeight;
     public float mDamage;
     public bool isDeathState;
     public BulletStyle style;
-    private Action<BaseBullet, BaseUnit> HitAction; // 中弹后的事件（由外部添加）
+    public List<Func<BaseBullet, BaseUnit, bool>> CanHitFuncList = new List<Func<BaseBullet, BaseUnit, bool>>(); // 子弹与单位能否相互碰撞的额外判断事件
+    private List<Action<BaseBullet, BaseUnit>> HitActionList = new List<Action<BaseBullet, BaseUnit>>(); // 中弹后的事件（由外部添加）
+    protected List<BaseUnit> unitList = new List<BaseUnit>();
     public bool isnKillSelf;
+    public bool isnUseHitEffect; // 不采用击中动画
     public List<ITask> TaskList = new List<ITask>();
+    public int aliveTime;
+    public bool isnDelOutOfBound;
+    public float mAngle; // 当前子弹角度
+    private float lastAngle; // 角度，上一帧
+    public bool isNavi;
+    // 以下三个为图片精灵偏移量
+    public FloatNumeric SpriteOffsetX = new FloatNumeric();
+    public FloatNumeric SpriteOffsetY = new FloatNumeric();
+    public Vector2 SpriteOffset { get { return new Vector2(SpriteOffsetX.Value, SpriteOffsetY.Value); } }
 
     // 外界给的标签
     public Dictionary<string, int> TagDict = new Dictionary<string, int>();
@@ -38,6 +52,7 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
         animator = transform.Find("SpriteGo").GetComponent<Animator>();
         mCircleCollider2D = GetComponent<CircleCollider2D>();
         spriteRenderer = transform.Find("SpriteGo").GetComponent<SpriteRenderer>();
+        Trans_Sprite = transform.Find("SpriteGo");
     }
 
     /// <summary>
@@ -52,16 +67,31 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
         mAccelerateTime = 0;
         mMovetime = 0;
         mRotate = Vector2.zero;
+        mAngle = 0;
+        lastAngle = 0;
+        Trans_Sprite.transform.right = Vector2.right;
         transform.right = Vector2.right;
         mDamage = 0;
         mHeight = 0;
+        isIgnoreHeight = false;
+        aliveTime = 0;
         isDeathState = false;
         isnKillSelf = false;
-        HitAction = null;
+        isnDelOutOfBound = false;
+        isnUseHitEffect = false;
+        SpriteOffsetX.Initialize(); SpriteOffsetY.Initialize();
+        SetSpriteLocalPosition(Vector2.zero);
+        SetSpriteRight(Vector2.right);
+        HitActionList.Clear();
+        CanHitFuncList.Clear();
         TagDict.Clear();
         TaskList.Clear();
+        unitList.Clear();
         SetCollision(true);
         SetActionState(new BulletFlyState(this));
+        transform.localScale = Vector2.one;
+        Trans_Sprite.transform.localRotation = new Quaternion(0, 0, 0, 0);
+        isNavi = true; // 默认是同步方向
     }
 
     /// <summary>
@@ -83,6 +113,9 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     // 子弹对目标造成伤害，TakeDamage的调用时机是敌对单位碰到了这个子弹，然后过来调用这个子弹的伤害逻辑
     public virtual void TakeDamage(BaseUnit baseUnit)
     {
+        // 子弹在死亡状态下不生效TakeDamage
+        if (isDeathState)
+            return;
         if (baseUnit != null)
             new DamageAction(CombatAction.ActionType.CauseDamage, mMasterBaseUnit, baseUnit, mDamage).ApplyAction();
         ExecuteHitAction(baseUnit);
@@ -143,7 +176,21 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     public virtual void SetRotate(Vector2 v)
     {
         mRotate = v;
-        transform.right = v;
+        // transform.right = v;
+        if(isNavi)
+            Trans_Sprite.transform.right = v;
+    }
+
+    /// <summary>
+    /// 改变方向（传进来的是角度制的参数）
+    /// </summary>
+    /// <param name="angle"></param>
+    public void SetRotate(float angle)
+    {
+        mAngle = angle;
+        lastAngle = mAngle;
+        angle = angle / 180 * Mathf.PI;
+        SetRotate(new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)));
     }
 
     public float GetDamage()
@@ -190,6 +237,22 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
 
     public virtual void MUpdate()
     {
+        if (mAngle != lastAngle)
+        {
+            SetRotate(mAngle);
+        }
+
+        List<BaseUnit> delList = new List<BaseUnit>();
+        foreach (var u in unitList)
+        {
+            if (!u.IsAlive())
+                delList.Add(u);
+        }
+        foreach (var u in delList)
+        {
+            unitList.Remove(u);
+        }
+
         List<ITask> deleteTask = new List<ITask>();
         foreach (var t in TaskList)
         {
@@ -207,10 +270,12 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
         mCurrentActionState.OnUpdate();
         animatorController.Update();
         // 子弹若出屏了请自删
-        if (!IsInView())
+        if (!isnDelOutOfBound && !IsInView())
         {
             ExecuteRecycle();
         }
+
+        aliveTime++;
     }
 
     /// <summary>
@@ -256,7 +321,7 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     /// <returns></returns>
     public virtual bool CanHit(BaseUnit unit)
     {
-        return !isDeathState;
+        return IsAlive() && (isIgnoreHeight || mHeight == unit.mHeight);
     }
 
     public virtual void OnFlyStateEnter()
@@ -287,7 +352,7 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     public virtual void OnHitState()
     {
         // 动画播放完一次后，转为移动状态
-        if(animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
+        if(isnUseHitEffect || animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
         {
             ExecuteRecycle();
         }
@@ -389,12 +454,21 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     }
 
     /// <summary>
-    /// 设置被弹事件
+    /// 添加被弹事件
     /// </summary>
     /// <param name="HitAction"></param>
-    public void SetHitAction(Action<BaseBullet, BaseUnit> HitAction)
+    public void AddHitAction(Action<BaseBullet, BaseUnit> HitAction)
     {
-        this.HitAction = HitAction;
+        HitActionList.Add(HitAction);
+    }
+
+    /// <summary>
+    /// 移除被弹事件
+    /// </summary>
+    /// <param name="HitAction"></param>
+    public void RemoveHitAction(Action<BaseBullet, BaseUnit> HitAction)
+    {
+        HitActionList.Remove(HitAction);
     }
 
     /// <summary>
@@ -403,8 +477,10 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     /// <param name="hitedUnit"></param>
     public void ExecuteHitAction(BaseUnit hitedUnit)
     {
-        if (HitAction != null)
-            HitAction(this, hitedUnit);
+        foreach (var action in HitActionList)
+        {
+            action(this, hitedUnit);
+        }
     }
 
     /// <summary>
@@ -430,6 +506,80 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     public bool IsAlive()
     {
         return !isDeathState && isActiveAndEnabled;
+    }
+
+    public void AddCanHitFunc(Func<BaseBullet, BaseUnit, bool> action)
+    {
+        CanHitFuncList.Add(action);
+    }
+
+    public void RemoveCanHitFunc(Func<BaseBullet, BaseUnit, bool> action)
+    {
+        CanHitFuncList.Remove(action);
+    }
+
+    /// <summary>
+    /// 改变贴图X偏移
+    /// </summary>
+    /// <param name="f"></param>
+    public void AddSpriteOffsetX(FloatModifier f)
+    {
+        SpriteOffsetX.AddAddModifier(f);
+        SetSpriteLocalPosition(SpriteOffset);
+    }
+
+    /// <summary>
+    /// 移除改变贴图X偏移
+    /// </summary>
+    /// <param name="f"></param>
+    public void RemoveSpriteOffsetX(FloatModifier f)
+    {
+        SpriteOffsetX.RemoveAddModifier(f);
+        SetSpriteLocalPosition(SpriteOffset);
+    }
+
+    /// <summary>
+    /// 移除改变贴图X偏移
+    /// </summary>
+    /// <param name="f"></param>
+    public void AddSpriteOffsetY(FloatModifier f)
+    {
+        SpriteOffsetY.AddAddModifier(f);
+        SetSpriteLocalPosition(SpriteOffset);
+    }
+
+    /// <summary>
+    /// 移除改变贴图Y偏移
+    /// </summary>
+    /// <param name="f"></param>
+    public void RemoveSpriteOffsetY(FloatModifier f)
+    {
+        SpriteOffsetY.RemoveAddModifier(f);
+        SetSpriteLocalPosition(SpriteOffset);
+    }
+
+    /// <summary>
+    /// 设置贴图对象坐标
+    /// </summary>
+    public virtual void SetSpriteLocalPosition(Vector2 vector2)
+    {
+        spriteRenderer.transform.localPosition = vector2;
+    }
+
+    public virtual void SetSpriteRight(Vector2 vector2)
+    {
+        spriteRenderer.transform.right = vector2;
+    }
+
+    /// <summary>
+    /// 设置贴图的角度
+    /// </summary>
+    /// <param name="angle"></param>
+    public void SetSpriteRotate(float angle)
+    {
+        //Trans_Sprite.transform.localRotation = new Quaternion(0, 0, angle, 0);
+        angle = angle * Mathf.PI / 180;
+        Trans_Sprite.transform.right = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
     }
 }
 

@@ -1,3 +1,4 @@
+using UnityEngine;
 /// <summary>
 /// 酒杯灯
 /// </summary>
@@ -6,17 +7,15 @@ public class CupLight : FoodUnit
     private int timer;
     private FloatModifier floatModifier = new FloatModifier(0);
     private int fireCount; // 火苗数
-    private float lastAttack; // 上一帧生产效率
+    private float lastProductivity; // 上一帧生产效率
 
     // 生产类卡片，没有攻击能力，在技能里不填写相关信息即可无法攻击
     public override void MInit()
     {
         fireCount = 0;
         timer = 0;
-        lastAttack = 0;
+        lastProductivity = 0;
         base.MInit();
-        // 对于生产卡而言，攻击力即生产效率，1.0代表100%的生产效率
-        NumericBox.Attack.SetBase(1.0f);
     }
 
     /// <summary>
@@ -31,7 +30,8 @@ public class CupLight : FoodUnit
         else
             fireCount = 1;
         // 根据星级计算出新的  算法为 生产效率（攻击力）*火苗数*34/间隔（秒）/60帧
-        floatModifier.Value = mCurrentAttack * (float)(fireCount * 34) / attr.valueList[mLevel] / 60;
+        floatModifier.Value = GetCurrentProductivity();
+        lastProductivity = floatModifier.Value;
         // 加回去
         GameController.Instance.AddCostResourceModifier("Fire", floatModifier);
     }
@@ -53,7 +53,7 @@ public class CupLight : FoodUnit
 
     public override void MUpdate()
     {
-        if (mCurrentAttack != lastAttack)
+        if (GetCurrentProductivity() != lastProductivity)
         {
             UpdateAttributeByLevel();
         }
@@ -65,10 +65,22 @@ public class CupLight : FoodUnit
         // 第60帧时回复火苗数*44火
         if (timer == 60)
         {
-            float replyCount = mCurrentAttack * fireCount * 34;
+            float replyCount = Mathf.Min(1, mCurrentAttackSpeed) * mCurrentAttack / 10 * fireCount * 34;
             SmallStove.CreateAddFireEffect(transform.position, replyCount);
         }
         timer++;
         base.OnIdleState();
+    }
+
+    /// <summary>
+    /// 获取当前生产力（每帧回复量）
+    /// </summary>
+    /// <returns></returns>
+    public float GetCurrentProductivity()
+    {
+        if (isFrozenState)
+            return 0;
+        else
+            return Mathf.Min(1, mCurrentAttackSpeed) * mCurrentAttack/10 * (float)(fireCount * 34) / attr.valueList[mLevel] / 60;
     }
 }

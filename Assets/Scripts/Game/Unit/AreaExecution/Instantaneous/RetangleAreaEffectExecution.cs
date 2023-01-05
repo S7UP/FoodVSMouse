@@ -26,7 +26,7 @@ public class RetangleAreaEffectExecution : AreaEffectExecution
         this.offsetY = offsetY;
         this.isAffectFood = isAffectFood;
         this.isAffectMouse = isAffectMouse;
-        SetBoxCollider2D(new Vector2(offsetX * MapManager.gridWidth, offsetY * MapManager.gridHeight), new Vector2(colCount * 1.05f * MapManager.gridWidth, rowCount * MapManager.gridHeight));
+        SetBoxCollider2D(new Vector2(offsetX * MapManager.gridWidth, offsetY * MapManager.gridHeight), new Vector2(colCount * MapManager.gridWidth, rowCount * MapManager.gridHeight));
     }
 
     public void SetBoxCollider2D(Vector2 offset, Vector2 size)
@@ -72,7 +72,7 @@ public class RetangleAreaEffectExecution : AreaEffectExecution
         return true;
     }
 
-    public static RetangleAreaEffectExecution GetInstance(Vector2 pos, float colCount, int rowCount, string CollisionLayer)
+    public static RetangleAreaEffectExecution GetInstance(Vector2 pos, float colCount, float rowCount, string CollisionLayer)
     {
         RetangleAreaEffectExecution e = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "AreaEffect/RetangleAreaEffectExecution").GetComponent<RetangleAreaEffectExecution>();
         e.MInit();

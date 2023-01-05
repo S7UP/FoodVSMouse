@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 using UnityEngine;
@@ -29,13 +30,11 @@ public class RatTrain2 : BaseRatTrain
         base.MInit();
         // 创建8节车厢
         CreateHeadAndBody(8);
-        // 设置车头1倍伤害传递，车厢0.5倍伤害传递，车尾1倍普通伤害，10倍灰烬伤害传递
-        GetHead().SetDmgRate(1.0f, 1.0f);
+        // 设置车头、车身、车尾的伤害倍率
+        GetHead().SetDmgRate(GetParamValue("head_normal", mHertIndex), GetParamValue("head_burn", mHertIndex));
         foreach (var item in GetBodyList())
-        {
-            item.SetDmgRate(0.5f, 0.5f);
-        }
-        GetBody(GetBodyList().Count - 1).SetDmgRate(1.0f, 10f);
+            item.SetDmgRate(GetParamValue("body_normal", mHertIndex), GetParamValue("body_burn", mHertIndex));
+        GetBody(GetBodyList().Count - 1).SetDmgRate(GetParamValue("tail_normal", mHertIndex), GetParamValue("tail_burn", mHertIndex));
         // 动起来了
         NumericBox.MoveSpeed.SetBase(TransManager.TranToVelocity(9f));
         BlockedMoveSpeedModifier = new FloatModifier(100*(TransManager.TranToVelocity(3f)/ NumericBox.MoveSpeed.Value)-100);
@@ -66,6 +65,23 @@ public class RatTrain2 : BaseRatTrain
             list.Add(SupersonicRocketHead(SkillAbility.GetDefaultSkillInfoInstance("超音速火箭头")));
             mSkillQueueAbilityManager.ClearAndAddSkillList(list);
         }
+    }
+
+    /// <summary>
+    /// 初始化BOSS的参数
+    /// </summary>
+    public override void InitBossParam()
+    {
+        // 切换阶段血量百分比
+        AddParamArray("hpRate", new float[] { 0.65f, 0.4f, 0.2f, 0.05f });
+
+        // 车头、车身、车尾的受伤倍率
+        AddParamArray("head_normal", new float[] { 1.0f });
+        AddParamArray("head_burn", new float[] { 1.0f });
+        AddParamArray("body_normal", new float[] { 0.5f });
+        AddParamArray("body_burn", new float[] { 0.5f });
+        AddParamArray("tail_normal", new float[] { 1.0f });
+        AddParamArray("tail_burn", new float[] { 10.0f }); // 车尾10倍爆破伤害
     }
 
     public override void UpdateRuntimeAnimatorController()
@@ -555,6 +571,10 @@ public class RatTrain2 : BaseRatTrain
             // 确定初始坐标和最终坐标
             Vector2 startV2 = new Vector2(center.x, center.y);
             Vector2 endV2 = new Vector2(center.x, center.y + MapManager.gridHeight * j);
+            // 一些初始出现动画不能被击中的效果
+            Func<BaseUnit, BaseUnit, bool> noSelectedAsTargetFunc = delegate { return false; };
+            Func<BaseUnit, BaseUnit, bool> noBlockFunc = delegate { return false; };
+            Func<BaseUnit, BaseBullet, bool> noHitFunc = delegate { return false; };
 
             CustomizationTask task = new CustomizationTask();
             int totalTime = 90;
@@ -562,7 +582,9 @@ public class RatTrain2 : BaseRatTrain
             task.OnEnterFunc = delegate
             {
                 m.transform.position = startV2; // 对初始坐标进行进一步修正
-                m.CloseCollision(); // 关闭判定
+                m.AddCanBeSelectedAsTargetFunc(noSelectedAsTargetFunc); // 不可作为选取的目标
+                m.AddCanBlockFunc(noBlockFunc); // 不可被阻挡
+                m.AddCanHitFunc(noHitFunc); // 不可被子弹击中
                 m.SetAlpha(0); // 0透明度
             };
             task.AddTaskFunc(delegate
@@ -580,7 +602,9 @@ public class RatTrain2 : BaseRatTrain
             task.OnExitFunc = delegate
             {
                 // 启用判定
-                m.OpenCollision();
+                m.RemoveCanBeSelectedAsTargetFunc(noSelectedAsTargetFunc);
+                m.RemoveCanBlockFunc(noBlockFunc);
+                m.RemoveCanHitFunc(noHitFunc);
             };
             m.AddTask(task);
         }

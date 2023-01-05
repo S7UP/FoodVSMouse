@@ -85,7 +85,7 @@ public class Item_Cloud : BaseItem
         if(collision.tag.Equals("Food") || collision.tag.Equals("Mouse") || collision.tag.Equals("Barrier"))
         {
             BaseUnit unit = collision.GetComponent<BaseUnit>();
-            if(!unitList.Contains(unit) && unit.GetHeight() == 0)
+            if(!unitList.Contains(unit) && unit.GetHeight() == 0 && !unit.NumericBox.GetBoolNumericValue(SkyGridType.NoAffect))
             {
                 unitList.Add(unit);
                 OnUnitEnter(unit);

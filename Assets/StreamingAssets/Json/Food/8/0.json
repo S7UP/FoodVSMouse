@@ -1,1 +1,1 @@
-{"baseAttrbute":{"name":"火盆","type":8,"shape":0,"baseHP":50.0,"baseAttack":0.0,"baseAttackSpeed":0.0,"attackPercent":0.0,"baseMoveSpeed":0.0,"baseDefense":0.0,"baseRange":0.0,"baseHeight":0},"valueList":[1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2,2.2,2.4,2.6,2.8,3,3.2,3.4],"foodType":6}
+{"baseAttrbute":{"name":"火盆","type":8,"shape":0,"baseHP":50.0,"baseAttack":10.0,"baseAttackSpeed":1.0,"attackPercent":0.0,"baseMoveSpeed":0.0,"baseDefense":0.0,"baseRange":0.0,"baseHeight":0},"valueList":[1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2,2.2,2.4,2.6,2.8,3,3.2,3.4],"foodType":6}

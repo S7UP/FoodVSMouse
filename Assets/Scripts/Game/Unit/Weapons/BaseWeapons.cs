@@ -101,14 +101,6 @@ public class BaseWeapons : MonoBehaviour, IGameControllerMember
     /// <returns></returns>
     public virtual bool IsHasTarget()
     {
-        List<BaseUnit>[] list = GameController.Instance.GetEnemyList();
-        int start = GetRowIndex();
-        int end = start;
-        for (int i = start; i <= end; i++)
-        {
-            if (list[i].Count > 0)
-                return true;
-        }
         return false;
     }
 

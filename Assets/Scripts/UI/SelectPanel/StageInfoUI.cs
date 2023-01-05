@@ -7,9 +7,8 @@ using UnityEngine.UI;
 /// </summary>
 public class StageInfoUI : MonoBehaviour
 {
-    private SelectPanel mSelectPanel;
+    private StageConfigPanel mStageConfigPanel;
     private RectTransform rectTransform;
-    private Tweener ShowTween;
     private GameObject Emp_StageInfo;
     private GameObject Emp_EnemyInfo;
     private GameObject Scr_AddInfo;
@@ -27,10 +26,6 @@ public class StageInfoUI : MonoBehaviour
     private void Awake()
     {
         rectTransform = transform.GetComponent<RectTransform>();
-        ShowTween = rectTransform.DOAnchorPosX(-610.24f, 0.5f);
-        ShowTween.SetEase(Ease.InCubic); // 由慢到快
-        ShowTween.Pause();
-        ShowTween.SetAutoKill(false);
 
         Emp_StageInfo = transform.Find("Img_Center").Find("Emp_Container").Find("Emp_StageInfo").gameObject;
         Emp_EnemyInfo = transform.Find("Img_Center").Find("Emp_Container").Find("Emp_EnemyInfo").gameObject;
@@ -80,7 +75,7 @@ public class StageInfoUI : MonoBehaviour
     public void UpdateInfo()
     {
         // 关卡情报
-        BaseStage.StageInfo info = mSelectPanel.GetCurrentSelectedStageInfo();
+        BaseStage.StageInfo info = PlayerData.GetInstance().GetCurrentStageInfo();
         Img_Map.sprite = GameManager.Instance.GetSprite("Chapter/"+ info.chapterIndex+"/"+ info.sceneIndex+"/0");
         Tex_MapName.text = "地图名称："+ChapterManager.GetSceneName((ChapterNameTypeMap)info.chapterIndex, info.sceneIndex);
         Tex_StageName.text = "关卡名称：" + info.name;
@@ -97,7 +92,7 @@ public class StageInfoUI : MonoBehaviour
         Tex_Illustrate.text = info.illustrate;
 
         // 附加说明
-        Tex_AddInfo.text = info.illustrate;
+        Tex_AddInfo.text = info.additionalNotes;
     }
 
     /// <summary>
@@ -105,7 +100,7 @@ public class StageInfoUI : MonoBehaviour
     /// </summary>
     public void Show()
     {
-        ShowTween.PlayForward();
+        
     }
 
     /// <summary>
@@ -113,12 +108,12 @@ public class StageInfoUI : MonoBehaviour
     /// </summary>
     public void Hide()
     {
-        ShowTween.PlayBackwards();
+        
     }
 
-    public void SetSelectPanel(SelectPanel panel)
+    public void SetStageConfigPanel(StageConfigPanel panel)
     {
-        mSelectPanel = panel;
+        mStageConfigPanel = panel;
     }
 
     /////////////////////////////////////以下方法是暴露给按钮用的/////////////////////////////////

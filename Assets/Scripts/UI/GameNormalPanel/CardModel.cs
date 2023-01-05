@@ -49,8 +49,8 @@ public class CardModel : MonoBehaviour, ICanvasRaycastFilter
         switch (displayMode)
         {
             case DisplayMode.SetCharacter:
-                CharacterInfo info = GameManager.Instance.playerData.GetCharacterInfo();
-                sprite = GameManager.Instance.GetSprite("Character/" + info.type + "/" + info.shape + "/1");
+                int type = GameManager.Instance.playerData.GetCharacter();
+                sprite = GameManager.Instance.GetSprite("Character/" + type + "/1");
                 UpdateSize(Vector3.one);
                 break;
             case DisplayMode.SetCard:

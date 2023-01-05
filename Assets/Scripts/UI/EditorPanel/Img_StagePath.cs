@@ -48,7 +48,6 @@ public class Img_StagePath : MonoBehaviour
                     sceneIndex = sceneIndex,
                     stageIndex = stageIndex,
                     apartList = new List<List<int>>() { new List<int>(){ 0, 1, 2, 3, 4, 5, 6} },
-                    waveIndexList = new List<int>(),
                     roundInfoList = new List<BaseRound.RoundInfo>(),
                     availableCardInfoList = new List<AvailableCardInfo>()
                 });;

@@ -99,7 +99,7 @@ public class WiskyBoom : FoodUnit
         // 添加对应的判定检测器
         {
             BombAreaEffectExecution bombEffect = BombAreaEffectExecution.GetInstance();
-            bombEffect.Init(this, 900, GetRowIndex(), 1, int.MaxValue, 0, 0, false, true);
+            bombEffect.Init(this, 900 * mCurrentAttack / 10, GetRowIndex(), 1, int.MaxValue, 0, 0, false, true);
             bombEffect.transform.position = this.GetPosition();
             GameController.Instance.AddAreaEffectExecution(bombEffect);
         }

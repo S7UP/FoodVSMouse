@@ -1,9 +1,6 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UIElements;
 using System;
-using static UnityEditor.PlayerSettings;
 
 public class DongJun : BossUnit
 {
@@ -130,6 +127,12 @@ public class DongJun : BossUnit
         // 添加高空地块
         BaseGridType gt = BaseGridType.GetInstance(GridType.Sky, 0);
         g.AddGridType(GridType.Sky, gt);
+        // 禁止放卡
+        Func<BaseGrid, FoodInGridType, bool> noBuildFunc = delegate { return false; };
+        g.AddCanBuildFuncListener(noBuildFunc);
+        // 可以试着强制移除上面的载具
+        g.KillFoodUnit(FoodInGridType.WaterVehicle);
+        g.KillFoodUnit(FoodInGridType.LavaVehicle);
 
         // 添加若干时间后移除的任务
         CustomizationTask t = new CustomizationTask();
@@ -167,6 +170,7 @@ public class DongJun : BossUnit
         {
             if (gt.animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
             {
+                g.RemoveCanBuildFuncListener(noBuildFunc);
                 g.RemoveGridType(GridType.Sky);
                 return true;
             }
@@ -201,13 +205,17 @@ public class DongJun : BossUnit
         m.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozenSlowDown, boolModifier); // 免疫冰冻减速
         m.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreDropFromSky, boolModifier); // 免疫坠落
         m.NumericBox.AddDecideModifierToBoolDict(PipelineKey, boolModifier); // 标记自己是洞，不能被别的洞传送
-        m.NumericBox.AddDecideModifierToBoolDict(WaterGridType.NoDrop, boolModifier); // 标记在水里不下降
+        WaterGridType.AddNoAffectByWater(m, boolModifier); // 标记免疫水蚀
         m.SetBaseAttribute(hp, 0, 1, 0, 100, 0, 0);
         m.transform.position = g.transform.position;
         m.currentYIndex = MapManager.GetYIndex(g.transform.position.y);
         m.CanBlockFuncList.Add(delegate { return false; }); // 管道不可阻挡所以也不会攻击
         Func<BaseUnit, BaseBullet, bool> noHitFunc = delegate { return false; };
         m.CanHitFuncList.Add(noHitFunc); // 管道也不会被子弹击中（转移子弹是用范围效果，下述）
+        m.CanBeSelectedAsTargetFuncList.Add(delegate { return false; }); // 不可作为目标被选取
+        // 禁止放卡
+        Func<BaseGrid, FoodInGridType, bool> noBuildFunc = delegate { return false; };
+        g.AddCanBuildFuncListener(noBuildFunc);
         GameController.Instance.AddMouseUnit(m);
         g.AddUnitToDict(PipelineKey, m); // 绑定在格子上
 
@@ -228,8 +236,16 @@ public class DongJun : BossUnit
                 return false;
             });
         }
-        // 当管道被摧毁时会留下无底洞
-        m.AddBeforeDeathEvent(delegate { CreateCave(g, Mathf.FloorToInt(GetParamValue("CaveAliveTime", mHertIndex) * 60)); });
+        // 当管道被摧毁时会留下无底洞并移除因为管道造成的不可放置
+        m.AddBeforeDeathEvent(delegate {
+            g.RemoveCanBuildFuncListener(noBuildFunc);
+            CreateCave(g, Mathf.FloorToInt(GetParamValue("CaveAliveTime", mHertIndex) * 60));
+        });
+        m.AddBeforeBurnEvent(delegate
+        {
+            g.RemoveCanBuildFuncListener(noBuildFunc);
+            CreateCave(g, Mathf.FloorToInt(GetParamValue("CaveAliveTime", mHertIndex) * 60));
+        });
         return m;
     }
 

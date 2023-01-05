@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-
-using UnityEngine;
 /// <summary>
 /// 格子的行动点管理器
 /// </summary>
@@ -33,13 +31,13 @@ public class GridActionPointManager
     public void AddListener(GridActionPointType actionPointType, Action<GridAction> action)
     {
         ActionPoints[actionPointType].Listeners.Add(action);
-        Debug.Log("添加监听成功！");
+        //Debug.Log("添加监听成功！");
     }
 
     public void RemoveListener(GridActionPointType actionPointType, Action<GridAction> action)
     {
         ActionPoints[actionPointType].Listeners.Remove(action);
-        Debug.Log("移除监听成功！");
+        //Debug.Log("移除监听成功！");
     }
 
     /// <summary>

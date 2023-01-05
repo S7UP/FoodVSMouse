@@ -66,9 +66,6 @@ public class MagicMirrorMouse : MouseUnit
 
     public override void OnCastState()
     {
-        if (currentStateTimer == 0)
-            return;
-
         // 每当动画播放完时，检查技能施放的状态来判断当前处于什么阶段： 施法前摇 施法中 施法后摇
         if (castState==1) // 在施术期间，等待施法结束
         {

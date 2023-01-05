@@ -12,7 +12,7 @@ public class EffectManager
     {
         if (!u.IsContainEffect(EffectType.HealEffect))
         {
-            BaseEffect eff = BaseEffect.GetInstance("HealEffect");
+            BaseEffect eff = BaseEffect.CreateInstance(GameManager.Instance.GetRuntimeAnimatorController("Mouse/5/HealEffect"), null, "Heal", null, false);
             GameController.Instance.AddEffect(eff);
             u.AddEffectToDict(EffectType.HealEffect, eff, Vector2.zero);
         }

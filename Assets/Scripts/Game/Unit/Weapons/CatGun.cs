@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 
 using UnityEngine;
 /// <summary>
@@ -17,10 +16,9 @@ public class CatGun : BaseWeapons
     /// <returns></returns>
     public override bool IsHasTarget()
     {
-        List<BaseUnit>[] list = GameController.Instance.GetEnemyList();
-        foreach (var m in list[GetRowIndex()])
+        foreach (var m in GameController.Instance.GetSpecificRowEnemyList(GetRowIndex()))
         {
-            if (m.CanBeSelectedAsTarget())
+            if (UnitManager.CanBeSelectedAsTarget(master, m))
                 return true;
         }
         return false;

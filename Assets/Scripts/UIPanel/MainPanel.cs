@@ -1,3 +1,4 @@
+using UnityEngine;
 /// <summary>
 /// 主面板
 /// </summary>
@@ -19,25 +20,25 @@ public class MainPanel : BasePanel
         GameManager.Instance.EnterEditorScene();
     }
 
-    public override void EnterPanel()
+    /// <summary>
+    /// 进入设置面板
+    /// </summary>
+    public void EnterConfigPanel()
     {
-
+        MainSceneState main = GameManager.Instance.uiManager.mUIFacade.currentSceneState as MainSceneState;
+        main.EnterConfigPanel();
     }
 
-    public override void ExitPanel()
+    /// <summary>
+    /// 退出游戏
+    /// </summary>
+    public void ExitGame()
     {
-
+        Application.Quit();
     }
 
-    // Start is called before the first frame update
-    void Start()
+    public void EnterEncyclopediaPanel()
     {
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
+        mUIFacade.currentScenePanelDict[StringManager.EncyclopediaPanel].EnterPanel();
     }
 }

@@ -9,9 +9,12 @@ public class BeeMouse : MouseUnit
     private bool isUseRangedAttack; // 是否使用远程攻击
     private Transform Ani_MouseTrans;
     private GeneralAttackSkillAbility generalAttackSkillAbility; // 平A技能
+    private static RuntimeAnimatorController Bullet_AnimatorController; // 蜜蜂鼠子弹
 
     public override void Awake()
     {
+        if (Bullet_AnimatorController == null)
+            Bullet_AnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Bullet/8/0");
         base.Awake();
         Ani_MouseTrans = transform.Find("Ani_Mouse");
     }
@@ -119,11 +122,15 @@ public class BeeMouse : MouseUnit
         Vector3 spawnPoint = GetBulletSpawnPoint();
         for (int i = -1; i <= 1; i++)
         {
-            BaseBullet b = GameController.Instance.CreateBullet(this, spawnPoint, Vector2.left, BulletStyle.Honey);
-            b.SetDamage(mCurrentAttack);
+            EnemyBullet b = EnemyBullet.GetInstance(Bullet_AnimatorController, this, mCurrentAttack);
+            b.isAffectFood = true;
+            b.isAffectCharacter = true;
             b.SetStandardVelocity(6.0f);
+            b.SetRotate(Vector2.left);
+            b.transform.position = transform.position + 1.0f*Vector3.up;
             // 添加一个纵向位移的任务
             GameController.Instance.AddTasker(new StraightMovePresetTasker(b, new Vector3(b.transform.position.x, transform.position.y + MapManager.gridHeight * i, b.transform.position.z), 60)).AddOtherEndEvent(delegate { b.UpdateRenderLayer(0); });
+            GameController.Instance.AddBullet(b);
         }
     }
 

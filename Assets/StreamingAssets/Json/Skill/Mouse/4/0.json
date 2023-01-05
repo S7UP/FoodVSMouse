@@ -1,0 +1,2 @@
+[{"name":"普通攻击","needEnergy":30.0,"startEnergy":30.0,"energyRegeneration":1.0,"skillType":0,"isExclusive":false,"canActiveInDeathState":false,"priority":0},
+{"name":"安放梯子","needEnergy":9999.0,"startEnergy":9999.0,"energyRegeneration":0.0,"skillType":1,"isExclusive":true,"canActiveInDeathState":false,"priority":1}]

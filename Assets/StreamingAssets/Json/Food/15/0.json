@@ -1,1 +1,1 @@
-{"baseAttrbute":{"name":"酒瓶炸弹","type":15,"shape":0,"baseHP":900.0,"baseAttack":0.0,"baseAttackSpeed":1.00,"attackPercent":0.75,"baseMoveSpeed":0.0,"baseDefense":0.0,"baseRange":0.0,"baseHeight":0},"valueList":[],"foodType":5}
+{"baseAttrbute":{"name":"酒瓶炸弹","type":15,"shape":0,"baseHP":50.0,"baseAttack":10.0,"baseAttackSpeed":1.00,"attackPercent":0.75,"baseMoveSpeed":0.0,"baseDefense":0.0,"baseRange":0.0,"baseHeight":0},"valueList":[],"foodType":5}

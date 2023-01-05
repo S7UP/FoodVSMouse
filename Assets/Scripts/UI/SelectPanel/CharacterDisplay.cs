@@ -5,10 +5,9 @@ using UnityEngine.UI;
 /// </summary>
 public class CharacterDisplay : MonoBehaviour
 {
-    private SelectWeaponsUI mSelectWeaponsUI;
+    private PlayerInfoPanel mPlayerInfoPanel;
 
     public int type;
-    public int shape;
     private Button Btn;
     private Image Img_Background;
     private Image Img_Icon;
@@ -21,8 +20,8 @@ public class CharacterDisplay : MonoBehaviour
         Btn.onClick.AddListener(delegate {
             if (isUpdate)
                 return;
-            // 通知宿主选择该武器
-            mSelectWeaponsUI.SetCharacterSelected(type, shape);
+            // 通知宿主选择该套装
+            mPlayerInfoPanel.OnClickCharacterDisplay(type);
         });
         Img_Background = GetComponent<Image>();
         Img_Icon = transform.Find("Button").GetComponent<Image>();
@@ -31,15 +30,13 @@ public class CharacterDisplay : MonoBehaviour
     public void Initial()
     {
         type = 0;
-        shape = 0;
     }
 
-    public void SetValues(SelectWeaponsUI ui, int type, int shape)
+    public void SetValues(PlayerInfoPanel ui, int type)
     {
-        mSelectWeaponsUI = ui;
+        mPlayerInfoPanel = ui;
         this.type = type;
-        this.shape = shape;
-        Img_Icon.sprite = GameManager.Instance.GetSprite("Character/" + type + "/" + shape + "/icon");
+        Img_Icon.sprite = GameManager.Instance.GetSprite("Character/" + type + "/icon");
     }
 
     public void CancelSelected()
@@ -58,7 +55,7 @@ public class CharacterDisplay : MonoBehaviour
     /// <returns></returns>
     public static CharacterDisplay GetInstance()
     {
-        return GameManager.Instance.GetGameObjectResource(FactoryType.UIFactory, "SelectPanel/CharacterDisplay").GetComponent<CharacterDisplay>();
+        return GameManager.Instance.GetGameObjectResource(FactoryType.UIFactory, "PlayerInfoPanel/CharacterDisplay").GetComponent<CharacterDisplay>();
     }
 
     /// <summary>
@@ -66,6 +63,6 @@ public class CharacterDisplay : MonoBehaviour
     /// </summary>
     public void ExecuteRecycle()
     {
-        GameManager.Instance.PushGameObjectToFactory(FactoryType.UIFactory, "SelectPanel/CharacterDisplay", gameObject);
+        GameManager.Instance.PushGameObjectToFactory(FactoryType.UIFactory, "PlayerInfoPanel/CharacterDisplay", gameObject);
     }
 }

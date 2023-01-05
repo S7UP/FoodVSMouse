@@ -75,23 +75,35 @@ public class ThrowLittleMouseSkillAbility : SkillAbility
             m.transform.position = new Vector3(master.transform.position.x, targetPosition.y, master.transform.position.z);
             m.SetActionState(new TransitionState(m));
             // 添加一个弹起的任务，任务结束后切换为步行状态
-            Tasker t = GameController.Instance.AddTasker(new ParabolaMovePresetTasker(m, 24.0f, 1.2f, m.transform.position, targetPosition, false));
+            // Tasker t = GameController.Instance.AddTasker(new ParabolaMovePresetTasker(m, 24.0f, 1.2f, m.transform.position, targetPosition, false));
             //m.CloseCollision();
             // 跳跃期间不可被阻挡也不能被常规子弹击中
-            Func<BaseUnit, BaseUnit, bool> noBlockFunc = delegate { return false; };
-            Func<BaseUnit, BaseBullet, bool> noHitFunc = delegate { return false; };
-            m.AddCanBlockFunc(noBlockFunc);
-            m.AddCanHitFunc(noHitFunc);
+            //Func<BaseUnit, BaseUnit, bool> noBlockFunc = delegate { return false; };
+            //Func<BaseUnit, BaseBullet, bool> noHitFunc = delegate { return false; };
+            //m.AddCanBlockFunc(noBlockFunc);
+            //m.AddCanHitFunc(noHitFunc);
 
 
-            m.DisableMove(true); // 暂时禁用移动
-            t.AddOtherEndEvent(delegate 
-            {
-                m.RemoveCanBlockFunc(noBlockFunc);
-                m.RemoveCanHitFunc(noHitFunc);
-                //m.OpenCollision();
-                m.DisableMove(false); });
-            }
+            //m.DisableMove(true); // 暂时禁用移动
+            //t.AddOtherEndEvent(delegate 
+            //{
+            //    m.RemoveCanBlockFunc(noBlockFunc);
+            //    m.RemoveCanHitFunc(noHitFunc);
+            //    //m.OpenCollision();
+            //    m.DisableMove(false); });
+
+            // 添加一个弹起的任务
+            CustomizationTask t = TaskManager.AddParabolaTask(m, TransManager.TranToVelocity(18), 1.2f, m.transform.position, targetPosition, false);
+            // 且禁止移动
+            m.DisableMove(true);
+            Action oldExitFunc = t.OnExitFunc;
+            t.OnExitFunc = delegate {
+                oldExitFunc();
+                m.DisableMove(false);
+                // 但是落地后晕眩2s
+                m.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(m, 120, false));
+            };
+        }
     }
 
     /// <summary>

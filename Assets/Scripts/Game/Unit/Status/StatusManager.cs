@@ -23,8 +23,28 @@ public class StatusManager
     {
         if (unit.IsAlive())
         {
-            unit.statusAbilityManager.EndNoCountUniqueStatusAbility(StringManager.FrozenSlowDown);
+            foreach (var s in unit.statusAbilityManager.GetAllStatusAbility())
+            {
+                if (s is FrozenSlowStatusAbility)
+                {
+                    s.TryEndActivate();
+                }
+            }
             unit.statusAbilityManager.EndNoCountUniqueStatusAbility(StringManager.Frozen);
+        }
+    }
+
+    /// <summary>
+    /// 移除所有与减速有关的效果
+    /// </summary>
+    public static void RemoveAllSlowDownDebuff(BaseUnit unit)
+    {
+        foreach (var s in unit.statusAbilityManager.GetAllStatusAbility())
+        {
+            if(s is SlowStatusAbility || s is FrozenSlowStatusAbility)
+            {
+                s.TryEndActivate();
+            }
         }
     }
 }

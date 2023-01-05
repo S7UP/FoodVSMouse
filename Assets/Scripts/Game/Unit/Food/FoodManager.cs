@@ -16,25 +16,40 @@ public class FoodManager
         { FoodNameTypeMap.IceCream, new List<string>(){"冰淇淋","果蔬冰淇淋" } },
         { FoodNameTypeMap.WaterPipe, new List<string>(){"双向水管","控温双向水管","合金水管" } },
         { FoodNameTypeMap.ThreeLinesVine, new List<string>(){"三线酒架","强力三线酒架","终结者酒架" } },
-        { FoodNameTypeMap.Heater, new List<string>(){"火盆","电子烤盘","熔岩烤盘" } },
+        { FoodNameTypeMap.Heater, new List<string>(){"火盆","电子烤盘","熔岩烤盘","金牛座精灵" } },
         { FoodNameTypeMap.WoodenDisk, new List<string>(){"木盘子" ,"友情木盘子"} },
         { FoodNameTypeMap.CottonCandy, new List<string>(){"棉花糖" } },
         { FoodNameTypeMap.IceBucket, new List<string>(){"冰桶炸弹" } },
         { FoodNameTypeMap.MelonShield, new List<string>(){"瓜皮护罩","尖刺瓜皮护罩" } },
-        //{ FoodNameTypeMap.LightningBread, new List<string>(){"雷电长棍面包","节能长棍面包","负离子面包" } },
+        { FoodNameTypeMap.Takoyaki, new List<string>(){"章鱼烧","两栖章鱼烧","火影章鱼烧" } },
         //{ FoodNameTypeMap.FlourBag, new List<string>(){"面粉袋" } },
         { FoodNameTypeMap.WineBottleBoom, new List<string>(){"酒瓶炸弹" } },
         { FoodNameTypeMap.CokeBoom, new List<string>(){"可乐炸弹" } },
         { FoodNameTypeMap.BoiledWaterBoom, new List<string>(){"开水壶炸弹" } },
         { FoodNameTypeMap.WiskyBoom, new List<string>(){"威士忌炸弹" } },
         { FoodNameTypeMap.PineappleBreadBoom, new List<string>(){"菠萝爆炸面包","独角菠萝面包","皇冠菠萝面包" } },
-        //{ FoodNameTypeMap.OilLight, new List<string>(){"油灯","高亮油灯" } },
+        { FoodNameTypeMap.SpinCoffee, new List<string>(){"旋转咖啡喷壶","迷雾旋转咖啡喷壶","原子旋转咖啡喷壶" } },
         //{ FoodNameTypeMap.Fan, new List<string>(){"换气扇" } },
-        { FoodNameTypeMap.MouseCatcher, new List<string>(){"老鼠夹子" } },
+        { FoodNameTypeMap.MouseCatcher, new List<string>(){"老鼠夹子","节能老鼠夹子","黑猫老鼠夹子" } },
         { FoodNameTypeMap.SpicyStringBoom, new List<string>(){"麻辣串炸弹" } },
         { FoodNameTypeMap.SugarGourd, new List<string>(){"糖葫芦炮弹","水果糖葫芦炮弹","七彩糖葫芦炮弹" } },
         { FoodNameTypeMap.MushroomDestroyer, new List<string>(){ "毒菌破坏者" } },
         { FoodNameTypeMap.PokerShield, new List<string>(){ "扑克护罩" } },
+        { FoodNameTypeMap.SaladPitcher, new List<string>(){ "色拉投手","果蔬色拉投手", "凯撒色拉投手" } },
+        { FoodNameTypeMap.ChocolatePitcher, new List<string>(){ "巧克力投手", "浓情巧克力投手", "脆心巧克力投手" } },
+        { FoodNameTypeMap.TofuPitcher, new List<string>(){ "臭豆腐投手", "什锦臭豆腐投手", "铁板臭豆腐投手" } },
+        { FoodNameTypeMap.EggPitcher, new List<string>(){ "煮蛋器投手", "威力煮蛋器", "强袭煮蛋器" } },
+        { FoodNameTypeMap.ToastBread, new List<string>(){ "土司面包" } },
+        { FoodNameTypeMap.ChocolateBread, new List<string>(){ "巧克力面包", "德芙面包" } },
+        { FoodNameTypeMap.RaidenBaguette, new List<string>(){ "雷电长棍面包", "节能雷电长棍面包", "负离子面包" } },
+        { FoodNameTypeMap.HotDog, new List<string>(){ "热狗大炮", "热狗高射炮", "热狗高射榴弹炮" } }
+    };
+
+    /// <summary>
+    /// 防御型卡片
+    /// </summary>
+    public static List<FoodNameTypeMap> DenfenceCard = new List<FoodNameTypeMap>() {
+        FoodNameTypeMap.MelonShield, FoodNameTypeMap.ChocolateBread, FoodNameTypeMap.ToastBread, FoodNameTypeMap.PineappleBreadBoom, FoodNameTypeMap.RaidenBaguette
     };
 
 
@@ -115,7 +130,7 @@ public class FoodManager
         {
             // 三个基础条件：可被选取、是美食或者人物单位、必须存活
             // 外加一个比较条件，就是单位横坐标比当前比较横坐标小
-            if (item.CanBeSelectedAsTarget() && (item is FoodUnit || item is CharacterUnit) && item.IsAlive() && item.transform.position.x < temp_x)
+            if (UnitManager.CanBeSelectedAsTarget(null, item) && (item is FoodUnit || item is CharacterUnit) && item.IsAlive() && item.transform.position.x < temp_x)
             {
                 // 如果目标是美食单位，则需要判断目标必须为默认类型卡片或者护罩类型卡片，否则不能作为选取目标
                 if(item is FoodUnit)
@@ -147,7 +162,7 @@ public class FoodManager
         {
             // 三个基础条件：可被选取、是美食或者人物单位、必须存活
             // 外加一个比较条件，就是单位横坐标比当前比较横坐标大
-            if (item.CanBeSelectedAsTarget() && (item is FoodUnit || item is CharacterUnit) && item.IsAlive() && item.transform.position.x > temp_x)
+            if (UnitManager.CanBeSelectedAsTarget(null, item) && (item is FoodUnit || item is CharacterUnit) && item.IsAlive() && item.transform.position.x > temp_x)
             {
                 // 如果目标是美食单位，则需要判断目标必须为默认类型卡片或者护罩类型卡片，否则不能作为选取目标
                 if (item is FoodUnit)
@@ -261,8 +276,8 @@ public class FoodManager
 
     /// <summary>
     /// 获取 特定 的行
-    /// 1、取出有<符合特定条件>的卡中最靠左侧的，作为该行的代表
-    /// 2、在所有代表中取出最靠右侧的代表，把这些代表的对应行作为结果行返回出去
+    /// 1、取出最<符合特定条件>的单位，作为该行的代表
+    /// 2、在所有代表中取出最<符合特定条件2>的单位，把这些代表的对应行作为结果行返回出去
     /// </summary>
     /// <returns></returns>
     public static List<int> GetRowListBySpecificConditions(Func<BaseUnit, BaseUnit, bool> RowCompareFunc, Func<BaseUnit, BaseUnit, int> LastCompareFunc)

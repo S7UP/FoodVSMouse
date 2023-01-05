@@ -7,29 +7,15 @@ using UnityEngine;
 /// </summary>
 public class SelectEquipmentUI : MonoBehaviour
 {
-    private SelectPanel mSelectPanel;
-    private RectTransform rectTransform;
-    private Tweener ShowTween;
-
     private SelectedCardUI mSelectedCardUI;
     private AvailableCardUI mAvailableCardUI;
-    private SelectWeaponsUI mSelectWeaponsUI;
 
     private void Awake()
     {
-        rectTransform = transform.GetComponent<RectTransform>();
-        ShowTween = rectTransform.DOAnchorPosY(-600f, 0.5f);
-        ShowTween.SetEase(Ease.InCubic); // 由慢到快
-        ShowTween.Pause();
-        ShowTween.SetAutoKill(false);
-
         mSelectedCardUI = transform.Find("SelectedCardUI").GetComponent<SelectedCardUI>();
         mSelectedCardUI.SetSelectEquipmentUI(this);
         mAvailableCardUI = transform.Find("AvailableCardUI").GetComponent<AvailableCardUI>();
         mAvailableCardUI.SetSelectEquipmentUI(this);
-        mSelectWeaponsUI = transform.Find("SelectWeaponsUI").GetComponent<SelectWeaponsUI>();
-        mSelectWeaponsUI.SetSelectEquipmentUI(this);
-
     }
 
     /// <summary>
@@ -47,10 +33,8 @@ public class SelectEquipmentUI : MonoBehaviour
     public void LoadAndFixUI()
     {
         mAvailableCardUI.Initial();
-        mAvailableCardUI.LoadAvailableCardInfoFromStage(mSelectPanel.GetCurrentSelectedStageInfo());
-        // SelectedCardUI.Initial()要于AvailableCardUI.Initial()之后
+        mAvailableCardUI.LoadAvailableCardInfoFromStage(PlayerData.GetInstance().GetCurrentStageInfo());
         mSelectedCardUI.Initial();
-        mSelectWeaponsUI.Initial();
     }
 
     /// <summary>
@@ -59,8 +43,8 @@ public class SelectEquipmentUI : MonoBehaviour
     public void SelectCard(FoodNameTypeMap type)
     {
         int cardCount = 18;
-        if (GetCurrentSelectedStageInfo().isEnableCardCount)
-            cardCount = GetCurrentSelectedStageInfo().cardCount;
+        if (PlayerData.GetInstance().GetCurrentStageInfo().isEnableCardCount)
+            cardCount = PlayerData.GetInstance().GetCurrentStageInfo().cardCount;
         if (mSelectedCardUI.GetSelectedCardCount() < cardCount)
         {
             // 在卡槽没有超上限时选卡
@@ -108,32 +92,6 @@ public class SelectEquipmentUI : MonoBehaviour
     }
 
     /// <summary>
-    /// 显示当前UI
-    /// </summary>
-    public void Show()
-    {
-        ShowTween.PlayForward();
-    }
-
-    /// <summary>
-    /// 隐藏当前UI
-    /// </summary>
-    public void Hide()
-    {
-        ShowTween.PlayBackwards();
-    }
-
-    public void SetSelectPanel(SelectPanel panel)
-    {
-        mSelectPanel = panel;
-    }
-
-    public BaseStage.StageInfo GetCurrentSelectedStageInfo()
-    {
-        return mSelectPanel.GetCurrentSelectedStageInfo();
-    }
-
-    /// <summary>
     /// 进入战斗场景
     /// </summary>
     public void EnterCombatScene()
@@ -141,10 +99,5 @@ public class SelectEquipmentUI : MonoBehaviour
         // 把当前选择的卡组转存至playerData,以供下一个场景读取
         GameManager.Instance.playerData.SetCurrentSelectedCardInfoList(mSelectedCardUI.GetCurrentSelectedCardGroup());
         GameManager.Instance.playerData.SetCurrentCardKeyList(mSelectedCardUI.GetCurrentSelectedKeyGroup());
-        BaseStage.StageInfo info = mSelectPanel.GetCurrentSelectedStageInfo();
-        GameManager.Instance.playerData.SetCurrentChapterStageValue(info.chapterIndex, info.sceneIndex, info.stageIndex);
-        GameManager.Instance.playerData.SetWeaponsInfo(mSelectWeaponsUI.GetSelctedWeaponsInfo());
-        GameManager.Instance.playerData.SetCharacterInfo(mSelectWeaponsUI.GetSelctedCharacterInfo());
-        mSelectPanel.EnterComBatScene();
     }
 }

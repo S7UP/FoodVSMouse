@@ -34,16 +34,16 @@ public class SelectedCardUI : MonoBehaviour
     public void Initial()
     {
         // 获取卡组表
-        BaseStage.StageInfo info = mSelectEquipmentUI.GetCurrentSelectedStageInfo();
+        BaseStage.StageInfo info = PlayerData.GetInstance().GetCurrentStageInfo();
         cardGroupList = GameManager.Instance.playerData.LoadCardGroupList(info.chapterIndex, info.sceneIndex, info.stageIndex);
         keyGroupList = GameManager.Instance.playerData.LoadKeyGroupList(info.chapterIndex, info.sceneIndex, info.stageIndex);
-        if (cardGroupList.Count < 8) // 默认8个卡片组
-            for (int i = cardGroupList.Count; i < 8; i++)
+        if (cardGroupList.Count < 4) // 默认4个卡片组
+            for (int i = cardGroupList.Count; i < 4; i++)
             {
                 cardGroupList.Add(new List<AvailableCardInfo>());
             }
-        if(keyGroupList.Count<8)
-            for (int i = keyGroupList.Count; i < 8; i++)
+        if(keyGroupList.Count<4)
+            for (int i = keyGroupList.Count; i < 4; i++)
             {
                 keyGroupList.Add(new List<char>());
             }
@@ -175,10 +175,10 @@ public class SelectedCardUI : MonoBehaviour
     /// </summary>
     private void UpdateCurrentSelectedCardGroupByCountLimit()
     {
-        if (mSelectEquipmentUI.GetCurrentSelectedStageInfo().isEnableCardCount)
+        if (PlayerData.GetInstance().GetCurrentStageInfo().isEnableCardCount)
         {
             int count = currentSelectedCardGroup.Count;
-            for (int i = mSelectEquipmentUI.GetCurrentSelectedStageInfo().cardCount; i < count; i++)
+            for (int i = PlayerData.GetInstance().GetCurrentStageInfo().cardCount; i < count; i++)
             {
                 currentSelectedCardGroup.RemoveAt(currentSelectedCardGroup.Count - 1);
             }
@@ -274,7 +274,7 @@ public class SelectedCardUI : MonoBehaviour
     /// </summary>
     private void UpdateCardCountText()
     {
-        BaseStage.StageInfo info = mSelectEquipmentUI.GetCurrentSelectedStageInfo();
+        BaseStage.StageInfo info = PlayerData.GetInstance().GetCurrentStageInfo();
         int cardCount = 18;
         if (info.isEnableCardCount)
             cardCount = info.cardCount;
@@ -286,7 +286,7 @@ public class SelectedCardUI : MonoBehaviour
     /// </summary>
     private void SaveCurrentStageCardGroupList()
     {
-        BaseStage.StageInfo info = mSelectEquipmentUI.GetCurrentSelectedStageInfo();
+        BaseStage.StageInfo info = PlayerData.GetInstance().GetCurrentStageInfo();
         GameManager.Instance.playerData.SaveCardGroupList(info.chapterIndex, info.sceneIndex, info.stageIndex, cardGroupList);
         GameManager.Instance.playerData.SaveKeyGroupList(info.chapterIndex, info.sceneIndex, info.stageIndex, keyGroupList);
     }

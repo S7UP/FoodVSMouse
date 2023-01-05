@@ -22,7 +22,7 @@ public class GeneralAttackSkillAbility : SkillAbility
     /// <summary>
     /// 根据目标的攻速来决定需要能量值
     /// </summary>
-    private void UpdateNeedEnergyByAttackSpeed()
+    public void UpdateNeedEnergyByAttackSpeed()
     {
         if (master.mBaseAttackSpeed > 0)
             needEnergy.SetBase(60 / master.mCurrentAttackSpeed);

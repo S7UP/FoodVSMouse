@@ -75,9 +75,9 @@ public class FlyMouse : MouseUnit, IFlyUnit
         return !(mCurrentActionState is TransitionState) && base.CanHit(bullet);
     }
 
-    public override bool CanBeSelectedAsTarget()
+    public override bool CanBeSelectedAsTarget(BaseUnit otherUnit)
     {
-        return !(mCurrentActionState is TransitionState) && base.CanBeSelectedAsTarget();
+        return !(mCurrentActionState is TransitionState) && base.CanBeSelectedAsTarget(otherUnit);
     }
 
     /// <summary>

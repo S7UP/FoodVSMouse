@@ -5,7 +5,27 @@ using UnityEngine;
 public class WaterGridType : BaseGridType
 {
     private const string TaskName = "WaterTask";
-    public const string NoDrop = "在水里不下降"; // 有此标记的单位在水里不会有上升和下降的动画表现
+    public const string NoDrop = "NoDropWater"; // 有此标记的单位在水里不会有上升和下降的动画表现
+
+    /// <summary>
+    /// 为某个单位添加完全不受水影响的效果
+    /// </summary>
+    /// <param name="unit"></param>
+    public static void AddNoAffectByWater(BaseUnit unit, BoolModifier boolModifier)
+    {
+        unit.NumericBox.AddDecideModifierToBoolDict(NoDrop, boolModifier); // 标记在水里不下降
+        unit.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreWaterGridState, boolModifier); // 免疫水蚀
+    }
+
+    /// <summary>
+    /// 为某个单位移除完全不受水影响的效果
+    /// </summary>
+    /// <param name="unit"></param>
+    public static void RemoveNoAffectByWater(BaseUnit unit, BoolModifier boolModifier)
+    {
+        unit.NumericBox.RemoveDecideModifierToBoolDict(NoDrop, boolModifier); // 标记在水里不下降
+        unit.NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreWaterGridState, boolModifier); // 免疫水蚀
+    }
 
     /// <summary>
     /// 是否满足进入条件
@@ -254,9 +274,10 @@ public class WaterGridType : BaseGridType
 
         public void OnExit()
         {
-            // 移除减移速 和 减攻速
+            // 移除减移速 和 减攻速 以及升高降低效果
             unit.NumericBox.MoveSpeed.RemoveFinalPctAddModifier(slowDownFloatModifier);
             unit.NumericBox.AttackSpeed.RemoveFinalPctAddModifier(decAttackSpeedModifier);
+            unit.RemoveSpriteOffsetY(EnterWaterSpriteOffsetY);
         }
 
         // 自定义方法
@@ -268,6 +289,10 @@ public class WaterGridType : BaseGridType
         public void DecCount()
         {
             count--;
+            if(count == 0 && !hasVehicle)
+            {
+                ChangeToVehicleMode();
+            }
         }
 
         /// <summary>

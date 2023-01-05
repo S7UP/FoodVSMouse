@@ -209,7 +209,7 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
 
         // CD
         double cd = attr.GetCD(level);
-        mBaseCD = Mathf.FloorToInt((float)cd * ConfigManager.fps);
+        mBaseCD = Mathf.FloorToInt((float)cd * 60);
         mCD = mBaseCD;
         mCDLeft = 0;
         isDisable = false; // 禁用标志
@@ -290,22 +290,31 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
     }
 
     /// <summary>
-    /// 可否被建造
+    /// 可否被建造（未填参数默认为当前悬停格）
     /// </summary>
     /// <returns></returns>
-    public virtual bool CanConstructe()
+    public bool CanConstructe()
     {
-        BaseGrid baseGrid = GameController.Instance.GetOverGrid();
-        if (baseGrid != null)
+        return CanConstructe(GameController.Instance.GetOverGrid());
+    }
+
+    /// <summary>
+    /// 可否被建造于某格上
+    /// </summary>
+    /// <param name="g"></param>
+    /// <returns></returns>
+    public bool CanConstructe(BaseGrid g)
+    {
+        if (g != null)
         {
             // 先检查格子状态能否允许造卡
-            if (!JudgeCanConstructeInGrid(baseGrid))
+            if (!JudgeCanConstructeInGrid(g))
                 return false;
             // 之后检查是否开启快捷放卡设置，如果是则允许放卡， 否则需要再查看是否含有此格子分类的卡片，若没有则允许建造，否则不行
-            return (baseGrid.CanBuildCard(GetFoodInGridType()) && (ConfigManager.isEnableQuickReleaseCard || !baseGrid.IsContainTag(GetFoodInGridType()))); 
+            bool isQuickBuild = GameManager.Instance.configManager.mConfig.isEnableQuickReleaseCard;
+            return (g.CanBuildCard(GetFoodInGridType()) && (isQuickBuild || !g.IsContainTag(GetFoodInGridType())));
         }
-        // TODO 读取对应格子，是否有其他卡片，能否嵌套种植，以及对应地形能否种植等
-        return false; 
+        return false;
     }
 
     /// <summary>
@@ -317,21 +326,21 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
     }
 
     /// <summary>
-    /// 对产生的卡片实体赋值加工包装
+    /// 对产生的卡片实体赋值加工包装（没参数默认为鼠标当前悬停格）
     /// </summary>
     public virtual void InitInstance()
     {
-        BaseGrid overGrid = GameController.Instance.GetOverGrid();
-        if (overGrid != null)
+        InitInstance(GameController.Instance.GetOverGrid());
+    }
+
+    /// <summary>
+    /// 对产生的卡片实体赋值加工包装
+    /// </summary>
+    public void InitInstance(BaseGrid g)
+    {
+        if (g != null)
         {
-            //GameController.Instance.SetFoodAttribute(GameManager.Instance.attributeManager.GetFoodUnitAttribute(mType, mShape));
-            //mProduct.MInit();
-            //mProduct.SetLevel(mLevel);
-            //mProduct.mBuilder = this; // 设置卡片的建造器
-            //overGrid.SetFoodUnitInGrid(mProduct); // 将卡片初始化并与种下的格子绑定
-            //GameController.Instance.AddFoodUnit(mProduct, overGrid.currentYIndex); // 将这个实体添加到战场上
-            //mProductList.Add(mProduct); // 添加到表内
-            InitInstance(mProduct, mType, mShape, overGrid, mLevel, this);
+            InitInstance(mProduct, mType, mShape, g, mLevel, this);
         }
         else
         {
@@ -429,7 +438,7 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
         {
             mImg_CDMask2.SetActive(true);
             mTex_CDLeft.SetActive(true);
-            mTex_CDLeft.GetComponent<Text>().text = ((float)mCDLeft / ConfigManager.fps).ToString("f2"); // 转化为真实秒的同时保留两位小数
+            mTex_CDLeft.GetComponent<Text>().text = ((float)mCDLeft / 60).ToString("f2"); // 转化为真实秒的同时保留两位小数
         }
 
         // 控制UI层的CD遮罩（实际上就是控制y方向上的scale）

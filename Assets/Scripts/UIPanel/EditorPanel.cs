@@ -25,12 +25,14 @@ public class EditorPanel : BasePanel
     private Toggle Tog_IsBossRound; // 是否为BOSS轮选择
     private InputField Inf_Interval; // 当前组间隔
     private InputField Inf_EndTime; // 当前结束等待时间
+    private InputField Inf_BGM; // 当前轮要切换的BGM名
     private Transform Emp_AddEnemyGroupTrans;
     private Button Btn_AddEnemyGroup; // 添加一组敌人按钮
     private Scr_SelectEnemyType scr_SelectEnemyType;
     private Dropdown Dro_RoundMode; // 本轮模式选项框
     private GameObject Emp_Interval;
     private GameObject Emp_EndTime;
+    private EditorPanel_MouseEditorUI_DefineParamUI DefineParamUI; // 自定义敌怪参数UI
 
     private GameObject StageEditorUI;
     private Transform scrStageContentRoundListTrans;
@@ -46,6 +48,8 @@ public class EditorPanel : BasePanel
     private Button Btn_AddStageRoundInfo; // 添加一个大轮敌人按钮
     private Img_StagePath mImg_StagePath;
     private Button Btn_Del;
+
+    private EditorPanel_StartCardEditorUI mEditorPanel_StartCardEditorUI; // 选择初始卡UI
 
     private GameObject Img_Confirm;
     private Button Btn_Yes;
@@ -124,11 +128,15 @@ public class EditorPanel : BasePanel
         Emp_EndTime = transform.Find("MouseEditorUI").Find("Img_RoundInfo").Find("Emp_EndTime").gameObject;
         Inf_EndTime = Emp_EndTime.transform.Find("InputField").GetComponent<InputField>();
         Inf_EndTime.onEndEdit.AddListener(delegate { OnRoundEndTimeInFChange(); });
+        Inf_BGM = transform.Find("MouseEditorUI").Find("Img_RoundInfo").Find("Emp_BGM").Find("InputField").GetComponent<InputField>();
+        Inf_BGM.onEndEdit.AddListener(delegate { OnRoundBGMInFChange(); });
         Emp_AddEnemyGroupTrans = scrContentEnemyGroupListTrans.Find("Emp_EnemyGroupOperate");
         Btn_AddEnemyGroup = Emp_AddEnemyGroupTrans.Find("Button").GetComponent<Button>();
         Btn_AddEnemyGroup.onClick.AddListener(delegate { OnAddEnemyGroupClick(); });
         scr_SelectEnemyType = transform.Find("MouseEditorUI").Find("Emp_EnemyGroupList").Find("Scr_SelectEnemyType").GetComponent<Scr_SelectEnemyType>();
         scr_SelectEnemyType.gameObject.SetActive(false);
+        DefineParamUI = MouseEditorUI.transform.Find("DefineParamUI").GetComponent<EditorPanel_MouseEditorUI_DefineParamUI>();
+        DefineParamUI.gameObject.SetActive(false);
 
         Dro_RoundMode = MouseEditorUI.transform.Find("Emp_Mode").Find("Dropdown").GetComponent<Dropdown>();
         {
@@ -203,6 +211,9 @@ public class EditorPanel : BasePanel
         Btn_ReturnToMain = transform.Find("Btn_ReturnToMain").GetComponent<Button>();
         Btn_ReturnToMain.onClick.AddListener(OnReturnToMainClick);
 
+        mEditorPanel_StartCardEditorUI = transform.Find("StartCardEditorUI").GetComponent<EditorPanel_StartCardEditorUI>();
+        mEditorPanel_StartCardEditorUI.SetEditorPanel(this);
+
         roundInfoStack = new Stack<BaseRound.RoundInfo>();
         currentRoundIndexStack = new Stack<int>();
         roundBtnList = new List<Button>();
@@ -240,12 +251,23 @@ public class EditorPanel : BasePanel
     public void LoadStage(BaseStage.StageInfo info)
     {
         currentStageInfo = info;
-        if (info.waveIndexList == null)
-            info.waveIndexList = new List<int>();
         if (info.roundInfoList == null)
             info.roundInfoList = new List<BaseRound.RoundInfo>();
         if (info.availableCardInfoList == null)
             info.availableCardInfoList = new List<AvailableCardInfo>();
+        if (info.startCardInfoList == null)
+        {
+            info.startCardInfoList = new List<AvailableCardInfo>[9][];
+            for (int i = 0; i < info.startCardInfoList.Length; i++)
+            {
+                info.startCardInfoList[i] = new List<AvailableCardInfo>[7];
+                for (int j = 0; j < info.startCardInfoList[i].Length; j++)
+                {
+                    info.startCardInfoList[i][j] = new List<AvailableCardInfo>();
+                }
+            }
+        }
+            
         InF_StageName.text = currentStageInfo.name;
         UpdateUI();
     }
@@ -323,6 +345,7 @@ public class EditorPanel : BasePanel
         }
         Inf_Interval.text = currentRoundInfo.interval.ToString();
         Inf_EndTime.text = currentRoundInfo.endTime.ToString();
+        Inf_BGM.text = currentRoundInfo.musicRefenceName;
 
         Dro_RoundMode.value = (int)currentRoundInfo.roundMode;
 
@@ -631,7 +654,6 @@ public class EditorPanel : BasePanel
     {
         if (currentRoundIndexStack.Count > 0 && !isUIUpdateState)
         {
-            Debug.Log("OnRoundIntervalInFChange");
             BaseRound.RoundInfo currentRoundInfo = GetCurrentRoundInfo();
             int i;
             if (!int.TryParse(Inf_Interval.text, out i))
@@ -649,7 +671,6 @@ public class EditorPanel : BasePanel
     {
         if (currentRoundIndexStack.Count > 0 && !isUIUpdateState)
         {
-            Debug.Log("OnRoundEndTimeInFChange");
             BaseRound.RoundInfo currentRoundInfo = GetCurrentRoundInfo();
             int i;
             if (!int.TryParse(Inf_EndTime.text, out i))
@@ -657,6 +678,18 @@ public class EditorPanel : BasePanel
                 Inf_EndTime.text = i.ToString();
             };
             currentRoundInfo.endTime = i;
+        }
+    }
+
+    /// <summary>
+    /// 当BGM引用输入框发生改变时
+    /// </summary>
+    private void OnRoundBGMInFChange()
+    {
+        if (currentRoundIndexStack.Count > 0 && !isUIUpdateState)
+        {
+            BaseRound.RoundInfo currentRoundInfo = GetCurrentRoundInfo();
+            currentRoundInfo.musicRefenceName = Inf_BGM.text;
         }
     }
 
@@ -809,72 +842,27 @@ public class EditorPanel : BasePanel
         if (currentRoundInfo.roundInfoList != null)
         {
             int i = 0;
-            int wave_index = 0;
-            foreach (var item in currentRoundInfo.roundInfoList)
+            foreach (var roundInfo in currentRoundInfo.roundInfoList)
             {
                 GameObject go = GameManager.Instance.GetGameObjectResource(FactoryType.UIFactory, "Btn_RoundInfo");
                 go.transform.SetParent(scrContentRoundListTrans);
                 go.transform.localScale = Vector3.one;
-                go.transform.Find("Text").GetComponent<Text>().text = item.name;
+                go.transform.Find("Text").GetComponent<Text>().text = roundInfo.name;
                 Button btn = go.GetComponent<Button>();
                 roundBtnList.Add(btn);
                 int j = i;
                 btn.onClick.AddListener(() => { SelectRound(j); });
                 Toggle toggle = go.transform.Find("Toggle").GetComponent<Toggle>();
                 toggle.onValueChanged.RemoveAllListeners();
+                toggle.isOn = roundInfo.isShowBigWaveRound;
                 // 只有在关卡编辑面板中的轮可以设置为一大波的标记
-                if (StageEditorUI.activeSelf)
-                {
-                    toggle.gameObject.SetActive(true);
-                    toggle.onValueChanged.AddListener(delegate { OnWaveToggleValueChange(toggle, j); });
-                    if (wave_index < currentStageInfo.waveIndexList.Count && i == currentStageInfo.waveIndexList[wave_index])
-                    {
-                        wave_index++;
-                        toggle.isOn = true;
-                    }
-                    else
-                    {
-                        toggle.isOn = false;
-                    }
-                }
-                else
-                {
-                    toggle.gameObject.SetActive(false);
-                }
-
+                toggle.onValueChanged.AddListener(delegate {
+                    roundInfo.isShowBigWaveRound = toggle.isOn;
+                });
                 i++;
             }
             // 自动更新滚动框高度
             UpdateScrollerContentHeight(scrContentRoundListTrans);
-        }
-    }
-
-
-    /// <summary>
-    /// 当一大波的标记被改变时
-    /// </summary>
-    private void OnWaveToggleValueChange(Toggle toggle, int index)
-    {
-        if (isUIUpdateState)
-            return;
-        if (toggle.isOn)
-        {
-            if(currentStageInfo.waveIndexList.Count > 0)
-            {
-                for (int i = 0; i < currentStageInfo.waveIndexList.Count; i++)
-                {
-                    if (index < currentStageInfo.waveIndexList[i])
-                    {
-                        currentStageInfo.waveIndexList.Insert(i, index);
-                        return;
-                    } 
-                }
-            }
-            currentStageInfo.waveIndexList.Add(index);
-        }
-        else
-        {
-            currentStageInfo.waveIndexList.Remove(index);
         }
     }
 
@@ -969,6 +957,18 @@ public class EditorPanel : BasePanel
     }
 
     /// <summary>
+    /// 开关初始卡片配置面板
+    /// </summary>
+    /// <param name="enable"></param>
+    public void SetStartCardEditorUIEnable(bool enable)
+    {
+        StageEditorUI.gameObject.SetActive(!enable);
+        mEditorPanel_StartCardEditorUI.gameObject.SetActive(enable);
+        if (enable)
+            mEditorPanel_StartCardEditorUI.Initial();
+    }
+
+    /// <summary>
     /// 当返回主菜单被点击时
     /// </summary>
     private void OnReturnToMainClick()
@@ -1029,6 +1029,15 @@ public class EditorPanel : BasePanel
             Inp_EditTextArea.text = GetCurrentStageInfo().additionalNotes;
             Inp_EditTextArea.onEndEdit.AddListener(delegate { GetCurrentStageInfo().additionalNotes = Inp_EditTextArea.text; });
         }
+    }
+
+    /// <summary>
+    /// 显示参数编辑UI
+    /// </summary>
+    public void ShowDefineParamUI(Dictionary<string, List<float>> ParamDict)
+    {
+        DefineParamUI.SetParamDict(ParamDict);
+        DefineParamUI.Show();
     }
 
     // Update is called once per frame

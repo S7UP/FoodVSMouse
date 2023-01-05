@@ -27,7 +27,6 @@ public class Pharaoh1 : BossUnit
     private List<BaseUnit> cursedUnit = new List<BaseUnit>(); // 被诅咒的单位
     private List<BaseUnit> bandageList = new List<BaseUnit>(); // 绷带单位
 
-    private bool isDisappear; // 是否已消失（仅法老原型可用，用于检测移动时是否要做钻地动画的）
     private bool isReal; // 是否为真身型态
 
     public override void Awake()
@@ -54,12 +53,41 @@ public class Pharaoh1 : BossUnit
     {
         cursedUnit.Clear();
         bandageList.Clear();
-        isDisappear = true;
         isReal = false;
         base.MInit();
         animator.runtimeAnimatorController = selfAnimatorController[0];
         CurseAddDamageModifier = new FloatModifier(GetParamValue("AddDamageRate", 0));
-        SetAlpha(0);
+        // 添加出现的技能
+        {
+            CompoundSkillAbility c = new CompoundSkillAbility(this);
+            int timeLeft = 0;
+            c.IsMeetSkillConditionFunc = delegate { return true; };
+            c.BeforeSpellFunc = delegate
+            {
+                animatorController.Play("Appear");
+            };
+            c.AddSpellingFunc(delegate {
+                if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
+                {
+                    animatorController.Play("Idle", true);
+                    return true;
+                }
+                return false;
+            });
+            c.AddSpellingFunc(delegate {
+                if (timeLeft > 0)
+                {
+                    timeLeft--;
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            });
+            // 强制设制当前技能为这个
+            mSkillQueueAbilityManager.SetCurrentSkill(c);
+        }
     }
 
     public override void MUpdate()
@@ -638,38 +666,28 @@ public class Pharaoh1 : BossUnit
         c.IsMeetSkillConditionFunc = delegate { return true; };
         c.BeforeSpellFunc = delegate
         {
-            if(!isDisappear)
-                animatorController.Play("Disappear");
-            else
-            {
-                isNoHit = true;
-                AddCanHitFunc(noHitFunc);
-                transform.position = pos;
-                animatorController.Play("Appear");
-                SetAlpha(1);
-                isDisappear = false;
-            }
+            animatorController.Play("Disappear");
         };
         {
-            if(!isDisappear)
-                c.AddSpellingFunc(delegate {
-                    if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
-                    {
-                        transform.position = pos;
-                        animatorController.Play("Appear");
-                        return true;
-                    }else if (animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime() > 0.3f && !isClose)
-                    {
-                        isClose = true;
-                        NumericBox.DamageRate.AddModifier(DecDmgWhenClosedModifier);
-                    }
-                    else if (animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime() > 0.65f && !isNoHit)
-                    {
-                        isNoHit = true;
-                        AddCanHitFunc(noHitFunc);
-                    }
-                    return false;
-                });
+            c.AddSpellingFunc(delegate {
+                if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
+                {
+                    transform.position = pos;
+                    animatorController.Play("Appear");
+                    return true;
+                }
+                else if (animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime() > 0.3f && !isClose)
+                {
+                    isClose = true;
+                    NumericBox.DamageRate.AddModifier(DecDmgWhenClosedModifier);
+                }
+                else if (animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime() > 0.65f && !isNoHit)
+                {
+                    isNoHit = true;
+                    AddCanHitFunc(noHitFunc);
+                }
+                return false;
+            });
 
 
             c.AddSpellingFunc(delegate {
@@ -796,7 +814,7 @@ public class Pharaoh1 : BossUnit
                         flag = false;
                         int xIndex = (9 - j);
                         // 去找当前列中生命值最高的卡片所在格子
-                        List<BaseGrid> l = GridManager.GetSpecificAreaGridList(GameController.Instance.mMapController.GetGridList(), MapManager.GetColumnX(xIndex - 0.5f), MapManager.GetColumnX(xIndex + 0.5f), MapManager.GetRowY(-0.5f), MapManager.GetRowY(6.5f));
+                        List<BaseGrid> l = GridManager.GetSpecificAreaGridList(GameController.Instance.mMapController.GetGridList(), MapManager.GetColumnX(xIndex - 0.5f), MapManager.GetColumnX(xIndex + 0.5f), MapManager.GetRowY(0.5f), MapManager.GetRowY(5.5f));
                         List<BaseGrid> l2 = GridManager.GetGridListWhichHasMaxCondition(l, (g) => {
                             List<FoodUnit> fList = g.GetAttackableFoodUnitList();
                             float max = float.MinValue;

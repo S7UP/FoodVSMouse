@@ -1,6 +1,5 @@
 using UnityEngine;
 using System;
-using static UnityEngine.UI.CanvasScaler;
 /// <summary>
 /// 会主动检测友方单位的敌方弹幕
 /// </summary>
@@ -16,7 +15,7 @@ public class EnemyBullet : BaseBullet
             BaseGrid g = unit.GetGrid();
             if (g != null)
             {
-                return g.GetHighestAttackPriorityUnit();
+                return g.GetHighestAttackPriorityUnit(mMasterBaseUnit);
             }
             return unit;
         };
@@ -25,7 +24,7 @@ public class EnemyBullet : BaseBullet
         spriteRenderer.sprite = null;
         animator.runtimeAnimatorController = null;
         base.MInit();
-        
+        mCircleCollider2D.radius = 0.1f;
     }
 
     /// <summary>
@@ -43,16 +42,18 @@ public class EnemyBullet : BaseBullet
         {
             FoodUnit u = collision.GetComponent<FoodUnit>();
             BaseUnit targetUnit = GetTarget(u);
-            if (targetUnit!=null && UnitManager.CanBulletHit(targetUnit, this))
+            if (targetUnit!=null && UnitManager.CanBulletHit(targetUnit, this) && !unitList.Contains(targetUnit))
             {
+                unitList.Add(targetUnit);
                 TakeDamage(targetUnit);
             }
         }else if(isAffectCharacter && collision.tag.Equals("Character"))
         {
             CharacterUnit u = collision.GetComponent<CharacterUnit>();
             BaseUnit targetUnit = GetTarget(u);
-            if (targetUnit != null && UnitManager.CanBulletHit(targetUnit, this))
+            if (targetUnit != null && UnitManager.CanBulletHit(targetUnit, this) && !unitList.Contains(targetUnit))
             {
+                unitList.Add(targetUnit);
                 TakeDamage(targetUnit);
             }
         }
@@ -66,6 +67,19 @@ public class EnemyBullet : BaseBullet
     public override void OnTriggerStay2D(Collider2D collision)
     {
         OnCollsion(collision);
+    }
+
+    public override void OnTriggerExit2D(Collider2D collision)
+    {
+        if (collision.tag.Equals("Food"))
+        {
+            FoodUnit u = collision.GetComponent<FoodUnit>();
+            unitList.Remove(u);
+        }else if (collision.tag.Equals("Character"))
+        {
+            CharacterUnit u = collision.GetComponent<CharacterUnit>();
+            unitList.Remove(u);
+        }
     }
 
     public void SetSprite(Sprite sprite)
@@ -87,7 +101,7 @@ public class EnemyBullet : BaseBullet
     {
         EnemyBullet e = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Bullet/EnemyBullet").GetComponent<EnemyBullet>();
         e.MInit();
-        e.SetCollisionLayer("ItemCollideAlly");
+        e.SetCollisionLayer("EnemyBullet");
         e.mMasterBaseUnit = master;
         e.SetDamage(dmg);
         e.SetRuntimeAnimatorController(runtimeAnimatorController);

@@ -1,13 +1,11 @@
-using UnityEngine;
-
 public class FrozenSlowStatusAbility : StatusAbility
 {
     private FloatModifier slowDownFloatModifier; // 当前提供减速效果的修饰器
-    private BoolModifier slowDownBoolModifier;
+    private BoolModifier slowDownBoolModifier = new BoolModifier(true);
 
-    public FrozenSlowStatusAbility(BaseUnit pmaster, float time) : base(pmaster, time)
+    public FrozenSlowStatusAbility(float PercentValue, BaseUnit pmaster, float time) : base(pmaster, time)
     {
-
+        slowDownFloatModifier = new FloatModifier(PercentValue);
     }
 
     /// <summary>
@@ -33,17 +31,8 @@ public class FrozenSlowStatusAbility : StatusAbility
     /// </summary>
     public override void OnDisableEffect()
     {
-        if (slowDownBoolModifier != null)
-        {
-            master.NumericBox.RemoveDecideModifierToBoolDict(StringManager.FrozenSlowDown, slowDownBoolModifier);
-            slowDownBoolModifier = null;
-        }
-
-        if (slowDownFloatModifier != null)
-        {
-            master.NumericBox.MoveSpeed.RemoveFinalPctAddModifier(slowDownFloatModifier);
-            slowDownFloatModifier = null;
-        }
+        master.NumericBox.RemoveDecideModifierToBoolDict(StringManager.FrozenSlowDown, slowDownBoolModifier);
+        master.NumericBox.MoveSpeed.RemoveFinalPctAddModifier(slowDownFloatModifier);
     }
 
     /// <summary>
@@ -51,19 +40,10 @@ public class FrozenSlowStatusAbility : StatusAbility
     /// </summary>
     public override void OnEnableEffect()
     {
-        if(slowDownBoolModifier == null)
-        {
-            // 为目标添加已冰冻减速的标签
-            slowDownBoolModifier = new BoolModifier(true);
-            master.NumericBox.AddDecideModifierToBoolDict(StringManager.FrozenSlowDown, slowDownBoolModifier);
-        }
-
-        if(slowDownFloatModifier == null)
-        {
-            // 实际减速效果应用
-            slowDownFloatModifier = new FloatModifier(-35);
-            master.NumericBox.MoveSpeed.AddFinalPctAddModifier(slowDownFloatModifier);
-        }
+        // 为目标添加已冰冻减速的标签
+        master.NumericBox.AddDecideModifierToBoolDict(StringManager.FrozenSlowDown, slowDownBoolModifier);
+        // 减速
+        master.NumericBox.MoveSpeed.AddFinalPctAddModifier(slowDownFloatModifier);
         // 添加变色效果
         master.SetFrozeSlowEffectEnable(true);
     }
@@ -91,7 +71,6 @@ public class FrozenSlowStatusAbility : StatusAbility
     public override bool IsMeetingEndCondition()
     {
         return master.isDeathState;
-        // return false;
     }
 
     /// <summary>
@@ -104,24 +83,6 @@ public class FrozenSlowStatusAbility : StatusAbility
         if (!TagsManager.IsUnitFrozen(master))
         {
             master.SetFrozeSlowEffectEnable(false);
-        }
-        // 注意，这里是直接从表中移除这个项
-        master.RemoveNoCountUniqueStatusAbility(StringManager.FrozenSlowDown);
-    }
-
-    /// <summary>
-    /// 用于唯一性状态，当状态存在时再被施加同一状态时，调用施加状态的这个方法
-    /// </summary>
-    public override void OnCover()
-    {
-        // 为对象添加这个状态前，先检查目标是否已处于这个状态了，如果是直接重置持续时间
-        StatusAbility sa = master.statusAbilityManager.GetNoCountUniqueStatus(StringManager.FrozenSlowDown);
-        if (sa != null)
-        {
-            FrozenSlowStatusAbility f = (sa as FrozenSlowStatusAbility);
-            f.totalTime = (f.totalTime.baseValue > this.totalTime.baseValue ? f.totalTime : this.totalTime);
-            f.leftTime = Mathf.Max(f.leftTime, this.leftTime);
-            // 之后这个对象应该会被系统抛弃，继续沿用原对象（sa)作为目标的状态，这里不需要管它是否被抛弃以及怎么抛弃，知道这件事就行了
         }
     }
 }

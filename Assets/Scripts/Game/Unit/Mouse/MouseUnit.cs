@@ -18,7 +18,7 @@ public class MouseUnit : BaseUnit
     public SpriteRenderer spriteRenderer;
     protected Animator animator;
     public Transform spriteTrans;
-
+    
     // 其他属性
     protected List<double> mHertRateList = new List<double>(); // 切换贴图时的受伤比率（高->低)
     public int mHertIndex; // 受伤贴图阶段
@@ -118,6 +118,8 @@ public class MouseUnit : BaseUnit
         mBoxCollider2D.offset = new Vector2(0, 0);
         mBoxCollider2D.size = new Vector2(0.49f*MapManager.gridWidth, 0.49f*MapManager.gridHeight);
     }
+
+
 
     /// <summary>
     /// 只有对象被创建时做一次，主要是用来获取各组件的引用
@@ -226,15 +228,16 @@ public class MouseUnit : BaseUnit
     /// <returns></returns>
     public virtual bool IsHasTarget()
     {
-        if(IsBlock())
+        if (IsBlock())
         {
             // 若目标依附于格子，则将目标切换为目标所在格的最高攻击优先级目标
             BaseGrid g = mBlockUnit.GetGrid();
             if (g != null)
             {
-                mBlockUnit = g.GetHighestAttackPriorityUnit();
+                mBlockUnit = g.GetHighestAttackPriorityUnit(this);
+                UpdateBlockState();
             }
-            return true;
+            return IsBlock();
         }
         return false;
     }
@@ -253,21 +256,12 @@ public class MouseUnit : BaseUnit
     /// </summary>
     protected virtual void UpdateBlockState()
     {
-        if (mBlockUnit != null && mBlockUnit.IsAlive() && mBlockUnit.CanBeSelectedAsTarget())
+        if (mBlockUnit != null && mBlockUnit.IsAlive() && UnitManager.CanBeSelectedAsTarget(this, mBlockUnit) && UnitManager.CanBlock(this, mBlockUnit))
         {
             isBlock = true;
         }
         else
             SetNoCollideAllyUnit();
-    }
-
-    /// <summary>
-    /// 给予群攻型敌人一种可以选择多个目标的接口
-    /// </summary>
-    /// <returns></returns>
-    public virtual List<BaseUnit> GetCurrentTargetList()
-    {
-        return null;
     }
 
     /// <summary>
@@ -313,7 +307,7 @@ public class MouseUnit : BaseUnit
     /// </summary>
     public override bool CanBlock(BaseUnit unit)
     {
-        return ((unit is FoodUnit || unit is CharacterUnit) && GetRowIndex() == unit.GetRowIndex() && mHeight == unit.mHeight);
+        return ((unit is FoodUnit || unit is CharacterUnit) && UnitManager.CanBeSelectedAsTarget(this, unit) && GetRowIndex() == unit.GetRowIndex() && mHeight == unit.mHeight);
     }
 
     /// <summary>
@@ -323,7 +317,7 @@ public class MouseUnit : BaseUnit
     /// <returns></returns>
     public override bool CanHit(BaseBullet bullet)
     {
-        return (GetRowIndex() == bullet.GetRowIndex() && mHeight == bullet.mHeight);
+        return IsAlive();
     }
 
     /// <summary>
@@ -385,6 +379,16 @@ public class MouseUnit : BaseUnit
     }
 
     /// <summary>
+    /// 当被攻击时闪白
+    /// </summary>
+    public void FlashWhenHited()
+    {
+        {
+            hitBox.OnHit();
+        }
+    }
+
+    /// <summary>
     /// 当贴图更新时要做的事，由子类override
     /// </summary>
     public virtual void OnUpdateRuntimeAnimatorController()
@@ -415,7 +419,7 @@ public class MouseUnit : BaseUnit
     /// <returns></returns>
     public bool IsBlock()
     {
-        return isBlock && mBlockUnit!=null && mBlockUnit.IsAlive();
+        return isBlock && mBlockUnit!=null && mBlockUnit.IsAlive() && UnitManager.CanBeSelectedAsTarget(this, mBlockUnit);
     }
 
     /// <summary>
@@ -448,8 +452,8 @@ public class MouseUnit : BaseUnit
     public virtual void OnAllyCollision(BaseUnit unit)
     {
         // 检测本格美食最高受击优先级单位
-        BaseUnit target = unit.GetGrid().GetHighestAttackPriorityUnit();
-        if (target!=null && !isBlock && UnitManager.CanBlock(this, target)) // 检测双方能否互相阻挡
+        BaseUnit target = unit.GetGrid().GetHighestAttackPriorityUnit(this);
+        if (target!=null && !isBlock && UnitManager.CanBlock(this, target)) // 检测双方能否互相阻挡，且老鼠能否将该目标视为攻击目标(这个在GetHighestAttackPriorityUnit已经做了）
         {
             isBlock = true;
             mBlockUnit = target;
@@ -579,6 +583,7 @@ public class MouseUnit : BaseUnit
     public override void OnDieStateEnter()
     {
         animatorController.Play(DieClipName);
+        animatorController.SetNoPlayOtherClip(true); // 不许切成其他动画
     }
 
     public override void OnAttackStateContinue()
@@ -601,11 +606,6 @@ public class MouseUnit : BaseUnit
 
     public override void DuringDeath()
     {
-        // 切换时的第一帧直接不执行update()，因为下述的info.normalizedTime的值还停留在上一个状态，逻辑会出问题！
-        if (currentStateTimer <= 0)
-        {
-            return;
-        }
         // 获取Die的动作信息，使得回收时机与动画显示尽可能同步
         if(animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
         {
@@ -621,6 +621,7 @@ public class MouseUnit : BaseUnit
         spriteRenderer.material = GameManager.Instance.GetMaterial("Dissolve2");
         // 禁止播放动画
         PauseCurrentAnimatorState(boolModifier);
+        animatorController.SetNoPlayOtherClip(true);
     }
 
     public override void DuringBurn(float _Threshold)
@@ -641,6 +642,7 @@ public class MouseUnit : BaseUnit
     {
         // 禁止播放动画
         PauseCurrentAnimatorState(boolModifier);
+        animatorController.SetNoPlayOtherClip(true);
     }
 
     /// <summary>
@@ -742,9 +744,9 @@ public class MouseUnit : BaseUnit
     /// 可否被选择为目标
     /// </summary>
     /// <returns></returns>
-    public override bool CanBeSelectedAsTarget()
+    public override bool CanBeSelectedAsTarget(BaseUnit otherUnit)
     {
-        return mBoxCollider2D.enabled;
+        return mBoxCollider2D.enabled && IsAlive() && base.CanBeSelectedAsTarget(otherUnit);
     }
 
     /// <summary>
@@ -824,7 +826,6 @@ public class MouseUnit : BaseUnit
         {
             rowIndexList.Remove(currentRowIndex);
         }
-        Debug.Log("rowIndexList.Count=" + rowIndexList.Count);
         // 然后从剩下的里面随机抽取一名幸运观众作为最终移动行
         int selectedIndex = Random.Range(0, rowIndexList.Count); // 还是注意，生成整形时不包括最大值
         // 纵向位移

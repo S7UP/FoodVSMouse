@@ -10,12 +10,28 @@ public class MainSceneState : BaseSceneState
     public override void EnterScene()
     {
         SceneManager.LoadScene("MainScene");
+        // 播放主菜单BGM
+        GameManager.Instance.audioSourceManager.PlayBGMusic("MainScene");
         mUIFacade.AddPanelToDict(StringManager.MainPanel);
+        mUIFacade.AddPanelToDict(StringManager.ConfigPanel);
         base.EnterScene();
+        EnterMainPanel(); // 默认进入MainPanel
     }
 
     public override void ExitScene()
     {
         base.ExitScene();
+    }
+
+    public void EnterMainPanel()
+    {
+        mUIFacade.currentScenePanelDict[StringManager.MainPanel].EnterPanel();
+        mUIFacade.currentScenePanelDict[StringManager.ConfigPanel].ExitPanel();
+    }
+
+    public void EnterConfigPanel()
+    {
+        mUIFacade.currentScenePanelDict[StringManager.MainPanel].ExitPanel();
+        mUIFacade.currentScenePanelDict[StringManager.ConfigPanel].EnterPanel();
     }
 }

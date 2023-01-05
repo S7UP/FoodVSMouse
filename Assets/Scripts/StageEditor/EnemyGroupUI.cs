@@ -21,32 +21,55 @@ public class EnemyGroupUI : MonoBehaviour
     private Button Btn_Del;
     private Button Btn_EnemyType;
     private RectTransform rectTransform;
+    private Transform Emp_Info_Trans;
     private GameObject Emp_Hp;
     private InputField Inf_Hp;
+    private InputField Inf_HpRate;
+    private InputField Inf_AttackRate;
+    private InputField Inf_MoveSpeedRate;
+    private InputField Inf_Defence;
+    private Text Tex_HpRate;
+    private Text Tex_AttackRate;
+    private Text Tex_MoveSpeedRate;
+    private Text Tex_Defence;
+    private Button Btn_Define;
 
     private void Awake()
     {
         // 引用初始化
         Emp_MaskList = transform.Find("Img_Mouse").Find("Emp_MaskList").gameObject;
         Img_Mouse = transform.Find("Img_Mouse").GetComponent<Image>();
+        Emp_Info_Trans = transform.Find("Img_Mouse").Find("Emp_Info");
         Img_MaskList = new Image[Emp_MaskList.transform.childCount];
         for (int i = 0; i < Emp_MaskList.transform.childCount; i++)
         {
             Img_MaskList[i] = Emp_MaskList.transform.GetChild(i).GetComponent<Image>();
             Img_MaskList[i].enabled = false; // 默认都先隐藏掉
         }
-        Tex_Type = transform.Find("Img_Mouse").Find("Emp_Info").Find("Tex_Type").GetComponent<Text>();
-        Tex_Shape = transform.Find("Img_Mouse").Find("Emp_Info").Find("Tex_Shape").GetComponent<Text>();
-        Dro_StartIndex = transform.Find("Img_Mouse").Find("Emp_Info").Find("Emp_StartIndex").Find("Dropdown").GetComponent<Dropdown>();
-        Dro_Number = transform.Find("Img_Mouse").Find("Emp_Info").Find("Emp_Number").Find("Dropdown").GetComponent<Dropdown>();
-        Dro_ApartIndex = transform.Find("Img_Mouse").Find("Emp_Info").Find("Emp_ApartIndex").Find("Dropdown").GetComponent<Dropdown>();
+        Tex_Type = Emp_Info_Trans.Find("Tex_Type").GetComponent<Text>();
+        Tex_Shape = Emp_Info_Trans.Find("Tex_Shape").GetComponent<Text>();
+        Dro_StartIndex = Emp_Info_Trans.Find("Emp_StartIndex").Find("Dropdown").GetComponent<Dropdown>();
+        Dro_Number = Emp_Info_Trans.Find("Emp_Number").Find("Dropdown").GetComponent<Dropdown>();
+        Dro_ApartIndex = Emp_Info_Trans.Find("Emp_ApartIndex").Find("Dropdown").GetComponent<Dropdown>();
         rectTransform = transform.GetComponent<RectTransform>();
 
-        Btn_Del = transform.Find("Img_Mouse").Find("Emp_Info").Find("Btn_Del").GetComponent<Button>();
+        Btn_Del = Emp_Info_Trans.Find("Btn_Del").GetComponent<Button>();
         Btn_EnemyType = transform.Find("Img_Mouse").GetComponent<Button>();
 
-        Emp_Hp = transform.Find("Img_Mouse").Find("Emp_Info").Find("Emp_Hp").gameObject;
+        Emp_Hp = Emp_Info_Trans.Find("Emp_Hp").gameObject;
         Inf_Hp = Emp_Hp.transform.Find("InputField").GetComponent<InputField>();
+
+        Inf_HpRate = Emp_Info_Trans.Find("Emp_HpRate").Find("InputField").GetComponent<InputField>();
+        Inf_AttackRate = Emp_Info_Trans.Find("Emp_AttackRate").Find("InputField").GetComponent<InputField>();
+        Inf_MoveSpeedRate = Emp_Info_Trans.Find("Emp_MoveSpeedRate").Find("InputField").GetComponent<InputField>();
+        Inf_Defence = Emp_Info_Trans.Find("Emp_Defence").Find("InputField").GetComponent<InputField>();
+
+        Tex_HpRate = Inf_HpRate.transform.Find("Text").GetComponent<Text>();
+        Tex_AttackRate = Inf_AttackRate.transform.Find("Text").GetComponent<Text>();
+        Tex_MoveSpeedRate = Inf_MoveSpeedRate.transform.Find("Text").GetComponent<Text>();
+        Tex_Defence = Inf_Defence.transform.Find("Text").GetComponent<Text>();
+
+        Btn_Define = Emp_Info_Trans.Find("Btn_Define").GetComponent<Button>();
     }
 
     public void Initial()
@@ -116,6 +139,34 @@ public class EnemyGroupUI : MonoBehaviour
         {
             Dro_ApartIndexOnValueChanged();
         });
+
+
+        // HpRate
+        Inf_HpRate.onEndEdit.RemoveAllListeners();
+        Inf_HpRate.onEndEdit.AddListener(delegate {
+            Inf_HpRateOnEndEdit(float.Parse(Inf_HpRate.text));
+        });
+        // AttackRate
+        Inf_AttackRate.onEndEdit.RemoveAllListeners();
+        Inf_AttackRate.onEndEdit.AddListener(delegate {
+            Inf_AttackRateOnEndEdit(float.Parse(Inf_AttackRate.text));
+        });
+        // MoveSpeedRate
+        Inf_MoveSpeedRate.onEndEdit.RemoveAllListeners();
+        Inf_MoveSpeedRate.onEndEdit.AddListener(delegate {
+            Inf_MoveSpeedRateOnEndEdit(float.Parse(Inf_MoveSpeedRate.text));
+        });
+        // Defence
+        Inf_Defence.onEndEdit.RemoveAllListeners();
+        Inf_Defence.onEndEdit.AddListener(delegate {
+            Inf_DefenceOnEndEdit(float.Parse(Inf_Defence.text));
+        });
+
+        // 自定义参数
+        Btn_Define.onClick.RemoveAllListeners();
+        Btn_Define.onClick.AddListener(delegate {
+            mEditorPanel.ShowDefineParamUI(mBaseEnemyGroup.GetEnemyAttribute().ParamDict);
+        });
     }
 
     /// <summary>
@@ -172,6 +223,84 @@ public class EnemyGroupUI : MonoBehaviour
         DisplayUpdate();
     }
 
+    /// <summary>
+    /// 生命倍率输入框值发生改变的事件
+    /// </summary>
+    private void Inf_HpRateOnEndEdit(float hpRate)
+    {
+        if (hpRate <= 0)
+        {
+            hpRate = 1;
+            Inf_HpRate.text = hpRate.ToString();
+        }
+        mBaseEnemyGroup.GetEnemyAttribute().HpRate = hpRate;
+        DisplayUpdate();
+        if (hpRate == 1)
+            Tex_HpRate.color = Color.black;
+        else
+            Tex_HpRate.color = Color.red;
+    }
+
+    /// <summary>
+    /// 攻击倍率输入框值发生改变的事件
+    /// </summary>
+    private void Inf_AttackRateOnEndEdit(float attackRate)
+    {
+        if (attackRate <= 0)
+        {
+            attackRate = 1;
+            Inf_AttackRate.text = attackRate.ToString();
+        }
+        mBaseEnemyGroup.GetEnemyAttribute().AttackRate = attackRate;
+        DisplayUpdate();
+        if (attackRate == 1)
+            Tex_AttackRate.color = Color.black;
+        else
+            Tex_AttackRate.color = Color.red;
+    }
+
+    /// <summary>
+    /// 移速倍率输入框值发生改变的事件
+    /// </summary>
+    private void Inf_MoveSpeedRateOnEndEdit(float moveSpeedRate)
+    {
+        if (moveSpeedRate <= 0)
+        {
+            moveSpeedRate = 1;
+            Inf_MoveSpeedRate.text = moveSpeedRate.ToString();
+        }
+        mBaseEnemyGroup.GetEnemyAttribute().MoveSpeedRate = moveSpeedRate;
+        DisplayUpdate();
+        if (moveSpeedRate == 1)
+            Tex_MoveSpeedRate.color = Color.black;
+        else
+            Tex_MoveSpeedRate.color = Color.red;
+    }
+
+    /// <summary>
+    /// 减伤值输入框值发生改变的事件
+    /// </summary>
+    private void Inf_DefenceOnEndEdit(float defence)
+    {
+        if (defence < 0)
+        {
+            defence = 0;
+            Inf_Defence.text = defence.ToString();
+        }
+        else if (defence > 1)
+        {
+            defence = 1;
+            Inf_Defence.text = defence.ToString();
+        }
+        mBaseEnemyGroup.GetEnemyAttribute().Defence = defence;
+        DisplayUpdate();
+        if (defence == 0)
+            Tex_Defence.color = Color.black;
+        else
+            Tex_Defence.color = Color.red;
+    }
+
+
 
     /// <summary>
     /// 从外部设置绑定的EnemyGroup
@@ -206,6 +335,16 @@ public class EnemyGroupUI : MonoBehaviour
             mBaseEnemyGroup.mApartIndex = 0;
         }
         Dro_ApartIndex.value = mBaseEnemyGroup.mApartIndex;
+
+        // 敌人的属性
+        Inf_HpRate.text = mBaseEnemyGroup.GetEnemyAttribute().HpRate.ToString();
+        Inf_AttackRate.text = mBaseEnemyGroup.GetEnemyAttribute().AttackRate.ToString();
+        Inf_MoveSpeedRate.text = mBaseEnemyGroup.GetEnemyAttribute().MoveSpeedRate.ToString();
+        Inf_Defence.text = mBaseEnemyGroup.GetEnemyAttribute().Defence.ToString();
+        Inf_HpRateOnEndEdit(mBaseEnemyGroup.GetEnemyAttribute().HpRate);
+        Inf_AttackRateOnEndEdit(mBaseEnemyGroup.GetEnemyAttribute().AttackRate);
+        Inf_MoveSpeedRateOnEndEdit(mBaseEnemyGroup.GetEnemyAttribute().MoveSpeedRate);
+        Inf_DefenceOnEndEdit(mBaseEnemyGroup.GetEnemyAttribute().Defence);
     }
 
     public void ChangeMouseInfo(BaseEnemyGroup.EnemyInfo enemyInfo)
@@ -248,6 +387,7 @@ public class EnemyGroupUI : MonoBehaviour
             int index = (startIndex + i)% rowCount;
             Img_MaskList[index].enabled = true;
         }
+
 
     }
 

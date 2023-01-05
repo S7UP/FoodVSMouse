@@ -69,11 +69,11 @@ public class CatapultMouse : MouseUnit
                 BaseGrid g = unit.GetGrid();
                 if (g != null)
                 {
-                    return g.GetThrowHighestAttackPriorityUnitInclude();
+                    return g.GetThrowHighestAttackPriorityUnitInclude(this);
                 }
                 return unit;
             };
-            TaskManager.AddParabolaTask(b, TransManager.TranToVelocity(24f), 0.25f, transform.position, new Vector2(u.transform.position.x, transform.position.y), false);
+            TaskManager.AddParabolaTask(b, TransManager.TranToVelocity(24f), 0.25f, transform.position, u, false);
             GameController.Instance.AddBullet(b);
 
         }
@@ -86,11 +86,11 @@ public class CatapultMouse : MouseUnit
                 BaseGrid g = unit.GetGrid();
                 if (g != null)
                 {
-                    return g.GetThrowHighestAttackPriorityUnitInclude();
+                    return g.GetThrowHighestAttackPriorityUnitInclude(this);
                 }
                 return unit;
             };
-            TaskManager.AddParabolaTask(b, TransManager.TranToVelocity(v), 2.0f, transform.position, new Vector2(targetUnit.transform.position.x, transform.position.y), false);
+            TaskManager.AddParabolaTask(b, TransManager.TranToVelocity(v), 2.0f, transform.position, targetUnit, false);
             GameController.Instance.AddBullet(b);
         }
     }

@@ -1,8 +1,17 @@
+using System;
+
 public class BoiledWaterBoom : FoodUnit
 {
+    private bool isTrigger;
     public override void MInit()
     {
+        isTrigger = false;
         base.MInit();
+        Action<CombatAction> hitedAction = (combatAction) => {
+            isTrigger = true;
+        };
+        AddActionPointListener(ActionPointType.PostReceiveDamage, hitedAction);
+        AddActionPointListener(ActionPointType.PostReceiveReboundDamage, hitedAction);
         // 添加炸弹的免疫修饰
         FoodManager.AddBombModifier(this);
     }
@@ -16,23 +25,13 @@ public class BoiledWaterBoom : FoodUnit
     }
 
     /// <summary>
-    /// 判断是否有有效的攻击目标
-    /// </summary>
-    /// <returns></returns>
-    protected override bool IsHasTarget()
-    {
-        // 即时型炸弹不需要
-        return false;
-    }
-
-    /// <summary>
     /// 是否满足普通攻击的条件
     /// </summary>
     /// <returns></returns>
     public override bool IsMeetGeneralAttackCondition()
     {
-        // 即时型炸弹不需要
-        return true;
+        // 生命值低于50或者当前所在格有普通类型卡片的存在
+        return isTrigger || GetGrid().IsContainTag(FoodInGridType.Default);
     }
 
     /// <summary>
@@ -90,7 +89,7 @@ public class BoiledWaterBoom : FoodUnit
         // 添加对应的判定检测器
         {
             BombAreaEffectExecution bombEffect = BombAreaEffectExecution.GetInstance();
-            bombEffect.Init(this, 900, GetRowIndex(), 5, 5, 0, 0, false, true);
+            bombEffect.Init(this, 900 * mCurrentAttack / 10, GetRowIndex(), 5, 5, 0, 0, false, true);
             bombEffect.transform.position = this.GetPosition();
             GameController.Instance.AddAreaEffectExecution(bombEffect);
         }

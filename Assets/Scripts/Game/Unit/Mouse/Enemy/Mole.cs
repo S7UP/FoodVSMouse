@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 /// <summary>
 /// 鼹鼠类
 /// </summary>
@@ -7,17 +8,20 @@ public class Mole : MouseUnit
     // 分为3P，P1在地下,P2在地面正常态，P3在地面受伤态
     private bool isAppear; // 是否出土
     private bool isMoveLeft; // 出土后是否向左移动
-    private bool canBeHited; // 能否被击中
     private BoolModifier IgnoreFrozen = new BoolModifier(true);
     private BoolModifier IgnoreFrozenSlowDown = new BoolModifier(true);
     private FloatModifier speedModifier;
+    private static Func<BaseUnit, BaseUnit, bool> noBeSelectedAsTargetFunc = delegate { return false; };
+    private static Func<BaseUnit, BaseBullet, bool> noHitFunc = delegate { return false; };
+    private static Func<BaseUnit, BaseUnit, bool> noBlockFunc = delegate { return false; };
+    private int stunTimeLeft;
 
     public override void MInit()
     {
         isAppear = false;
         isMoveLeft = false;
-        canBeHited = false;
         speedModifier = null;
+        stunTimeLeft = 120;
         base.MInit();
         // 初始在地下时免疫冰冻效果
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozen, IgnoreFrozen);
@@ -30,35 +34,10 @@ public class Mole : MouseUnit
         NumericBox.MoveSpeed.AddPctAddModifier(speedModifier);
         // 初始高度为-1
         mHeight = -1;
-    }
-
-    /// <summary>
-    /// 当处于遁地状态时完全不被子弹击中
-    /// </summary>
-    /// <param name="bullet"></param>
-    /// <returns></returns>
-    public override bool CanHit(BaseBullet bullet)
-    {
-        return canBeHited && base.CanHit(bullet);
-    }
-
-    /// <summary>
-    /// 当处于遁地状态时处于不可选取状态
-    /// </summary>
-    /// <returns></returns>
-    public override bool CanBeSelectedAsTarget()
-    {
-        return canBeHited && base.CanBeSelectedAsTarget();
-    }
-
-    /// <summary>
-    /// 是否满足普通攻击的条件
-    /// </summary>
-    /// <returns></returns>
-    public override bool IsMeetGeneralAttackCondition()
-    {
-        // 被阻挡了 且 阻挡对象是有效的
-        return canBeHited && base.IsMeetGeneralAttackCondition();
+        // 初始不可作为攻击目标、不可被攻击、也不阻挡不攻击
+        AddCanBeSelectedAsTargetFunc(noBeSelectedAsTargetFunc);
+        AddCanHitFunc(noHitFunc);
+        AddCanBlockFunc(noBlockFunc);
     }
 
     /// <summary>
@@ -76,16 +55,7 @@ public class Mole : MouseUnit
         isAppear = true;
         this.isMoveLeft = isMoveLeft;
         // 改朝向
-        //if(isMoveLeft)
-        //    SetLocalScale(new Vector2(-1, 1));
         SetActionState(new TransitionState(this));
-        // 不再免疫冻结状态
-        NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreFrozen, IgnoreFrozen);
-        NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreFrozenSlowDown, IgnoreFrozenSlowDown);
-        // 移除加速效果
-        NumericBox.MoveSpeed.RemovePctAddModifier(speedModifier);
-        // 高度置为正常高度0
-        mHeight = 0;
     }
 
     /// <summary>
@@ -127,7 +97,9 @@ public class Mole : MouseUnit
         base.OnMoveState();
         // 当移动到左一列格子最左边缘时出土，但是是逆行
         if(!isAppear && transform.position.x < MapManager.GetColumnX(-0.4f))
+        {
             ExecuteAppear(false);
+        }
     }
 
     /// <summary>
@@ -151,10 +123,41 @@ public class Mole : MouseUnit
         // 动画播放完一次后，转为移动状态
         if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
         {
+            // 不再免疫冻结状态
+            NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreFrozen, IgnoreFrozen);
+            NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreFrozenSlowDown, IgnoreFrozenSlowDown);
+            SetActionState(new CastState(this));
+            // 移除加速效果
+            NumericBox.MoveSpeed.RemovePctAddModifier(speedModifier);
+            // 高度置为正常高度0
+            mHeight = 0;
+            // 移除不可作为攻击目标、不可被攻击
+            RemoveCanBeSelectedAsTargetFunc(noBeSelectedAsTargetFunc);
+            RemoveCanHitFunc(noHitFunc);
+        }
+    }
+
+    public override void OnTransitionStateExit()
+    {
+        
+    }
+
+    public override void OnCastStateEnter()
+    {
+        animatorController.Play("Stun", true);
+    }
+
+    public override void OnCastState()
+    {
+        if (stunTimeLeft > 0)
+        {
+            stunTimeLeft--;
+        }
+        else
+        {
+            // 现在可以被阻挡了
+            RemoveCanBlockFunc(noBlockFunc);
             SetActionState(new MoveState(this));
         }
-        // 中弹判定
-        if (!canBeHited && animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime() > 0.5)
-            canBeHited = true;
     }
 }

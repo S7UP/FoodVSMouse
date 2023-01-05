@@ -45,6 +45,10 @@ public class CardBuilderManager
             d.Add(FoodNameTypeMap.WoodenDisk, AfterBuildWoodenDisk);
             d.Add(FoodNameTypeMap.PokerShield, AfterBuildPokerShield);
             d.Add(FoodNameTypeMap.CottonCandy, AfterBuildCottonCandy);
+            d.Add(FoodNameTypeMap.ChocolateBread, AfterBuildChocolateBread);
+            d.Add(FoodNameTypeMap.RaidenBaguette, AfterBuildRaidenBaguette);
+            d.Add(FoodNameTypeMap.IceBucket, AfterBuildIceBucketFoodUnit);
+            d.Add(FoodNameTypeMap.BoiledWaterBoom, AfterBuildBoiledWaterBoom);
         }
 
         /// <summary>
@@ -65,6 +69,10 @@ public class CardBuilderManager
             d.Add(FoodNameTypeMap.WoodenDisk, AfterDestructeWoodenDisk);
             d.Add(FoodNameTypeMap.PokerShield, AfterDestructePokerShield);
             d.Add(FoodNameTypeMap.CottonCandy, AfterDestructeCottonCandy);
+            d.Add(FoodNameTypeMap.ChocolateBread, AfterDestructeChocolateBread);
+            d.Add(FoodNameTypeMap.RaidenBaguette, AfterDestructeRaidenBaguette);
+            d.Add(FoodNameTypeMap.IceBucket, AfterDestructeIceBucketFoodUnit);
+            d.Add(FoodNameTypeMap.BoiledWaterBoom, AfterDestructeBoiledWaterBoom);
         }
 
         /// <summary>
@@ -304,5 +312,83 @@ public class CardBuilderManager
     private bool CottonCandyCanConstructeInGrid(BaseGrid grid)
     {
         return grid.IsContainGridType(GridType.Lava);
+    }
+
+    /// <summary>
+    /// 种植巧克力面包后的增值效果
+    /// </summary>
+    private void AfterBuildChocolateBread(BaseCardBuilder builder)
+    {
+        builder.mCostDict["Fire"] = builder.mCostDict["Fire"] + 75f;
+    }
+
+    /// <summary>
+    /// 移除巧克力面包后的减值效果
+    /// </summary>
+    private void AfterDestructeChocolateBread(BaseCardBuilder builder)
+    {
+        builder.mCostDict["Fire"] = builder.mCostDict["Fire"] - 75f;
+    }
+
+    /// <summary>
+    /// 种植雷电后增值效果
+    /// </summary>
+    private void AfterBuildRaidenBaguette(BaseCardBuilder builder)
+    {
+        if (builder.mShape < 1)
+        {
+            builder.mCostDict["Fire"] = builder.mCostDict["Fire"] + 300f;
+        }
+        else
+        {
+            builder.mCostDict["Fire"] = builder.mCostDict["Fire"] + 250f;
+        }
+    }
+
+    /// <summary>
+    /// 移除雷电后减值效果
+    /// </summary>
+    private void AfterDestructeRaidenBaguette(BaseCardBuilder builder)
+    {
+        if (builder.mShape < 1)
+        {
+            builder.mCostDict["Fire"] = builder.mCostDict["Fire"] - 300f;
+        }
+        else
+        {
+            builder.mCostDict["Fire"] = builder.mCostDict["Fire"] - 250f;
+        }
+    }
+
+    /// <summary>
+    /// 种植冰桶炸弹后增值效果
+    /// </summary>
+    private void AfterBuildIceBucketFoodUnit(BaseCardBuilder builder)
+    {
+        builder.mCostDict["Fire"] = builder.mCostDict["Fire"] + 75f;
+    }
+
+    /// <summary>
+    /// 移除冰桶炸弹后减值效果
+    /// </summary>
+    private void AfterDestructeIceBucketFoodUnit(BaseCardBuilder builder)
+    {
+        builder.mCostDict["Fire"] = builder.mCostDict["Fire"] - 75f;
+    }
+
+    /// <summary>
+    /// 种植开水壶炸弹后增值效果
+    /// </summary>
+    private void AfterBuildBoiledWaterBoom(BaseCardBuilder builder)
+    {
+        builder.mCostDict["Fire"] = builder.mCostDict["Fire"] + 100f;
+    }
+
+    /// <summary>
+    /// 移除开水壶炸弹后减值效果
+    /// </summary>
+    private void AfterDestructeBoiledWaterBoom(BaseCardBuilder builder)
+    {
+        builder.mCostDict["Fire"] = builder.mCostDict["Fire"] - 100f;
     }
 }

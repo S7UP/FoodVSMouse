@@ -116,6 +116,8 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
 
         TaskList.Clear();
         TaskDict.Clear();
+
+        transform.right = Vector2.right;
     }
 
     /// <summary>

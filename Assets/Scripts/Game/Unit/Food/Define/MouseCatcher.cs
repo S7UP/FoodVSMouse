@@ -1,3 +1,6 @@
+using System;
+
+using UnityEngine;
 /// <summary>
 /// 老鼠夹子
 /// </summary>
@@ -14,6 +17,17 @@ public class MouseCatcher : FoodUnit
         prepareTime = totalPrepareTime;
         isTriggerBoom = false;
         base.MInit();
+
+        if(mShape >= 2)
+        {
+            AddCanBeSelectedAsTargetFunc(delegate { return false; });
+            AddCanBlockFunc(delegate { return false; });
+            // 添加隐匿特效
+            BaseEffect e = BaseEffect.CreateInstance(GameManager.Instance.GetRuntimeAnimatorController("Effect/HiddenEffect"), "Appear", "Idle", "Disappear", true);
+            e.SetSpriteRendererSorting("Effect", 2);
+            GameController.Instance.AddEffect(e);
+            AddEffectToDict("SpinCoffeeHidden", e, new Vector2(0, 0 * 0.5f * MapManager.gridWidth));
+        }
     }
 
     /// <summary>
@@ -22,6 +36,36 @@ public class MouseCatcher : FoodUnit
     public override void BeforeDrop()
     {
         base.BeforeDeath();
+    }
+
+    private void CreateCheckArea()
+    {
+        RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 0.65f, 0.65f, "ItemCollideEnemy");
+        r.isAffectMouse = true;
+        r.SetAffectHeight(0);
+        Action<MouseUnit> action = (u) =>
+        {
+            if (r.isAlive && UnitManager.CanBeSelectedAsTarget(this, u))
+            {
+                isTriggerBoom = true;
+                ExecuteDeath();
+                r.MDestory();
+            }
+        };
+        r.SetOnEnemyEnterAction(action);
+        r.SetOnEnemyStayAction(action);
+        CustomizationTask t = new CustomizationTask();
+        t.AddTaskFunc(delegate {
+            if(IsAlive())
+                r.transform.position = transform.position;
+            else
+            {
+                r.MDestory();
+            }
+            return false;
+        });
+        r.AddTask(t);
+        GameController.Instance.AddAreaEffectExecution(r);
     }
 
     public override void OnIdleStateEnter()
@@ -42,17 +86,6 @@ public class MouseCatcher : FoodUnit
             prepareTime--;
         if (prepareTime == 1)
             SetActionState(new TransitionState(this));
-
-        // 检测本格是否有满足触发条件的敌人
-        foreach (var enemy in GetGrid().GetMouseUnitList())
-        {
-            if (GetHeight() == enemy.GetHeight())
-            {
-                isTriggerBoom = true;
-                ExecuteDeath();
-                break;
-            }
-        }
     }
 
     public override void OnTransitionStateEnter()
@@ -77,6 +110,8 @@ public class MouseCatcher : FoodUnit
         NumericBox.RemoveDecideModifierToBoolDict(StringManager.Invincibility, boolModifier);
         NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, boolModifier);
         NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreFrozen, boolModifier);
+        // 添加检测效果
+        CreateCheckArea();
     }
 
     public override void BeforeDeath()
@@ -119,7 +154,7 @@ public class MouseCatcher : FoodUnit
     private void CreateNormalBoom()
     {
         BombAreaEffectExecution bombEffect = BombAreaEffectExecution.GetInstance();
-        bombEffect.Init(this, 900, GetRowIndex(), 1.5f, 1, 0, 0, false, true);
+        bombEffect.Init(this, 0, GetRowIndex(), 1.5f, 1, 0, 0, false, true);
         bombEffect.transform.position = this.GetPosition();
         bombEffect.SetAffectHeight(0); // 仅对地
         GameController.Instance.AddAreaEffectExecution(bombEffect);
@@ -133,7 +168,7 @@ public class MouseCatcher : FoodUnit
         // 对地秒杀非BOSS效果
         {
             BombAreaEffectExecution bombEffect = BombAreaEffectExecution.GetInstance();
-            bombEffect.Init(this, 900, GetRowIndex(), 1.5f, 1, 0, 0, false, true);
+            bombEffect.Init(this, 900 * mCurrentAttack / 10, GetRowIndex(), 1.5f, 1, 0, 0, false, true);
             bombEffect.transform.position = this.GetPosition();
             bombEffect.SetAffectHeight(0); // 仅对地
             bombEffect.SetOnEnemyEnterAction(BurnNoBossEnemyUnit);
@@ -143,8 +178,9 @@ public class MouseCatcher : FoodUnit
         // 3*3一次900灰烬伤害
         {
             BombAreaEffectExecution bombEffect = BombAreaEffectExecution.GetInstance();
-            bombEffect.Init(this, 900, GetRowIndex(), 3, 3, 0, 0, false, true);
+            bombEffect.Init(this, 900 * mCurrentAttack / 10, GetRowIndex(), 3, 3, 0, 0, false, true);
             bombEffect.transform.position = this.GetPosition();
+            bombEffect.SetAffectHeight(0); // 仅对地
             GameController.Instance.AddAreaEffectExecution(bombEffect);
         }
     }
@@ -158,6 +194,6 @@ public class MouseCatcher : FoodUnit
             new BombDamageAction(CombatAction.ActionType.CauseDamage, this, m, m.mCurrentHp).ApplyAction();
         else
             // 对BOSS造成900点灰烬伤害
-            new BombDamageAction(CombatAction.ActionType.CauseDamage, this, m, 900).ApplyAction();
+            new BombDamageAction(CombatAction.ActionType.CauseDamage, this, m, 900 * mCurrentAttack / 10).ApplyAction();
     }
 }

@@ -19,6 +19,29 @@ public class BaseEnemyGroup
     }
 
     /// <summary>
+    /// 敌人附加属性，由v0.26版本添加，现在，你可以自定敌人的属性了
+    /// </summary>
+    [System.Serializable]
+    public class EnemyAttribute
+    {
+        public float HpRate; // 生命值倍率：默认为1.0
+        public float AttackRate; // 攻击力倍率：默认为1.0
+        public float MoveSpeedRate; // 基础移动速度倍率：默认为1.0
+        public float Defence; // 初始减伤：默认为0，取值范围为0~100，100时代表100%减伤（刀枪不入）
+
+        public Dictionary<string, List<float>> ParamDict; // 参数字典，用于覆盖原敌怪特定参数
+
+        public EnemyAttribute()
+        {
+            HpRate = 1.0f;
+            AttackRate = 1.0f;
+            MoveSpeedRate = 1.0f;
+            Defence = 0.0f;
+            ParamDict = new Dictionary<string, List<float>>();
+        }
+    }
+
+    /// <summary>
     /// 当前组敌人在游戏中实际出的行数表
     /// </summary>
     public struct RealEnemyList
@@ -55,8 +78,9 @@ public class BaseEnemyGroup
     public int mApartIndex; // 处在关卡的第几分路组下标
     public int mStartIndex; // 在当前分路组下的第几下标对应的行开始作为怪的起始点
     public EnemyInfo mEnemyInfo; // 敌人种类
-    public int mCount; // 敌人数量
-    public float mHp;
+    public int mCount; // 仅小怪可用：敌人数量
+    public float mHp; // 仅BOSS可用：BOSS血量
+    public EnemyAttribute mEnemyAttribute;
 
     /// <summary>
     /// 初始化方法
@@ -121,5 +145,15 @@ public class BaseEnemyGroup
             enemyInfo = mEnemyInfo,
             rowIndexList = rowIndexList
         };
+    }
+
+    /// <summary>
+    /// 对外暴露的唯一获取属性的接口
+    /// </summary>
+    public EnemyAttribute GetEnemyAttribute()
+    {
+        if (mEnemyAttribute == null)
+            mEnemyAttribute = new EnemyAttribute();
+        return mEnemyAttribute;
     }
 }

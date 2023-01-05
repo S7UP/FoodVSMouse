@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 
 using UnityEngine;
-using UnityEngine.UI;
 //using DG.Tweening;
 
 //UI中介，上层与管理者们做交互，下层与UI面板进行交互
@@ -16,8 +15,6 @@ public class UIFacade
     public Dictionary<string, IBasePanel> currentScenePanelDict = new Dictionary<string, IBasePanel>();
 
     // 其他成员变量
-    private GameObject mask;
-    private Image maskImage;
     public Canvas uiCanvas; //{ get { return GameObject.Find("Canvas").GetComponent<Canvas>(); } }
     // 场景状态
     public IBaseSceneState currentSceneState;
@@ -25,7 +22,6 @@ public class UIFacade
 
     public UIFacade(UIManager uIManager)
     {
-        Debug.Log("create UIFacade!");
         mGameManager = GameManager.Instance;
         mPlayerManager = mGameManager.playerManager;
         mUIManager = uIManager;
@@ -158,5 +154,17 @@ public class UIFacade
     public void CloseOrOpenEffectMusic()
     {
         mAudioSourceManager.CloseOrOpenEffectMusic();
+    }
+
+    /// <summary>
+    /// 更新当前存在的面板
+    /// </summary>
+    public void UpdatePanel()
+    {
+        foreach (var keyValuePair in currentScenePanelDict)
+        {
+            IBasePanel panel = keyValuePair.Value;
+            panel.UpdatePanel();
+        }
     }
 }

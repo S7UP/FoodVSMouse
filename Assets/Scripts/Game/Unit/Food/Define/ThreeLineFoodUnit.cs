@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 
 using UnityEngine;
 /// <summary>
@@ -40,12 +39,11 @@ public class ThreeLineFoodUnit : FoodUnit
     /// <returns></returns>
     protected override bool IsHasTarget()
     {
-        List<BaseUnit>[] list = GameController.Instance.GetEnemyList();
         int start = Mathf.Max(0, GetRowIndex() - 1);
         int end = Mathf.Min(GetRowIndex() + 1, MapController.yRow - 1);
         for (int i = start; i <= end; i++)
         {
-            if (GameController.Instance.CheckRowCanAttack(i))
+            if (GameController.Instance.CheckRowCanAttack(this, i))
                 return true;
         }
         return false;
@@ -75,11 +73,6 @@ public class ThreeLineFoodUnit : FoodUnit
     /// </summary>
     public override void OnGeneralAttack()
     {
-        // 切换时的第一帧直接不执行update()，因为下述的info.normalizedTime的值还停留在上一个状态，逻辑会出问题！
-        if (currentStateTimer <= 0)
-        {
-            return;
-        }
         // 伤害判定帧应当执行判定
         if (IsDamageJudgment())
         {
@@ -120,17 +113,29 @@ public class ThreeLineFoodUnit : FoodUnit
     /// </summary>
     public override void ExecuteDamage()
     {
+        int rowIndex = GetRowIndex(); // 获取当前行
+
         for (int i = -1; i <= 1; i++)
         {
-            for (int j = 0; j < countArray[i+1]; j++)
+            for (int j = 0; j < countArray[i + 1]; j++)
             {
                 BaseBullet b = GameController.Instance.CreateBullet(this, transform.position, Vector2.right, BulletStyle.Wine);
                 b.SetDamage(mCurrentAttack);
                 b.SetStandardVelocity(24.0f);
-                // 添加一个纵向位移的任务
-                GameController.Instance.AddTasker(new StraightMovePresetTasker(b, MapManager.gridHeight / 30, 0, Vector3.up * i, MapManager.gridHeight));
-                // 横向位移
-                GameController.Instance.AddTasker(new StraightMovePresetTasker(b, MapManager.gridWidth / 30 * j, 0, Vector3.right, 60));
+                if((rowIndex == 0 && i==1) || (rowIndex == 6 && i == -1))
+                {
+                    // 添加一个纵向位移的任务
+                    GameController.Instance.AddTasker(new StraightMovePresetTasker(b, MapManager.gridHeight / 30, 0, Vector3.up * 0, MapManager.gridHeight));
+                    // 横向位移
+                    GameController.Instance.AddTasker(new StraightMovePresetTasker(b, MapManager.gridWidth / 30 * (j + 0.5f), 0, Vector3.right, 60));
+                }
+                else
+                {
+                    // 添加一个纵向位移的任务
+                    GameController.Instance.AddTasker(new StraightMovePresetTasker(b, MapManager.gridHeight / 30, 0, Vector3.up * i, MapManager.gridHeight));
+                    // 横向位移
+                    GameController.Instance.AddTasker(new StraightMovePresetTasker(b, MapManager.gridWidth / 30 * j, 0, Vector3.right, 60));
+                }
             }
         }
     }

@@ -7,19 +7,24 @@ public class Img_StageConfig : MonoBehaviour
 {
     private EditorPanel mEditorPanel;
 
+    private InputField Inp_StartBGM;
     private InputField Inp_StartEnergy;
     private Toggle Tog_TimeLimit;
     private InputField Inp_TotalSeconds;
     private Toggle Tog_CardCountLimit;
     private InputField Inp_CardCount;
     private Toggle Tog_Card;
+    private Toggle Tog_StartCard;
     private Button Btn_ConfigCard;
+    private Button Btn_ConfigStartCard;
     private Button Btn_Background;
     private Button Btn_Illustrate;
     private Button Btn_AdditionalNotes;
 
     private void Awake()
     {
+        Inp_StartBGM = transform.Find("Emp_ConfigList").Find("Emp_StartBGM").Find("InputField").GetComponent<InputField>();
+        Inp_StartBGM.onEndEdit.AddListener(delegate { OnStartBGMInputFieldChange(); });
         Inp_StartEnergy = transform.Find("Emp_ConfigList").Find("Emp_InitialEnergy").Find("InputField").GetComponent<InputField>();
         Inp_StartEnergy.onEndEdit.AddListener(delegate { OnStartEnergyInputFieldChange(); });
         Tog_TimeLimit = transform.Find("Emp_ConfigList").Find("Tog_TimeLimit").GetComponent<Toggle>();
@@ -36,9 +41,16 @@ public class Img_StageConfig : MonoBehaviour
 
         Tog_Card = transform.Find("Emp_ConfigList").Find("Tog_Card").GetComponent<Toggle>();
         Tog_Card.onValueChanged.AddListener(delegate { OnCardLimitToggleChange(); });
+        Tog_StartCard = transform.Find("Emp_ConfigList").Find("Tog_StartCard").GetComponent<Toggle>();
+        Tog_StartCard.onValueChanged.AddListener(delegate { OnStartCardToggleChange(); });
+
         Btn_ConfigCard = transform.Find("Emp_ConfigList").Find("Tog_Card").Find("Button").GetComponent<Button>();
         Btn_ConfigCard.onClick.AddListener(delegate { OnCardConfigButtonClick(); });
         Btn_ConfigCard.interactable = false;
+
+        Btn_ConfigStartCard = Tog_StartCard.transform.Find("Button").GetComponent<Button>();
+        Btn_ConfigStartCard.onClick.AddListener(delegate { OnStartCardConfigButtonClick(); });
+        Btn_ConfigStartCard.interactable = false;
 
         Btn_Background = transform.Find("Emp_ConfigList").Find("Emp_Background").Find("Button").GetComponent<Button>();
         Btn_Background.onClick.AddListener(delegate { mEditorPanel.ShowEditTextArea(0); });
@@ -51,6 +63,9 @@ public class Img_StageConfig : MonoBehaviour
     public void Initial()
     {
         BaseStage.StageInfo info = mEditorPanel.GetCurrentStageInfo();
+
+        Inp_StartBGM.text = info.startBGMRefence + "";
+
         Inp_StartEnergy.text = info.startCost + "";
 
         Tog_TimeLimit.isOn = info.isEnableTimeLimit;
@@ -63,11 +78,28 @@ public class Img_StageConfig : MonoBehaviour
 
         Tog_Card.isOn = info.isEnableCardLimit;
         Btn_ConfigCard.interactable = Tog_Card.isOn;
+
+        Tog_StartCard.isOn = info.isEnableStartCard;
+        Btn_ConfigStartCard.interactable = Tog_StartCard.isOn;
     }
 
     public void SetEditorPanel(EditorPanel panel)
     {
         mEditorPanel = panel;
+    }
+
+    /// <summary>
+    /// 当输入初始BGM引用时
+    /// </summary>
+    private void OnStartBGMInputFieldChange()
+    {
+        if (Inp_StartBGM.text == null || Inp_StartBGM.text.Equals(""))
+        {
+            Inp_StartBGM.text = "";
+            return;
+        }
+        BaseStage.StageInfo info = mEditorPanel.GetCurrentStageInfo();
+        info.startBGMRefence = Inp_StartBGM.text;
     }
 
     /// <summary>
@@ -162,5 +194,23 @@ public class Img_StageConfig : MonoBehaviour
     private void OnCardConfigButtonClick()
     {
         mEditorPanel.SetConfigCardUIEnable(true);
+    }
+
+    /// <summary>
+    /// 当启用初始卡片选框发生改变时
+    /// </summary>
+    private void OnStartCardToggleChange()
+    {
+        BaseStage.StageInfo info = mEditorPanel.GetCurrentStageInfo();
+        info.isEnableStartCard = Tog_StartCard.isOn;
+        Btn_ConfigStartCard.interactable = Tog_StartCard.isOn;
+    }
+
+    /// <summary>
+    /// 当配置初始卡片按钮被点击时
+    /// </summary>
+    private void OnStartCardConfigButtonClick()
+    {
+        mEditorPanel.SetStartCardEditorUIEnable(true);
     }
 }

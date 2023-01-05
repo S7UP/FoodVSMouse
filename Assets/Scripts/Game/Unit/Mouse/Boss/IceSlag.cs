@@ -854,7 +854,7 @@ public class IceSlag : BossUnit
             BaseGrid g = unit.GetGrid();
             if (g != null)
             {
-                return g.GetThrowHighestAttackPriorityUnitInclude();
+                return g.GetThrowHighestAttackPriorityUnitInclude(this);
             }
             return unit;
         };
@@ -904,7 +904,7 @@ public class IceSlag : BossUnit
         TaskManager.AddParabolaTask(b, TransManager.TranToVelocity(48f), 1.5f, transform.position, targetPos, true);
         GameController.Instance.AddBullet(b);
         // 添加击中时效果
-        b.SetHitAction((bullet, unit) => {
+        b.AddHitAction((bullet, unit) => {
             // 产生3*3赋予元素效果
             RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(new Vector2(MapManager.GetColumnX(b.GetColumnIndex()), MapManager.GetRowY(b.GetRowIndex())), 3, 3, "BothCollide");
             r.isAffectFood = true;

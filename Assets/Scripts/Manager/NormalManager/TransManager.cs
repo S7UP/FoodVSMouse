@@ -11,7 +11,7 @@ public class TransManager
     /// <returns></returns>
     public static float TranToVelocity(float standardVelocity)
     {
-        return standardVelocity * MapManager.gridWidth / ConfigManager.fps / 6;
+        return standardVelocity * MapManager.gridWidth / 60 / 6;
     }
 
     /// <summary>
@@ -21,7 +21,7 @@ public class TransManager
     /// <returns></returns>
     public static float TranToStandardVelocity(float velocity)
     {
-        return velocity * 6 * ConfigManager.fps / MapManager.gridWidth;
+        return velocity * 6 * 60 / MapManager.gridWidth;
     }
 
     /// <summary>

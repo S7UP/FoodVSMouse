@@ -32,6 +32,15 @@ public class KangarooMouse : MouseUnit
                 NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreStun, IgnoreStunModifier);
                 animatorController.Play("Drop");
             });
+        statusAbilityManager.AddAfterRemoveStatusAbilityEvent(StringManager.Stun,
+            delegate {
+                if (isFirstRoot)
+                    return;
+                isFirstRoot = true;
+                NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreFrozen, IgnoreFrozenModifier);
+                NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreStun, IgnoreStunModifier);
+                animatorController.Play("Drop");
+            });
         jumpDistance = 1 + 0.5f * mShape;
     }
 

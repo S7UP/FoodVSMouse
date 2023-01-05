@@ -3,9 +3,15 @@ public class StringManager
     // panel
     public const string StartLoadPanel = "StartLoadPanel";
     public const string GameNormalPanel = "GameNormalPanel";
+    public const string ConfigPanel = "ConfigPanel";
     public const string EditorPanel = "EditorPanel";
     public const string SelectPanel = "SelectPanel";
     public const string MainPanel = "MainPanel";
+    public const string EncyclopediaPanel = "EncyclopediaPanel";
+    public const string PlayerInfoPanel = "PlayerInfoPanel";
+    public const string MainlinePanel = "MainlinePanel";
+    public const string StageConfigPanel = "StageConfigPanel";
+    public const string RankSelectPanel = "RankSelectPanel";
 
     // 常用标签
     public const string BulletDamgeIncreasement = "子弹伤害增幅";
@@ -13,6 +19,8 @@ public class StringManager
     public const string BeFrightened = "被惊吓";
 
     // 特殊状态与其免疫类型
+    public const string SlowDown = "减速效果";
+
     public const string FrozenSlowDown = "冰冻减速效果";
     public const string IgnoreFrozenSlowDown = "冰冻减速效果免疫";
     public const string Frozen = "冻结";

@@ -16,7 +16,6 @@ public class CharacterUnit : BaseUnit
     public BaseWeapons weapons; // 持有武器
 
     // 其他
-    // type: 0 = female；1 = male
     public int typeAndShapeToLayer = 0; // 种类与变种对图层的加权等级
 
     private BaseGrid mGrid; // 卡片所在的格子（单格卡)
@@ -44,7 +43,8 @@ public class CharacterUnit : BaseUnit
     public override void MInit()
     {
         base.MInit();
-        animator.runtimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Character/" + mType + "/" + mShape);
+        PlayerData data = PlayerData.GetInstance();
+        animator.runtimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Character/" + data.GetCharacter());
         // 动画控制器绑定animator
         animatorController.ChangeAnimator(animator);
         // 受伤闪白
@@ -53,9 +53,9 @@ public class CharacterUnit : BaseUnit
         // 移除原本的武器引用（如果有
         if (weapons != null)
             weapons.DeathEvent();
-        // 添加武器test
-        WeaponsInfo info = GameManager.Instance.playerData.GetWeaponsInfo();
-        weapons = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Weapons/"+info.type+"/"+info.shape).GetComponent<BaseWeapons>();
+        // 添加武器
+        int type = data.GetWeapons();
+        weapons = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Weapons/"+type+"/0").GetComponent<BaseWeapons>();
         weapons.MInit();
         weapons.transform.SetParent(transform);
         weapons.master = this;
@@ -468,9 +468,9 @@ public class CharacterUnit : BaseUnit
     /// 可否被选择为目标
     /// </summary>
     /// <returns></returns>
-    public override bool CanBeSelectedAsTarget()
+    public override bool CanBeSelectedAsTarget(BaseUnit otherUnit)
     {
-        return mBoxCollider2D.enabled && base.CanBeSelectedAsTarget();
+        return mBoxCollider2D.enabled && base.CanBeSelectedAsTarget(otherUnit);
     }
 
     public override void MPause()

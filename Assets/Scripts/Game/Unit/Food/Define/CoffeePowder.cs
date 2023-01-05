@@ -3,14 +3,17 @@
 /// </summary>
 public class CoffeePowder : FoodUnit
 {
+    private static FloatModifier attackSpeedModifier = new FloatModifier(50);
+    private static FloatModifier attackModifier = new FloatModifier(100);
+    private static BoolModifier boolModifier = new BoolModifier(true);
+
     public override void MInit()
     {
         base.MInit();
-        // 获取100%减伤，接近无限的生命值，以及免疫灰烬秒杀效果
+        // 获取100%减伤，以及免疫灰烬秒杀效果
         NumericBox.Defense.SetBase(1);
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, new BoolModifier(true));
         NumericBox.AddDecideModifierToBoolDict(StringManager.Invincibility, new BoolModifier(true));
-        SetMaxHpAndCurrentHp(float.MaxValue);
         // 不可选取
         CloseCollision();
     }
@@ -80,12 +83,35 @@ public class CoffeePowder : FoodUnit
         BaseGrid g = GetGrid();
         if (g != null)
         {
-            foreach (var item in g.GetAttackableFoodUnitList())
+            foreach (var unit in g.GetAttackableFoodUnitList())
             {
                 // 移除这些卡的负面控制效果
-                StatusManager.RemoveAllSettleDownDebuff(item);
-                // 增加攻速效果
-                item.AddStatusAbility(new AttackSpeedStatusAbility(item, 5 * 60, attr.valueList[mLevel]));
+                StatusManager.RemoveAllSettleDownDebuff(unit);
+                // 增加攻击攻速效果
+                int timeLeft = 10 * 60;
+                CustomizationTask t = new CustomizationTask();
+                t.OnEnterFunc = delegate {
+                    unit.NumericBox.AttackSpeed.AddPctAddModifier(attackSpeedModifier);
+                    unit.NumericBox.Attack.AddPctAddModifier(attackModifier);
+
+                    unit.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozen, boolModifier);
+                    unit.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, boolModifier);
+                };
+                t.AddTaskFunc(delegate {
+                    if (timeLeft > 0)
+                        timeLeft--;
+                    else
+                        return true;
+                    return false;
+                });
+                t.OnExitFunc = delegate {
+                    unit.NumericBox.AttackSpeed.RemovePctAddModifier(attackSpeedModifier);
+                    unit.NumericBox.Attack.RemovePctAddModifier(attackModifier);
+
+                    unit.NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreFrozen, boolModifier);
+                    unit.NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreStun, boolModifier);
+                };
+                unit.AddTask(t);
             }
         }
     }

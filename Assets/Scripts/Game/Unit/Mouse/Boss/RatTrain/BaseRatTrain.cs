@@ -1,11 +1,14 @@
 using System.Collections.Generic;
-
+using System;
 using UnityEngine;
 /// <summary>
 /// 鼠国列车通用
 /// </summary>
 public class BaseRatTrain : BossUnit
 {
+    private static Func<BaseUnit, BaseUnit, bool> noBeSelectedAsTargetFunc = delegate { return false; };
+    private static Func<BaseUnit, BaseBullet, bool> noHitedFunc = delegate { return false; };
+
     /// <summary>
     /// 路径点
     /// 两个点确定一条直线路径
@@ -20,7 +23,7 @@ public class BaseRatTrain : BossUnit
         /// <returns></returns>
         public Vector2 GetRotate()
         {
-            return (end-start).normalized;
+            return (end - start).normalized;
         }
 
         public float GetDistance()
@@ -38,17 +41,17 @@ public class BaseRatTrain : BossUnit
         public Queue<RatTrainComponent> ratTrainComponentQueue = new Queue<RatTrainComponent>(); // 待通过的车厢表
         public float distLeft; // 下一个车厢转移时还需要移动的距离
 
-        public RatTrainBodyTransferManager(RoutePoints routePoints, List<RatTrainBody> list)
+        public RatTrainBodyTransferManager(RoutePoints routePoints, List<RatTrainBody> list, float hscale)
         {
             this.routePoints = routePoints;
             foreach (var item in list)
             {
                 ratTrainComponentQueue.Enqueue(item);
             }
-            distLeft = headToBodyDist;
+            distLeft = 0.5f*headLength + 0.5f*length*hscale;
         }
 
-        public void Update(float v)
+        public void Update(float v, float hscale)
         {
             distLeft -= v;
             if (distLeft <= 0)
@@ -59,7 +62,7 @@ public class BaseRatTrain : BossUnit
                     RoutePoints r = new RoutePoints { start = routePoints.start + (-distLeft)* routePoints.GetRotate(), end = routePoints.end };
                     ratTrainComponentQueue.Dequeue().AddRoute(r);
                 }
-                distLeft = length + distLeft;
+                distLeft += length * hscale;
             }
         }
 
@@ -76,11 +79,12 @@ public class BaseRatTrain : BossUnit
     // 确定四个边界
     public static float left = MapManager.GetColumnX(-1);
     public static float right = MapManager.GetColumnX(9);
-    public static float up = MapManager.GetRowY(-1);
-    public static float bottom = MapManager.GetRowY(7);
+    public static float up = MapManager.GetRowY(-2);
+    public static float bottom = MapManager.GetRowY(8);
 
     public static float length = 1.17f; // 列车长度
-    public static float headToBodyDist = 1.0f; // 头到第一节车厢的距离
+    public static float headLength = 0.83f; // 头长度
+    protected float hscale; // 列车横向缩放
 
     private RatTrainHead head; // 车头
     private List<RatTrainBody> bodyList = new List<RatTrainBody>(); // 车身
@@ -93,6 +97,7 @@ public class BaseRatTrain : BossUnit
         bodyList.Clear();
         transferQueue.Clear();
         isMoveToDestination = false;
+        hscale = 1.0f; // 默认为1
         base.MInit();
         // 取消判定且没有贴图
         CloseCollision();
@@ -108,16 +113,43 @@ public class BaseRatTrain : BossUnit
     public void CreateHeadAndBody(int bodyCount)
     {
         // 车头
-        head = GameController.Instance.CreateMouseUnit(0, new BaseEnemyGroup.EnemyInfo() { type = 30, shape = mShape }).GetComponent<RatTrainHead>();
+        head = RatTrainHead.GetInstance();
         head.SetMaster(this);
         head.SetDmgRate(1.0f, 1.0f);
+        GameController.Instance.AddMouseUnit(head);
         // 车身
         for (int i = 0; i < bodyCount; i++)
         {
-            RatTrainBody b = GameController.Instance.CreateMouseUnit(0, new BaseEnemyGroup.EnemyInfo() { type = 31, shape = mShape }).GetComponent<RatTrainBody>();
+            RatTrainBody b = RatTrainBody.GetInstance(i);
             b.SetMaster(this);
             b.SetDmgRate(1.0f, 1.0f);
+            b.transform.localScale = new Vector2(hscale, 1);
             bodyList.Add(b);
+            GameController.Instance.AddMouseUnit(b);
+        }
+    }
+
+    /// <summary>
+    /// 设置所有的车组件不可被选为攻击目标和被击中
+    /// </summary>
+    public void SetAllComponentNoBeSelectedAsTargetAndHited()
+    {
+        foreach (var u in GetAllRatTrainComponent())
+        {
+            u.AddCanBeSelectedAsTargetFunc(noBeSelectedAsTargetFunc);
+            u.AddCanHitFunc(noHitedFunc);
+        }
+    }
+
+    /// <summary>
+    /// 取消设置所有的车组件不可被选为攻击目标和被击中
+    /// </summary>
+    public void CancelSetAllComponentNoBeSelectedAsTargetAndHited()
+    {
+        foreach (var u in GetAllRatTrainComponent())
+        {
+            u.RemoveCanBeSelectedAsTargetFunc(noBeSelectedAsTargetFunc);
+            u.RemoveCanHitFunc(noHitedFunc);
         }
     }
 
@@ -149,7 +181,7 @@ public class BaseRatTrain : BossUnit
         int c = 0;
         foreach (var item in transferQueue)
         {
-            item.Update(GetMoveSpeed());
+            item.Update(GetMoveSpeed(), hscale);
             if (item.IsEmpty())
                 c++;
         }
@@ -186,7 +218,7 @@ public class BaseRatTrain : BossUnit
     public void AddNextRouteToManager()
     {
         // 取下一个路径点
-        transferQueue.Enqueue(new RatTrainBodyTransferManager(GetCurrentRoute(), GetBodyList()));
+        transferQueue.Enqueue(new RatTrainBodyTransferManager(GetCurrentRoute(), GetBodyList(), hscale));
     }
 
     /// <summary>
@@ -241,6 +273,15 @@ public class BaseRatTrain : BossUnit
         if (index < bodyList.Count)
             return bodyList[index];
         return null;
+    }
+
+    /// <summary>
+    /// 获取车尾
+    /// </summary>
+    /// <returns></returns>
+    public RatTrainBody GetLastBody()
+    {
+        return bodyList[bodyList.Count - 1];
     }
 
     /// <summary>
@@ -318,5 +359,19 @@ public class BaseRatTrain : BossUnit
             return 0;
         else
             return base.GetMoveSpeed();
+    }
+
+    /// <summary>
+    /// 获取车头到第一节车身的距离
+    /// </summary>
+    /// <returns></returns>
+    public float GetHeadToBodyLength()
+    {
+        return 0.5f * headLength + 0.5f * length * hscale;
+    }
+
+    public float GetBodyLength()
+    {
+        return length * hscale;
     }
 }

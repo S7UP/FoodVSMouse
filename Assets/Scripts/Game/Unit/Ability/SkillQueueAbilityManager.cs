@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System;
 /// <summary>
 /// 技能队列管理器
 /// 适用于固定出招顺序的敌人，如常规BOSS
@@ -8,9 +9,12 @@ public sealed class SkillQueueAbilityManager
 {
     private BaseUnit master;
     private List<SkillAbility> skillList = new List<SkillAbility>();
+    // 下一个技能使用的优先级：下一个临时技能 > 下一个技能下标队列出队后下标所对应的技能 > 正常顺序技能
     private int index;
     private SkillAbility currentSkillAbility; // 当前在使用的技能
-    private SkillAbility nextSkillAbility; // 下一个技能（由外部给定，在当前技能用完后优先取下一个技能而非队列里的技能，除非下个技能为空，不影响下标前进）
+    private SkillAbility nextSkillAbility; // 下一个临时技能
+    private Queue<int> nextSkillIndexQueue = new Queue<int>(); // 下一个技能的下标队列
+    private Func<List<int>> GetNextSkillIndexQueueFunc = null; // 获取下一个技能施放队列的方法（在每次队列归0时自动调用一次）
 
     public SkillQueueAbilityManager(BaseUnit unit)
     {
@@ -34,18 +38,27 @@ public sealed class SkillQueueAbilityManager
         if(currentSkillAbility==null || !currentSkillAbility.isSpelling)
         {
             master.skillAbilityManager.RemoveSkillAbility(currentSkillAbility);
-            // 如果有下一个技能则优先取下一个技能，然后将下个技能置空，否则按队列的顺序来
+            // 如果有下一个技能则优先取下一个技能，然后将下个技能置空，否则按队列的顺序来，如果队列也为空则按顺序来
             if (nextSkillAbility != null)
             {
                 currentSkillAbility = nextSkillAbility;
                 nextSkillAbility = null;
-            }
-            else
+            }else
             {
-                // 下标后移，然后取余
-                index++;
-                index = index % skillList.Count;
-                currentSkillAbility = skillList[index];
+                if(nextSkillIndexQueue.Count == 0 && GetNextSkillIndexQueueFunc != null)
+                    foreach (var i in GetNextSkillIndexQueueFunc())
+                    {
+                        EnqueueNextSkillIndex(i);
+                    }
+                if(nextSkillIndexQueue.Count > 0)
+                    currentSkillAbility = skillList[nextSkillIndexQueue.Dequeue() % skillList.Count];
+                else
+                {
+                    // 下标后移，然后取余
+                    index++;
+                    index = index % skillList.Count;
+                    currentSkillAbility = skillList[index];
+                }
             }
             master.skillAbilityManager.AddSkillAbility(currentSkillAbility);
             currentSkillAbility.FullCurrentEnergy();
@@ -93,4 +106,23 @@ public sealed class SkillQueueAbilityManager
         this.index = index;
     }
 
+    /// <summary>
+    /// 把下一个要用的技能入队
+    /// </summary>
+    /// <param name="skillIndex"></param>
+    public void EnqueueNextSkillIndex(int skillIndex)
+    {
+        nextSkillIndexQueue.Enqueue(skillIndex);
+    }
+
+
+    /// <summary>
+    /// 设置获取下一个技能释放顺序队列的方法
+    /// </summary>
+    /// <param name="func"></param>
+    /// <returns></returns>
+    public void SetGetNextSkillIndexQueueFunc(Func<List<int>> func)
+    {
+        GetNextSkillIndexQueueFunc = func;
+    }
 }

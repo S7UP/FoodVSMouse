@@ -104,13 +104,21 @@ MonoBehaviour:
   mShape: 0
   typeAndShapeValue: 0
   currentStateTimer: 0
+  disableMove: 0
+  aliveTime: 0
+  lastPosition: {x: 0, y: 0}
   rigibody2D: {fileID: 0}
   mBoxCollider2D: {fileID: 0}
+  spriteRenderer: {fileID: 0}
   spriteTrans: {fileID: 0}
   mHertIndex: 0
   currentXIndex: 0
   currentYIndex: 0
   isBoss: 0
+  AttackClipName: 
+  IdleClipName: 
+  MoveClipName: 
+  DieClipName: 
 --- !u!1 &7911401160402135796
 GameObject:
   m_ObjectHideFlags: 0
@@ -188,7 +196,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 2.09, y: 2.08}
+  m_Size: {x: 1.53, y: 1.98}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 0
@@ -204,7 +212,7 @@ Animator:
   m_GameObject: {fileID: 7911401160402135796}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 294e51166aa05c649b1a46a62e064bf0, type: 2}
+  m_Controller: {fileID: 9100000, guid: 5d0316b761f1626419332d440e5a0951, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0

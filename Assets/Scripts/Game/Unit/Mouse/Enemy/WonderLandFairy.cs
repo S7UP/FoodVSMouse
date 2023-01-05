@@ -27,9 +27,9 @@ public class WonderLandFairy : MouseUnit
         return false;
     }
 
-    public override bool CanBeSelectedAsTarget()
+    public override bool CanBeSelectedAsTarget(BaseUnit otherUnit)
     {
-        return !isConceal && base.CanBeSelectedAsTarget();
+        return !isConceal && base.CanBeSelectedAsTarget(otherUnit);
     }
 
     public override bool CanHit(BaseBullet bullet)

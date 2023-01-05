@@ -26,18 +26,25 @@ public class GameManager : MonoBehaviour
         playerManager = new PlayerManager();
         factoryManager = new FactoryManager();
         audioSourceManager = new AudioSourceManager();
-        // 加载ConfigManager，目前的作用仅仅是锁60帧
-        configManager = new ConfigManager();
+        configManager = new ConfigManager(); // 加载ConfigManager，导入玩家的设置
         abilityManager = AbilityManager.GetSingleton();
         uiManager = new UIManager();
         attributeManager = new AttributeManager();
         attributeManager.Initial();
         // 加载玩家数据(静态)
-        playerData = PlayerData.LoadPlayerData();
-        Debug.Log(playerData);
+        playerData = PlayerData.GetInstance();
         // 初始场景
         uiManager.mUIFacade.ChangeSceneState(new StartLoadSceneState(uiManager.mUIFacade));
+        Load();
         //Test
+    }
+
+    /// <summary>
+    /// 在Loading界面加载的东西
+    /// </summary>
+    public void Load()
+    {
+        MouseManager.LoadAll();
     }
 
     /// <summary>
@@ -149,8 +156,10 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        deltaTime += (Time.deltaTime - deltaTime) * 0.1f;
         //GetFPs
+        deltaTime += (Time.deltaTime - deltaTime) * 0.1f;
+        uiManager.mUIFacade.UpdatePanel();
+        audioSourceManager.Update();
     }
 
     void OnGUI()
@@ -159,7 +168,7 @@ public class GameManager : MonoBehaviour
 
         GUIStyle style = new GUIStyle();
 
-        Rect rect = new Rect(0, 0, w, h * 2 / 100);
+        Rect rect = new Rect(0, h - h * 2 / 100, w, h * 2 / 100);
         style.alignment = TextAnchor.UpperLeft;
         style.fontSize = h * 2 / 100;
         style.normal.textColor = new Color(1, 1, 1, 1.0f);

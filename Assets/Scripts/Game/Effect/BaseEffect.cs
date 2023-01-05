@@ -23,7 +23,7 @@ public class BaseEffect : MonoBehaviour, IGameControllerMember
         spriteRenderer = GetComponent<SpriteRenderer>();
     }
 
-    public virtual void MInit()
+    public void MInit()
     {
         if(spriteRenderer != null)
         {
@@ -31,7 +31,6 @@ public class BaseEffect : MonoBehaviour, IGameControllerMember
             SetSpriteRendererSorting("Effect", 0);
         }
             
-
         state = 0;
         animatorController.ChangeAnimator(animator);
         if (AppearClipName != null && !AppearClipName.Equals(""))
@@ -42,6 +41,8 @@ public class BaseEffect : MonoBehaviour, IGameControllerMember
                 animatorController.Play(clipName, isCycle);
             state = 1;
         }
+
+        transform.localScale = Vector2.one;
     }
 
     public void SetSpriteRendererSorting(string LayerName, int order)

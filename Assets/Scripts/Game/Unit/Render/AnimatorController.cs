@@ -15,6 +15,8 @@ public class AnimatorController
     private BoolModifier gamePauseModifier = new BoolModifier(true); // 游戏暂停的修饰器
     private bool isUseGamePauseModifier; // 是否使用了游戏暂停的修饰器
 
+    private bool isNoPlayOtherClip; // 是否处于不能播放其他动画的状态
+
     public AnimatorController()
     {
 
@@ -25,6 +27,7 @@ public class AnimatorController
         taskListDict.Clear();
         currentTask = null;
         isUseGamePauseModifier = false;
+        isNoPlayOtherClip = false;
         isPauseBoolNumeric.Initialize();
         UpdateSpeed();
     }
@@ -105,6 +108,9 @@ public class AnimatorController
     /// <param name="aniName"></param>
     public void Play(string aniName, bool isCycle)
     {
+        if (isNoPlayOtherClip)
+            return;
+
         AnimatorStateRecorder a = GetAnimatorStateRecorder(aniName);
         if (a != null)
         {
@@ -124,6 +130,9 @@ public class AnimatorController
     /// <param name="aniName"></param>
     public void Play(string aniName, bool isCycle, float normalizedTime)
     {
+        if (isNoPlayOtherClip)
+            return;
+
         AnimatorStateRecorder a = GetAnimatorStateRecorder(aniName);
         if (a != null)
         {
@@ -236,7 +245,7 @@ public class AnimatorController
             AddTask(animator, aniName, false, 0, 1);
             return taskListDict[aniName];
         }
-        Debug.Log("当前Animator不存在名为{" + aniName + "}的状态");
+        // Debug.Log("当前Animator不存在名为{" + aniName + "}的状态");
         return null;
     }
 
@@ -257,6 +266,15 @@ public class AnimatorController
     public bool IsPause()
     {
         return isPauseBoolNumeric.Value;
+    }
+
+    /// <summary>
+    /// 设置可否切换成别的动画
+    /// </summary>
+    /// <param name="enable"></param>
+    public void SetNoPlayOtherClip(bool enable)
+    {
+        isNoPlayOtherClip = enable;
     }
 
     /////////////////////////////////////////////////////////////////////////////////以下为私有方法///////////////////////////////////////////

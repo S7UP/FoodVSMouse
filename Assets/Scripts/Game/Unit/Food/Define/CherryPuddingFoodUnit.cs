@@ -32,7 +32,10 @@ public class CherryPuddingFoodUnit : FoodUnit
     /// </summary>
     public override void UpdateAttributeByLevel()
     {
-        SetMaxHpAndCurrentHp((float)(attr.baseAttrbute.baseHP + attr.valueList[mLevel]));
+        if(mShape >= 1)
+            SetMaxHpAndCurrentHp((float)(attr.baseAttrbute.baseHP + attr.valueList[mLevel])*1.25f);
+        else
+            SetMaxHpAndCurrentHp((float)(attr.baseAttrbute.baseHP + attr.valueList[mLevel]));
     }
 
     /// <summary>
@@ -54,13 +57,59 @@ public class CherryPuddingFoodUnit : FoodUnit
         // 判断子弹是否已被反弹
         if (baseBullet.GetTagCount(StringManager.BulletRebound) > 0)
             return false;
-        // 判断子弹类型能否过盆
+        // 判断子弹类型能否反弹
         foreach (var item in canReboundBulletStyleList)
         {
             if (item == baseBullet.style)
                 return true;
         }
         return false;
+    }
+
+    /// <summary>
+    /// 寻找被重定向投掷物的目标算法（先左向找最左的，再右向找最左的）
+    /// </summary>
+    /// <returns></returns>
+    public BaseUnit FindRedirectThrowingObjectTarget(BaseBullet b)
+    {
+        // 先寻找有效单位
+        BaseUnit target = MouseManager.FindTheMostLeftTarget(b.mMasterBaseUnit, float.MinValue, b.transform.position.x, b.GetRowIndex());
+        if (target != null)
+        {
+            return target;
+        }
+        else
+        {
+            // 如果没目标那就再找一次，这次从右侧找
+            target = MouseManager.FindTheMostLeftTarget(b.mMasterBaseUnit, b.transform.position.x, float.MaxValue, b.GetRowIndex());
+            return target;
+        }
+    }
+
+    /// <summary>
+    /// 重定向投掷物
+    /// </summary>
+    public void RedirectThrowingObject(BaseBullet b)
+    {
+        // 判断子弹是否已被重定向过，如果已被重定向过了则不能再重定向
+        if (b.GetTagCount(StringManager.BulletRebound) > 0)
+            return;
+        // 添加重定向任务，重定向至子弹左侧所有可攻击单位中最靠左侧的单位
+        {
+            // 先寻找有效单位
+            BaseUnit target = FindRedirectThrowingObjectTarget(b);
+            if (target != null)
+            {
+                // 弹回去！
+                PitcherManager.AddDefaultFlyTask(b, b.transform.position, target, true, false);
+            }
+            //else
+            //{
+            //    // 这要是还没有的话，那就原地向上弹然后碎掉吧
+            //    PitcherManager.AddDefaultFlyTask(b, b.transform.position, b.transform.position, true, false);
+            //}
+            b.AddTag(StringManager.BulletRebound); // 为子弹打上已反弹的标记，防止多次反弹
+        }
     }
 
     public void OnCollision(Collider2D collision)

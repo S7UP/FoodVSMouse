@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-
+using System;
 using UnityEngine;
 
 public class BaseGrid : MonoBehaviour, IGameControllerMember
@@ -30,15 +30,14 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     protected Dictionary<string, BaseUnit> mAttachedUnitDict = new Dictionary<string, BaseUnit>(); // 其他附加在格子上的单位引用（仅作引用，格子本身与该单位无其他关系）
 
     public bool canBuild;
+    public List<Func<BaseGrid, FoodInGridType, bool>> canBuildFuncListenerList = new List<Func<BaseGrid, FoodInGridType, bool>>();
     public int currentXIndex { get; private set; }
     public int currentYIndex { get; private set; }
     public bool isHeightLimit = true; // 地形效果是否只作用于特定高度
     public float mHeight = 0;
     public List<ITask> TaskList = new List<ITask>(); // 自身挂载任务表
     public Dictionary<string, ITask> TaskDict = new Dictionary<string, ITask>(); // 任务字典（仅记录引用不实际执行逻辑，执行逻辑在任务表中）
-
     private BoxCollider2D mBoxCollider2D;
-
     public GridActionPointManager gridActionPointManager = new GridActionPointManager();
 
     private void Awake()
@@ -53,6 +52,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         mFoodUnitDict.Clear();
         mItemUnitDict.Clear();
         mAttachedUnitDict.Clear();
+        canBuildFuncListenerList.Clear();
         characterUnit = null;
         canBuild = true;
         currentXIndex = 0;
@@ -87,10 +87,15 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     /// 格子本身是否允许放置
     /// </summary>
     /// <returns></returns>
-    public virtual bool CanBuildCard(FoodInGridType foodInGridType)
+    public bool CanBuildCard(FoodInGridType foodInGridType)
     {
         if (!canBuild)
             return false;
+        foreach (var func in canBuildFuncListenerList)
+        {
+            if (!func(this, foodInGridType))
+                return false;
+        }
         // 人物被视为默认类型的美食，即不能与默认类型的共存
         if (characterUnit != null && foodInGridType.Equals(FoodInGridType.Default))
             return false;
@@ -117,6 +122,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         mGridTypeDict.Add(type, t);
         t.transform.SetParent(transform);
         t.transform.localPosition = Vector3.zero;
+        t.masterGird = this;
         t.MInit();
     }
 
@@ -213,18 +219,27 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     {
         FoodInGridType t = BaseCardBuilder.GetFoodInGridType(food.mType);
         // 需要剔除并销毁上一个与自己相同标签的卡，这种情况会在开启快捷放卡设置后出现
+        KillFoodUnit(t);
+        // 之后再把自身加入
+        gridActionPointManager.TriggerActionPoint(GridActionPointType.BeforeSetFoodUnit, new GridAction(food, this));
+        mFoodUnitDict.Add(t, food);
+        gridActionPointManager.TriggerActionPoint(GridActionPointType.AfterSetFoodUnit, new GridAction(food, this));
+    }
+
+    /// <summary>
+    /// 强制击杀某种类型的卡
+    /// </summary>
+    /// <param name="t"></param>
+    public void KillFoodUnit(FoodInGridType t)
+    {
         if (IsContainTag(t))
         {
             mFoodUnitDict[t].ExecuteDeath();
             // ExecuteDeath里已经包括RemoveFoodUnit了，这段注释请别删除！
             // 这里再保险处理一次
-            if(IsContainTag(t))
+            if (IsContainTag(t))
                 RemoveFoodUnit(mFoodUnitDict[t]);
         }
-        // 之后再把自身加入
-        gridActionPointManager.TriggerActionPoint(GridActionPointType.BeforeSetFoodUnit, new GridAction(food, this));
-        mFoodUnitDict.Add(t, food);
-        gridActionPointManager.TriggerActionPoint(GridActionPointType.AfterSetFoodUnit, new GridAction(food, this));
     }
 
     /// <summary>
@@ -332,7 +347,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         if (collision.tag.Equals("Mouse"))
         {
             MouseUnit unit = collision.GetComponent<MouseUnit>();
-            if (!unit.isDeathState && unit.GetRowIndex() == currentYIndex && unit.CanBeSelectedAsTarget() && (!isHeightLimit || unit.GetHeight()==mHeight) && !mMouseUnitList.Contains(unit))
+            if (!unit.isDeathState && unit.GetRowIndex() == currentYIndex && UnitManager.CanBeSelectedAsTarget(null, unit) && (!isHeightLimit || unit.GetHeight()==mHeight) && !mMouseUnitList.Contains(unit))
             { 
                 AddMouseUnit(unit);
             }
@@ -354,26 +369,58 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     }
 
     /// <summary>
-    /// 默认情况下，获取本格中最高攻击优先级的单位
+    /// 获取本格最高攻击优先级的可攻击单位
     /// </summary>
-    public BaseUnit GetHighestAttackPriorityUnit()
+    /// <param name="typeQueue">优先级队列</param>
+    /// <param name="attacker">攻击者</param>
+    /// <returns></returns>
+    public BaseUnit GetHighestAttackPriorityFoodUnit(Queue<FoodInGridType> typeQueue, BaseUnit attacker)
     {
-        if (IsContainTag(FoodInGridType.Shield))
+        while(typeQueue.Count > 0)
         {
-            return mFoodUnitDict[FoodInGridType.Shield];
-        }
-        else if (IsContainTag(FoodInGridType.Default))
-        {
-            return mFoodUnitDict[FoodInGridType.Default];
-        }else if (characterUnit != null)
-        {
-            return characterUnit;
-        }
-        else if (IsContainTag(FoodInGridType.Bomb))
-        {
-            return mFoodUnitDict[FoodInGridType.Bomb];
+            FoodInGridType t = typeQueue.Dequeue();
+            BaseUnit unit = null;
+            if (IsContainTag(t))
+            {
+                unit = mFoodUnitDict[t];
+            }
+            else if (t.Equals(FoodInGridType.Default) && characterUnit != null)
+            {
+                unit = characterUnit;
+            }
+            if (unit != null)
+                return unit;
         }
         return null;
+    }
+
+    /// <summary>
+    /// 默认情况下，获取本格中最高攻击优先级的单位
+    /// </summary>
+    public BaseUnit GetHighestAttackPriorityUnit(BaseUnit attacker)
+    {
+        Queue<FoodInGridType> typeQueue = new Queue<FoodInGridType>();
+        typeQueue.Enqueue(FoodInGridType.Shield);
+        typeQueue.Enqueue(FoodInGridType.Default);
+        typeQueue.Enqueue(FoodInGridType.Bomb);
+
+        return GetHighestAttackPriorityFoodUnit(typeQueue, attacker);
+        //if (IsContainTag(FoodInGridType.Shield) && UnitManager.CanBeSelectedAsTarget(attacker, mFoodUnitDict[FoodInGridType.Shield]))
+        //{
+        //    return mFoodUnitDict[FoodInGridType.Shield];
+        //}
+        //else if (IsContainTag(FoodInGridType.Default))
+        //{
+        //    return mFoodUnitDict[FoodInGridType.Default];
+        //}else if (characterUnit != null)
+        //{
+        //    return characterUnit;
+        //}
+        //else if (IsContainTag(FoodInGridType.Bomb))
+        //{
+        //    return mFoodUnitDict[FoodInGridType.Bomb];
+        //}
+        //return null;
     }
 
     public FoodUnit GetFoodByTag(FoodInGridType type)
@@ -396,7 +443,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     /// 获取本格中最高攻击优先级的单位，其中包括水中载具
     /// </summary>
     /// <returns></returns>
-    public BaseUnit GetHighestAttackPriorityUnitIncludeWaterVehicle()
+    public BaseUnit GetHighestAttackPriorityUnitIncludeWaterVehicle(BaseUnit attacker)
     {
         if (IsContainTag(FoodInGridType.Shield))
         {
@@ -418,7 +465,14 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         {
             return mFoodUnitDict[FoodInGridType.WaterVehicle];
         }
-        return null;
+
+        Queue<FoodInGridType> typeQueue = new Queue<FoodInGridType>();
+        typeQueue.Enqueue(FoodInGridType.Shield);
+        typeQueue.Enqueue(FoodInGridType.Default);
+        typeQueue.Enqueue(FoodInGridType.Bomb);
+        typeQueue.Enqueue(FoodInGridType.WaterVehicle);
+
+        return GetHighestAttackPriorityFoodUnit(typeQueue, attacker);
     }
 
     /// <summary>
@@ -451,6 +505,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         {
             return mFoodUnitDict[FoodInGridType.LavaVehicle];
         }
+        
         return null;
     }
 
@@ -498,7 +553,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     /// 对于投掷来说获取一格内卡片的攻击优先级
     /// </summary>
     /// <returns></returns>
-    public BaseUnit GetThrowHighestAttackPriorityUnitInclude()
+    public BaseUnit GetThrowHighestAttackPriorityUnitInclude(BaseUnit attacker)
     {
         if (IsContainTag(FoodInGridType.Default))
         {
@@ -512,7 +567,12 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         {
             return characterUnit;
         }
-        return null;
+
+        Queue<FoodInGridType> typeQueue = new Queue<FoodInGridType>();
+        typeQueue.Enqueue(FoodInGridType.Default);
+        typeQueue.Enqueue(FoodInGridType.Shield);
+
+        return GetHighestAttackPriorityFoodUnit(typeQueue, attacker);
     }
 
     /// <summary>
@@ -838,5 +898,15 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         {
             RemoveTask(t);
         }
+    }
+
+    public void AddCanBuildFuncListener(Func<BaseGrid, FoodInGridType, bool> func)
+    {
+        canBuildFuncListenerList.Add(func);
+    }
+
+    public void RemoveCanBuildFuncListener(Func<BaseGrid, FoodInGridType, bool> func)
+    {
+        canBuildFuncListenerList.Remove(func);
     }
 }

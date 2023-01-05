@@ -30,7 +30,7 @@ public class SelectStageUI : MonoBehaviour
     private void Awake()
     {
         rectTransform = transform.GetComponent<RectTransform>();
-        ShowTween = rectTransform.DOAnchorPosX(235, 0.5f);
+        ShowTween = rectTransform.DOAnchorPosX(1380, 0.5f);
         ShowTween.SetEase(Ease.InCubic); // 由慢到快
         ShowTween.Pause();
         ShowTween.SetAutoKill(false);
@@ -90,7 +90,11 @@ public class SelectStageUI : MonoBehaviour
                 btn.transform.Find("Text").GetComponent<Text>().text = info.name;
                 int j = i;
                 btn.onClick.RemoveAllListeners();
-                btn.onClick.AddListener(delegate { OnBtnStageClick(btn, j); });
+                btn.onClick.AddListener(delegate { 
+                    OnBtnStageClick(btn, j);
+                    // 然后显示关卡信息和选卡界面
+                    GameManager.Instance.uiManager.mUIFacade.currentScenePanelDict[StringManager.StageConfigPanel].EnterPanel();
+                });
                 btn.transform.SetParent(Trans_StageList);
                 btn.transform.localScale = Vector3.one;
                 btn.transform.SetAsFirstSibling();
@@ -110,8 +114,7 @@ public class SelectStageUI : MonoBehaviour
     /// </summary>
     public void OnBtnStageClick(Button btn, int index)
     {
-        Debug.Log("index="+index);
-        mSelectPanel.SetCurrentSelectedStageInfo(index);
+        PlayerData.GetInstance().SetCurrentStageInfo(mSelectPanel.GetCurrentSceneStageList()[index]);
         selectIndex = index;
         // 当前页所有按钮变蓝
         foreach (var item in Btn_StageList)

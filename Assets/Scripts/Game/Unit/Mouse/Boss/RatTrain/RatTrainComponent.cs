@@ -4,31 +4,46 @@ using UnityEngine;
 /// <summary>
 /// 鼠国列车部件（作为车头和车身的父类）
 /// </summary>
-public class RatTrainComponent : MouseUnit
+public abstract class RatTrainComponent : MouseModel
 {
     private BaseRatTrain master; // 绑定的BOSS对象
     private float dmgRate; // 伤害传导倍率
     private float burnDmgRate; // 灰烬伤害传导倍率
     private Queue<BaseRatTrain.RoutePoints> routeQueue = new Queue<BaseRatTrain.RoutePoints>(); // 路径队列
     private bool isDisappear; // 是否消失
+    private bool isHide;
+    protected int bodyLayerIndex; // 位于主人的第几节
 
     private BaseRatTrain.RoutePoints currentRoute; // 当前所在路径
 
     public override void MInit()
     {
+        bodyLayerIndex = -1;
         master = null;
         dmgRate = 0;
         burnDmgRate = 0;
         routeQueue.Clear();
-        isDisappear = true;
         currentRoute = new BaseRatTrain.RoutePoints();
         base.MInit();
         // 添加等同于BOSS的免疫机制
         BossUnit.AddBossIgnoreDebuffEffect(this);
         // 初始隐藏，无受击判定且不可被选取
         isDisappear = false;
+        isHide = false;
         Hide(true);
         isBoss = true; // 车厢也算BOSS判定
+    }
+
+    public override void MUpdate()
+    {
+        base.MUpdate();
+        if(master != null && master.IsAlive())
+            mCurrentHp = master.mCurrentHp;
+    }
+
+    public override void LoadSkillAbility()
+    {
+
     }
 
     /// <summary>
@@ -36,6 +51,9 @@ public class RatTrainComponent : MouseUnit
     /// </summary>
     public void Hide(bool disappear)
     {
+        if (isHide == disappear)
+            return;
+        isHide = disappear;
         if (disappear)
         {
             CloseCollision();
@@ -48,6 +66,15 @@ public class RatTrainComponent : MouseUnit
         }
     }
 
+    /// <summary>
+    /// 要在范围内才能被选为攻击目标
+    /// </summary>
+    /// <param name="otherUnit"></param>
+    /// <returns></returns>
+    public override bool CanBeSelectedAsTarget(BaseUnit otherUnit)
+    {
+        return transform.position.x >= MapManager.GetColumnX(10) && transform.position.x <= MapManager.GetColumnX(-2) && transform.position.y >= MapManager.GetRowY(7) && transform.position.y <= MapManager.GetRowY(-1) && base.CanBeSelectedAsTarget(otherUnit);
+    }
 
     public override void OnMoveState()
     {
@@ -84,7 +111,6 @@ public class RatTrainComponent : MouseUnit
         }
     }
 
-
     public override void OnTransitionStateEnter()
     {
         if (isDisappear)
@@ -120,9 +146,14 @@ public class RatTrainComponent : MouseUnit
                     Hide(true);
                     isDisappear = true;
                     currentRoute = routeQueue.Dequeue();
-                    transform.position = currentRoute.start;
                     moveRotate = currentRoute.GetRotate();
                     transform.right = moveRotate*-1; // 改变朝向
+                    if (bodyLayerIndex >= 1 && master.GetBody(bodyLayerIndex - 1) != null)
+                        transform.position = (Vector2)master.GetBody(bodyLayerIndex - 1).transform.position - moveRotate * master.GetBodyLength(); // 起始点为上一节的尾巴减去车长*车方向
+                    else if (bodyLayerIndex == 0 && master.GetHead() != null)
+                        transform.position = (Vector2)master.GetHead().transform.position - moveRotate * master.GetHeadToBodyLength();
+                    else
+                        transform.position = currentRoute.start;
                     SetActionState(new TransitionState(this));
                 }
                 else
@@ -211,6 +242,16 @@ public class RatTrainComponent : MouseUnit
         }
     }
 
+    public override void OnRealDamage(float dmg)
+    {
+        // boss本体取代受伤
+        if (master != null)
+        {
+            master.OnRealDamage(dmgRate * dmg);
+            master.UpdateHertMap();
+        }
+    }
+
     public override void OnBombBurnDamage(float dmg)
     {
         // boss本体取代受伤
@@ -218,6 +259,14 @@ public class RatTrainComponent : MouseUnit
         {
             master.OnBombBurnDamage(burnDmgRate * dmg);
             master.UpdateHertMap();
+        }
+    }
+
+    public override void AddRecordDamage(float value)
+    {
+        if(master != null)
+        {
+            master.AddRecordDamage(dmgRate * value);
         }
     }
 
@@ -277,6 +326,38 @@ public class RatTrainComponent : MouseUnit
     public override void SetCollider2DParam()
     {
         mBoxCollider2D.offset = new Vector2(0, 0);
-        mBoxCollider2D.size = new Vector2(1.5f * MapManager.gridWidth, 0.75f * MapManager.gridHeight);
+        mBoxCollider2D.size = new Vector2(0.49f * MapManager.gridWidth, 0.49f * MapManager.gridHeight);
+    }
+
+    /// <summary>
+    /// 是否处于消失态
+    /// </summary>
+    /// <returns></returns>
+    public bool IsDisappear()
+    {
+        return isDisappear;
+    }
+
+    /// <summary>
+    /// 是否移藏（看不见）
+    /// </summary>
+    /// <returns></returns>
+    public bool IsHide()
+    {
+        return isHide;
+    }
+
+    /// <summary>
+    /// 是否还有路径没走完
+    /// </summary>
+    /// <returns></returns>
+    public bool HasRoute()
+    {
+        return GetRouteQueue().Count > 0;
+    }
+
+    public override void UpdateRenderLayer(int arrayIndex)
+    {
+        spriteRenderer.sortingOrder = LayerManager.CalculateSortingLayer(LayerManager.UnitType.Enemy, 7, 2, bodyLayerIndex);
     }
 }

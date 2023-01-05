@@ -29,11 +29,34 @@ public class LadderMouse : MouseUnit
     /// </summary>
     public void DefaultPutEvent()
     {
-        BaseLadder l = (BaseLadder)GameController.Instance.CreateItem(targetGrid.GetColumnIndex(), targetGrid.GetRowIndex(), (int)ItemNameTypeMap.Ladder, mShape);
-        // 设置贴图向右偏移
-        //l.SetSpriteLocalPosition(new Vector2(0.5f*MapManager.gridWidth, 0));
-        l.AddSpriteOffsetX(new FloatModifier(0.5f * MapManager.gridWidth));
-        l.SetMoveDistance(MapManager.gridWidth*3);
+        // 新添加一个检测，如果当前在这一刻没有防御型卡片，则直接屏蔽放梯子
+        bool flag = false;
+        List<FoodUnit> list = targetGrid.GetFoodUnitList();
+        foreach (var unit in list)
+        {
+            FoodNameTypeMap f_type = (FoodNameTypeMap)unit.mType;
+            if (FoodManager.DenfenceCard.Contains(f_type))
+            {
+                flag = true;
+                break;
+            }
+        }
+
+        if (flag)
+        {
+            BaseLadder l = (BaseLadder)GameController.Instance.CreateItem(targetGrid.GetColumnIndex(), targetGrid.GetRowIndex(), (int)ItemNameTypeMap.Ladder, mShape);
+            // 设置贴图向右偏移
+            l.AddSpriteOffsetX(new FloatModifier(0.5f * MapManager.gridWidth));
+            if(mShape == 0)
+            {
+                l.SetMoveDistanceAndMaxHight(MapManager.gridWidth * 1.5f, 0.7f*MapManager.gridHeight);
+            }
+            else
+            {
+                l.SetMoveDistanceAndMaxHight(MapManager.gridWidth * 3, 1.2f);
+            }
+            
+        }
     }
 
     /// <summary>
@@ -77,7 +100,19 @@ public class LadderMouse : MouseUnit
                 BaseGrid g = u.GetGrid();
                 if (g != null)
                 {
-                    if (g.IsContainTag(FoodInGridType.Shield) || g.IsContainTag(FoodInGridType.Defence))
+                    bool flag = false;
+                    List<FoodUnit> list = g.GetFoodUnitList();
+                    foreach (var unit in list)
+                    {
+                        FoodNameTypeMap f_type = (FoodNameTypeMap)unit.mType;
+                        if (FoodManager.DenfenceCard.Contains(f_type))
+                        {
+                            flag = true;
+                            break;
+                        }
+                    }
+
+                    if (flag)
                     {
                         targetGrid = g;
                         generalAttackSkillAbility.EndActivate(); // 取消平A
@@ -94,17 +129,14 @@ public class LadderMouse : MouseUnit
     public override void OnCastStateEnter()
     {
         animatorController.Play("Put");
-        Debug.Log("t = " + animatorController.GetCurrentAnimatorStateRecorder().aniTime);
     }
 
     public override void OnCastState()
     {
         if (currentStateTimer == 0)
             return;
-        Debug.Log("r = "+ animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime());
         if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
         {
-            Debug.Log("putLadderSkillAbility.TriggerEvent()");
             putLadderSkillAbility.TriggerEvent(); // 触发实际事件
             putLadderSkillAbility.SetEndSkill();
         }

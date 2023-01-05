@@ -46,7 +46,7 @@ public class WaterPipeFoodUnit : FoodUnit
     /// <returns></returns>
     protected override bool IsHasTarget()
     {
-        return GameController.Instance.CheckRowCanAttack(GetRowIndex());
+        return GameController.Instance.CheckRowCanAttack(this, GetRowIndex());
     }
 
     /// <summary>
@@ -73,11 +73,6 @@ public class WaterPipeFoodUnit : FoodUnit
     /// </summary>
     public override void OnGeneralAttack()
     {
-        // 切换时的第一帧直接不执行update()，因为下述的info.normalizedTime的值还停留在上一个状态，逻辑会出问题！
-        if (currentStateTimer <= 0)
-        {
-            return;
-        }
         // 伤害判定帧应当执行判定
         if (IsDamageJudgment())
         {
@@ -121,14 +116,14 @@ public class WaterPipeFoodUnit : FoodUnit
         // 前攻击
         if (currentAttackCount < maxFrontAttackCount)
         {
-            BaseBullet b = GameController.Instance.CreateBullet(this, transform.position + Vector3.right * 0.25f + Vector3.up*0.1f, Vector2.right, BulletStyle.Water);
+            BaseBullet b = GameController.Instance.CreateBullet(this, transform.position + Vector3.up*0.1f, Vector2.right, BulletStyle.Water);
             b.SetDamage(mCurrentAttack);
             b.SetStandardVelocity(24.0f);
         }
         // 后攻击
         if(currentAttackCount < maxBackAttackCount)
         {
-            BaseBullet b = GameController.Instance.CreateBullet(this, transform.position + Vector3.left * 0.25f, Vector2.left, BulletStyle.Water);
+            BaseBullet b = GameController.Instance.CreateBullet(this, transform.position, Vector2.left, BulletStyle.Water);
             b.SetDamage(mCurrentAttack);
             b.SetStandardVelocity(24.0f);
         }

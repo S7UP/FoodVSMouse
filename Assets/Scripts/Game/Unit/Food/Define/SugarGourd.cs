@@ -7,7 +7,7 @@ using UnityEngine;
 public class SugarGourd : FoodUnit
 {
     private static readonly int[] countArray = { 1, 1, 2 }; // 根据转职情况来确定发射几颗子弹
-    private static readonly float[] damageRateArray = { 1.0f, 1.0f, 0.65f}; // 伤害比率与转职关系
+    private static readonly float[] damageRateArray = { 1.0f, 1.0f, 0.75f}; // 伤害比率与转职关系
     private static readonly int[] stunTimeArray = { 6, 15, 15}; // 击晕时间（帧）与转职关系
     private int currentAttackCount;
     private int maxAttackCount;
@@ -52,7 +52,7 @@ public class SugarGourd : FoodUnit
         // 只要有空中单位并且可以被选取即可攻击
         foreach (var item in GameController.Instance.GetEachEnemy())
         {
-            if (item.GetHeight() == 1 && item.CanBeSelectedAsTarget() && item.IsAlive())
+            if (item.GetHeight() == 1 && UnitManager.CanBeSelectedAsTarget(this, item) && item.IsAlive())
                 return true;
         }
         return false;
@@ -134,7 +134,7 @@ public class SugarGourd : FoodUnit
         b.SetCompareFunc(BulletCompareFunc);
         b.SetVelocityChangeEvent(TransManager.TranToVelocity(12), TransManager.TranToVelocity(48), 90);
         b.SetDamage(mCurrentAttack* damageRateArray[mShape]);
-        b.SetHitAction(BulletHitAction); // 设置击中后的事件
+        b.AddHitAction(BulletHitAction); // 设置击中后的事件
     }
 
     ////////////////////////////////////////////////////////////以下是私有方法///////////////////////////////////////////////////////////////////////
@@ -147,9 +147,9 @@ public class SugarGourd : FoodUnit
     /// <returns>若为true则compareTarget会取代currentTarget成为当前target</returns>
     private bool BulletCompareFunc(BaseUnit currentTarget, BaseUnit compareTarget)
     {
-        if (compareTarget == null || !compareTarget.IsAlive() || !compareTarget.CanBeSelectedAsTarget() || compareTarget.GetHeight()!=1)
+        if (compareTarget == null || !compareTarget.IsAlive() || !UnitManager.CanBeSelectedAsTarget(this, compareTarget) || compareTarget.GetHeight()!=1)
             return false;
-        if (currentTarget == null || !currentTarget.IsAlive() || !currentTarget.CanBeSelectedAsTarget() || currentTarget.GetHeight() != 1)
+        if (currentTarget == null || !currentTarget.IsAlive() || !UnitManager.CanBeSelectedAsTarget(this, compareTarget) || currentTarget.GetHeight() != 1)
             return true;
         return (compareTarget.transform.position.x < currentTarget.transform.position.x);
     }

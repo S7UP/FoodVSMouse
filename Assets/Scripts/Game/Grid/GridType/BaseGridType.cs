@@ -2,13 +2,14 @@ using System.Collections.Generic;
 
 using UnityEngine;
 /// <summary>
-/// 基础地形类形
+/// 基础地形类型
 /// </summary>
 public class BaseGridType : MonoBehaviour, IGameControllerMember
 {
     public GridType mType;
     public int mShape;
 
+    public BaseGrid masterGird; // 依附的格子
     public BoxCollider2D mBoxCollider2D;
     public SpriteRenderer spriteRenderer;
     public Animator animator;
@@ -31,6 +32,7 @@ public class BaseGridType : MonoBehaviour, IGameControllerMember
 
     public virtual void MInit()
     {
+        masterGird = null;
         animator.runtimeAnimatorController = null;
         spriteRenderer.sprite = null;
         animatorController.Initialize();

@@ -62,7 +62,7 @@ public class AerialBombardmentMouse : MouseUnit, IFlyUnit
             // 检测到单位碰撞了！
             BaseUnit unit = collision.GetComponent<BaseUnit>();
             // 检测本格美食最高受击优先级单位
-            BaseUnit target = unit.GetGrid().GetHighestAttackPriorityUnit();
+            BaseUnit target = unit.GetGrid().GetHighestAttackPriorityUnit(this);
             if (target != null)
             {
                 // 标记技能发现目标了，可以执行投弹操作
@@ -119,9 +119,9 @@ public class AerialBombardmentMouse : MouseUnit, IFlyUnit
         return !(mCurrentActionState is TransitionState) && base.CanHit(bullet);
     }
 
-    public override bool CanBeSelectedAsTarget()
+    public override bool CanBeSelectedAsTarget(BaseUnit otherUnit)
     {
-        return !(mCurrentActionState is TransitionState) && base.CanBeSelectedAsTarget();
+        return !(mCurrentActionState is TransitionState) && base.CanBeSelectedAsTarget(otherUnit);
     }
 
     /// <summary>

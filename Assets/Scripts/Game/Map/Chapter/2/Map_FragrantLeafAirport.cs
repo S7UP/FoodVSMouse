@@ -130,8 +130,8 @@ public class Map_FragrantLeafAirport : ChapterMap
             // 添加风域
             for (int i = 0; i < 7; i += 2)
             {
-                WindAreaEffectExecution e = WindAreaEffectExecution.GetInstance(9, 1, new Vector2(MapManager.GetColumnX(4f), MapManager.GetRowY(i)));
-                WindAreaEffectExecution.SetClassicalWindAreaEffectMode(e, 1, 450, 120, 780, true); // 等待时间、速度变化时间、匀速时间
+                WindAreaEffectExecution e = WindAreaEffectExecution.GetInstance(8.6f, 1, new Vector2(MapManager.GetColumnX(4f), MapManager.GetRowY(i)));
+                WindAreaEffectExecution.SetClassicalWindAreaEffectMode(e, 1, 450, 120, 780); // 等待时间、速度变化时间、匀速时间
                 GameController.Instance.AddAreaEffectExecution(e);
             }
         }

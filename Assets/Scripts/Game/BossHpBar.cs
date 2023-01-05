@@ -1,4 +1,3 @@
-
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -195,11 +194,11 @@ public class BossHpBar : BaseProgressBar
             {
                 mCurrentBarNumber = currentBarNum;
                 // 更新个位数数据显示
-                Emp_BossLifeLeft.transform.GetChild(2).GetComponent<Image>().sprite = numberSpriteList[currentBarNum % 10];
+                Emp_BossLifeLeft.transform.GetChild(2).GetComponent<Image>().sprite = numberSpriteList[Mathf.Max(0, currentBarNum % 10)];
                 // 更新十位数数据显示
-                Emp_BossLifeLeft.transform.GetChild(1).GetComponent<Image>().sprite = numberSpriteList[Mathf.FloorToInt((currentBarNum % 100) / 10)];
+                Emp_BossLifeLeft.transform.GetChild(1).GetComponent<Image>().sprite = numberSpriteList[Mathf.Max(0, Mathf.FloorToInt((currentBarNum % 100) / 10))];
                 // 更新百位数数据显示
-                Emp_BossLifeLeft.transform.GetChild(0).GetComponent<Image>().sprite = numberSpriteList[Mathf.FloorToInt((currentBarNum % 1000) / 100)];
+                Emp_BossLifeLeft.transform.GetChild(0).GetComponent<Image>().sprite = numberSpriteList[Mathf.Max(0, Mathf.FloorToInt((currentBarNum % 1000) / 100))];
 
                 if (currentBarNum <= 1)
                 {
@@ -231,8 +230,8 @@ public class BossHpBar : BaseProgressBar
             float percent = CalculateCurrentBarProgress();
             Img_BossHp2.transform.localScale = new Vector3(percent, 1, 1);
             // 虚血掉落效果 掉落速度为每秒掉10%
-            mVirtualHpBarPercent1 = Mathf.Max(percent, mVirtualHpBarPercent1 - (float)(0.10 / ConfigManager.fps));
-            mVirtualHpBarPercent2 = Mathf.Max(0, mVirtualHpBarPercent2 - (float)(0.10 / ConfigManager.fps));
+            mVirtualHpBarPercent1 = Mathf.Max(percent, mVirtualHpBarPercent1 - (float)(0.10 / 60));
+            mVirtualHpBarPercent2 = Mathf.Max(0, mVirtualHpBarPercent2 - (float)(0.10 / 60));
             if (mVirtualHpBarPercent2 <= 0)
             {
                 Img_BossVirtualHp2.SetActive(false);

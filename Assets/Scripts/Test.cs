@@ -1,11 +1,10 @@
-using UnityEngine;
 public class Test
 {
     public static string TestStageName = "151"; // "singleMouseText"
 
     public static void OnGameControllerAwake()
     {
-        Debug.Log("OnGameControllerAwake()");
+        // Debug.Log("OnGameControllerAwake()");
         // 添加平A技能
         //GeneralAttackSkillAbility atk = new GeneralAttackSkillAbility(GameController.Instance.CreateMouseUnit(0, new BaseEnemyGroup.EnemyInfo() { type = 0, shape = 0 }));
         //FoodUnit food = new FoodUnit();

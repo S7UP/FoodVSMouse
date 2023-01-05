@@ -153,7 +153,7 @@ public class PenguinMouse : MouseUnit
         {
             foreach (var item in list)
             {
-                if (!item.CanBeSelectedAsTarget())
+                if (!UnitManager.CanBeSelectedAsTarget(this, item))
                     continue;
                 int temp = item.GetColumnIndex();
                 if (temp < minColumnIndex)
@@ -179,7 +179,7 @@ public class PenguinMouse : MouseUnit
             {
                 foreach (var item in list)
                 {
-                    if (!item.CanBeSelectedAsTarget())
+                    if (!UnitManager.CanBeSelectedAsTarget(this, item))
                         continue;
                     int temp = item.GetColumnIndex();
                     if (temp < minColumnIndex)
@@ -198,7 +198,7 @@ public class PenguinMouse : MouseUnit
             {
                 foreach (var item in list)
                 {
-                    if (!item.CanBeSelectedAsTarget())
+                    if (!UnitManager.CanBeSelectedAsTarget(this, item))
                         continue;
                     int temp = item.GetColumnIndex();
                     if (temp < minColumnIndex)

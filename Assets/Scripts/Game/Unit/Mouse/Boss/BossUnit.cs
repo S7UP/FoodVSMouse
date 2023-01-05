@@ -52,6 +52,16 @@ public class BossUnit : MouseUnit
         mSkillQueueAbilityManager.Initial();
     }
 
+    public override void OnMoveStateEnter()
+    {
+        
+    }
+
+    public override void OnMoveState()
+    {
+        
+    }
+
     public override void ExecuteRecycle()
     {
         // 移除全场无限攻击TAG
@@ -142,7 +152,6 @@ public class BossUnit : MouseUnit
     /// <summary>
     /// 自动更新贴图
     /// </summary>
-    /// <param name="collision"></param>
     public override void UpdateRuntimeAnimatorController()
     {
         //AnimatorStateRecorder a = animatorController.GetCurrentAnimatorStateRecorder(); // 获取当前在播放的动画
@@ -259,6 +268,18 @@ public class BossUnit : MouseUnit
             Debug.LogWarning("BOSS中已存在名为“" + key + "”的参数！传进来的新参数数组会覆盖原来的数组！");
             BossParamArrayDict[key] = arr;
         }
+
+        // 特殊参数处理
+        if (key.Equals("hpRate"))
+        {
+            InitHertRateList();
+            UpdateHertMap();
+        }
+    }
+
+    public void AddParamArray(string key, List<float> list)
+    {
+        AddParamArray(key, list.ToArray());
     }
 
     /// <summary>
@@ -281,5 +302,24 @@ public class BossUnit : MouseUnit
             Debug.LogWarning("BOSS中未发现名为“"+key+"”的参数！");
             return 0;
         }
+    }
+
+    /// <summary>
+    /// 是否不存在或者越界
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="stage"></param>
+    /// <returns></returns>
+    public bool IsParamValueInValidOrOutOfBound(string key, int stage)
+    {
+        if (BossParamArrayDict.ContainsKey(key) && BossParamArrayDict[key].Length > 0)
+        {
+            float[] arr = BossParamArrayDict[key];
+            if (stage < arr.Length)
+                return false;
+            else
+                return true;
+        }
+        return true;
     }
 }

@@ -10,7 +10,6 @@ public class IceCream : FoodUnit
         NumericBox.Defense.SetBase(1);
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, new BoolModifier(true));
         NumericBox.AddDecideModifierToBoolDict(StringManager.Invincibility, new BoolModifier(true));
-        SetMaxHpAndCurrentHp(float.MaxValue);
         // 不可选取
         CloseCollision();
     }
@@ -52,11 +51,6 @@ public class IceCream : FoodUnit
     /// </summary>
     public override void OnGeneralAttack()
     {
-        // 切换时的第一帧直接不执行update()，因为下述的info.normalizedTime的值还停留在上一个状态，逻辑会出问题！
-        if (currentStateTimer <= 0)
-        {
-            return;
-        }
         // 伤害判定帧应当执行判定
         if (IsDamageJudgment())
         {
@@ -75,7 +69,7 @@ public class IceCream : FoodUnit
         BaseGrid g = GetGrid();
         if (g == null)
             return false;
-        return (animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime() >= attackPercent && mAttackFlag && g.GetHighestAttackPriorityUnit() != null && g.GetHighestAttackPriorityUnit() is FoodUnit);
+        return (animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime() >= attackPercent && mAttackFlag && g.GetFoodUnitList().Count>1);
     }
 
     /// <summary>
@@ -101,8 +95,13 @@ public class IceCream : FoodUnit
     /// </summary>
     public override void ExecuteDamage()
     {
-        // 使当前格拥有最高受击优先级的卡片CD重置
-        FoodUnit u = (FoodUnit)GetGrid().GetHighestAttackPriorityUnit();
-        u.GetCardBuilder().ResetCD();
+        //u.GetCardBuilder().ResetCD();
+        // 上面的注释已经过时了，留着是代表老版本设定，新版本设定在下面
+        // 使当前格所有卡片CD重置
+        foreach (var unit in GetGrid().GetFoodUnitList())
+        {
+            if(unit.mType != mType)
+                unit.GetCardBuilder().ResetCD();
+        }
     }
 }

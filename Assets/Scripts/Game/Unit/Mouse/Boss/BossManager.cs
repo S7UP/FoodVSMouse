@@ -11,6 +11,11 @@ public class BossManager
                 { 0, "洞君" }
             }
         },
+        { BossNameTypeMap.ANuo, new Dictionary<int, string>()
+            {
+                { 0, "阿诺" }
+            }
+        },
         { BossNameTypeMap.Pharaoh1, new Dictionary<int, string>()
             { { 0, "法老"}
             }
@@ -25,7 +30,10 @@ public class BossManager
         },
 
         { BossNameTypeMap.RatTrain, new Dictionary<int, string>()
-            { { 2, "列车终极"}
+            {
+                { 0, "列车初级"},
+                { 1, "列车进化"},
+                { 2, "列车终极"}
             }
         },
         { BossNameTypeMap.CaptainAmerica, new Dictionary<int, string>()

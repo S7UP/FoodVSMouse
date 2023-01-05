@@ -31,7 +31,7 @@ public class MapController : MonoBehaviour, IGameControllerMember
     {
         if (currentMap == null)
         {
-            BaseStage.ChapterStageValue v = GameManager.Instance.playerData.GetCurrentChapterStageValue();
+            BaseStage.StageInfo v = GameManager.Instance.playerData.GetCurrentStageInfo();
             currentMap = ChapterMap.GetInstance(v.chapterIndex, v.sceneIndex);
             currentMap.MInit();
         }

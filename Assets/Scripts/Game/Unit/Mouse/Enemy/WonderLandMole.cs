@@ -45,9 +45,9 @@ public class WonderLandMole : MouseUnit
     /// 当处于遁地状态时处于不可选取状态
     /// </summary>
     /// <returns></returns>
-    public override bool CanBeSelectedAsTarget()
+    public override bool CanBeSelectedAsTarget(BaseUnit otherUnit)
     {
-        return canBeHited && base.CanBeSelectedAsTarget();
+        return canBeHited && base.CanBeSelectedAsTarget(otherUnit);
     }
 
     /// <summary>

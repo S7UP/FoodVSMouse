@@ -144,11 +144,11 @@ public class BaseWindCave : BaseItem
         if (timeLeft > 0)
         {
             timeLeft--;
-            Debug.Log("timeLeft="+timeLeft);
+            //Debug.Log("timeLeft="+timeLeft);
         }
         if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
         {
-            Debug.Log("Enter IdleState");
+            //Debug.Log("Enter IdleState");
             SetActionState(new IdleState(this));
         }
     }

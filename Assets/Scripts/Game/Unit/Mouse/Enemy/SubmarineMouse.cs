@@ -111,7 +111,7 @@ public class SubmarineMouse : MouseUnit, IInWater
     public override void OnAllyCollision(BaseUnit unit)
     {
         // 检测本格美食最高受击优先级单位（包括水中载具）
-        BaseUnit target = unit.GetGrid().GetHighestAttackPriorityUnitIncludeWaterVehicle();
+        BaseUnit target = unit.GetGrid().GetHighestAttackPriorityUnitIncludeWaterVehicle(this);
         if (!isBlock && UnitManager.CanBlock(this, target)) // 检测双方能否互相阻挡
         {
             isBlock = true;
@@ -131,7 +131,7 @@ public class SubmarineMouse : MouseUnit, IInWater
             BaseGrid g = mBlockUnit.GetGrid();
             if (g != null)
             {
-                mBlockUnit = g.GetHighestAttackPriorityUnitIncludeWaterVehicle();
+                mBlockUnit = g.GetHighestAttackPriorityUnitIncludeWaterVehicle(this);
             }
             return true;
         }

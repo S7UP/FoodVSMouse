@@ -9,6 +9,7 @@ public class FogAreaEffectExecution : RetangleAreaEffectExecution
     private const string TaskName = "FogTask"; // 专属的任务名 
     private SpriteRenderer spriteRenderer;
     private bool isOpen;
+    private bool isDisappear;
     private float alpha;
 
     public override void Awake()
@@ -20,6 +21,7 @@ public class FogAreaEffectExecution : RetangleAreaEffectExecution
     public override void MInit()
     {
         isOpen = false;
+        isDisappear = false;
         alpha = 0;
         spriteRenderer.color = new Color(1, 1, 1, alpha);
         base.MInit();
@@ -35,6 +37,11 @@ public class FogAreaEffectExecution : RetangleAreaEffectExecution
         else
         {
             alpha = Mathf.Max(alpha - 0.02f, 0f);
+            if(alpha == 0 && isDisappear)
+            {
+                MDestory();
+                return;
+            }
         }
         spriteRenderer.color = new Color(1, 1, 1, alpha);
         base.MUpdate();
@@ -81,6 +88,15 @@ public class FogAreaEffectExecution : RetangleAreaEffectExecution
             OnCharacterExit(item);
         }
         characterList.Clear();
+    }
+
+    /// <summary>
+    /// 使自己消失：透明度逐渐降低，到0时回收自己
+    /// </summary>
+    public void SetDisappear()
+    {
+        SetClose();
+        isDisappear = true;
     }
 
     public override void OnEnemyEnter(MouseUnit unit)
@@ -181,6 +197,8 @@ public class FogAreaEffectExecution : RetangleAreaEffectExecution
         {
             return false;
         };
+        // 禁止被选取的方法
+        private static Func<BaseUnit, BaseUnit, bool> noBeSelectedAsTargetFunc = delegate { return false; };
 
         private int count; // 进入的迷雾数
         private BaseUnit unit;
@@ -210,6 +228,7 @@ public class FogAreaEffectExecution : RetangleAreaEffectExecution
             // 使得目标既不可被阻挡也不可被弹幕攻击
             unit.AddCanBlockFunc(noBlockFunc);
             unit.AddCanHitFunc(noHitFunc);
+            unit.AddCanBeSelectedAsTargetFunc(noBeSelectedAsTargetFunc);
             // 添加隐匿特效
             BaseEffect e = BaseEffect.CreateInstance(GameManager.Instance.GetRuntimeAnimatorController("Effect/HiddenEffect"), "Appear", "Idle", "Disappear", true);
             e.SetSpriteRendererSorting("Effect", 2);
@@ -240,6 +259,7 @@ public class FogAreaEffectExecution : RetangleAreaEffectExecution
             // 取消以上特性
             unit.RemoveCanBlockFunc(noBlockFunc);
             unit.RemoveCanHitFunc(noHitFunc);
+            unit.RemoveCanBeSelectedAsTargetFunc(noBeSelectedAsTargetFunc);
             unit.RemoveEffectFromDict(EffectType.Hidden);
         }
 

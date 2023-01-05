@@ -5,11 +5,15 @@ using System;
 /// </summary>
 public class MouseModel : MouseUnit
 {
+    public bool canTriggerCat;
+    public bool canTriggerLoseWhenEnterLoseLine;
+
     public override void MInit()
     {
         mType = -1;
         mShape = -1;
-        
+        canTriggerCat = true;
+        canTriggerLoseWhenEnterLoseLine = true;
         base.MInit();
 
         spriteRenderer.sprite = null;
@@ -104,5 +108,15 @@ public class MouseModel : MouseUnit
         m.AddActionPointListener(ActionPointType.PostReceiveDamage, action);
         m.AddActionPointListener(ActionPointType.PostReceiveReboundDamage, action);
         return m;
+    }
+
+    public override bool CanTriggerCat()
+    {
+        return canTriggerCat;
+    }
+
+    public override bool CanTriggerLoseWhenEnterLoseLine()
+    {
+        return canTriggerLoseWhenEnterLoseLine;
     }
 }

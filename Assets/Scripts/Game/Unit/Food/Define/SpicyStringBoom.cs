@@ -1,4 +1,4 @@
-using UnityEngine;
+using System;
 /// <summary>
 /// 麻辣烫炸弹
 /// </summary>
@@ -15,6 +15,10 @@ public class SpicyStringBoom : FoodUnit
         prepareTime = totalPrepareTime;
         isTriggerBoom = false;
         base.MInit();
+        // 不被空中单位作为攻击目标
+        AddCanBeSelectedAsTargetFunc((u1, u2) => {
+            return u2!=null && u2.mHeight != 1;
+        });
     }
 
     /// <summary>
@@ -41,38 +45,38 @@ public class SpicyStringBoom : FoodUnit
     {
         if (!IsFinishPrepare())
             prepareTime--;
-        //else
-        //{
-        //    // 准备好后才会检测本格是否有满足触发条件的敌人
-        //    foreach (var enemy in GetGrid().GetMouseUnitList())
-        //    {
-        //        if (enemy.GetHeight() == 1)
-        //        {
-        //            isTriggerBoom = true;
-        //            ExecuteDeath();
-        //            break;
-        //        }
-        //    }
-        //}
         if (prepareTime == 1)
             SetActionState(new TransitionState(this));
     }
 
-    /// <summary>
-    /// 检测空军并触发爆炸
-    /// </summary>
-    /// <param name="collision"></param>
-    public void OnTriggerEnter2D(Collider2D collision)
+    private void CreateCheckArea()
     {
-        if(IsFinishPrepare() && collision.tag.Equals("Mouse"))
+        RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 0.65f, 0.65f, "ItemCollideEnemy");
+        r.isAffectMouse = true;
+        r.SetAffectHeight(1);
+        Action<MouseUnit> action = (u) =>
         {
-            MouseUnit m = collision.GetComponent<MouseUnit>();
-            if (m.GetHeight() == 1 && GetRowIndex()==m.GetRowIndex() && m.CanBeSelectedAsTarget())
+            if (r.isAlive && UnitManager.CanBeSelectedAsTarget(this, u))
             {
                 isTriggerBoom = true;
                 ExecuteDeath();
+                r.MDestory();
             }
-        }
+        };
+        r.SetOnEnemyEnterAction(action);
+        r.SetOnEnemyStayAction(action);
+        CustomizationTask t = new CustomizationTask();
+        t.AddTaskFunc(delegate {
+            if (IsAlive())
+                r.transform.position = transform.position;
+            else
+            {
+                r.MDestory();
+            }
+            return false;
+        });
+        r.AddTask(t);
+        GameController.Instance.AddAreaEffectExecution(r);
     }
 
     public override void OnTransitionStateEnter()
@@ -97,6 +101,8 @@ public class SpicyStringBoom : FoodUnit
         NumericBox.RemoveDecideModifierToBoolDict(StringManager.Invincibility, boolModifier);
         NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, boolModifier);
         NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreFrozen, boolModifier);
+        // 添加检测范围
+        CreateCheckArea();
     }
 
     public override void BeforeDeath()
@@ -135,7 +141,7 @@ public class SpicyStringBoom : FoodUnit
         // 单行1.5格内对空秒杀非BOSS效果
         {
             BombAreaEffectExecution bombEffect = BombAreaEffectExecution.GetInstance();
-            bombEffect.Init(this, 900, GetRowIndex(), 1.5f, 1, 0, 0, false, true);
+            bombEffect.Init(this, 900 * mCurrentAttack / 10, GetRowIndex(), 1.5f, 1, 0, 0, false, true);
             bombEffect.transform.position = this.GetPosition();
             bombEffect.SetAffectHeight(1); // 仅对空
             bombEffect.SetOnEnemyEnterAction(BurnNoBossEnemyUnit);
@@ -162,7 +168,7 @@ public class SpicyStringBoom : FoodUnit
             new BombDamageAction(CombatAction.ActionType.CauseDamage, this, m, m.mCurrentHp).ApplyAction();
         else
             // 对BOSS造成900点灰烬伤害
-            new BombDamageAction(CombatAction.ActionType.CauseDamage, this, m, 900).ApplyAction();
+            new BombDamageAction(CombatAction.ActionType.CauseDamage, this, m, 900 * mCurrentAttack / 10).ApplyAction();
     }
 
     /// <summary>
@@ -175,6 +181,11 @@ public class SpicyStringBoom : FoodUnit
         {
             IFlyUnit flyUnit = (IFlyUnit)m;
             flyUnit.ExecuteDrop();
+        }
+        else
+        {
+            // 其他单位受到900点灰烬伤害
+            new BombDamageAction(CombatAction.ActionType.CauseDamage, this, m, 900 * mCurrentAttack / 10).ApplyAction();
         }
     }
 }

@@ -1,1 +1,1 @@
-{"baseAttrbute":{"name":"咖啡粉","type":3,"shape":0,"baseHP":9999.0,"baseAttack":0.0,"baseAttackSpeed":0.0,"attackPercent":1.0,"baseMoveSpeed":0.0,"baseDefense":0.0,"baseRange":0.0,"baseHeight":0},"valueList":[10,15,20,25,30,35,40,45,50,55,60,65,70,75,85,95,110],"foodType":0}
+{"baseAttrbute":{"name":"咖啡粉","type":3,"shape":0,"baseHP":50.0,"baseAttack":10.0,"baseAttackSpeed":1.0,"attackPercent":1.0,"baseMoveSpeed":0.0,"baseDefense":0.0,"baseRange":0.0,"baseHeight":0},"valueList":[10,15,20,25,30,35,40,45,50,55,60,65,70,75,85,95,110],"foodType":0}

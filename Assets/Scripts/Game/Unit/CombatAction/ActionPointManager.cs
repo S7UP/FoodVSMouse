@@ -24,6 +24,7 @@ public sealed class ActionPointManager
         ActionPoints.Add(ActionPointType.PreCauseDamage, new ActionPoint());
         ActionPoints.Add(ActionPointType.PreReceiveCure, new ActionPoint());
         ActionPoints.Add(ActionPointType.PreReceiveDamage, new ActionPoint());
+        ActionPoints.Add(ActionPointType.PreReceiveReboundDamage, new ActionPoint());
     }
 
     public void AddListener(ActionPointType actionPointType, Action<CombatAction> action)

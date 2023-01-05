@@ -134,7 +134,7 @@ public class TrackingBullets : BaseBullet
     /// </summary>
     private void CheckTargetValid()
 {
-        if(target == null || !target.IsAlive() || !target.CanBeSelectedAsTarget() || target.GetHeight() != mHeight || !UnitCanHit(target))
+        if(target == null || !target.IsAlive() || !UnitManager.CanBeSelectedAsTarget(target, mMasterBaseUnit) || target.GetHeight() != mHeight || !UnitCanHit(target))
         {
             target = null;
         }
