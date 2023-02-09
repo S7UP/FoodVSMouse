@@ -90,7 +90,7 @@ public class IceSlag : BossUnit
         AddParamArray("num1_0", new float[] { 4, 3, 5 }); // 光弹数
         AddParamArray("num1_1", new float[] { 0, 1, 1 }); // 元素弹数
         AddParamArray("dmg1_0", new float[] { 900, 900, 900 }); // 光弹伤害
-        
+        AddParamArray("stun1_0", new float[] { 9, 9, 9 }); // 光弹对人物的晕眩时间
     }
 
     /// <summary>
@@ -153,7 +153,15 @@ public class IceSlag : BossUnit
             unit.NumericBox.AddDecideModifierToBoolDict(IceMagicKey, IceMagic);
             affectedUnitList.Add(unit);
             // 添加特效
-            unit.AddEffectToDict(IceMagicKey, BaseEffect.CreateInstance(Sprite_IceMagic), 0f*MapManager.gridHeight*Vector2.up);
+            BaseEffect e = BaseEffect.CreateInstance(Sprite_IceMagic);
+            string name;
+            int order;
+            if (unit.TryGetSpriteRenternerSorting(out name, out order))
+            {
+                e.SetSpriteRendererSorting(name, order + 4);
+            }
+            GameController.Instance.AddEffect(e);
+            unit.AddEffectToDict(IceMagicKey, e, 0f*MapManager.gridHeight*Vector2.up);
         }
     }
 
@@ -200,7 +208,15 @@ public class IceSlag : BossUnit
             unit.NumericBox.AddDecideModifierToBoolDict(FireMagicKey, FireMagic);
             affectedUnitList.Add(unit);
             // 添加特效
-            unit.AddEffectToDict(FireMagicKey, BaseEffect.CreateInstance(Sprite_FireMagic), 0f * MapManager.gridHeight * Vector2.up);
+            BaseEffect e = BaseEffect.CreateInstance(Sprite_FireMagic);
+            string name;
+            int order;
+            if (unit.TryGetSpriteRenternerSorting(out name, out order))
+            {
+                e.SetSpriteRendererSorting(name, order + 4);
+            }
+            GameController.Instance.AddEffect(e);
+            unit.AddEffectToDict(FireMagicKey, e, 0f * MapManager.gridHeight * Vector2.up);
         }
     }
 
@@ -801,7 +817,10 @@ public class IceSlag : BossUnit
             r.isAffectBullet = true;
             r.SetOnFoodEnterAction(unitAction);
             r.SetOnEnemyEnterAction(unitAction);
-            r.SetOnBulletEnterAction((bullet)=>{
+
+            RetangleAreaEffectExecution r2 = RetangleAreaEffectExecution.GetInstance(b.transform.position, 1, 1, "Enemy");
+            r2.isAffectBullet = true;
+            r2.SetOnBulletEnterAction((bullet) => {
                 // 摧毁接触的子弹
                 bullet.TakeDamage(null);
                 bullet.KillThis();
@@ -815,6 +834,7 @@ public class IceSlag : BossUnit
                 {
                 // 每帧坐标同步跟随就行了
                     r.transform.position = b.transform.position;
+                    r2.transform.position = b.transform.position;
                 },
             //Func<bool> EndCondition, 
                 delegate
@@ -826,9 +846,11 @@ public class IceSlag : BossUnit
                 delegate
                 {
                     r.MDestory();
+                    r2.MDestory();
                 }
             );
             GameController.Instance.AddAreaEffectExecution(r);
+            GameController.Instance.AddAreaEffectExecution(r2);
         }
     }
 
@@ -838,7 +860,7 @@ public class IceSlag : BossUnit
     private void CreateLightBullet(float minLeftX)
     {
         // 先去获取当前行最靠左的可攻击美食单位
-        BaseUnit targetUnit = FoodManager.GetSpecificRowFarthestLeftCanTargetedAlly(GetRowIndex(), transform.position.x);
+        BaseUnit targetUnit = FoodManager.GetSpecificRowFarthestLeftCanTargetedAlly(GetRowIndex(), transform.position.x, true);
         Vector3 targetPos;
         if (targetUnit == null)
             targetPos = new Vector2(minLeftX, MapManager.GetRowY(GetRowIndex()));
@@ -847,8 +869,10 @@ public class IceSlag : BossUnit
 
         // 以下是产生弹体
         float dmg1_0 = GetParamValue("dmg1_0", mHertIndex);
+        int stun1_0 = Mathf.FloorToInt(GetParamValue("stun1_0", mHertIndex) * 60); // 对人物的晕眩时间
         RuntimeAnimatorController run = Run_LightBullet;
-        EnemyBullet b = EnemyBullet.GetInstance(run, this, dmg1_0*(mCurrentAttack/10));
+        float dmg = dmg1_0 * (mCurrentAttack / 10); // 最终打到人身上的伤害
+        EnemyBullet b = EnemyBullet.GetInstance(run, this, 0);
         // 修改攻击优先级，这种投掷攻击优先攻击护罩里的东西
         b.GetTargetFunc = (unit) => {
             BaseGrid g = unit.GetGrid();
@@ -858,6 +882,17 @@ public class IceSlag : BossUnit
             }
             return unit;
         };
+        b.AddHitAction((b, u)=> {
+            if(u is CharacterUnit)
+            {
+                // 如果击中人物，则为人物施加晕眩效果
+                u.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(u, stun1_0, false));
+            }
+            else
+            {
+                new DamageAction(CombatAction.ActionType.CauseDamage, this, u, dmg).ApplyAction();
+            }
+        });
         TaskManager.AddParabolaTask(b, TransManager.TranToVelocity(48f), 1.5f, transform.position, targetPos, true);
         GameController.Instance.AddBullet(b);
     }
@@ -886,7 +921,7 @@ public class IceSlag : BossUnit
         };
 
         // 先去获取当前行最靠左的可攻击美食单位
-        BaseUnit targetUnit = FoodManager.GetSpecificRowFarthestLeftCanTargetedAlly(GetRowIndex(), transform.position.x);
+        BaseUnit targetUnit = FoodManager.GetSpecificRowFarthestLeftCanTargetedAlly(GetRowIndex(), transform.position.x, true);
         Vector3 targetPos;
         if (targetUnit == null)
             targetPos = new Vector2(minLeftX, MapManager.GetRowY(GetRowIndex()));

@@ -42,25 +42,41 @@ public class FrogMouse : MouseUnit, IInWater
             // 进入不可选取状态
             // CloseCollision();
             // 跳跃格子数等于 0.5*当前移动速度标准值
-            float dist = 0.5f * TransManager.TranToStandardVelocity(GetMoveSpeed());
-            Tasker t = GameController.Instance.AddTasker(new ParabolaMovePresetTasker(this, 12.0f, 0.8f, transform.position, transform.position + (Vector3)moveRotate * dist * MapManager.gridWidth, false));
-            // 跳跃期间不可被阻挡也不能被常规子弹击中
-            Func<BaseUnit, BaseUnit, bool> noBlockFunc = delegate { return false; };
-            Func<BaseUnit, BaseBullet, bool> noHitFunc = delegate { return false; };
-            AddCanBlockFunc(noBlockFunc);
-            AddCanHitFunc(noHitFunc);
+            float v = TransManager.TranToStandardVelocity(GetMoveSpeed());
+            float dist = 0.5f * v * MapManager.gridWidth;
+            //Tasker t = GameController.Instance.AddTasker(new ParabolaMovePresetTasker(this, 12.0f, 0.8f, transform.position, transform.position + (Vector3)moveRotate * dist * MapManager.gridWidth, false));
+            //// 跳跃期间不可被阻挡也不能被常规子弹击中
+            //Func<BaseUnit, BaseUnit, bool> noBlockFunc = delegate { return false; };
+            //Func<BaseUnit, BaseBullet, bool> noHitFunc = delegate { return false; };
+            //AddCanBlockFunc(noBlockFunc);
+            //AddCanHitFunc(noHitFunc);
 
+            //DisableMove(true);
+            //t.AddOtherEndEvent(delegate 
+            //{
+            //    //OpenCollision();
+            //    RemoveCanBlockFunc(noBlockFunc);
+            //    RemoveCanHitFunc(noHitFunc);
+            //    // 结束后青蛙消失，失去青蛙带来的所有移动速度加成
+            //    NumericBox.MoveSpeed.RemovePctAddModifier(FrogSpeedModifier);
+            //    NumericBox.MoveSpeed.RemovePctAddModifier(FrogInWaterSpeedModifier);
+            //    DisableMove(false);
+            //});
+
+            CustomizationTask t = TaskManager.AddParabolaTask(this, dist / 60, dist / 2, transform.position, transform.position + (Vector3)moveRotate * dist, false);
             DisableMove(true);
-            t.AddOtherEndEvent(delegate 
+            Action oldExit = t.OnExitFunc;
+            t.OnExitFunc = delegate
             {
-                //OpenCollision();
-                RemoveCanBlockFunc(noBlockFunc);
-                RemoveCanHitFunc(noHitFunc);
+                if (oldExit != null)
+                    oldExit();
+                DisableMove(false);
                 // 结束后青蛙消失，失去青蛙带来的所有移动速度加成
                 NumericBox.MoveSpeed.RemovePctAddModifier(FrogSpeedModifier);
                 NumericBox.MoveSpeed.RemovePctAddModifier(FrogInWaterSpeedModifier);
                 DisableMove(false);
-            });
+            };
+
         }
         else
         {
@@ -81,7 +97,7 @@ public class FrogMouse : MouseUnit, IInWater
         }
         SetActionState(new TransitionState(this));
         // 添加水波特效
-        EffectManager.AddWaterWaveEffectToUnit(this);
+        EffectManager.AddWaterWaveEffectToUnit(this, Vector2.zero);
     }
 
     public void OnStayWater()

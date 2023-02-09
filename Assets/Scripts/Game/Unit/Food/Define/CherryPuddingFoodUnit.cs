@@ -1,6 +1,4 @@
 using System.Collections.Generic;
-
-using UnityEngine;
 /// <summary>
 /// 樱桃反弹布丁
 /// </summary>
@@ -10,21 +8,13 @@ public class CherryPuddingFoodUnit : FoodUnit
     /// 可以被反弹的子弹类型表
     /// </summary>
     public static List<BulletStyle> canReboundBulletStyleList = new List<BulletStyle>() {
-        BulletStyle.Wine, BulletStyle.Water, BulletStyle.Fire
+        BulletStyle.Normal, BulletStyle.NoStrengthenNormal
     };
-
-
-    private Rigidbody2D rigibody2D;
-
-    public override void Awake()
-    {
-        base.Awake();
-        rigibody2D = GetComponent<Rigidbody2D>();
-    }
 
     public override void MInit()
     {
         base.MInit();
+        CreateReboundArea();
     }
 
     /// <summary>
@@ -39,31 +29,40 @@ public class CherryPuddingFoodUnit : FoodUnit
     }
 
     /// <summary>
-    /// 该单位装了rigibody2d，因此需要重写此方法
-    /// </summary>
-    /// <param name="V3"></param>
-    public override void SetPosition(Vector3 V3)
-    {
-        rigibody2D.MovePosition(V3);
-    }
-
-    /// <summary>
     /// 检测传入子弹是否能反弹
     /// </summary>
     /// <param name="baseBullet"></param>
     /// <returns></returns>
-    public bool CanThrought(BaseBullet baseBullet)
+    public bool CanThrought(BaseBullet b)
     {
+        // 自身不被控制
+        if (isFrozenState)
+            return false;
+        // 子弹得是友方子弹
+        if (!(b is AllyBullet))
+            return false;
         // 判断子弹是否已被反弹
-        if (baseBullet.GetTagCount(StringManager.BulletRebound) > 0)
+        if (b.GetTagCount(StringManager.BulletRebound) > 0)
             return false;
         // 判断子弹类型能否反弹
         foreach (var item in canReboundBulletStyleList)
         {
-            if (item == baseBullet.style)
+            if (item == b.style)
                 return true;
         }
         return false;
+    }
+
+    public override bool CanBeSelectedAsTarget(BaseUnit otherUnit)
+    {
+        // 在自身为定身状态下，不被友方投掷选为攻击目标
+        if(otherUnit is FoodUnit)
+        {
+            FoodUnit f = otherUnit as FoodUnit;
+            if (GetNoCountUniqueStatus(StringManager.Stun) != null && PitcherManager.IsPitcher(f))
+                return false;
+        }
+        return base.CanBeSelectedAsTarget(otherUnit);
     }
 
     /// <summary>
@@ -72,6 +71,10 @@ public class CherryPuddingFoodUnit : FoodUnit
     /// <returns></returns>
     public BaseUnit FindRedirectThrowingObjectTarget(BaseBullet b)
     {
+        // 若自身被定身了则不重定向投掷物
+        if (GetNoCountUniqueStatus(StringManager.Stun)!=null)
+            return null;
+
         // 先寻找有效单位
         BaseUnit target = MouseManager.FindTheMostLeftTarget(b.mMasterBaseUnit, float.MinValue, b.transform.position.x, b.GetRowIndex());
         if (target != null)
@@ -87,62 +90,43 @@ public class CherryPuddingFoodUnit : FoodUnit
     }
 
     /// <summary>
-    /// 重定向投掷物
+    /// 创建反弹子弹检测圈
     /// </summary>
-    public void RedirectThrowingObject(BaseBullet b)
+    private void CreateReboundArea()
     {
-        // 判断子弹是否已被重定向过，如果已被重定向过了则不能再重定向
-        if (b.GetTagCount(StringManager.BulletRebound) > 0)
-            return;
-        // 添加重定向任务，重定向至子弹左侧所有可攻击单位中最靠左侧的单位
+        RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 0.5f, 0.5f, "ItemCollideBullet");
+        r.isAffectBullet = true;
+        r.SetOnBulletEnterAction(OnCollision);
+        r.SetOnBulletStayAction(OnCollision);
         {
-            // 先寻找有效单位
-            BaseUnit target = FindRedirectThrowingObjectTarget(b);
-            if (target != null)
-            {
-                // 弹回去！
-                PitcherManager.AddDefaultFlyTask(b, b.transform.position, target, true, false);
-            }
-            //else
-            //{
-            //    // 这要是还没有的话，那就原地向上弹然后碎掉吧
-            //    PitcherManager.AddDefaultFlyTask(b, b.transform.position, b.transform.position, true, false);
-            //}
+            CustomizationTask t = new CustomizationTask();
+            t.AddTaskFunc(delegate {
+                if(this.IsAlive())
+                {
+                    r.transform.position = transform.position;
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            });
+            t.OnExitFunc = delegate {
+                r.MDestory();
+            };
+            r.AddTask(t);
+        }
+        GameController.Instance.AddAreaEffectExecution(r);
+    }
+
+    public void OnCollision(BaseBullet b)
+    {
+        if (CanThrought(b)) // 检测子弹能否穿过
+        {
+            // 子弹反向
+            b.SetRotate(-b.GetRotate());
             b.AddTag(StringManager.BulletRebound); // 为子弹打上已反弹的标记，防止多次反弹
         }
-    }
-
-    public void OnCollision(Collider2D collision)
-    {
-        // 死亡动画时不接受任何碰撞事件
-        if (isDeathState)
-        {
-            return;
-        }
-
-
-        if (collision.tag.Equals("Bullet"))
-        {
-            // 检测到子弹单位碰撞了
-            BaseBullet bullet = collision.GetComponent<BaseBullet>();
-            if (CanThrought(bullet)) // 检测子弹能否穿过
-            {
-                // 子弹反向
-                bullet.SetRotate(-bullet.GetRotate());
-                bullet.AddTag(StringManager.BulletRebound); // 为子弹打上已反弹的标记，防止多次反弹
-            }
-        }
-    }
-
-    // rigibody相关
-    private void OnTriggerEnter2D(Collider2D collision)
-    {
-        OnCollision(collision);
-    }
-
-    private void OnTriggerStay2D(Collider2D collision)
-    {
-        OnCollision(collision);
     }
 
     /////////////////////////////////以下功能均失效，不需要往下翻看/////////////////////////////////////

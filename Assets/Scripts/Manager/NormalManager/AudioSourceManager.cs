@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Collections;
 /// <summary>
 /// 负责控制音乐的播放与停止，以及游戏中各种音效的播放
 /// </summary>
@@ -39,6 +40,29 @@ public class AudioSourceManager
         currentAudioSourceIndex++;
         currentAudioSourceIndex = currentAudioSourceIndex % MusicAudioSource.Length;
         currentAudioSource = MusicAudioSource[currentAudioSourceIndex];
+    }
+
+    public static void LoadBGMusic(string refenceName)
+    {
+        MusicInfo info = MusicManager.GetMusicInfo(refenceName);
+        if (info != null)
+        {
+            AudioClip audioClip = GameManager.Instance.GetAudioClip(info.resPath);
+        }
+    }
+
+    public static IEnumerator AsyncLoadBGMusic(string refenceName)
+    {
+        MusicInfo info = MusicManager.GetMusicInfo(refenceName);
+        if (info != null)
+        {
+            yield return GameManager.Instance.StartCoroutine(GameManager.Instance.AsyncGetAudioClip(info.resPath));
+            // AudioClip audioClip = GameManager.Instance.GetAudioClip(info.resPath);
+        }
+        else
+        {
+            yield return null;
+        }
     }
 
     public void PlayBGMusic(string refenceName)

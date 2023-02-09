@@ -1,4 +1,5 @@
-using DG.Tweening;
+
+using System.Collections.Generic;
 
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,6 +12,9 @@ public class StageInfoUI : MonoBehaviour
     private RectTransform rectTransform;
     private GameObject Emp_StageInfo;
     private GameObject Emp_EnemyInfo;
+    private MousePanel_StageConfigPanel mMousePanel;
+    private ScrollRect Scr_EnemyList;
+    private RectTransform RectTrans_MouseItemContent;
     private GameObject Scr_AddInfo;
     private Sprite btnSprite0; // 上方按钮暗
     private Sprite btnSprite1; // 上方按钮亮
@@ -23,12 +27,20 @@ public class StageInfoUI : MonoBehaviour
     private Text Tex_Illustrate;
     private Text Tex_AddInfo;
 
+    private List<MouseItem_StageConfigPanel> mouseItemList = new List<MouseItem_StageConfigPanel>();
+    private List<BossItem_StageConfigPanel> bossItemList = new List<BossItem_StageConfigPanel>();
+    private MouseItem_StageConfigPanel currentMouseItem; // 当前选中的老鼠
+    private BossItem_StageConfigPanel currentBossItem; // 当前选中的BOSS
+
     private void Awake()
     {
         rectTransform = transform.GetComponent<RectTransform>();
 
         Emp_StageInfo = transform.Find("Img_Center").Find("Emp_Container").Find("Emp_StageInfo").gameObject;
         Emp_EnemyInfo = transform.Find("Img_Center").Find("Emp_Container").Find("Emp_EnemyInfo").gameObject;
+        mMousePanel = Emp_EnemyInfo.transform.Find("MousePanel").GetComponent<MousePanel_StageConfigPanel>();
+        Scr_EnemyList = Emp_EnemyInfo.transform.Find("Scr_EnemyList").GetComponent<ScrollRect>();
+        RectTrans_MouseItemContent = Scr_EnemyList.content.GetComponent<RectTransform>();
         Scr_AddInfo = transform.Find("Img_Center").Find("Emp_Container").Find("Scr_AddInfo").gameObject;
 
         btnSprite0 = GameManager.Instance.GetSprite("UI/SelectPanel/36");
@@ -55,7 +67,7 @@ public class StageInfoUI : MonoBehaviour
     {
         // 不显示画面
         Emp_StageInfo.gameObject.SetActive(false);
-        Emp_EnemyInfo.gameObject.SetActive(false);
+        HideEnemyInfoPanel();
         Scr_AddInfo.gameObject.SetActive(false);
 
         // 按钮全部置暗
@@ -67,6 +79,125 @@ public class StageInfoUI : MonoBehaviour
         // 默认显示第一个
         Emp_StageInfo.gameObject.SetActive(true);
         imgList[0].sprite = btnSprite1;
+    }
+
+    /// <summary>
+    /// 显示敌方信息页面
+    /// </summary>
+    public void ShowEnemyInfoPanel()
+    {
+        mMousePanel.Initial();
+        foreach (var item in mouseItemList)
+        {
+            item.ExecuteRecycle();
+        }
+        mouseItemList.Clear();
+        foreach (var item in bossItemList)
+        {
+            item.ExecuteRecycle();
+        }
+        bossItemList.Clear();
+
+        // 获取当前关卡信息
+        BaseStage.StageInfo info = PlayerData.GetInstance().GetCurrentStageInfo();
+        if (info == null)
+            return;
+        // 统计小怪并置于面板
+        {
+            List<BaseEnemyGroup> list = BaseRound.GetAllEnemyList(new List<BaseEnemyGroup>(), info.roundInfoList);
+            if (list != null)
+            {
+                foreach (var g in list)
+                {
+                    int type = g.mEnemyInfo.type;
+                    int shape = g.mEnemyInfo.shape;
+                    int num = g.mCount;
+                    MouseItem_StageConfigPanel mouseItem = null;
+                    mouseItem = MouseItem_StageConfigPanel.GetInstance(type, shape, num, delegate { SetCurrentMouseItem(mouseItem); });
+                    mouseItem.transform.SetParent(Scr_EnemyList.content);
+                    mouseItem.transform.localScale = Vector2.one;
+                    mouseItemList.Add(mouseItem);
+                }
+                SetCurrentMouseItem(mouseItemList[0]);
+            }
+        }
+
+        // 统计BOSS并置于面板
+        {
+            List<BaseEnemyGroup> list = BaseRound.GetBossList(new List<BaseEnemyGroup>(), info.roundInfoList);
+            if (list != null)
+            {
+                foreach (var g in list)
+                {
+                    int type = g.mEnemyInfo.type;
+                    int shape = g.mEnemyInfo.shape;
+                    BossItem_StageConfigPanel bossItem = null;
+                    bossItem = BossItem_StageConfigPanel.GetInstance(type, shape, g.mHp, delegate { SetCurrentBossItem(bossItem); });
+                    bossItem.transform.SetParent(Scr_EnemyList.content);
+                    bossItem.transform.localScale = Vector2.one;
+                    bossItemList.Add(bossItem);
+                }
+            }
+        }
+
+        // 自适应滑动窗口的高度
+        RectTrans_MouseItemContent.sizeDelta = new Vector2(RectTrans_MouseItemContent.sizeDelta.x, 10 + 90 * (1 + (mouseItemList.Count + bossItemList.Count) / 3));
+
+        Emp_EnemyInfo.gameObject.SetActive(true);
+    }
+
+    /// <summary>
+    /// 隐藏敌方信息页面
+    /// </summary>
+    public void HideEnemyInfoPanel()
+    {
+        Emp_EnemyInfo.gameObject.SetActive(false);
+    }
+
+    /// <summary>
+    /// 设置当前选中的老鼠图例
+    /// </summary>
+    /// <param name="mouseItem"></param>
+    public void SetCurrentMouseItem(MouseItem_StageConfigPanel mouseItem)
+    {
+        currentMouseItem = mouseItem;
+        currentBossItem = null;
+        UpdateMousePanel();
+    }
+
+    /// <summary>
+    /// 设置当前选中的Boss图例
+    /// </summary>
+    /// <param name="mouseItem"></param>
+    public void SetCurrentBossItem(BossItem_StageConfigPanel bossItem)
+    {
+        currentBossItem = bossItem;
+        currentMouseItem = null;
+        UpdateMousePanel();
+    }
+
+    /// <summary>
+    /// 更新老鼠信息面板
+    /// </summary>
+    private void UpdateMousePanel()
+    {
+        int type;
+        int shape;
+        if (currentMouseItem != null)
+        {
+            type = currentMouseItem.type;
+            shape = currentMouseItem.shape;
+            mMousePanel.Initial();
+            mMousePanel.UpdateByMouseParam(type, shape);
+        }else if(currentBossItem != null)
+        {
+            type = currentBossItem.type;
+            shape = currentBossItem.shape;
+            mMousePanel.Initial();
+            mMousePanel.UpdateByBossParam(type, shape, currentBossItem.maxHp);
+        }
+
+
     }
 
     /// <summary>
@@ -127,7 +258,7 @@ public class StageInfoUI : MonoBehaviour
         imgList[1].sprite = btnSprite0;
         imgList[2].sprite = btnSprite0;
         Emp_StageInfo.gameObject.SetActive(true);
-        Emp_EnemyInfo.gameObject.SetActive(false);
+        HideEnemyInfoPanel();
         Scr_AddInfo.gameObject.SetActive(false);
     }
 
@@ -140,7 +271,7 @@ public class StageInfoUI : MonoBehaviour
         imgList[1].sprite = btnSprite1;
         imgList[2].sprite = btnSprite0;
         Emp_StageInfo.gameObject.SetActive(false);
-        Emp_EnemyInfo.gameObject.SetActive(true);
+        ShowEnemyInfoPanel();
         Scr_AddInfo.gameObject.SetActive(false);
     }
 
@@ -153,7 +284,7 @@ public class StageInfoUI : MonoBehaviour
         imgList[1].sprite = btnSprite0;
         imgList[2].sprite = btnSprite1;
         Emp_StageInfo.gameObject.SetActive(false);
-        Emp_EnemyInfo.gameObject.SetActive(false);
+        HideEnemyInfoPanel();
         Scr_AddInfo.gameObject.SetActive(true);
     }
 }

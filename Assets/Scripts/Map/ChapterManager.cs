@@ -29,6 +29,9 @@ public class ChapterManager
             { 11, "咖喱岛（日）"},
             { 12, "咖喱岛（夜）"},
             { 13, "深渊"},
+            { 14, "勇士神殿"},
+            { 15, "勇士深渊"},
+            { 16, "布丁岛（水）"}
         }},
         // 火山岛
         { ChapterNameTypeMap.HouShan, new Dictionary<int, string>(){

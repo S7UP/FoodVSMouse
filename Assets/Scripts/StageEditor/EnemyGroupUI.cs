@@ -357,8 +357,8 @@ public class EnemyGroupUI : MonoBehaviour
             Img_Mouse.sprite = GameManager.Instance.GetSprite("Mouse/" + enemyInfo.type + "/" + enemyInfo.shape + "/display");
         Img_Mouse.SetNativeSize();
         // …Ë÷√rect
-        float w = Img_Mouse.GetComponent<RectTransform>().rect.width + Emp_MaskList.GetComponent<RectTransform>().rect.width;
-        rectTransform.localPosition = new Vector3(w/2, rectTransform.localPosition.y, rectTransform.localPosition.z);
+        float w = Img_Mouse.GetComponent<RectTransform>().rect.width/2 + Emp_MaskList.GetComponent<RectTransform>().rect.width + Emp_Info_Trans.GetComponent<RectTransform>().rect.width/2;
+        rectTransform.localPosition = new Vector3(w, rectTransform.localPosition.y, rectTransform.localPosition.z);
         rectTransform.sizeDelta = new Vector2(w, rectTransform.sizeDelta.y);
     }
 

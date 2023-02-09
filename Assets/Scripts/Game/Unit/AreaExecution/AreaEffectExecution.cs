@@ -37,6 +37,12 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
     public Dictionary<string, float> FloatDict = new Dictionary<string, float>();
     public List<string> TagList = new List<string>();
 
+    private List<Func<FoodUnit, bool>> FoodEnterConditionFuncList = new List<Func<FoodUnit, bool>>();
+    private List<Func<MouseUnit, bool>> EnemyEnterConditionFuncList = new List<Func<MouseUnit, bool>>();
+    private List<Func<CharacterUnit, bool>> CharacterEnterConditionFuncList = new List<Func<CharacterUnit, bool>>();
+    private List<Func<BaseGrid, bool>> GridEnterConditionFuncList = new List<Func<BaseGrid, bool>>();
+    private List<Func<BaseBullet, bool>> BulletEnterConditionFuncList = new List<Func<BaseBullet, bool>>();
+
     private Action<FoodUnit> OnFoodEnterAction;
     private Action<MouseUnit> OnEnemyEnterAction;
     private Action<CharacterUnit> OnCharacterEnterAction;
@@ -57,8 +63,7 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
 
     private Action<AreaEffectExecution> OnDestoryExtraAction;
 
-    public List<ITask> TaskList = new List<ITask>(); // 自身挂载任务表
-    public Dictionary<string, ITask> TaskDict = new Dictionary<string, ITask>(); // 任务字典（仅记录引用不实际执行逻辑，执行逻辑在任务表中）
+    public TaskController taskController = new TaskController();
 
     public virtual void Awake()
     {
@@ -91,6 +96,12 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
         isIgnoreHeight = true; // 默认情况下无视高度
         affectHeight = 0;
 
+        FoodEnterConditionFuncList.Clear();
+        EnemyEnterConditionFuncList.Clear();
+        CharacterEnterConditionFuncList.Clear();
+        GridEnterConditionFuncList.Clear();
+        BulletEnterConditionFuncList.Clear();
+
         OnFoodEnterAction = null;
         OnEnemyEnterAction = null;
         OnCharacterEnterAction = null;
@@ -114,8 +125,7 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
         FloatDict.Clear();
         TagList.Clear();
 
-        TaskList.Clear();
-        TaskDict.Clear();
+        taskController.Initial();
 
         transform.right = Vector2.right;
     }
@@ -220,7 +230,7 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
         if (isAffectFood && collision.tag.Equals("Food"))
         {
             FoodUnit food = collision.GetComponent<FoodUnit>();
-            if (!foodUnitList.Contains(food) && !excludeFoodUnitList.Contains(food) && IsMeetingCondition(food) && (isIgnoreHeight || food.GetHeight() == affectHeight))
+            if (IsMeetingCondition(food))
             {
                 foodUnitList.Add(food);
                 OnFoodEnter(food);
@@ -228,7 +238,7 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
         }else if (isAffectMouse && collision.tag.Equals("Mouse"))
         {
             MouseUnit mouse = collision.GetComponent<MouseUnit>();
-            if (!mouseUnitList.Contains(mouse) && !excludeMouseUnitList.Contains(mouse) && IsMeetingCondition(mouse) && (isIgnoreHeight || mouse.GetHeight() == affectHeight))
+            if (IsMeetingCondition(mouse))
             {
                 mouseUnitList.Add(mouse);
                 OnEnemyEnter(mouse);
@@ -236,7 +246,7 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
         }else if (isAffectCharacter && collision.tag.Equals("Character"))
         {
             CharacterUnit c = collision.GetComponent<CharacterUnit>();
-            if (!characterList.Contains(c) && !excludeCharacterList.Contains(c) && IsMeetingCondition(c) && (isIgnoreHeight || c.GetHeight() == affectHeight))
+            if (IsMeetingCondition(c))
             {
                 characterList.Add(c);
                 OnCharacterEnter(c);
@@ -244,7 +254,7 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
         }else if (isAffectGrid && collision.tag.Equals("Grid"))
         {
             BaseGrid g = collision.GetComponent<BaseGrid>();
-            if(!gridList.Contains(g) && !excludeGridList.Contains(g) && IsMeetingCondition(g))
+            if(IsMeetingCondition(g))
             {
                 gridList.Add(g);
                 OnGridEnter(g);
@@ -253,7 +263,7 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
         else if (isAffectBullet && collision.tag.Equals("Bullet"))
         {
             BaseBullet b = collision.GetComponent<BaseBullet>();
-            if (!bulletList.Contains(b) && !excludeBulletList.Contains(b) && IsMeetingCondition(b))
+            if (IsMeetingCondition(b))
             {
                 bulletList.Add(b);
                 OnBulletEnter(b);
@@ -325,13 +335,44 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
         OnExit(collision);
     }
 
-    /// <summary>
-    /// 是否满足事件条件
-    /// </summary>
-    /// <param name="baseUnit"></param>
-    /// <returns></returns>
-    public virtual bool IsMeetingCondition(BaseUnit baseUnit)
+    private bool IsMeetingCondition(FoodUnit u)
     {
+        if (foodUnitList.Contains(u) || excludeFoodUnitList.Contains(u) || !(isIgnoreHeight || u.GetHeight() == affectHeight))
+            return false;
+        // 附加一个条件，Food必须是可被攻击类型的
+        if (!FoodManager.IsAttackableFoodType(u))
+            return false;
+        foreach (var func in FoodEnterConditionFuncList)
+        {
+            if (!func(u))
+                return false;
+        }
+        return true;
+    }
+
+    private bool IsMeetingCondition(MouseUnit u)
+    {
+        if (mouseUnitList.Contains(u) || excludeMouseUnitList.Contains(u) || !(isIgnoreHeight || u.GetHeight() == affectHeight))
+            return false;
+
+        foreach (var func in EnemyEnterConditionFuncList)
+        {
+            if (!func(u))
+                return false;
+        }
+        return true;
+    }
+
+    private bool IsMeetingCondition(CharacterUnit u)
+    {
+        if (characterList.Contains(u) || excludeCharacterList.Contains(u) || !(isIgnoreHeight || u.GetHeight() == affectHeight))
+            return false;
+
+        foreach (var func in CharacterEnterConditionFuncList)
+        {
+            if (!func(u))
+                return false;
+        }
         return true;
     }
 
@@ -340,8 +381,16 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
     /// </summary>
     /// <param name="grid"></param>
     /// <returns></returns>
-    public virtual bool IsMeetingCondition(BaseGrid grid)
+    private bool IsMeetingCondition(BaseGrid grid)
     {
+        if (gridList.Contains(grid) || excludeGridList.Contains(grid))
+            return false;
+
+        foreach (var func in GridEnterConditionFuncList)
+        {
+            if (!func(grid))
+                return false;
+        }
         return true;
     }
 
@@ -350,9 +399,67 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
     /// </summary>
     /// <param name="grid"></param>
     /// <returns></returns>
-    public virtual bool IsMeetingCondition(BaseBullet bullet)
+    private bool IsMeetingCondition(BaseBullet bullet)
     {
+        if (bulletList.Contains(bullet) || excludeBulletList.Contains(bullet))
+            return false;
+
+        foreach (var func in BulletEnterConditionFuncList)
+        {
+            if (!func(bullet))
+                return false;
+        }
         return true;
+    }
+
+    public void AddFoodEnterConditionFunc(Func<FoodUnit, bool> func)
+    {
+        FoodEnterConditionFuncList.Add(func);
+    }
+
+    public void AddEnemyEnterConditionFunc(Func<MouseUnit, bool> func)
+    {
+        EnemyEnterConditionFuncList.Add(func);
+    }
+
+    public void AddCharacterEnterConditionFunc(Func<CharacterUnit, bool> func)
+    {
+        CharacterEnterConditionFuncList.Add(func);
+    }
+
+    public void AddGridEnterConditionFunc(Func<BaseGrid, bool> func)
+    {
+        GridEnterConditionFuncList.Add(func);
+    }
+
+    public void AddBulletEnterConditionFunc(Func<BaseBullet, bool> func)
+    {
+        BulletEnterConditionFuncList.Add(func);
+    }
+
+    public void RemoveFoodEnterConditionFunc(Func<FoodUnit, bool> func)
+    {
+        FoodEnterConditionFuncList.Remove(func);
+    }
+
+    public void RemoveEnemyEnterConditionFunc(Func<MouseUnit, bool> func)
+    {
+        EnemyEnterConditionFuncList.Remove(func);
+    }
+
+    public void RemoveCharacterEnterConditionFunc(Func<CharacterUnit, bool> func)
+    {
+        CharacterEnterConditionFuncList.Remove(func);
+    }
+
+    public void RemoveGridEnterConditionFunc(Func<BaseGrid, bool> func)
+    {
+        GridEnterConditionFuncList.Remove(func);
+    }
+
+    public void RemoveBulletEnterConditionFunc(Func<BaseBullet, bool> func)
+    {
+        BulletEnterConditionFuncList.Remove(func);
     }
 
     /// <summary>
@@ -509,6 +616,16 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
             {
                 foodUnitList.Remove(item);
             }
+            f_delList.Clear();
+            foreach (var item in excludeFoodUnitList)
+            {
+                if (!item.IsAlive())
+                    f_delList.Add(item);
+            }
+            foreach (var item in f_delList)
+            {
+                excludeFoodUnitList.Remove(item);
+            }
 
             List<MouseUnit> m_delList = new List<MouseUnit>();
             foreach (var item in mouseUnitList)
@@ -521,6 +638,16 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
             foreach (var item in m_delList)
             {
                 mouseUnitList.Remove(item);
+            }
+            m_delList.Clear();
+            foreach (var item in excludeMouseUnitList)
+            {
+                if (!item.IsAlive())
+                    m_delList.Add(item);
+            }
+            foreach (var item in m_delList)
+            {
+                excludeMouseUnitList.Remove(item);
             }
 
             List<CharacterUnit> c_delList = new List<CharacterUnit>();
@@ -535,6 +662,16 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
             {
                 characterList.Remove(item);
             }
+            c_delList.Clear();
+            foreach (var item in excludeCharacterList)
+            {
+                if (!item.IsAlive())
+                    c_delList.Add(item);
+            }
+            foreach (var item in c_delList)
+            {
+                excludeCharacterList.Remove(item);
+            }
 
             List<BaseGrid> g_delList = new List<BaseGrid>();
             foreach (var item in gridList)
@@ -547,6 +684,16 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
             foreach (var item in g_delList)
             {
                 gridList.Remove(item);
+            }
+            g_delList.Clear();
+            foreach (var item in excludeGridList)
+            {
+                if (!item.isActiveAndEnabled)
+                    g_delList.Add(item);
+            }
+            foreach (var item in g_delList)
+            {
+                excludeGridList.Remove(item);
             }
 
             List<BaseBullet> b_delList = new List<BaseBullet>();
@@ -561,8 +708,18 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
             {
                 bulletList.Remove(item);
             }
+            b_delList.Clear();
+            foreach (var item in excludeBulletList)
+            {
+                if (!item.IsAlive())
+                    b_delList.Add(item);
+            }
+            foreach (var item in b_delList)
+            {
+                excludeBulletList.Remove(item);
+            }
 
-            OnTaskUpdate();
+            taskController.Update();
 
             if (timeLeft > 0)
                 timeLeft--;
@@ -707,11 +864,7 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
     /// </summary>
     public void AddUniqueTask(string key, ITask t)
     {
-        if (!TaskDict.ContainsKey(key))
-        {
-            TaskDict.Add(key, t);
-            AddTask(t);
-        }
+        taskController.AddUniqueTask(key, t);
     }
 
     /// <summary>
@@ -720,8 +873,7 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
     /// <param name="t"></param>
     public void AddTask(ITask t)
     {
-        TaskList.Add(t);
-        t.OnEnter();
+        taskController.AddTask(t);
     }
 
     /// <summary>
@@ -729,11 +881,7 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
     /// </summary>
     public void RemoveUniqueTask(string key)
     {
-        if (TaskDict.ContainsKey(key))
-        {
-            RemoveTask(TaskDict[key]);
-            TaskDict.Remove(key);
-        }
+        taskController.RemoveUniqueTask(key);
     }
 
     /// <summary>
@@ -742,8 +890,7 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
     /// <param name="t"></param>
     public void RemoveTask(ITask t)
     {
-        TaskList.Remove(t);
-        t.OnExit();
+        taskController.RemoveTask(t);
     }
 
     /// <summary>
@@ -753,38 +900,6 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
     /// <returns></returns>
     public ITask GetTask(string key)
     {
-        if (TaskDict.ContainsKey(key))
-            return TaskDict[key];
-        return null;
-    }
-
-    /// <summary>
-    /// Task组更新
-    /// </summary>
-    private void OnTaskUpdate()
-    {
-        List<string> deleteKeyList = new List<string>();
-        foreach (var keyValuePair in TaskDict)
-        {
-            ITask t = keyValuePair.Value;
-            if (t.IsMeetingExitCondition())
-                deleteKeyList.Add(keyValuePair.Key);
-        }
-        foreach (var key in deleteKeyList)
-        {
-            RemoveUniqueTask(key);
-        }
-        List<ITask> deleteTask = new List<ITask>();
-        foreach (var t in TaskList)
-        {
-            if (t.IsMeetingExitCondition())
-                deleteTask.Add(t);
-            else
-                t.OnUpdate();
-        }
-        foreach (var t in deleteTask)
-        {
-            RemoveTask(t);
-        }
+        return taskController.GetTask(key);
     }
 }

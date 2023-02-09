@@ -143,7 +143,7 @@ public class Takoyaki : FoodUnit
     private void CreateBullet()
     {
         float dmg = mCurrentAttack;
-        AllyBullet b = AllyBullet.GetInstance(Bullet_RuntimeAnimatorController, this, dmg);
+        AllyBullet b = AllyBullet.GetInstance(BulletStyle.Trace, Bullet_RuntimeAnimatorController, this, dmg);
         b.isNavi = false;
         b.isIgnoreHeight = true; // 攻击时无视高度
         b.transform.position = transform.position;

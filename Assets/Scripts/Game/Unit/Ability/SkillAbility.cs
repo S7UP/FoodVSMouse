@@ -310,24 +310,4 @@ public abstract class SkillAbility : AbilityEntity
     {
         return a.priority < b.priority;
     }
-
-    /// <summary>
-    /// 测试用功能，不在正式游戏实装
-    /// </summary>
-    public void SaveInfo()
-    {
-        SkillAbilityInfo skillAbilityInfo = new SkillAbilityInfo()
-        {
-            name = name,
-            needEnergy = needEnergy.baseValue,
-            startEnergy = startEnergy.baseValue,
-            energyRegeneration = energyRegeneration.baseValue,
-            skillType = skillType,
-            canActiveInDeathState = canActiveInDeathState
-        };
-        // 先Update，如果不存在再Insert
-        if(!AbilityManager.Instance.Update(skillAbilityInfo, master.mUnitType, master.mType, master.mShape))
-            AbilityManager.Instance.Insert(skillAbilityInfo, master.mUnitType, master.mType, master.mShape);
-        AbilityManager.Instance.SaveAll();
-    }
 }

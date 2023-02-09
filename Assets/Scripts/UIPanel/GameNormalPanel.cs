@@ -2,13 +2,17 @@ using System.Collections.Generic;
 
 using UnityEngine;
 using UnityEngine.UI;
+using DG.Tweening;
+using System.Collections;
 
 /// <summary>
 /// 负责管理战斗场景UI面板的类
 /// </summary>
 
-public class GameNormalPanel : MonoBehaviour, IBasePanel
+public class GameNormalPanel : BasePanel
 {
+    public static GameNormalPanel Instance;
+
     public GameObject mCardControllerUI;
     public GameObject mCardBuilderList; // 卡槽UI（横向）
     public GameObject mCardBuilderList2;  // 卡槽UI（纵向）
@@ -28,12 +32,26 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
     private GameObject PauseUI;
     private GameObject PutCharacterUI;
     // private GameObject Prefab_Tex_DamageNumber;
+    private InfoUI_GameNormalPanel InfoUI;
+    private Transform Tran_JewelSkillUI;
+    private JewelSkill_GameNormalPanel[] JewelSkillArray;
+    private Text Tex_ExpTips; // 经验值文本
 
+    private Image Img_Rank;
+    private Text Tex_PlayTime;
+    private Text Tex_TotalEnergy;
+
+    private RectTransform RectTrans_BGM;
+    private Text Tex_BGM;
+    private Tweener Tweener_BGM;
 
     public bool IsInCharacterConstructMode; // 是否在角色放置模式
 
-    private void Awake()
+
+    protected override void Awake()
     {
+        Instance = this;
+        base.Awake();
         DontDestroyOnLoad(gameObject); // 切场景时不销毁
         mCardControllerUI = transform.Find("CardControllerUI").gameObject;
         mCardBuilderList = mCardControllerUI.transform.Find("CardBuilderList").gameObject;
@@ -53,11 +71,29 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
         Ani_BigWave = Img_BigWave.GetComponent<Animator>();
         PauseUI = transform.Find("PauseUI").gameObject;
         PutCharacterUI = transform.Find("PutCharacterUI").gameObject;
+        InfoUI = transform.Find("InfoUI").GetComponent<InfoUI_GameNormalPanel>();
         // Prefab_Tex_DamageNumber = GameManager.Instance.GetGameObjectResource(FactoryType.UIFactory, "GameNormalPanel/Tex_DamageNumber");
+        Tran_JewelSkillUI = transform.Find("JewelSkillUI").transform;
+        JewelSkillArray = new JewelSkill_GameNormalPanel[3] {
+            Tran_JewelSkillUI.Find("Btn_Skill1").GetComponent<JewelSkill_GameNormalPanel>(),
+            Tran_JewelSkillUI.Find("Btn_Skill2").GetComponent<JewelSkill_GameNormalPanel>(),
+            Tran_JewelSkillUI.Find("Btn_Skill3").GetComponent<JewelSkill_GameNormalPanel>()
+        };
+        Tex_ExpTips = transform.Find("ExpTips").GetComponent<Text>();
+        Img_Rank = transform.Find("Img_Rank").Find("Rank").GetComponent<Image>();
+        Tex_PlayTime = transform.Find("LeftBottomInfo").Find("Time_Label").Find("Text").GetComponent<Text>();
+        Tex_TotalEnergy = transform.Find("LeftBottomInfo").Find("TotalEnergy_Label").Find("Text").GetComponent<Text>();
+
+        RectTrans_BGM = transform.Find("BGM").GetComponent<RectTransform>();
+        Tex_BGM = RectTrans_BGM.Find("Text").GetComponent<Text>();
+        Tweener_BGM = RectTrans_BGM.DOAnchorPosY(42, 2);
+        Tweener_BGM.SetAutoKill(false);
+        Tweener_BGM.Pause();
     }
 
-    public void InitPanel()
+    public override void InitPanel()
     {
+        base.EnterPanel();
         // 停止所有BGM
         GameManager.Instance.audioSourceManager.StopAllMusic();
         mShovelModel.transform.position = mShovelSlot2Trans.transform.position; // 铲子归位
@@ -70,6 +106,15 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
         PauseUI.SetActive(false);
         PutCharacterUI.SetActive(false);
         IsInCharacterConstructMode = false;
+        InfoUI.gameObject.SetActive(false);
+        Tex_ExpTips.gameObject.SetActive(false);
+        // 可以让GameController开始工作了
+        GameController.Instance.SetStart();
+    }
+
+    public override void EnterPanel()
+    {
+
     }
 
     /// <summary>
@@ -77,11 +122,33 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
     /// </summary>
     public void InitInGameController()
     {
-        mCardModel = GameObject.Find("Emp_CardModel").GetComponent<CardModel>();
+        //mCardModel = GameObject.Find("Emp_CardModel").GetComponent<CardModel>();
+        mCardModel = GameManager.Instance.GetGameObjectResource(FactoryType.UIFactory, "Emp_CardModel").GetComponent<CardModel>();
+        mCardModel.transform.SetParent(GameController.Instance.transform);
+        mCardModel.transform.localScale = Vector2.one;
         mCardModel.HideCardModel(); // 隐藏卡片模型
         ExitCharacterConstructMode();
         ExitCardConstructMode();
         ExitCardRemoveMode();
+        // 读取玩家选择的宝石，安上对应的技能图标
+        PlayerData data = PlayerData.GetInstance();
+        for (int i = 0; i < 3; i++)
+        {
+            int type = data.GetJewel(i);
+            JewelSkillArray[i].MInit(type, GameController.Instance.mJewelSkillArray[i]);
+        }
+        // 读取游戏当前难度并重置时间
+        switch (data.GetDifficult())
+        {
+            case 1: Img_Rank.sprite = GameManager.Instance.GetSprite("UI/Difficulty/Normal");break;
+            case 2: Img_Rank.sprite = GameManager.Instance.GetSprite("UI/Difficulty/Hard"); break;
+            case 3: Img_Rank.sprite = GameManager.Instance.GetSprite("UI/Difficulty/Lunatic"); break;
+            default:
+                Img_Rank.sprite = GameManager.Instance.GetSprite("UI/Difficulty/Easy");
+                break;
+        }
+        Tex_PlayTime.text = "00:00:00.00";
+        Tex_TotalEnergy.text = "--";
     }
 
     /// <summary>
@@ -131,7 +198,7 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
     }
 
     /// <summary>
-    /// 当重新尝试被点击时
+    /// 当重新尝试被点击时（胜利或失败结算页面的重新尝试）
     /// </summary>
     public void OnRetryClick()
     {
@@ -140,12 +207,33 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
     }
 
     /// <summary>
+    /// 当重新尝试被点击时（游戏还未结束，是从菜单主动点击重新尝试的）
+    /// </summary>
+    public void OnClickRetryWhenNoEnd()
+    {
+        // 推把也加经验值的
+        PlayerData.GetInstance().AddExp(GameController.Instance.GetDefaultExpReward());
+        OnRetryClick();
+    }
+
+    /// <summary>
     /// 当返回选择配置被点击时
     /// </summary>
     public void OnReturnToSelcetClick()
     {
-        GameController.Instance.RecycleAndDestoryAllInstance();
-        GameManager.Instance.EnterSelectScene();
+        // GameController.Instance.RecycleAndDestoryAllInstance();
+        // GameManager.Instance.EnterSelectScene();
+        GameManager.Instance.EnterTownScene();
+    }
+
+    /// <summary>
+    /// 当返回选择配置被点击时（游戏还未结束，是从菜单主动点击重新尝试的）
+    /// </summary>
+    public void OnReturnToSelcetClickWhenNoEnd()
+    {
+        // 推把也加经验值的
+        PlayerData.GetInstance().AddExp(GameController.Instance.GetDefaultExpReward());
+        OnReturnToSelcetClick();
     }
 
     /// <summary>
@@ -153,8 +241,18 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
     /// </summary>
     public void OnReturnToMainClick()
     {
-        GameController.Instance.RecycleAndDestoryAllInstance();
+        // GameController.Instance.RecycleAndDestoryAllInstance();
         GameManager.Instance.EnterMainScene();
+    }
+
+    /// <summary>
+    /// 当返回主菜单被点击时（游戏还未结束，是从菜单主动点击重新尝试的）
+    /// </summary>
+    public void OnReturnToMainClickWhenNoEnd()
+    {
+        // 推把也加经验值的
+        PlayerData.GetInstance().AddExp(GameController.Instance.GetDefaultExpReward());
+        OnReturnToMainClick();
     }
 
     /// <summary>
@@ -287,6 +385,8 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
         GameController.Instance.mCardController.SelectShovel();
     }
 
+
+
     /// <summary>
     /// 设置人物HP文本与位置
     /// </summary>
@@ -302,8 +402,9 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
     /// </summary>
     public void EnterWinPanel()
     {
-        InitPanel();
+        //InitPanel();
         WinPanel.SetActive(true);
+        Tex_ExpTips.gameObject.SetActive(true);
         Ani_Win.Play("win", 0, 0);
     }
 
@@ -312,8 +413,9 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
     /// </summary>
     public void EnterLosePanel()
     {
-        InitPanel();
+        //InitPanel();
         LosePanel.SetActive(true);
+        Tex_ExpTips.gameObject.SetActive(true);
         Ani_Win.Play("lose", 0, 0);
     }
 
@@ -329,35 +431,122 @@ public class GameNormalPanel : MonoBehaviour, IBasePanel
             s = GameManager.Instance.GetSprite("UI/LastWave");
             Img_BigWave.GetComponent<Image>().sprite = s;
             Img_BigWave.GetComponent<Image>().SetNativeSize();
-            Ani_BigWave.Play("LastWave");
+            Ani_BigWave.Play("LastWave", -1, 0);
         }
         else
         {
             s = GameManager.Instance.GetSprite("UI/BigWave");
             Img_BigWave.GetComponent<Image>().sprite = s;
             Img_BigWave.GetComponent<Image>().SetNativeSize();
-            Ani_BigWave.Play("BigWave");
+            Ani_BigWave.Play("BigWave", -1, 0);
         }
-            
     }
 
-    public void EnterPanel()
+    /// <summary>
+    /// 显示美食信息
+    /// </summary>
+    /// <param name="unit"></param>
+    public void DisplayFoodInfo(BaseUnit unit)
     {
-        throw new System.NotImplementedException();
+        InfoUI.DisplayFoodInfo(unit);
     }
 
-    public void ExitPanel()
+    /// <summary>
+    /// 显示老鼠信息
+    /// </summary>
+    /// <param name="unit"></param>
+    public void DisplayMouseInfo(BaseUnit unit)
     {
-        throw new System.NotImplementedException();
+        InfoUI.DisplayMouseInfo(unit);
     }
 
-    public void UpdatePanel()
+    /// <summary>
+    /// 显示人物信息
+    /// </summary>
+    /// <param name="unit"></param>
+    public void DisplayCharacterInfo(BaseUnit unit)
     {
-        
+        InfoUI.DisplayCharacterInfo(unit);
+    }
+
+    /// <summary>
+    /// 设置通关时的经验值提示
+    /// </summary>
+    /// <param name="s"></param>
+    public void SetExpTips(string s)
+    {
+        Tex_ExpTips.text = s;
+    }
+
+    public override void ExitPanel()
+    {
+        base.ExitPanel();
+    }
+
+    public override void UpdatePanel()
+    {
+        if (InfoUI.isActiveAndEnabled)
+        {
+            InfoUI.MUpdate();
+        }
+        foreach (var item in JewelSkillArray)
+        {
+            item.MUpdate();
+        }
+        // 更新时间轴
+        if (GameController.Instance != null)
+        {
+            int frame = GameController.Instance.GetCurrentStageFrame();
+            int hour = frame / 216000;
+            frame = frame % 216000;
+            int min = frame / 3600;
+            frame = frame % 3600;
+            int sec = frame / 60;
+            frame = frame % 60;
+            int ms = 100 * frame / 60;
+
+            string hh = (hour >= 10 ? hour.ToString() : "0" + hour.ToString());
+            string mm = (min >= 10 ? min.ToString() : "0" + min.ToString());
+            string ss = (sec >= 10 ? sec.ToString() : "0" + sec.ToString());
+            string msms = (ms >= 10 ? ms.ToString() : "0" + ms.ToString());
+            Tex_PlayTime.text = hh + ":" + mm + ":" + ss + "." + msms;
+            Tex_TotalEnergy.text = GameController.Instance.mCostController.totalFire.ToString("#0");
+        }
     }
 
     private void OnDestroy()
     {
         Debug.Log("Destory GameNormalPanel");
+    }
+
+    public void OnEnterShovelModel()
+    {
+        mShovelModel.OnPointerEnter();
+    }
+
+    public void OnExitShovelModel()
+    {
+        mShovelModel.OnPointerExit();
+    }
+
+    public void ShowBGM(MusicInfo info)
+    {
+        if(info != null)
+        {
+            Tex_BGM.text = "BGM：" + info.displayName + "    Author：" + info.author;
+            RectTrans_BGM.sizeDelta = new Vector2(Tex_BGM.text.Length * Tex_BGM.fontSize + 40, RectTrans_BGM.sizeDelta.y);
+            Tweener_BGM.PlayForward();
+            StartCoroutine(ShowBGM());
+        }
+    }
+
+    private IEnumerator ShowBGM()
+    {
+        while (Tweener_BGM.IsPlaying())
+            yield return null;
+        // 然后等两秒
+        for (int i = 0; i < 120; i++)
+            yield return null;
+        Tweener_BGM.PlayBackwards();
     }
 }

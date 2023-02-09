@@ -12,6 +12,7 @@ public class CombatAction
         SpellSkill,  // 技能效果
         CauseDamage, // 造成伤害
         ReboundDamage, // 反弹伤害
+        RecordDamage, // 标记伤害
         GiveCure,    // 回复
         AssignEffect,// 提供效果
         GiveShield,  // 提供护盾

@@ -25,7 +25,18 @@ public class FogAreaEffectExecution : RetangleAreaEffectExecution
         alpha = 0;
         spriteRenderer.color = new Color(1, 1, 1, alpha);
         base.MInit();
-
+        AddFoodEnterConditionFunc((u) => {
+            return isOpen && alpha >= 1f;
+        });
+        AddEnemyEnterConditionFunc((m) => {
+            // 对BOSS单位无效
+            if (m.IsBoss())
+                return false;
+            return isOpen && alpha >= 1f;
+        });
+        AddCharacterEnterConditionFunc((u) => {
+            return isOpen && alpha >= 1f;
+        });
     }
 
     public override void MUpdate()
@@ -45,18 +56,6 @@ public class FogAreaEffectExecution : RetangleAreaEffectExecution
         }
         spriteRenderer.color = new Color(1, 1, 1, alpha);
         base.MUpdate();
-    }
-
-    public override bool IsMeetingCondition(BaseUnit unit)
-    {
-        // 对BOSS单位无效
-        if(unit is MouseUnit)
-        {
-            MouseUnit m = unit as MouseUnit;
-            if (m.IsBoss())
-                return false;
-        }
-        return isOpen && alpha>=1f && base.IsMeetingCondition(unit);
     }
 
     /// <summary>

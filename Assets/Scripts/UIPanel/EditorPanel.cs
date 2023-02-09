@@ -20,6 +20,7 @@ public class EditorPanel : BasePanel
     private Button Btn_Save; // 保存
     private InputField InF_StageName; // 当前关卡名文本输入框
     private Button Btn_AddRoundInfo; // 添加一轮敌人按钮
+    private Button Btn_SetRoundParam;
     private Button Btn_DelRoundInfo; // 删除当前轮敌人按钮
     private InputField Inf_RoundName; // 当前轮名称
     private Toggle Tog_IsBossRound; // 是否为BOSS轮选择
@@ -118,6 +119,8 @@ public class EditorPanel : BasePanel
         Btn_AddRoundInfo.onClick.AddListener(delegate { AddNewRoundInfo(); });
         Btn_DelRoundInfo = transform.Find("MouseEditorUI").Find("Img_RoundInfo").Find("Btn_DelRoundInfo").GetComponent<Button>();
         Btn_DelRoundInfo.onClick.AddListener(() => { DelCurrentRoundInfo(); });
+        Btn_SetRoundParam = transform.Find("MouseEditorUI").Find("Img_RoundInfo").Find("Btn_SetRoundParam").GetComponent<Button>();
+        Btn_SetRoundParam.onClick.AddListener(() => { ShowDefineParamUI(GetCurrentRoundInfo().ParamArrayDict); });
         Inf_RoundName = transform.Find("MouseEditorUI").Find("Img_RoundInfo").Find("Emp_Name").Find("InputField").GetComponent<InputField>();
         Inf_RoundName.onEndEdit.AddListener(delegate { OnRoundNameInFChange(); });
         Tog_IsBossRound = transform.Find("MouseEditorUI").Find("Img_RoundInfo").Find("Emp_IsBossRound").Find("Toggle").GetComponent<Toggle>();

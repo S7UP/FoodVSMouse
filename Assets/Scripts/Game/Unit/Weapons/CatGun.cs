@@ -16,12 +16,7 @@ public class CatGun : BaseWeapons
     /// <returns></returns>
     public override bool IsHasTarget()
     {
-        foreach (var m in GameController.Instance.GetSpecificRowEnemyList(GetRowIndex()))
-        {
-            if (UnitManager.CanBeSelectedAsTarget(master, m))
-                return true;
-        }
-        return false;
+        return GameController.Instance.CheckRowCanAttack(master, GetRowIndex());
     }
 
     /// <summary>

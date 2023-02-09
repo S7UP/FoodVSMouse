@@ -36,7 +36,7 @@ public class FlySelfDestructMouse : MouseUnit, IFlyUnit
     /// </summary>
     private bool IsMeetDropCondition()
     {
-        return (GetColumnIndex() <= dropColumn && !isDrop);
+        return (transform.position.x <= MapManager.GetColumnX(dropColumn) && !isDrop);
     }
 
     /// <summary>

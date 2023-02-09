@@ -32,16 +32,16 @@ public class EggPitcher : FoodUnit
         switch (mShape)
         {
             case 1:
-                mainDamageRate = 4.8f;
-                aoeDamageRate = 0.48f;
+                mainDamageRate = 3f;
+                aoeDamageRate = 1.2f;
                 break;
             case 2:
-                mainDamageRate = 4.8f;
-                aoeDamageRate = 0.48f;
+                mainDamageRate = 3f;
+                aoeDamageRate = 1.2f;
                 break;
             default:
-                mainDamageRate = 3.6f;
-                aoeDamageRate = 0.36f;
+                mainDamageRate = 2.25f;
+                aoeDamageRate = 0.9f;
                 break;
         }
         targetPosition = Vector2.zero;
@@ -147,7 +147,7 @@ public class EggPitcher : FoodUnit
     /// <param name="target"></param>
     private BaseBullet CreateBullet(Vector2 startPosition, float ori_dmg, BaseUnit target)
     {
-        AllyBullet b = AllyBullet.GetInstance(BulletRuntimeAnimatorControllerArray[mShape], this, mainDamageRate * ori_dmg);
+        AllyBullet b = AllyBullet.GetInstance(BulletStyle.Throwing, BulletRuntimeAnimatorControllerArray[mShape], this, mainDamageRate * ori_dmg);
         b.AddSpriteOffsetY(new FloatModifier(0.5f * MapManager.gridHeight));
         b.isnDelOutOfBound = true; // 出屏不自删
 
@@ -158,8 +158,8 @@ public class EggPitcher : FoodUnit
             {
                 if (u != null)
                 {
-                    // 为目标施加1秒的减速
-                    u.AddStatusAbility(new SlowStatusAbility(-80, u, 60));
+                    // 添加内伤
+                    u.AddRecordDamage(mainDamageRate * ori_dmg);
                     // 产生AOE
                     CreateDamageArea(u.transform.position, ori_dmg);
                 }

@@ -193,8 +193,12 @@ public class BaseProgressController : MonoBehaviour, IGameControllerMember
     {
         if(mBossHpBar.HasTarget())
             mBossHpBar.gameObject.SetActive(true);
-        if(mBossHpBar2.HasTarget())
+        else
+            mBossHpBar.gameObject.SetActive(false);
+        if (mBossHpBar2.HasTarget())
             mBossHpBar2.gameObject.SetActive(true);
+        else
+            mBossHpBar2.gameObject.SetActive(false);
         mRoundProgressBar.gameObject.SetActive(false);
     }
 

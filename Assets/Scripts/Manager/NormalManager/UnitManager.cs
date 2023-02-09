@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 /// <summary>
 /// 处理游戏单位的管理者
 /// </summary>
@@ -69,5 +71,34 @@ public class UnitManager
                 return false;
         }
         return u2.CanBeSelectedAsTarget(u1);
+    }
+
+    /// <summary>
+    /// 获取经一定条件筛选后的单位表
+    /// </summary>
+    /// <param name="unitList"></param>
+    /// <param name="ConditionFunc"></param>
+    /// <returns></returns>
+    public static List<BaseUnit> GetList(List<BaseUnit> unitList, Func<BaseUnit, bool> ConditionFunc)
+    {
+        List<BaseUnit> list = new List<BaseUnit>();
+        if (unitList == null)
+            return list;
+        foreach (var unit in unitList)
+        {
+            if (ConditionFunc == null || ConditionFunc(unit))
+                list.Add(unit);
+        }
+        return list;
+    }
+
+
+    /// <summary>
+    /// 目标是否滞空（弹起）
+    /// </summary>
+    /// <returns></returns>
+    public static bool IsFlying(BaseUnit unit)
+    {
+        return (unit.NumericBox.IntDict.ContainsKey(StringManager.Flying) && unit.NumericBox.IntDict[StringManager.Flying].Value > 0);
     }
 }

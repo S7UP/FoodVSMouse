@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -61,7 +62,28 @@ public class BaseStage : MonoBehaviour
         public bool isEnableStartCard; // 是否提供初始卡片
         public List<AvailableCardInfo>[][] startCardInfoList; // 提供初始卡片相关信息表
         public string startBGMRefence; // 初始BGM引用
-        
+
+        /// <summary>
+        /// 在进入战斗场景前加载资源
+        /// </summary>
+        public IEnumerator LoadResWhenEnterCombatScene()
+        {
+            // 获取所有的BGM
+            List<string> bgmList = new List<string>();
+            foreach (var round in roundInfoList)
+            {
+                foreach (var bgm in round.GetAllBGM())
+                {
+                    bgmList.Add(bgm);
+                }
+            }
+            // 预加载BGM
+            foreach (var bgm in bgmList)
+            {
+                //GameManager.Instance.AsyncGetAudioClip(bgm);
+                yield return GameManager.Instance.StartCoroutine(AudioSourceManager.AsyncLoadBGMusic(bgm));
+            }
+        }
 
         /// <summary>
         /// 获取整个关卡轮数表
@@ -120,13 +142,64 @@ public class BaseStage : MonoBehaviour
     public StageInfo mStageInfo;
     public List<BaseRound> mRoundList;
     public BaseRound mCurrentRound;
-    public int mCurrentRoundTimer;
+    public int mTotalRoundTime;
+    public int mEarlyTime; // 前触发提前出怪而提早的时间
     public int mCurrentRoundIndex;
     private List<Stack<int>> apartRowOffsetStackList; // 当前分路组对应行偏移量
     public bool isWinWhenClearAllBoss; // 在击败所有BOSS后是否判定为胜利 如果是，则只要击败最后一个BOSS就算胜利，否则需要消灭场上所有老鼠才算胜利
     public int bossLeft; // 全关剩余BOSS数，在游戏开始时会先统计有多少个BOSS
-    
+    public bool isEndRound; // 是否出完怪了
+
     private Queue<BoolModifier> waveQueue; // 每次出队的元素布尔值决定当前游戏画面显示是使用“一大波”提示还是“最后一波”提示
+    public Dictionary<string, List<float>> ParamArrayDict = new Dictionary<string, List<float>>(); // 该关卡目前的参数变化字典
+    public Dictionary<string, Action<string, List<float>, List<float>>> ParamChangeActionDict = new Dictionary<string, Action<string, List<float>, List<float>>>();
+
+    /// <summary>
+    /// 只要在Round中读取到变量就会触发
+    /// </summary>
+    /// <param name="key"></param>
+    public void ChangeParamValue(string key, List<float> list)
+    {
+        if (ParamArrayDict.ContainsKey(key))
+        {
+            if (ParamChangeActionDict.ContainsKey(key))
+                ParamChangeActionDict[key](key, ParamArrayDict[key], list); // key, old, new
+            ParamArrayDict[key] = list;
+        }
+        else
+        {
+            if (ParamChangeActionDict.ContainsKey(key))
+                ParamChangeActionDict[key](key, null, list); // key, old, new
+            ParamArrayDict.Add(key, list);
+        }
+    }
+
+    /// <summary>
+    /// 添加参数被修改的监听
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="action"></param>
+    public void AddParamChangeAction(string key, Action<string, List<float>, List<float>> action)
+    {
+        if (ParamChangeActionDict.ContainsKey(key))
+        {
+            ParamChangeActionDict[key] = action;
+        }
+        else
+            ParamChangeActionDict.Add(key, action);
+    }
+
+    /// <summary>
+    /// 移除参数被修改的监听
+    /// </summary>
+    /// <param name="key"></param>
+    public void RemoveParamChangeAction(string key)
+    {
+        if (ParamChangeActionDict.ContainsKey(key))
+        {
+            ParamChangeActionDict.Remove(key);
+        }
+    }
 
     /// <summary>
     /// 开始关卡
@@ -147,7 +220,10 @@ public class BaseStage : MonoBehaviour
             if (GameController.Instance.isPause)
                 i--;
             else if (!GameController.Instance.IsHasEnemyInScene())
+            {
+                mEarlyTime += time - i;
                 break; // 如果场上没有敌人了则跳过等待，提早下一轮
+            }
             yield return null;
         }
     }
@@ -157,10 +233,17 @@ public class BaseStage : MonoBehaviour
     /// </summary>
     public IEnumerator Execute()
     {
-        GameController.Instance.mProgressController.mRoundProgressBar.SetTotalRoundCount(mRoundList.Count);
+        GameController.Instance.mProgressController.mRoundProgressBar.SetTotalRoundCount(mRoundList);
         GameController.Instance.mProgressController.mRoundProgressBar.UpdateRoundCountUI(0);
         mCurrentRoundIndex = -1;
-        mCurrentRoundTimer = 0;
+        mTotalRoundTime = 0;
+        mEarlyTime = 0;
+        isEndRound = false;
+        foreach (var round in mRoundList)
+        {
+            if(!round.mRoundInfo.isBossRound)
+                mTotalRoundTime += round.GetTotalTimer();
+        }
         // 先等一帧，第一帧要放人
         yield return StartCoroutine(WaitForIEnumerator(1));
         //Debug.Log("游戏开始了！现在是第"+GameController.Instance.GetCurrentStageFrame()+"帧");
@@ -168,6 +251,7 @@ public class BaseStage : MonoBehaviour
         ConstructeStartCard();
         // 播放BGM
         GameManager.Instance.audioSourceManager.PlayBGMusic(mStageInfo.startBGMRefence);
+        GameNormalPanel.Instance.ShowBGM(MusicManager.GetMusicInfo(mStageInfo.startBGMRefence));
         // yield return StartCoroutine(WaitForIEnumerator(mStageInfo.perpareTime));
         for (int i = 0; i < mStageInfo.perpareTime; i++)
         {
@@ -175,12 +259,10 @@ public class BaseStage : MonoBehaviour
                 i--;
             yield return null;
         }
-        //Debug.Log("开始出怪了！现在是第" + GameController.Instance.GetCurrentStageFrame() + "帧");
         for (int i = 0; i < mRoundList.Count; i++)
         {
             mCurrentRound = mRoundList[i];
             GameController.Instance.mProgressController.mRoundProgressBar.UpdateRoundCountUI(i + 1);
-            mCurrentRoundTimer = 0;
             mCurrentRoundIndex = i;
             if (mStageInfo.defaultMode.Equals(StageMode.HalfRandom))
                 PushRandomToRowOffsetStack();
@@ -189,6 +271,7 @@ public class BaseStage : MonoBehaviour
             yield return StartCoroutine(mCurrentRound.Execute());
             PopRowOffsetStack();
         }
+        isEndRound = true;
         //Debug.Log("出怪完毕！");
     }
 
@@ -243,8 +326,8 @@ public class BaseStage : MonoBehaviour
     public virtual void Init()
     {
         mCurrentRound = null;
-        mCurrentRoundTimer = 0;
         mCurrentRoundIndex = -1;
+        isEndRound = false;
         // 通过RoundInfo来创建BaseRound实体
         mRoundList = new List<BaseRound>();
         if (mStageInfo.roundInfoList != null)
@@ -302,6 +385,9 @@ public class BaseStage : MonoBehaviour
         // 当遍历完后，强制设置上一面旗子显示为“最后一波”，即置为true
         if (lastModifier != null)
             lastModifier.Value = true;
+
+        ParamArrayDict.Clear();
+        ParamChangeActionDict.Clear();
     }
 
     /// <summary>
@@ -319,15 +405,19 @@ public class BaseStage : MonoBehaviour
     /// <returns></returns>
     public float GetCurrentProgress()
     {
-        float per = 1.0f / (GetTotalRoundCount() + 1);
+        // float per = 1.0f / (GetTotalRoundCount() + 1);
         if (GetCurrentRoundIndex() == -1)
         {
             // 如果为准备轮次
-            return per * Mathf.Min(1.0f, (float)mCurrentRoundTimer / mStageInfo.perpareTime);
+            //return per * Mathf.Min(1.0f, (float)mCurrentRoundTimerLeft / mStageInfo.perpareTime);
+            return 0;
         }
         else
         {
-            return (GetCurrentRoundIndex() + 1 + Mathf.Min(1.0f, (float)mCurrentRoundTimer / mStageInfo.roundInfoList[GetCurrentRoundIndex()].GetTotalTimer())) * per;
+            //return (GetCurrentRoundIndex() + 1 + Mathf.Min(1.0f, (float)mCurrentRoundTimerLeft / mStageInfo.roundInfoList[GetCurrentRoundIndex()].GetTotalTimer())) * per;
+            if (mTotalRoundTime == 0)
+                return 0;
+            return Mathf.Min(1, (float)(GameController.Instance.GetCurrentStageFrame() + mEarlyTime)/mTotalRoundTime);
         }
     }
 
@@ -363,7 +453,8 @@ public class BaseStage : MonoBehaviour
     {
         if (GameController.Instance.isPause)
             return;
-        mCurrentRoundTimer++;
+        if (GetCurrentRound() != null && GetCurrentRound().mRoundInfo.isBossRound)
+            mEarlyTime--;
         // 操作当前轮数进度条的UI
         GameController.Instance.mProgressController.mRoundProgressBar.SetCurrentProgress(GetCurrentProgress());
     }
@@ -400,7 +491,7 @@ public class BaseStage : MonoBehaviour
     {
         for (int j = 0; j < mStageInfo.apartList.Count; j++)
         {
-            apartRowOffsetStackList[j].Push(Random.Range(0, mStageInfo.apartList[j].Count)); // 注意，生成整形时不包括最大值
+            apartRowOffsetStackList[j].Push(UnityEngine.Random.Range(0, mStageInfo.apartList[j].Count)); // 注意，生成整形时不包括最大值
         }
     }
 
@@ -476,4 +567,6 @@ public class BaseStage : MonoBehaviour
             }
         }
     }
+
+
 }

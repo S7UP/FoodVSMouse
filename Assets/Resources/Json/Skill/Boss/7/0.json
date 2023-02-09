@@ -1,0 +1,4 @@
+[{"name":"大荒星陨","needEnergy":1.0,"startEnergy":0.0,"energyRegeneration":0.0,"skillType":1,"isExclusive":true,"canActiveInDeathState":false,"priority":9},
+{"name":"召唤钢爪陷阱","needEnergy":1.0,"startEnergy":0.0,"energyRegeneration":0.0,"skillType":1,"isExclusive":true,"canActiveInDeathState":false,"priority":8},
+{"name":"导弹轰炸","needEnergy":1.0,"startEnergy":0.0,"energyRegeneration":0.0,"skillType":1,"isExclusive":true,"canActiveInDeathState":false,"priority":7},
+{"name":"金刚之刺","needEnergy":1.0,"startEnergy":0.0,"energyRegeneration":0.0,"skillType":1,"isExclusive":true,"canActiveInDeathState":false,"priority":6}]

@@ -4,6 +4,15 @@ using UnityEngine;
 /// </summary>
 public class AllyBullet : BaseBullet
 {
+    private static RuntimeAnimatorController DefaultAllyBullet_RuntimeAnimatorController;
+
+    public override void Awake()
+    {
+        if (DefaultAllyBullet_RuntimeAnimatorController == null)
+            DefaultAllyBullet_RuntimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Bullet/DefaultAllyBullet");
+        base.Awake();
+    }
+
     public override void MInit()
     {
         spriteRenderer.sprite = null;
@@ -16,12 +25,12 @@ public class AllyBullet : BaseBullet
     {
         if (collision.tag.Equals("Mouse"))
         {
-            MouseUnit u;
-            bool flag = collision.TryGetComponent<MouseUnit>(out u);
+            BaseUnit u;
+            bool flag = collision.TryGetComponent(out u);
             if (flag && !unitList.Contains(u) && UnitManager.CanBulletHit(u, this))
             {
-                unitList.Add(u);
                 TakeDamage(u);
+                unitList.Add(u);
             }
         }
     }
@@ -40,8 +49,8 @@ public class AllyBullet : BaseBullet
     {
         if (collision.tag.Equals("Mouse"))
         {
-            MouseUnit u;
-            bool flag = collision.TryGetComponent<MouseUnit>(out u);
+            BaseUnit u;
+            bool flag = collision.TryGetComponent(out u);
             if (flag)
             {
                 unitList.Remove(u);
@@ -56,7 +65,10 @@ public class AllyBullet : BaseBullet
 
     public void SetRuntimeAnimatorController(RuntimeAnimatorController runtimeAnimatorController)
     {
-        animator.runtimeAnimatorController = runtimeAnimatorController;
+        if (runtimeAnimatorController == null)
+            animator.runtimeAnimatorController = DefaultAllyBullet_RuntimeAnimatorController;
+        else
+            animator.runtimeAnimatorController = runtimeAnimatorController;
     }
 
     public void SetCollisionLayer(string layerName)
@@ -64,15 +76,17 @@ public class AllyBullet : BaseBullet
         gameObject.layer = LayerMask.NameToLayer(layerName);
     }
 
-    public static AllyBullet GetInstance(RuntimeAnimatorController runtimeAnimatorController, BaseUnit master, float dmg)
+    public static AllyBullet GetInstance(BulletStyle style, RuntimeAnimatorController runtimeAnimatorController, BaseUnit master, float dmg)
     {
         AllyBullet e = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Bullet/AllyBullet").GetComponent<AllyBullet>();
         e.MInit();
+        e.style = style;
         e.SetCollisionLayer("AllyBullet");
         e.mMasterBaseUnit = master;
         e.SetDamage(dmg);
         e.SetRuntimeAnimatorController(runtimeAnimatorController);
-        e.transform.position = master.transform.position;
+        if(master!=null)
+            e.transform.position = master.transform.position;
         return e;
     }
 

@@ -40,10 +40,12 @@ public class AttributeManager
     /// <returns></returns>
     public FoodUnit.Attribute GetFoodUnitAttribute(int type, int shape)
     {
+        FoodUnit.Attribute attr;
         if (!foodAttributeDict.ContainsKey(type))
             foodAttributeDict.Add(type, new Dictionary<int, FoodUnit.Attribute>());
-        if (!foodAttributeDict[type].ContainsKey(shape))
-            foodAttributeDict[type].Add(shape, JsonManager.Load<FoodUnit.Attribute>("Food/" + type + "/" + shape + ""));
+        if (!foodAttributeDict[type].ContainsKey(shape) && JsonManager.TryLoadFromResource("Food/" + type + "/" + shape + "", out attr))
+            //foodAttributeDict[type].Add(shape, JsonManager.Load<FoodUnit.Attribute>("Food/" + type + "/" + shape + ""));
+            foodAttributeDict[type].Add(shape, attr);
         return foodAttributeDict[type][shape];
     }
 
@@ -55,10 +57,12 @@ public class AttributeManager
     /// <returns></returns>
     public MouseUnit.Attribute GetMouseUnitAttribute(int type, int shape)
     {
+        MouseUnit.Attribute attr;
         if (!mouseAttributeDict.ContainsKey(type))
             mouseAttributeDict.Add(type, new Dictionary<int, MouseUnit.Attribute>());
-        if (!mouseAttributeDict[type].ContainsKey(shape))
-            mouseAttributeDict[type].Add(shape, JsonManager.Load<MouseUnit.Attribute>("Mouse/" + type + "/" + shape + ""));
+        if (!mouseAttributeDict[type].ContainsKey(shape) && JsonManager.TryLoadFromResource("Mouse/" + type + "/" + shape + "", out attr))
+            //mouseAttributeDict[type].Add(shape, JsonManager.Load<MouseUnit.Attribute>("Mouse/" + type + "/" + shape + ""));
+            mouseAttributeDict[type].Add(shape, attr);
         return mouseAttributeDict[type][shape];
     }
 
@@ -70,10 +74,12 @@ public class AttributeManager
     /// <returns></returns>
     public MouseUnit.Attribute GetBossUnitAttribute(int type, int shape)
     {
+        MouseUnit.Attribute attr;
         if (!bossAttributeDict.ContainsKey(type))
             bossAttributeDict.Add(type, new Dictionary<int, MouseUnit.Attribute>());
-        if (!bossAttributeDict[type].ContainsKey(shape))
-            bossAttributeDict[type].Add(shape, JsonManager.Load<MouseUnit.Attribute>("Boss/" + type + "/" + shape + ""));
+        if (!bossAttributeDict[type].ContainsKey(shape) && JsonManager.TryLoadFromResource("Boss/" + type + "/" + shape + "", out attr))
+            //bossAttributeDict[type].Add(shape, JsonManager.Load<MouseUnit.Attribute>("Boss/" + type + "/" + shape + ""));
+            bossAttributeDict[type].Add(shape, attr);
         return bossAttributeDict[type][shape];
     }
 
@@ -85,10 +91,12 @@ public class AttributeManager
     /// <returns></returns>
     public BaseUnit.Attribute GetItemUnitAttribute(int type, int shape)
     {
+        BaseUnit.Attribute attr;
         if (!itemAttributeDict.ContainsKey(type))
             itemAttributeDict.Add(type, new Dictionary<int, BaseUnit.Attribute>());
-        if (!itemAttributeDict[type].ContainsKey(shape))
-            itemAttributeDict[type].Add(shape, JsonManager.Load<BaseUnit.Attribute>("Item/" + type + "/" + shape + ""));
+        if (!itemAttributeDict[type].ContainsKey(shape) && JsonManager.TryLoadFromResource("Item/" + type + "/" + shape + "", out attr))
+            //itemAttributeDict[type].Add(shape, JsonManager.Load<BaseUnit.Attribute>("Item/" + type + "/" + shape + ""));
+            itemAttributeDict[type].Add(shape, attr);
         return itemAttributeDict[type][shape];
     }
 
@@ -98,14 +106,14 @@ public class AttributeManager
     /// <param name="type"></param>
     /// <param name="shape"></param>
     /// <returns></returns>
-    public BaseUnit.Attribute GetCharacterUnitAttribute(int type, int shape)
-    {
-        if (!characterAttributeDict.ContainsKey(type))
-            characterAttributeDict.Add(type, new Dictionary<int, BaseUnit.Attribute>());
-        if (!characterAttributeDict[type].ContainsKey(shape))
-            characterAttributeDict[type].Add(shape, JsonManager.Load<BaseUnit.Attribute>("Character/" + type + "/" + shape + ""));
-        return characterAttributeDict[type][shape];
-    }
+    //public BaseUnit.Attribute GetCharacterUnitAttribute(int type, int shape)
+    //{
+    //    if (!characterAttributeDict.ContainsKey(type))
+    //        characterAttributeDict.Add(type, new Dictionary<int, BaseUnit.Attribute>());
+    //    if (!characterAttributeDict[type].ContainsKey(shape))
+    //        characterAttributeDict[type].Add(shape, JsonManager.Load<BaseUnit.Attribute>("Character/" + type + "/" + shape + ""));
+    //    return characterAttributeDict[type][shape];
+    //}
 
     /// <summary>
     /// 获取特定卡片的建造信息
@@ -115,10 +123,12 @@ public class AttributeManager
     /// <returns></returns>
     public BaseCardBuilder.Attribute GetCardBuilderAttribute(int type, int shape)
     {
+        BaseCardBuilder.Attribute attr;
         if (!cardBuilderAttributeDict.ContainsKey(type))
             cardBuilderAttributeDict.Add(type, new Dictionary<int, BaseCardBuilder.Attribute>());
-        if (!cardBuilderAttributeDict[type].ContainsKey(shape))
-            cardBuilderAttributeDict[type].Add(shape, JsonManager.Load<BaseCardBuilder.Attribute>("CardBuilder/" + type + "/" + shape + ""));
+        if (!cardBuilderAttributeDict[type].ContainsKey(shape) && JsonManager.TryLoadFromResource("CardBuilder/" + type + "/" + shape + "", out attr))
+            //cardBuilderAttributeDict[type].Add(shape, JsonManager.Load<BaseCardBuilder.Attribute>("CardBuilder/" + type + "/" + shape + ""));
+            cardBuilderAttributeDict[type].Add(shape, attr);
         return cardBuilderAttributeDict[type][shape];
     }
 
@@ -190,10 +200,13 @@ public class AttributeManager
     /// <returns></returns>
     public BaseStage.StageInfo GetStageInfo(int chapterIndex, int sceneIndex, int arrayIndex)
     {
+        //StageInfo info;
         if (!stageInfoDict.ContainsKey(chapterIndex))
             stageInfoDict.Add(chapterIndex, new Dictionary<int, Dictionary<int, StageInfo>>());
         if (!stageInfoDict[chapterIndex].ContainsKey(sceneIndex))
             stageInfoDict[chapterIndex].Add(sceneIndex, new Dictionary<int, StageInfo>());
+        //if (!stageInfoDict[chapterIndex][sceneIndex].ContainsKey(arrayIndex) && JsonManager.TryLoadFromResource("Stage/Chapter/" + chapterIndex + "/" + sceneIndex + "/" + arrayIndex, out info))
+        //    stageInfoDict[chapterIndex][sceneIndex].Add(arrayIndex, info);
         if (!stageInfoDict[chapterIndex][sceneIndex].ContainsKey(arrayIndex))
             stageInfoDict[chapterIndex][sceneIndex].Add(arrayIndex, JsonManager.Load<StageInfo>("Stage/Chapter/" + chapterIndex + "/" + sceneIndex + "/" + arrayIndex));
         return stageInfoDict[chapterIndex][sceneIndex][arrayIndex];

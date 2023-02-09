@@ -179,7 +179,6 @@ public class BossUnit : MouseUnit
     //private CompoundSkillAbility PharaohCurseInit(SkillAbility.SkillAbilityInfo info)
     //{
     //    CompoundSkillAbility c = new CompoundSkillAbility(this, info);
-    //    Skill_PharaohCurse = c;
     //    // й╣ож
     //    c.IsMeetSkillConditionFunc = delegate { return true; };
     //    c.BeforeSpellFunc = delegate

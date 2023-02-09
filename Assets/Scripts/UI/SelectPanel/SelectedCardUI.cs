@@ -10,7 +10,7 @@ public class SelectedCardUI : MonoBehaviour
     private List<SelectedCardModel> cardModelList = new List<SelectedCardModel>();
     private List<Button> Btn_CardGroup = new List<Button>();
     private Text Tex_CardCount;
-    private Transform SelectedCardListTrans;
+    private ScrollRect Scr_SelectedCardList;
     private Transform CardGroupListTrans;
     private Button Btn_Save;
 
@@ -22,7 +22,8 @@ public class SelectedCardUI : MonoBehaviour
     private void Awake()
     {
         Tex_CardCount = transform.Find("Img_center").Find("Tex_CardCount").GetComponent<Text>();
-        SelectedCardListTrans = transform.Find("Img_center").Find("Emp_Container").Find("SelectedCardList");
+        // SelectedCardListTrans = transform.Find("Img_center").Find("Emp_Container").Find("Scr").Find("Viewport").Find("Content").GetComponent<RectTransform>();
+        Scr_SelectedCardList = transform.Find("Img_center").Find("Emp_Container").Find("Scr").GetComponent<ScrollRect>();
         CardGroupListTrans = transform.Find("Img_center").Find("Emp_CardGroupList");
         Btn_Save = transform.Find("Img_center").Find("Btn_Save").GetComponent<Button>();
         Btn_Save.onClick.AddListener(delegate { SaveCurrentStageCardGroupList(); });
@@ -125,13 +126,16 @@ public class SelectedCardUI : MonoBehaviour
         UpdateCurrentSelectedCardGroupByAvailableCardUI();
         // 强制更新卡片数量最大值为卡片数量上限
         UpdateCurrentSelectedCardGroupByCountLimit();
+        // 根据卡的数量自适应宽度
+        Scr_SelectedCardList.content.sizeDelta = new Vector2(currentSelectedCardGroup.Count * 50.68f, Scr_SelectedCardList.content.sizeDelta.y);
+        Scr_SelectedCardList.horizontalNormalizedPosition = 1.0f;
         // 填充卡片模型
         foreach (var item in currentSelectedCardGroup)
         {
             SelectedCardModel model = SelectedCardModel.CreateInstance();
             model.SetSelectedCardUI(this);
             model.SetAvailableCardInfo(item);
-            model.transform.SetParent(SelectedCardListTrans);
+            model.transform.SetParent(Scr_SelectedCardList.content);
             model.transform.localScale = Vector3.one;
             cardModelList.Add(model);
             // 播放飞入动画
@@ -197,10 +201,13 @@ public class SelectedCardUI : MonoBehaviour
         SelectedCardModel model = SelectedCardModel.CreateInstance();
         model.SetSelectedCardUI(this);
         model.SetAvailableCardInfo(info);
-        model.transform.SetParent(SelectedCardListTrans);
+        model.transform.SetParent(Scr_SelectedCardList.content);
         model.transform.localScale = Vector3.one;
         cardModelList.Add(model);
         currentSelectedCardGroup.Add(info);
+        // 根据卡片数量自适应宽度
+        Scr_SelectedCardList.content.sizeDelta = new Vector2(currentSelectedCardGroup.Count * 50.68f, Scr_SelectedCardList.content.sizeDelta.y);
+        Scr_SelectedCardList.horizontalNormalizedPosition = 1.0f;
         // 播放飞入动画
         model.PlaySelectedTween(mSelectEquipmentUI.GetAvailableCardModelPosition((FoodNameTypeMap)type));
         // 在可选卡片UI中标记为被选中
@@ -220,6 +227,7 @@ public class SelectedCardUI : MonoBehaviour
     public void RemoveCard(int type)
     {
         AvailableCardInfo info = null;
+        int index = 0;
         foreach (var item in currentSelectedCardGroup)
         {
             if (item.type == type)
@@ -227,11 +235,17 @@ public class SelectedCardUI : MonoBehaviour
                 info = item;
                 break;
             }
+            index++;
         }
         if (info != null)
         {
             // 从当前卡组中移除对应卡片
             currentSelectedCardGroup.Remove(info);
+            // 从键位表移除对应键位
+            currentSelectedKeyGroup.Remove(currentSelectedKeyGroup[index]);
+            // 根据卡片数量自适应宽度
+            Scr_SelectedCardList.content.sizeDelta = new Vector2(currentSelectedCardGroup.Count * 50.68f, Scr_SelectedCardList.content.sizeDelta.y);
+            Scr_SelectedCardList.horizontalNormalizedPosition = 1.0f;
             // 移除对应模型并播放动画
             SelectedCardModel model = null;
             foreach (var item in cardModelList)

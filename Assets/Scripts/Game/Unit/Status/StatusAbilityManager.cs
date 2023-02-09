@@ -135,11 +135,16 @@ public sealed class StatusAbilityManager
     /// <returns></returns>
     public StatusAbility GetNoCountUniqueStatus(string statusName)
     {
-        if (!noCountUniqueStatusAbilityDict.ContainsKey(statusName))
+        if (!IsContainNoCountUniqueStatus(statusName))
         {
             return null;
         }
         return noCountUniqueStatusAbilityDict[statusName];
+    }
+
+    public bool IsContainNoCountUniqueStatus(string statusName)
+    {
+        return noCountUniqueStatusAbilityDict.ContainsKey(statusName);
     }
 
     /// <summary>

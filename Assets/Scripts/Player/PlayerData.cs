@@ -1,8 +1,7 @@
 using System.Collections.Generic;
-using System.IO;
-using System.Xml.Linq;
-
+using System;
 using UnityEngine;
+
 [System.Serializable]
 /// <summary>
 /// 玩家存档信息
@@ -21,7 +20,7 @@ public class PlayerData
     public string name = "不知名的冒险家"; // 玩家名
     public float currentExp = 0; // 玩家当前经验值
     public int level = 1; // 玩家当前等级
-    public int weapons = 0; // 玩家武器
+    public int weapons = 5; // 玩家武器
     public int suit = 0; // 玩家套装种类
     public int[] jewelArray = new int[3] { -1, -1, -1 }; // 宝石（3个）
     public int difficult = 0; // 难度(0,1,2,3)
@@ -30,7 +29,7 @@ public class PlayerData
     private BaseStage.StageInfo currentStageInfo;
     private List<AvailableCardInfo> currentSelectedCardInfoList = new List<AvailableCardInfo>(); // 当前携带的卡片组（选卡场景与关卡场景对接）
     private List<char> currentCardKeyList = new List<char>(); // 当前键位控制表
-
+    private Func<bool> currentStageSuccessRewardFunc; // 当前关卡胜利后的奖励，若为true
 
     /// <summary>
     /// 从本地加载玩家存档数据
@@ -39,7 +38,7 @@ public class PlayerData
     {
         if(_Instance == null)
         {
-            PlayerData data = null;
+            PlayerData data;
             if (!JsonManager.TryLoadFromLocal(path, out data))
             {
                 // 如果不存在存档，则新建一个存档
@@ -227,7 +226,10 @@ public class PlayerData
     /// <returns></returns>
     public int GetWeapons()
     {
-        return weapons;
+        if (WeaponsManager.IsWeaponsInValid(weapons))
+            return weapons;
+        // 非法武器编号只会返回笼包枪
+        return (int)WeaponsNameTypeMap.BunGun;
     }
 
     /// <summary>
@@ -254,5 +256,102 @@ public class PlayerData
     public void SetDifficult(int diff)
     {
         difficult = diff;
+    }
+
+    /// <summary>
+    /// 获取当前级从0开始升到下一级所需经验值
+    /// </summary>
+    public float GetNextLevelExp()
+    {
+        return PlayerManager.GetNextLevelExp(level);
+    }
+
+    /// <summary>
+    /// 增加经验值
+    /// </summary>
+    public void AddExp(float value)
+    {
+        if (value <= 0)
+            return;
+        currentExp += value;
+        TryLevelUp();
+        Save();
+        // 如果当前场景中有玩家面板，则需要更新一下信息
+        if (GameManager.Instance.uiManager.mUIFacade.currentScenePanelDict.ContainsKey(StringManager.PlayerInfoPanel))
+        {
+            PlayerInfoPanel panel = GameManager.Instance.uiManager.mUIFacade.currentScenePanelDict[StringManager.PlayerInfoPanel] as PlayerInfoPanel;
+            panel.UpdatePlayerInfo();
+        }
+    }
+
+    /// <summary>
+    /// 在每次经验值增加后调用，尝试升级
+    /// </summary>
+    private bool TryLevelUp()
+    {
+        bool isLevelUp = false;
+        float maxExp = GetNextLevelExp();
+        while (maxExp > 0 && currentExp >= maxExp && level < PlayerManager.maxLevel)
+        {
+            level++;
+            currentExp -= maxExp;
+            maxExp = GetNextLevelExp();
+            isLevelUp = true;
+        }
+        return isLevelUp;
+    }
+
+    /// <summary>
+    /// 获取当前等级
+    /// </summary>
+    /// <returns></returns>
+    public int GetLevel()
+    {
+        return Mathf.Min(level, PlayerManager.maxLevel);
+    }
+
+    /// <summary>
+    /// 是否定满级
+    /// </summary>
+    /// <returns></returns>
+    public bool IsMaxLevel()
+    {
+        return level >= PlayerManager.maxLevel;
+    }
+
+    public int GetJewel(int index)
+    {
+        // 检查这个槽有没有解锁，没有解锁都是-1
+        bool isDeveloperMode = ConfigManager.IsDeveloperMode();
+        string id = "Jewel" + (index + 1);
+        if (!(isDeveloperMode || OtherUnlockManager.IsUnlock(id) || OtherUnlockManager.TryUnlock(id)))
+            return -1;
+        int i = jewelArray[index];
+        if (!JewelManager.IsJewelValid(i))
+            return -1;
+        return jewelArray[index];
+    }
+
+    public void SetJewel(int index, int value)
+    {
+        jewelArray[index] = value;
+        Save();
+    }
+    
+    /// <summary>
+    /// 设置当前关卡胜利后要执行的方法（一般用于判断是不是首通，因为首通会给额外经验值或者其他奖励）
+    /// </summary>
+    public void SetCurrentStageSuccessRewardFunc(Func<bool> func)
+    {
+        currentStageSuccessRewardFunc = func;
+    }
+
+    /// <summary>
+    /// 获取当前关卡胜利后要执行的方法（仅在关卡胜利后立即调用，会覆盖默认给经验值的方法）
+    /// </summary>
+    /// <returns></returns>
+    public Func<bool> GetCurrentStageSuccessRewardFunc()
+    {
+        return currentStageSuccessRewardFunc;
     }
 }

@@ -27,7 +27,7 @@ Transform:
   m_GameObject: {fileID: 7807539521256197935}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 7807539522743697238}
   m_RootOrder: 0
@@ -70,14 +70,14 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 481756845
-  m_SortingLayer: 4
+  m_SortingLayer: 5
   m_SortingOrder: 1
   m_Sprite: {fileID: 21300000, guid: 568ea773416111d4e916677408e08aac, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 0.69, y: 0.58}
+  m_Size: {x: 0.41, y: 0.14}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -166,9 +166,20 @@ MonoBehaviour:
   mMasterBaseUnit: {fileID: 0}
   animator: {fileID: 0}
   mCircleCollider2D: {fileID: 0}
+  spriteRenderer: {fileID: 0}
   mVelocity: 0
+  mAccelerate: 0
+  mAccelerateTime: 0
+  mMovetime: 0
   mRotate: {x: 0, y: 0}
+  isIgnoreHeight: 0
   mHeight: 0
   mDamage: 0
   isDeathState: 0
   style: 0
+  isnKillSelf: 0
+  isnUseHitEffect: 0
+  aliveTime: 0
+  isnDelOutOfBound: 0
+  mAngle: 0
+  isNavi: 0

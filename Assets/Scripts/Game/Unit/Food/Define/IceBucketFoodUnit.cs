@@ -37,8 +37,8 @@ public class IceBucketFoodUnit : FoodUnit
     /// <returns></returns>
     public override bool IsMeetGeneralAttackCondition()
     {
-        // 生命值低于50或者当前所在格有普通类型卡片的存在
-        return isTrigger || GetGrid().IsContainTag(FoodInGridType.Default);
+        // 生命值低于50或者当前所在格有普通类型卡片的存在 或者人物
+        return isTrigger || GetGrid().IsContainTag(FoodInGridType.Default) || GetGrid().IsContainCharacter();
     }
 
     /// <summary>

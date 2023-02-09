@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 
 using UnityEngine;
 
@@ -11,7 +10,7 @@ public class BaseWeapons : MonoBehaviour, IGameControllerMember
     {
         get
         {
-            return "Weapons/"+mType+"/"+mShape;
+            return "Weapons/"+mType;
         }
     } // 预制体类型/路径
 
@@ -86,13 +85,20 @@ public class BaseWeapons : MonoBehaviour, IGameControllerMember
     /// </summary>
     public virtual void LoadSkillAbility()
     {
-        List<SkillAbility.SkillAbilityInfo> infoList = AbilityManager.Instance.GetSkillAbilityInfoList(UnitType.Weapons, mType, mShape);
+        //List<SkillAbility.SkillAbilityInfo> infoList = AbilityManager.Instance.GetSkillAbilityInfoList(UnitType.Weapons, mType, mShape);
         // 普通攻击
-        if (infoList.Count > 0)
+        weaponsGeneralAttackSkillAbility = new WeaponsGeneralAttackSkillAbility(this, new SkillAbility.SkillAbilityInfo()
         {
-            weaponsGeneralAttackSkillAbility = new WeaponsGeneralAttackSkillAbility(this, infoList[0]);
-            skillAbilityManager.AddSkillAbility(weaponsGeneralAttackSkillAbility);
-        }
+            name = "普通攻击",
+            needEnergy = 60,
+            startEnergy = 60,
+            energyRegeneration = 1.0f,
+            skillType = SkillAbility.Type.GeneralAttack,
+            isExclusive = true,
+            canActiveInDeathState = false,
+            priority = 0
+        });
+        skillAbilityManager.AddSkillAbility(weaponsGeneralAttackSkillAbility);
     }
 
     /// <summary>
@@ -121,6 +127,8 @@ public class BaseWeapons : MonoBehaviour, IGameControllerMember
     {
         // 切换为攻击动画贴图
         SetActionState(new WeaponsAttackState(this));
+        // 可以试着带着人一起动
+        master.SetActionState(new AttackState(master));
     }
 
     /// <summary>
@@ -128,11 +136,6 @@ public class BaseWeapons : MonoBehaviour, IGameControllerMember
     /// </summary>
     public virtual void OnGeneralAttack()
     {
-        // 切换时的第一帧直接不执行update()，因为下述的info.normalizedTime的值还停留在上一个状态，逻辑会出问题！
-        if (currentStateTimer <= 0)
-        {
-            return;
-        }
         // 伤害判定帧应当执行判定
         if (IsDamageJudgment())
         {
@@ -157,6 +160,31 @@ public class BaseWeapons : MonoBehaviour, IGameControllerMember
     {
         mAttackFlag = true;
         SetActionState(new WeaponsIdleState(this));
+        // 可以试着带着人一起动
+        master.SetActionState(new IdleState(master));
+        // 从人物身上读取攻速，来决定能量回复速度（这样武器攻击就与攻速挂钩了）
+        weaponsGeneralAttackSkillAbility.energyRegeneration.SetBase(master.mCurrentAttackSpeed);
+        UpdateAnimationSpeedByAttackSpeed("Attack");
+    }
+
+    protected void UpdateAnimationSpeedByAttackSpeed(string attackClipName)
+    {
+        // 更新自己的播放速度
+        {
+            AnimatorStateRecorder a = animatorController.GetAnimatorStateRecorder(attackClipName);
+            float time = a.aniTime; // 一倍速下一次攻击动画的播放时间（帧）
+            float interval = 1.0f / master.mCurrentAttackSpeed * 60;  // 攻击间隔（帧）
+            float speed = Mathf.Max(1, time / interval); // 计算动画实际播放速度
+            animatorController.SetSpeed(attackClipName, speed);
+        }
+        // 更新主人的播放速度
+        {
+            AnimatorStateRecorder a = master.animatorController.GetAnimatorStateRecorder(attackClipName);
+            float time = a.aniTime; // 一倍速下一次攻击动画的播放时间（帧）
+            float interval = 1.0f / master.mCurrentAttackSpeed * 60;  // 攻击间隔（帧）
+            float speed = Mathf.Max(1, time / interval); // 计算动画实际播放速度
+            master.animatorController.SetSpeed(attackClipName, speed);
+        }
     }
 
     /// <summary>
@@ -361,7 +389,7 @@ public class BaseWeapons : MonoBehaviour, IGameControllerMember
         // 再清除技能效果
         skillAbilityManager.TryEndAllSpellingSkillAbility();
         // 然后安心去世吧
-        GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, mPreFabPath, this.gameObject);
+        GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, mPreFabPath, gameObject);
     }
 
     public virtual void AfterDeath()

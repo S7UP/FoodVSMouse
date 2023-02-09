@@ -2,11 +2,12 @@ using System.Collections.Generic;
 using System;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 /// <summary>
 /// 卡片建造器，其绑定者为游戏画面上的卡槽UI
 /// </summary>
-public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerMember
+public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerMember, IPointerEnterHandler, IPointerExitHandler
 {
     // 美食原生种类-美食在格子上的分类映射表
     // 下面没说的都是Default类的
@@ -103,6 +104,7 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
     public Attribute attr;
 
     // 对应UI的GameObject
+    private RectTransform RectTrans;
     public GameObject mTex_FireCost;
     public GameObject mImg_Card;
     public GameObject mImg_CostMask;
@@ -222,6 +224,7 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
 
     public void Awake()
     {
+        RectTrans = GetComponent<RectTransform>();
         mTex_FireCost = transform.Find("Tex_FireCost").gameObject;
         mImg_Card = transform.Find("Img_Card").gameObject;
         mImg_CostMask = transform.Find("Img_CostMask").gameObject;
@@ -438,7 +441,7 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
         {
             mImg_CDMask2.SetActive(true);
             mTex_CDLeft.SetActive(true);
-            mTex_CDLeft.GetComponent<Text>().text = ((float)mCDLeft / 60).ToString("f2"); // 转化为真实秒的同时保留两位小数
+            mTex_CDLeft.GetComponent<Text>().text = ((float)mCDLeft / 60).ToString("#0.0"); // 转化为真实秒的同时保留一位小数
         }
 
         // 控制UI层的CD遮罩（实际上就是控制y方向上的scale）
@@ -770,5 +773,21 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
     public static BaseCardBuilder GetResource()
     {
         return GameManager.Instance.GetGameObjectResource(FactoryType.UIFactory, "CardBuilder").GetComponent<BaseCardBuilder>();
+    }
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        if (mType != -1)
+        {
+            TextArea.Instance.SetText(FoodManager.GetFoodName(mType, mShape) + "\n" + FoodManager.GetVerySimpleFeature((FoodNameTypeMap)mType));
+            TextArea.Instance.SetLocalPosition(transform, new Vector2(0, -RectTrans.sizeDelta.y / 2), new Vector2(-1, -1));
+        }
+
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        if (mType != -1)
+            TextArea.ExecuteRecycle();
     }
 }

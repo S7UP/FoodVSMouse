@@ -10,9 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 8116370559506349390}
   - component: {fileID: 8116370559506349385}
-  - component: {fileID: 3845538910722500033}
   - component: {fileID: 6432907980936340271}
-  m_Layer: 12
+  m_Layer: 6
   m_Name: 9
   m_TagString: Food
   m_Icon: {fileID: 0}
@@ -61,27 +60,6 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 0.3, y: 0.3}
   m_EdgeRadius: 0
---- !u!50 &3845538910722500033
-Rigidbody2D:
-  serializedVersion: 4
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8116370559506349391}
-  m_BodyType: 1
-  m_Simulated: 1
-  m_UseFullKinematicContacts: 0
-  m_UseAutoMass: 0
-  m_Mass: 1
-  m_LinearDrag: 0
-  m_AngularDrag: 0.05
-  m_GravityScale: 1
-  m_Material: {fileID: 0}
-  m_Interpolate: 0
-  m_SleepingMode: 1
-  m_CollisionDetection: 0
-  m_Constraints: 0
 --- !u!114 &6432907980936340271
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -100,12 +78,15 @@ MonoBehaviour:
   mHeight: 0
   moveRotate: {x: 0, y: 0}
   isFrozenState: 0
+  isIgnoreRecordDamage: 0
   mName: 
   mType: 0
   mShape: 0
   typeAndShapeValue: 0
   currentStateTimer: 0
   disableMove: 0
+  aliveTime: 0
+  lastPosition: {x: 0, y: 0}
   mBoxCollider2D: {fileID: 0}
   spriteTrans: {fileID: 0}
   mFoodType: 0
@@ -124,7 +105,7 @@ GameObject:
   - component: {fileID: 8116370559772073300}
   - component: {fileID: 8116370559772073302}
   - component: {fileID: 8116370559772073303}
-  m_Layer: 12
+  m_Layer: 6
   m_Name: Ani_Food
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -284,7 +265,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4918401844580172144, guid: eda71e04dfd1bbe4aa1c0f498a732b19, type: 3}
       propertyPath: m_Layer
-      value: 12
+      value: 6
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: eda71e04dfd1bbe4aa1c0f498a732b19, type: 3}

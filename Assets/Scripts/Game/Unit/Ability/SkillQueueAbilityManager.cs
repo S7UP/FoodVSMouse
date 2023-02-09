@@ -106,6 +106,11 @@ public sealed class SkillQueueAbilityManager
         this.index = index;
     }
 
+    public int GetCurrentSkillIndex()
+    {
+        return index;
+    }
+
     /// <summary>
     /// 把下一个要用的技能入队
     /// </summary>

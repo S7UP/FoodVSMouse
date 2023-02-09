@@ -22,7 +22,8 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
     public void MInit()
     {
         // 变量初始化
-        mGameNormalPanel = (GameNormalPanel)GameManager.Instance.uiManager.mUIFacade.currentScenePanelDict[StringManager.GameNormalPanel];
+        //mGameNormalPanel = (GameNormalPanel)GameManager.Instance.uiManager.mUIFacade.currentScenePanelDict[StringManager.GameNormalPanel];
+        mGameNormalPanel = GameNormalPanel.Instance;
         mGameNormalPanel.ClearAllSlot(); // 清空卡槽
         mSelectedCardBuilder = null;
         isSelectCard = false;
@@ -155,15 +156,7 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
     public void ConstructeByCardType(int type, BaseGrid g)
     {
         // 寻找合适的cardBuilder
-        BaseCardBuilder cardBuilder = null;
-        foreach (var c in mCardBuilderList)
-        {
-            if(type == c.attr.type)
-            {
-                cardBuilder = c;
-                break;
-            }
-        }
+        BaseCardBuilder cardBuilder = GetCardBuilderByType(type);
         // 如果没有则什么也不会发生，等于说即使系统给你初始卡了但如果你没带就不会给
         if (cardBuilder == null)
             return;
@@ -176,6 +169,29 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
             cardBuilder.InitInstance(g); // 初始化实体信息
             cardBuilder.TriggerAfterBuildAction();
         }
+    }
+
+    /// <summary>
+    /// 根据卡片种类来获取当前卡片建造器（若无携带则返回null）
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
+    public BaseCardBuilder GetCardBuilderByType(int type)
+    {
+        // 寻找合适的cardBuilder
+        foreach (var c in mCardBuilderList)
+        {
+            if (type == c.attr.type)
+            {
+                return c;
+            }
+        }
+        return null;
+    }
+
+    public BaseCardBuilder GetCardBuilderByType(FoodNameTypeMap type)
+    {
+        return GetCardBuilderByType((int)type);
     }
 
     /// <summary>

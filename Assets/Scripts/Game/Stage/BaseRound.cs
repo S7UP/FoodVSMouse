@@ -25,7 +25,28 @@ public class BaseRound
         public bool isBossRound; // 是否为BOSS轮次
         public List<BaseEnemyGroup> bossList; // BOSS列表
         public string musicRefenceName; // BGM的引用名
+        public Dictionary<string, List<float>> ParamArrayDict = new Dictionary<string, List<float>>(); // 该轮的参数变化字典
 
+
+        /// <summary>
+        /// 获取全部背景音乐
+        /// </summary>
+        /// <returns></returns>
+        public List<string> GetAllBGM()
+        {
+            List<string> list = new List<string>();
+            if (musicRefenceName == null || musicRefenceName.Equals(""))
+                return list;
+            list.Add(musicRefenceName);
+            foreach (var round in roundInfoList)
+            {
+                foreach (var bgm in round.GetAllBGM())
+                {
+                    list.Add(bgm);
+                }
+            }
+            return list;
+        }
 
         /// <summary>
         /// 获取本轮总持续时间
@@ -58,6 +79,23 @@ public class BaseRound
         }
 
         /// <summary>
+        /// 获取本轮中的BOSS信息表
+        /// </summary>
+        /// <returns></returns>
+        public List<BaseEnemyGroup> GetBossList()
+        {
+            List<BaseEnemyGroup> list = new List<BaseEnemyGroup>();
+            if (isBossRound && bossList != null)
+            {
+                foreach (var g in bossList)
+                {
+                    list.Add(g);
+                }
+            }
+            return BaseRound.GetBossList(list, roundInfoList);
+        }
+
+        /// <summary>
         /// 前序遍历当前轮
         /// </summary>
         /// <returns></returns>
@@ -78,6 +116,28 @@ public class BaseRound
                     }
                 }
             }
+            return list;
+        }
+
+        /// <summary>
+        /// 通过遍历的方式获取自身和自身子轮的所有敌人类别并作数量上的统计
+        /// </summary>
+        /// <returns></returns>
+        public List<BaseEnemyGroup> GetAllEnemyList()
+        {
+            List<BaseEnemyGroup> list = new List<BaseEnemyGroup>();
+            // Boss波次的敌人不统计
+            if (isBossRound)
+                return list;
+            if (baseEnemyGroupList != null)
+                foreach (var item in baseEnemyGroupList)
+                {
+                    BaseEnemyGroup g = new BaseEnemyGroup();
+                    g.mEnemyInfo = new BaseEnemyGroup.EnemyInfo() { type = item.mEnemyInfo.type, shape = item.mEnemyInfo.shape };
+                    g.mCount = item.mCount;
+                    list.Add(g);
+                }
+            list = BaseRound.GetAllEnemyList(list, roundInfoList);
             return list;
         }
     }
@@ -111,6 +171,10 @@ public class BaseRound
     // 使用协程执行本轮的出怪逻辑
     public IEnumerator Execute()
     {
+        // 触发一次参数变化的监听
+        foreach (var keyValuePair in mRoundInfo.ParamArrayDict)
+            GameController.Instance.mCurrentStage.ChangeParamValue(keyValuePair.Key, keyValuePair.Value);
+
         // 设置行偏移量
         if (mRoundInfo.roundMode.Equals(RoundMode.Fixed))
             GameController.Instance.mCurrentStage.PushZeroToRowOffsetStack();
@@ -126,6 +190,7 @@ public class BaseRound
 
         // 播放BGM
         GameManager.Instance.audioSourceManager.PlayBGMusic(mRoundInfo.musicRefenceName);
+        GameNormalPanel.Instance.ShowBGM(MusicManager.GetMusicInfo(mRoundInfo.musicRefenceName));
 
         // 先执行自己的刷怪组的内容
         if (mRoundInfo.isBossRound)
@@ -202,7 +267,7 @@ public class BaseRound
         for (int i = 0; i < realEnemyList.GetSize(); i++)
         {
             MouseUnit m = GameController.Instance.CreateMouseUnit(realEnemyList.Get(i), realEnemyList.enemyInfo);
-            m.SetMaxHpAndCurrentHp(m.mMaxHp * enemyAttribute.HpRate); // 对老鼠最大生命值进行修正
+            m.SetMaxHpAndCurrentHp(m.mMaxHp * enemyAttribute.HpRate * NumberManager.GetCurrentEnemyHpRate()); // 对老鼠最大生命值进行修正
             m.NumericBox.MoveSpeed.SetBase(m.NumericBox.MoveSpeed.baseValue*enemyAttribute.MoveSpeedRate); // 对老鼠移动速度修正
             m.NumericBox.Attack.SetBase(m.mBaseAttack * enemyAttribute.AttackRate); // 对老鼠攻击力修正
             m.NumericBox.Defense.SetBase(enemyAttribute.Defence); // 对老鼠减伤修正
@@ -220,7 +285,7 @@ public class BaseRound
         for (int i = 0; i < realEnemyList.GetSize(); i++)
         {
             BossUnit b = GameController.Instance.CreateBossUnit(realEnemyList.Get(i), realEnemyList.enemyInfo, hp, -1);
-            b.SetMaxHpAndCurrentHp(b.mMaxHp * enemyAttribute.HpRate); // 对老鼠最大生命值进行修正
+            b.SetMaxHpAndCurrentHp(b.mMaxHp * enemyAttribute.HpRate * NumberManager.GetCurrentEnemyHpRate()); // 对老鼠最大生命值进行修正
             // 要是把上面那行注释了，然后把下面这个语句块取消注释，就能还原原版的卡暴击方法
             // 认真的吗？原版的BUG也还原给你看
             //{
@@ -322,4 +387,59 @@ public class BaseRound
             endTime = 0
         };
     }
+
+    /// <summary>
+    /// 通过遍历的方式获取表中所有轮的所有敌人类别并作数量上的统计
+    /// </summary>
+    /// <returns></returns>
+    public static List<BaseEnemyGroup> GetAllEnemyList(List<BaseEnemyGroup> list, List<RoundInfo> roundInfoList)
+    {
+        if (roundInfoList != null)
+        {
+            foreach (var round in roundInfoList)
+            {
+                List<BaseEnemyGroup> l = round.GetAllEnemyList();
+                for (int i = 0; i < l.Count; i++)
+                {
+                    BaseEnemyGroup g = l[i];
+                    bool flag = false;
+                    for (int j = 0; j < list.Count; j++)
+                    {
+                        BaseEnemyGroup g2 = list[j];
+                        if (g.mEnemyInfo.type == g2.mEnemyInfo.type && g.mEnemyInfo.shape == g2.mEnemyInfo.shape)
+                        {
+                            g2.mCount += g.mCount;
+                            flag = true;
+                            break;
+                        }
+                    }
+                    if (!flag)
+                    {
+                        BaseEnemyGroup g3 = new BaseEnemyGroup();
+                        g3.mEnemyInfo = new BaseEnemyGroup.EnemyInfo() { type = g.mEnemyInfo.type, shape = g.mEnemyInfo.shape };
+                        g3.mCount = g.mCount;
+                        list.Add(g3);
+                    }
+                }
+            }
+        }
+        return list;
+    }
+
+    /// <summary>
+    /// 通过遍历的方式获取表中所有轮的BOSS统计
+    /// </summary>
+    /// <returns></returns>
+    public static List<BaseEnemyGroup> GetBossList(List<BaseEnemyGroup> list, List<RoundInfo> roundInfoList)
+    {
+        foreach (var round in roundInfoList)
+        {
+            foreach (var g in round.GetBossList())
+            {
+                list.Add(g);
+            }
+        }
+        return list;
+    }
+
 }

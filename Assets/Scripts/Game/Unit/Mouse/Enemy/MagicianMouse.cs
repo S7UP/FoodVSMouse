@@ -57,7 +57,7 @@ public class MagicianMouse : MouseUnit
 
         // 然后把它扔出去
         // 添加一个弹起的任务
-        CustomizationTask t = TaskManager.AddParabolaTask(m, TransManager.TranToVelocity(18), 1.2f, m.transform.position, m.transform.position + distance * (Vector3)moveRotate, false);
+        CustomizationTask t = TaskManager.AddParabolaTask(m, distance/60, distance/2, m.transform.position, m.transform.position + distance * (Vector3)moveRotate, false);
         m.SetActionState(new TransitionState(m));
         m.animatorController.Play("Fly", true);
         Action oldExitFunc = t.OnExitFunc;

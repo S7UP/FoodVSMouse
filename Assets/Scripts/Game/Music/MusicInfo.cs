@@ -1,5 +1,4 @@
-using System;
-[Serializable]
+[System.Serializable]
 /// <summary>
 /// “Ù¿÷–≈œ¢
 /// </summary>

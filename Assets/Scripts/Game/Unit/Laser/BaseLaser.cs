@@ -32,8 +32,7 @@ public class BaseLaser : MonoBehaviour, IGameControllerMember
     public BaseUnit master;
     public float damage;
     public bool isCollide;
-    public List<ITask> TaskList = new List<ITask>(); // 自身挂载任务表
-    public Dictionary<string, ITask> TaskDict = new Dictionary<string, ITask>(); // 任务字典（仅记录引用不实际执行逻辑，执行逻辑在任务表中）
+    public TaskController taskController = new TaskController();
 
     public void Awake()
     {
@@ -60,8 +59,7 @@ public class BaseLaser : MonoBehaviour, IGameControllerMember
 
         isCollide = true; // 是否开启判定
 
-        TaskList.Clear();
-        TaskDict.Clear();
+        taskController.Initial();
     }
 
     public void MUpdate()
@@ -104,7 +102,7 @@ public class BaseLaser : MonoBehaviour, IGameControllerMember
             UpdateHitEffectDict();
         }
 
-        OnTaskUpdate();
+        taskController.Update();
     }
 
     public void MPause()
@@ -222,8 +220,7 @@ public class BaseLaser : MonoBehaviour, IGameControllerMember
     /// <param name="t"></param>
     public void AddTask(ITask t)
     {
-        TaskList.Add(t);
-        t.OnEnter();
+        taskController.AddTask(t);
     }
 
     /// <summary>
@@ -231,11 +228,7 @@ public class BaseLaser : MonoBehaviour, IGameControllerMember
     /// </summary>
     public void RemoveUniqueTask(string key)
     {
-        if (TaskDict.ContainsKey(key))
-        {
-            RemoveTask(TaskDict[key]);
-            TaskDict.Remove(key);
-        }
+        taskController.RemoveUniqueTask(key);
     }
 
     /// <summary>
@@ -244,8 +237,7 @@ public class BaseLaser : MonoBehaviour, IGameControllerMember
     /// <param name="t"></param>
     public void RemoveTask(ITask t)
     {
-        t.OnExit();
-        TaskList.Remove(t);
+        taskController.RemoveTask(t);
     }
 
     /// <summary>
@@ -255,39 +247,7 @@ public class BaseLaser : MonoBehaviour, IGameControllerMember
     /// <returns></returns>
     public ITask GetTask(string key)
     {
-        if (TaskDict.ContainsKey(key))
-            return TaskDict[key];
-        return null;
-    }
-
-    /// <summary>
-    /// Task组更新
-    /// </summary>
-    private void OnTaskUpdate()
-    {
-        List<string> deleteKeyList = new List<string>();
-        foreach (var keyValuePair in TaskDict)
-        {
-            ITask t = keyValuePair.Value;
-            if (t.IsMeetingExitCondition())
-                deleteKeyList.Add(keyValuePair.Key);
-        }
-        foreach (var key in deleteKeyList)
-        {
-            RemoveUniqueTask(key);
-        }
-        List<ITask> deleteTask = new List<ITask>();
-        foreach (var t in TaskList)
-        {
-            if (t.IsMeetingExitCondition())
-                deleteTask.Add(t);
-            else
-                t.OnUpdate();
-        }
-        foreach (var t in deleteTask)
-        {
-            RemoveTask(t);
-        }
+        return taskController.GetTask(key);
     }
 
     public static BaseLaser GetInstance(BaseUnit master, float damage, string layerName, LayerMask mask, Vector2 pos, Vector2 rot, Sprite HeadSprite, Sprite BodySprite, Sprite TailSprite, Sprite HitEffectSprite,

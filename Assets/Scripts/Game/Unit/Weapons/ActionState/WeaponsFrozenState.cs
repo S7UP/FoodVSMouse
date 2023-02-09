@@ -14,6 +14,7 @@ public class WeaponsFrozenState : WeaponsActionState
     {
         master.OnFrozenStateEnter();
         master.isFrozenState = true;
+        master.isDisableSkill = true;
         master.PauseCurrentAnimatorState(); // 停止动画
     }
 
@@ -28,6 +29,7 @@ public class WeaponsFrozenState : WeaponsActionState
     {
         master.OnFrozenStateExit();
         master.isFrozenState = false;
+        master.isDisableSkill = false;
         master.ResumeCurrentAnimatorState(); // 放开动画
         master.SetActionState(lastState);
     }

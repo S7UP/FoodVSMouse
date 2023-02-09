@@ -8,4 +8,6 @@ public enum JewelNameTypeMap
     Bombing = 2, // 轰炸宝石
     Laser = 3, // 激光宝石
     CatEyes = 4, // 猫眼宝石
+    Attack = 5, // 强力宝石
+    AttackSpeed = 6, // 疾风宝石
 }

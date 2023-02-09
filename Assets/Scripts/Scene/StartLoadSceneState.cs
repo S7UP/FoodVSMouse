@@ -10,8 +10,9 @@ public class StartLoadSceneState : BaseSceneState
 
     public override void EnterScene()
     {
-        //SceneManager.LoadScene("StartLoadScene");
-        mUIFacade.AddPanelToDict(StringManager.StartLoadPanel);
+        // SceneManager.LoadScene("StartLoadScene");
+        // mUIFacade.AddPanelToDict(StringManager.StartLoadPanel);
+        // GameManager.Instance.startLoadPanel.gameObject.SetActive(true);
         base.EnterScene();
     }
 

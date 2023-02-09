@@ -57,6 +57,7 @@ public class Thundered : BossUnit
         AddParamArray("t1_1", new float[] { 4, 3, 2 }); // 移动时间
         AddParamArray("dmg1_0", new float[] { 900, 900, 900 }); // 导弹伤害
         AddParamArray("t1_2", new float[] { 3, 1.5f, 0.5f }); // 导弹发射完后的停滞时间
+        AddParamArray("stun1_0", new float[] { 9, 9, 9 }); // 导弹对人物的晕眩时间
         // 毁灭激光
         AddParamArray("t2_0", new float[] { 1, 0.5f, 0 }); // 升空时的观察时间
         AddParamArray("t2_1", new float[] { 4, 3, 2 }); // 移动时间
@@ -245,7 +246,7 @@ public class Thundered : BossUnit
         bool isFly = false; // 是否处于飞行状态
         int t1_0 = Mathf.FloorToInt(GetParamValue("t1_0", mHertIndex)*60); // 升空时的观察时间
         int t1_1 = Mathf.FloorToInt(GetParamValue("t1_1", mHertIndex)*60); // 移动时间
-        float dmg1_0 = GetParamValue("dmg1_0", mHertIndex); // 导弹伤害
+        
         int t1_2 = Mathf.FloorToInt(GetParamValue("t1_2", mHertIndex)*60); // 导弹发射完后的停滞时间
 
         int timeLeft = 0;
@@ -343,24 +344,11 @@ public class Thundered : BossUnit
                     if (animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime() >= 0.3 && missileCounter == 0)
                     {
                         // 先去获取当前行最靠左的可攻击美食单位
-                        BaseUnit targetUnit = FoodManager.GetSpecificRowFarthestLeftCanTargetedAlly(GetRowIndex(), transform.position.x);
-                        Vector3 targetpos = Vector3.zero;
+                        BaseUnit targetUnit = FoodManager.GetSpecificRowFarthestLeftCanTargetedAlly(GetRowIndex(), transform.position.x, true);
                         if (targetUnit == null)
-                            targetpos = new Vector2(MapManager.GetColumnX(0), MapManager.GetRowY(GetRowIndex()));
+                            CreateMissile(new Vector2(MapManager.GetColumnX(0), MapManager.GetRowY(GetRowIndex())));
                         else
-                            targetpos = targetUnit.transform.position;
-                        EnemyBullet b = EnemyBullet.GetInstance(GameManager.Instance.GetRuntimeAnimatorController("Boss/4/Missile"), this, dmg1_0 * (mCurrentAttack / 10));
-                        TaskManager.AddParabolaTask(b, TransManager.TranToVelocity(32f), 1.5f, transform.position, targetpos, true);
-                        // 修改攻击优先级，这种投掷攻击优先攻击护罩里的东西
-                        b.GetTargetFunc = (unit) => {
-                            BaseGrid g = unit.GetGrid();
-                            if (g != null)
-                            {
-                                return g.GetThrowHighestAttackPriorityUnitInclude(this);
-                            }
-                            return unit;
-                        };
-                        GameController.Instance.AddBullet(b);
+                            CreateMissile(targetUnit.transform.position);
                         missileCounter++;
                     }
                     else if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
@@ -379,29 +367,12 @@ public class Thundered : BossUnit
                     {
                         if (animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime() >= 0.3*(i+1) && missileCounter == i)
                         {
-                            if (i == 0)
-                            {
-                                // 先去获取当前行最靠左的可攻击美食单位
-                                BaseUnit targetUnit = FoodManager.GetSpecificRowFarthestLeftCanTargetedAlly(GetRowIndex(), transform.position.x);
-                                Vector3 targetpos = Vector3.zero;
-                                if (targetUnit == null)
-                                    targetPos = new Vector2(MapManager.GetColumnX(0), MapManager.GetRowY(GetRowIndex()));
-                                else
-                                    targetPos = targetUnit.transform.position;
-                            }
-
-                            EnemyBullet b = EnemyBullet.GetInstance(GameManager.Instance.GetRuntimeAnimatorController("Boss/4/Missile"), this, dmg1_0 * (mCurrentAttack / 10));
-                            TaskManager.AddParabolaTask(b, TransManager.TranToVelocity(32f), 1.5f, transform.position, targetPos, true);
-                            // 修改攻击优先级，这种投掷攻击优先攻击护罩里的东西
-                            b.GetTargetFunc = (unit) => {
-                                BaseGrid g = unit.GetGrid();
-                                if (g != null)
-                                {
-                                    return g.GetThrowHighestAttackPriorityUnitInclude(this);
-                                }
-                                return unit;
-                            };
-                            GameController.Instance.AddBullet(b);
+                            // 先去获取当前行最靠左的可攻击美食单位
+                            BaseUnit targetUnit = FoodManager.GetSpecificRowFarthestLeftCanTargetedAlly(GetRowIndex(), transform.position.x, true);
+                            if (targetUnit == null)
+                                CreateMissile(new Vector2(MapManager.GetColumnX(0), MapManager.GetRowY(GetRowIndex())));
+                            else
+                                CreateMissile(targetUnit.transform.position);
                             missileCounter++;
                         }
                     }
@@ -426,25 +397,13 @@ public class Thundered : BossUnit
                             if (i == 0)
                             {
                                 // 先去获取当前行最靠左的可攻击美食单位
-                                BaseUnit targetUnit = FoodManager.GetSpecificRowFarthestLeftCanTargetedAlly(GetRowIndex(), transform.position.x);
-                                Vector3 targetpos = Vector3.zero;
+                                BaseUnit targetUnit = FoodManager.GetSpecificRowFarthestLeftCanTargetedAlly(GetRowIndex(), transform.position.x, true);
                                 if (targetUnit == null)
                                     targetPos = new Vector2(MapManager.GetColumnX(0), MapManager.GetRowY(GetRowIndex()));
                                 else
                                     targetPos = targetUnit.transform.position;
                             }
-                            EnemyBullet b = EnemyBullet.GetInstance(GameManager.Instance.GetRuntimeAnimatorController("Boss/4/Missile"), this, dmg1_0 * (mCurrentAttack / 10));
-                            TaskManager.AddParabolaTask(b, TransManager.TranToVelocity(32f), 1.5f, transform.position, targetPos + Vector2.up*MapManager.gridHeight*(i-1), true);
-                            // 修改攻击优先级，这种投掷攻击优先攻击护罩里的东西
-                            b.GetTargetFunc = (unit) => {
-                                BaseGrid g = unit.GetGrid();
-                                if (g != null)
-                                {
-                                    return g.GetThrowHighestAttackPriorityUnitInclude(this);
-                                }
-                                return unit;
-                            };
-                            GameController.Instance.AddBullet(b);
+                            CreateMissile(targetPos + Vector2.up * MapManager.gridHeight * (i - 1));
                             missileCounter++;
                         }
                     }
@@ -479,6 +438,39 @@ public class Thundered : BossUnit
         c.OnNoSpellingFunc = delegate { };
         c.AfterSpellFunc = delegate { };
         return c;
+    }
+
+    /// <summary>
+    /// 发射一发导弹
+    /// </summary>
+    private void CreateMissile(Vector2 targetpos)
+    {
+        float dmg1_0 = GetParamValue("dmg1_0", mHertIndex); // 导弹伤害
+        int stun1_0 = Mathf.FloorToInt(GetParamValue("stun1_0", mHertIndex) * 60); // 对人物的晕眩时间
+        float dmg = dmg1_0 * (mCurrentAttack / 10);
+        EnemyBullet b = EnemyBullet.GetInstance(GameManager.Instance.GetRuntimeAnimatorController("Boss/4/Missile"), this, 0);
+        // 修改攻击优先级，这种投掷攻击优先攻击护罩里的东西
+        b.GetTargetFunc = (unit) => {
+            BaseGrid g = unit.GetGrid();
+            if (g != null)
+            {
+                return g.GetThrowHighestAttackPriorityUnitInclude(this);
+            }
+            return unit;
+        };
+        b.AddHitAction((b, u) => {
+            if (u is CharacterUnit)
+            {
+                // 如果击中人物，则为人物施加晕眩效果
+                u.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(u, stun1_0, false));
+            }
+            else
+            {
+                new DamageAction(CombatAction.ActionType.CauseDamage, this, u, dmg).ApplyAction();
+            }
+        });
+        TaskManager.AddParabolaTask(b, TransManager.TranToVelocity(48f), 1.5f, transform.position, targetpos, true);
+        GameController.Instance.AddBullet(b);
     }
 
     /// <summary>

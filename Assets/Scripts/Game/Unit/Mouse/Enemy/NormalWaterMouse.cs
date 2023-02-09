@@ -1,3 +1,4 @@
+using UnityEngine;
 /// <summary>
 /// »ù´¡Ë®¾ü
 /// </summary>
@@ -17,7 +18,7 @@ public class NormalWaterMouse : MouseUnit, IInWater
     {
         isEnterWater = true;
         SetActionState(new TransitionState(this));
-        EffectManager.AddWaterWaveEffectToUnit(this);
+        EffectManager.AddWaterWaveEffectToUnit(this, Vector2.zero);
     }
 
     public void OnStayWater()

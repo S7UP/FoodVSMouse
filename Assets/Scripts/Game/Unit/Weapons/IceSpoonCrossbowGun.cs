@@ -25,6 +25,27 @@ public class IceSpoonCrossbowGun : BaseWeapons
     }
 
     /// <summary>
+    /// 加载技能，此处仅加载普通攻击，具体技能加载实现请在子类中重写
+    /// </summary>
+    public override void LoadSkillAbility()
+    {
+        //List<SkillAbility.SkillAbilityInfo> infoList = AbilityManager.Instance.GetSkillAbilityInfoList(UnitType.Weapons, mType, mShape);
+        // 普通攻击
+        weaponsGeneralAttackSkillAbility = new WeaponsGeneralAttackSkillAbility(this, new SkillAbility.SkillAbilityInfo()
+        {
+            name = "普通攻击",
+            needEnergy = 120,
+            startEnergy = 120,
+            energyRegeneration = 1.0f,
+            skillType = SkillAbility.Type.GeneralAttack,
+            isExclusive = true,
+            canActiveInDeathState = false,
+            priority = 0
+        });
+        skillAbilityManager.AddSkillAbility(weaponsGeneralAttackSkillAbility);
+    }
+
+    /// <summary>
     /// 判断是否有有效的攻击目标
     /// </summary>
     /// <returns></returns>
@@ -63,7 +84,7 @@ public class IceSpoonCrossbowGun : BaseWeapons
     {
         // 选择目标
         BaseUnit target = PitcherManager.FindTargetByPitcher(master, transform.position.x, GetRowIndex());
-        CreateBullet(transform.position, 10, target);
+        CreateBullet(transform.position, 4*master.mCurrentAttack, target);
     }
 
     /// <summary>
@@ -74,7 +95,7 @@ public class IceSpoonCrossbowGun : BaseWeapons
     /// <param name="target"></param>
     private BaseBullet CreateBullet(Vector2 startPosition, float ori_dmg, BaseUnit target)
     {
-        AllyBullet b = AllyBullet.GetInstance(IceEggBullet_RuntimeAnimatorController, master, ori_dmg);
+        AllyBullet b = AllyBullet.GetInstance(BulletStyle.Throwing, IceEggBullet_RuntimeAnimatorController, master, ori_dmg);
         b.AddSpriteOffsetY(new FloatModifier(0.5f * MapManager.gridHeight));
         b.isnDelOutOfBound = true; // 出屏不自删
         // 冰勺击中效果
@@ -85,8 +106,8 @@ public class IceSpoonCrossbowGun : BaseWeapons
                 Vector2 pos; // 范围冰冻减速效果中心位置
                 if (u != null && u.IsValid())
                 {
-                    // 如果单位存在，则在单位位置爆炸，并且单位受到1.5%最大生命值与攻击力中较大者伤害，对BOSS恒为攻击力
-                    float dmg = Mathf.Max(0.015f * u.mMaxHp, b.GetDamage());
+                    // 如果单位存在，则在单位位置爆炸，并且单位受到3%最大生命值与攻击力中较大者伤害，对BOSS恒为攻击力
+                    float dmg = Mathf.Max(0.03f * u.mMaxHp, b.GetDamage());
                     if (u is MouseUnit)
                     {
                         MouseUnit m = u as MouseUnit;

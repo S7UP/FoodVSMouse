@@ -3,11 +3,13 @@ using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
 using System;
+using UnityEngine.EventSystems;
 /// <summary>
 /// 选择配置中已被选中的卡片模型
 /// </summary>
-public class SelectedCardModel : MonoBehaviour
+public class SelectedCardModel : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
+    private RectTransform RectTrans;
     private SelectedCardUI mSelectedCardUI;
     private RectTransform Emp_Card_RectTrans;
     private Text Tex_Cost;
@@ -23,6 +25,7 @@ public class SelectedCardModel : MonoBehaviour
 
     private void Awake()
     {
+        RectTrans = GetComponent<RectTransform>();
         Emp_Card_RectTrans = transform.Find("Emp_Card").GetComponent<RectTransform>();
         Tex_Cost = Emp_Card_RectTrans.Find("Tex_Cost").GetComponent<Text>();
         Btn_Cancel = Emp_Card_RectTrans.Find("Btn_Cancel").GetComponent<Button>();
@@ -180,5 +183,23 @@ public class SelectedCardModel : MonoBehaviour
         int index = mSelectedCardUI.GetModelInListIndex(this);
         Inp_Key.text = mSelectedCardUI.GetKeyByIndex(index).ToString();
         isUpdateKey = false;
+    }
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        int type = mAvailableCardInfo.type;
+        int shape = mAvailableCardInfo.maxShape;
+        if (type != -1)
+        {
+            TextArea.Instance.SetText(FoodManager.GetFoodName(type, shape) + "\n" + FoodManager.GetVerySimpleFeature((FoodNameTypeMap)type));
+            TextArea.Instance.SetLocalPosition(transform, new Vector2(RectTrans.sizeDelta.x / 2, -RectTrans.sizeDelta.y / 2), new Vector2(1, -1));
+        }
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        int type = mAvailableCardInfo.type;
+        if (type != -1)
+            TextArea.ExecuteRecycle();
     }
 }

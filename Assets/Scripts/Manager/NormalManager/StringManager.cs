@@ -12,11 +12,15 @@ public class StringManager
     public const string MainlinePanel = "MainlinePanel";
     public const string StageConfigPanel = "StageConfigPanel";
     public const string RankSelectPanel = "RankSelectPanel";
+    public const string WarriorChallengePanel = "WarriorChallengePanel";
+    public const string SpurlinePanel = "SpurlinePanel";
+    public const string StaffPanel = "StaffPanel";
 
     // 常用标签
     public const string BulletDamgeIncreasement = "子弹伤害增幅";
     public const string BulletRebound = "子弹反弹";
     public const string BeFrightened = "被惊吓";
+    public const string Flying = "滞空";
 
     // 特殊状态与其免疫类型
     public const string SlowDown = "减速效果";

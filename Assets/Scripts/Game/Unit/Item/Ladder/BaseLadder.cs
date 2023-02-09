@@ -42,10 +42,10 @@ public class BaseLadder : BaseItem
             MouseUnit m = collision.GetComponent<MouseUnit>();
             if (unitList.Contains(m) || m.IsBoss() || !UnitManager.CanBeSelectedAsTarget(this, m))
                 return;
-            if (m.GetRowIndex() != GetRowIndex() || m.GetHeight() != GetHeight())
+            if (m.GetRowIndex() != GetRowIndex() || m.GetHeight() != GetHeight() || !m.moveRotate.Equals(Vector2.left))
                 return;
-            // 另一个判定条件，就是目标有Flying标签时不触发
-            if (m.NumericBox.IntDict.ContainsKey("Flying") && m.NumericBox.IntDict["Flying"].Value > 0)
+            // 另一个判定条件，就是目标不滞空
+            if (UnitManager.IsFlying(m))
                 return;
 
             // 把这个单位添加到表里

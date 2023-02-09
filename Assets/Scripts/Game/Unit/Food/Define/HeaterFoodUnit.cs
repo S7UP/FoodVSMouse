@@ -7,26 +7,29 @@ using UnityEngine;
 /// </summary>
 public class HeaterFoodUnit : FoodUnit
 {
+    private static RuntimeAnimatorController Bullet_RuntimeAnimatorController;
+
     /// <summary>
     /// 可以通过火盆的子弹类型表
     /// </summary>
-    public static List<BulletStyle> canThroughtBulletStyleList = new List<BulletStyle>() { 
-        BulletStyle.Wine, BulletStyle.Water
+    public static List<BulletStyle> canThroughtBulletStyleList = new List<BulletStyle>() {
+        BulletStyle.Normal
     };
 
 
     private float mulRate; //伤害倍化倍率
-    private Rigidbody2D rigibody2D;
 
     public override void Awake()
     {
+        if (Bullet_RuntimeAnimatorController == null)
+            Bullet_RuntimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Food/8/Bullet");
         base.Awake();
-        rigibody2D = GetComponent<Rigidbody2D>();
     }
 
     public override void MInit()
     {
         base.MInit();
+        CreateCheckArea();
     }
 
     /// <summary>
@@ -34,70 +37,83 @@ public class HeaterFoodUnit : FoodUnit
     /// </summary>
     public override void UpdateAttributeByLevel()
     {
-        mulRate = (float)(attr.baseAttrbute.baseAttack + attr.valueList[mLevel]);
-    }
-
-    /// <summary>
-    /// 该单位装了rigibody2d，因此需要重写此方法
-    /// </summary>
-    /// <param name="V3"></param>
-    public override void SetPosition(Vector3 V3)
-    {
-        rigibody2D.MovePosition(V3);
+        mulRate = (float)attr.valueList[mLevel];
     }
 
     /// <summary>
     /// 检测传入子弹是否能穿过
     /// </summary>
-    /// <param name="baseBullet"></param>
+    /// <param name="b"></param>
     /// <returns></returns>
-    public bool CanThrought(BaseBullet baseBullet)
+    public bool CanThrought(BaseBullet b)
     {
+        // 自身不被控制
+        if (isFrozenState)
+            return false;
+        // 子弹得是友方子弹
+        if (!(b is AllyBullet))
+            return false;
         // 判断子弹是否已被增强
-        if (baseBullet.GetTagCount(StringManager.BulletDamgeIncreasement) > 0)
+        if (b.GetTagCount(StringManager.BulletDamgeIncreasement) > 0)
             return false;
         // 判断子弹类型能否过盆
         foreach (var item in canThroughtBulletStyleList)
         {
-            if (item == baseBullet.style)
+            if (item == b.style)
                 return true;
         }
         return false;
     }
 
-    public void OnCollision(Collider2D collision)
+    /// <summary>
+    /// 获取倍率
+    /// </summary>
+    /// <returns></returns>
+    public float GetDamageRate()
     {
-        // 死亡动画时不接受任何碰撞事件
-        if (isDeathState)
-        {
-            return;
-        }
-
-
-        if (collision.tag.Equals("Bullet"))
-        {
-            // 检测到子弹单位碰撞了
-            BaseBullet bullet = collision.GetComponent<BaseBullet>();
-            if (CanThrought(bullet)) // 检测子弹能否穿过
-            {
-                // 强制把子弹贴图改为火弹（但是不改变原始style值）
-                bullet.ChangeAnimatorWithoutChangeStyle(BulletStyle.Fire);
-                bullet.SetDamage(bullet.GetDamage() * mulRate); // 倍化伤害
-                bullet.SetVelocity(bullet.GetVelocity() * 1.5f); // 加速
-                bullet.AddTag(StringManager.BulletDamgeIncreasement); // 为子弹打上已增幅的标记，防止多次过火
-            }
-        }
+        return 1 + Mathf.Min(1, mCurrentAttackSpeed) * Mathf.Min(1, mCurrentAttack / 10) * (mulRate - 1);
     }
 
-    // rigibody相关
-    private void OnTriggerEnter2D(Collider2D collision)
+    /// <summary>
+    /// 创建过火检测圈
+    /// </summary>
+    private void CreateCheckArea()
     {
-        OnCollision(collision);
+        RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 1.0f, 1.0f, "ItemCollideBullet");
+        r.isAffectBullet = true;
+        r.SetOnBulletEnterAction(OnCollision);
+        r.SetOnBulletStayAction(OnCollision);
+        {
+            CustomizationTask t = new CustomizationTask();
+            t.AddTaskFunc(delegate {
+                if (this.IsAlive())
+                {
+                    r.transform.position = transform.position;
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            });
+            t.OnExitFunc = delegate {
+                r.MDestory();
+            };
+            r.AddTask(t);
+        }
+        GameController.Instance.AddAreaEffectExecution(r);
     }
 
-    private void OnTriggerStay2D(Collider2D collision)
+    public void OnCollision(BaseBullet b)
     {
-        OnCollision(collision);
+        if (CanThrought(b)) // 检测子弹能否穿过
+        {
+            // 强制把子弹贴图改为火弹（但是不改变原始style值）
+            b.animator.runtimeAnimatorController = Bullet_RuntimeAnimatorController;
+            b.SetDamage(b.GetDamage() * GetDamageRate()); // 倍化伤害
+            b.SetVelocity(b.GetVelocity() * 1.5f); // 加速
+            b.AddTag(StringManager.BulletDamgeIncreasement); // 为子弹打上已增幅的标记，防止多次过火
+        }
     }
 
     /////////////////////////////////以下功能均失效，不需要往下翻看/////////////////////////////////////

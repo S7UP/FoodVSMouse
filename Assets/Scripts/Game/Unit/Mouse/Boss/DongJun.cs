@@ -266,21 +266,15 @@ public class DongJun : BossUnit
         }
 
         RetangleAreaEffectExecution r1 = null;
+        RetangleAreaEffectExecution r1_bullet = null;
         RetangleAreaEffectExecution r2 = null;
+        RetangleAreaEffectExecution r2_bullet = null;
 
-        // 为左向管道添加转移子弹的区域 并将区域与 管道绑定
+        // 为左向管道添加转移老鼠的区域 并将区域与 管道绑定
         {
             Vector3 offset = 0*Vector3.left * 0.375f * MapManager.gridWidth; // 跟随偏移量
-            r1 = RetangleAreaEffectExecution.GetInstance(p1.transform.position + offset, 0.25f, 1, "CollideTriple");
+            r1 = RetangleAreaEffectExecution.GetInstance(p1.transform.position + offset, 0.25f, 1, "ItemCollideEnemy");
             r1.isAffectMouse = true;
-            r1.isAffectBullet = true;
-            // 转移子弹
-            r1.SetOnBulletEnterAction((b) => {
-                if (b.GetRotate().x > 0)
-                {
-                    b.transform.position = r2.transform.position;
-                }
-            });
             // 转移敌怪
             r1.SetOnEnemyEnterAction((m) => {
                 // BOSS与管道本身不能通过
@@ -312,13 +306,45 @@ public class DongJun : BossUnit
             });
             r1.AddTask(t);
         }
+        // 为左向管道添加转移子弹的区域 并将区域与 管道绑定
+        {
+            Vector3 offset = 0 * Vector3.left * 0.375f * MapManager.gridWidth; // 跟随偏移量
+            r1_bullet = RetangleAreaEffectExecution.GetInstance(p1.transform.position + offset, 0.25f, 1, "Enemy");
+            r1_bullet.isAffectBullet = true;
+            // 转移子弹
+            r1_bullet.SetOnBulletEnterAction((b) => {
+                if (b.GetRotate().x > 0)
+                {
+                    b.transform.position = p2.transform.position;
+                    r1_bullet.AddExcludeBullet(b); // 不再二次传送这个子弹
+                }
+            });
+            r1_bullet.SetAffectHeight(0);
+            GameController.Instance.AddAreaEffectExecution(r1_bullet);
+
+            // 添加绑定任务
+            CustomizationTask t = new CustomizationTask();
+            t.AddTaskFunc(delegate {
+                if (p1.IsAlive())
+                {
+                    r1_bullet.transform.position = p1.transform.position + offset;
+                    return false;
+                }
+                else
+                {
+                    r1_bullet.MDestory();
+                    return true;
+                }
+            });
+            r1_bullet.AddTask(t);
+        }
 
 
 
-        // 为右向管道添加转移子弹的区域 并将区域与 管道绑定
+        // 为右向管道添加转移老鼠的区域 并将区域与 管道绑定
         {
             Vector3 offset = 0*Vector3.right * 0.375f * MapManager.gridWidth; // 跟随偏移量
-            r2 = RetangleAreaEffectExecution.GetInstance(p2.transform.position + offset, 0.25f, 1, "CollideTriple");
+            r2 = RetangleAreaEffectExecution.GetInstance(p2.transform.position + offset, 0.25f, 1, "ItemCollideEnemy");
             r2.isAffectMouse = true;
             r2.isAffectBullet = true;
             // 转移子弹
@@ -358,6 +384,38 @@ public class DongJun : BossUnit
                 }
             });
             r2.AddTask(t);
+        }
+        // 为右向管道添加转移子弹的区域 并将区域与 管道绑定
+        {
+            Vector3 offset = 0 * Vector3.right * 0.375f * MapManager.gridWidth; // 跟随偏移量
+            r2_bullet = RetangleAreaEffectExecution.GetInstance(p2.transform.position + offset, 0.25f, 1, "Enemy");
+            r2_bullet.isAffectBullet = true;
+            // 转移子弹
+            r2_bullet.SetOnBulletEnterAction((b) => {
+                if (b.GetRotate().x < 0)
+                {
+                    b.transform.position = p1.transform.position;
+                    r2_bullet.AddExcludeBullet(b); // 不再二次传送这个子弹
+                }
+            });
+            r2_bullet.SetAffectHeight(0);
+            GameController.Instance.AddAreaEffectExecution(r2_bullet);
+
+            // 添加绑定任务
+            CustomizationTask t = new CustomizationTask();
+            t.AddTaskFunc(delegate {
+                if (p2.IsAlive())
+                {
+                    r2_bullet.transform.position = p2.transform.position + offset;
+                    return false;
+                }
+                else
+                {
+                    r2_bullet.MDestory();
+                    return true;
+                }
+            });
+            r2_bullet.AddTask(t);
         }
 
         // 对两管施加死亡绑定（一个死了会连带另一个也死）
@@ -710,6 +768,7 @@ public class DongJun : BossUnit
         r.SetInstantaneous();
         r.isAffectFood = true;
         r.isAffectMouse = true;
+        r.isAffectCharacter = true;
         r.SetOnFoodEnterAction(stunAction);
         r.SetOnEnemyEnterAction(stunAction);
         r.AddExcludeMouseUnit(this); // 自身被排除在外

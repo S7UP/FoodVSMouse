@@ -70,6 +70,14 @@ public class BaseMap : MonoBehaviour, IGameControllerMember
     {
 
     }
+
+    /// <summary>
+    /// 每帧更新结束后附带更新事件
+    /// </summary>
+    public virtual void AfterUpdate()
+    {
+
+    }
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void MInit()
@@ -129,6 +137,8 @@ public class BaseMap : MonoBehaviour, IGameControllerMember
         {
             item.MUpdate();
         }
+
+        AfterUpdate();
     }
 
     public void MPause()

@@ -4,7 +4,7 @@ using UnityEngine;
 /// <summary>
 /// 木盘子
 /// </summary>
-public class WoodenDisk : FoodUnit, IInWater
+public class WoodenDisk : FoodUnit
 {
     private const string TaskKey = "木盘子提供的悬浮效果";
     private BoolModifier IgnoreWaterModifier = new BoolModifier(true); // 免疫水蚀修饰器
@@ -29,10 +29,67 @@ public class WoodenDisk : FoodUnit, IInWater
         unitList.Clear();
         base.MInit();
         // 免疫水蚀效果
-        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreWaterGridState, IgnoreWaterModifier);
+        WaterGridType.AddNoAffectByWater(this, IgnoreWaterModifier);
         typeAndShapeToLayer = -1;
-        // 添加水波纹效果
-        EffectManager.AddWaterWaveEffectToUnit(this);
+        // 创建承载检测区域
+        CreateCheckArea();
+        // 设置仅能被部分老鼠阻挡并且伤害
+        AddCanBlockFunc((self, other) =>
+        {
+            if(other is MouseUnit)
+            {
+                if (noEffectMouseList.Contains((MouseNameTypeMap)other.mType))
+                    return true;
+            }
+            return false;
+        });
+        AddCanHitFunc((self, bullet) => {
+            return false;
+        });
+        AddCanBeSelectedAsTargetFunc((self, other) => {
+            if (other is MouseUnit)
+            {
+                if (noEffectMouseList.Contains((MouseNameTypeMap)other.mType))
+                    return true;
+            }
+            return false;
+        });
+    }
+
+    /// <summary>
+    /// 创建检测区域
+    /// </summary>
+    private void CreateCheckArea()
+    {
+        RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 1, 1, "BothCollide");
+        r.isAffectFood = true;
+        r.isAffectMouse = true;
+        r.isAffectCharacter = true;
+        r.SetOnFoodEnterAction(OnCollision);
+        r.SetOnEnemyEnterAction(OnCollision);
+        r.SetOnCharacterEnterAction(OnCollision);
+        r.SetOnFoodStayAction(OnCollision);
+        r.SetOnEnemyStayAction(OnCollision);
+        r.SetOnCharacterStayAction(OnCollision);
+        r.SetOnFoodExitAction(OnUnitExit);
+        r.SetOnEnemyExitAction(OnUnitExit);
+        r.SetOnCharacterExitAction(OnUnitExit);
+        GameController.Instance.AddAreaEffectExecution(r);
+
+        CustomizationTask t = new CustomizationTask();
+        t.AddTaskFunc(delegate {
+            if (IsAlive())
+            {
+                r.transform.position = transform.position;
+                return false;
+            }
+            else
+                return true;
+        });
+        t.OnExitFunc = delegate {
+            r.ExecuteRecycle();
+        };
+        r.AddTask(t);
     }
 
     public override void UpdateAttributeByLevel()
@@ -61,35 +118,21 @@ public class WoodenDisk : FoodUnit, IInWater
         base.MUpdate();
     }
 
-    private void OnCollision(Collider2D collision)
+    private void OnCollision(BaseUnit u)
     {
-        if(collision.tag.Equals("Food") || collision.tag.Equals("Mouse") || collision.tag.Equals("Item") || collision.tag.Equals("Character"))
+        // 检查目标是否不能生效
+        if ((u is MouseUnit && noEffectMouseList.Contains((MouseNameTypeMap)u.mType)) || u.GetHeight() != 0)
+            return;
+
+        if (!unitList.Contains(u))
         {
-            BaseUnit unit = collision.GetComponent<BaseUnit>();
-            // 检查目标是否不能生效
-            if ((unit is MouseUnit && noEffectMouseList.Contains((MouseNameTypeMap)unit.mType)) || unit.GetHeight()!=0)
-                return;
-
-            if (!unitList.Contains(unit))
-            {
-                // 使目标的木盘子承载数+1
-                if (!unit.NumericBox.IntDict.ContainsKey(Tag))
-                    unit.NumericBox.IntDict.Add(Tag, new IntNumeric());
-                unit.NumericBox.IntDict[Tag].AddAddModifier(VehicleModifier);
-                // 把目标对象加入自己承载的表中
-                unitList.Add(unit);
-            } 
+            // 使目标的木盘子承载数+1
+            if (!u.NumericBox.IntDict.ContainsKey(Tag))
+                u.NumericBox.IntDict.Add(Tag, new IntNumeric());
+            u.NumericBox.IntDict[Tag].AddAddModifier(VehicleModifier);
+            // 把目标对象加入自己承载的表中
+            unitList.Add(u);
         }
-    }
-
-    public void OnTriggerEnter2D(Collider2D collision)
-    {
-        OnCollision(collision);
-    }
-
-    public void OnTriggerStay2D(Collider2D collision)
-    {
-        OnCollision(collision);
     }
 
     private void OnUnitExit(BaseUnit unit)
@@ -105,19 +148,10 @@ public class WoodenDisk : FoodUnit, IInWater
         }
     }
 
-    public void OnTriggerExit2D(Collider2D collision)
-    {
-        if (collision.tag.Equals("Food") || collision.tag.Equals("Mouse") || collision.tag.Equals("Item") || collision.tag.Equals("Character"))
-        {
-            BaseUnit unit = collision.GetComponent<BaseUnit>();
-            OnUnitExit(unit);
-        }
-    }
-
     public override void AfterDeath()
     {
         // 移除水波纹效果
-        EffectManager.RemoveWaterWaveEffectFromUnit(this);
+        // EffectManager.RemoveWaterWaveEffectFromUnit(this);
 
         // 移除表中还存在的单位身上的由该盘子产生的免疫水蚀标签
         for (int i = 0; i < unitList.Count; i++)
@@ -125,21 +159,6 @@ public class WoodenDisk : FoodUnit, IInWater
             OnUnitExit(unitList[0]);
         }
         base.AfterDeath();
-    }
-
-    public void OnEnterWater()
-    {
-        
-    }
-
-    public void OnStayWater()
-    {
-        
-    }
-
-    public void OnExitWater()
-    {
-        
     }
 
     /// <summary>

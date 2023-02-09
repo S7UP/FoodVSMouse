@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 /// <summary>
@@ -79,7 +77,15 @@ public class RankSelectPanel : BasePanel
 
         if (mUIFacade.currentScenePanelDict.ContainsKey(StringManager.MainlinePanel))
         {
-            mUIFacade.currentScenePanelDict[StringManager.MainlinePanel].InitPanel(); // 刷新一下主线面板以更新难度
+            mUIFacade.currentScenePanelDict[StringManager.MainlinePanel].InitPanel(); // 刷新一下面板以更新难度
+        }
+        if (mUIFacade.currentScenePanelDict.ContainsKey(StringManager.WarriorChallengePanel))
+        {
+            mUIFacade.currentScenePanelDict[StringManager.WarriorChallengePanel].InitPanel(); // 刷新一下面板以更新难度
+        }
+        if (mUIFacade.currentScenePanelDict.ContainsKey(StringManager.SpurlinePanel))
+        {
+            mUIFacade.currentScenePanelDict[StringManager.SpurlinePanel].InitPanel(); // 刷新一下面板以更新难度
         }
     }
 

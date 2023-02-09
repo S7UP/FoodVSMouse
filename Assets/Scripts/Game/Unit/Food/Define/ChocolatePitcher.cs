@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 using UnityEngine;
 /// <summary>
 /// 巧克力投手
@@ -31,18 +33,18 @@ public class ChocolatePitcher : FoodUnit
         {
             case 1:
                 BigBulletAttackCount = 2;
-                BigDamageRate = 1.5f;
-                StunTime = 180;
+                BigDamageRate = 1f;
+                StunTime = 360;
                 break;
             case 2:
                 BigBulletAttackCount = 1;
-                BigDamageRate = 1.5f;
-                StunTime = 180;
+                BigDamageRate = 1f;
+                StunTime = 360;
                 break;
             default:
                 BigBulletAttackCount = 2;
-                BigDamageRate = 1.25f;
-                StunTime = 60;
+                BigDamageRate = 1f;
+                StunTime = 240;
                 break;
         }
         bigLeft = BigBulletAttackCount;
@@ -79,9 +81,7 @@ public class ChocolatePitcher : FoodUnit
     {
         BaseUnit targetUnit = PitcherManager.FindTargetByPitcher(this, transform.position.x, GetRowIndex());
         if (targetUnit != null)
-        {
             targetPosition = targetUnit.transform.position;
-        }
         return targetUnit != null;
     }
 
@@ -149,19 +149,40 @@ public class ChocolatePitcher : FoodUnit
     /// </summary>
     public override void ExecuteDamage()
     {
-        // 选择目标
-        BaseUnit target = PitcherManager.FindTargetByPitcher(this, transform.position.x, GetRowIndex());
-
-
+        int rowIndex = GetRowIndex();
         if(bigLeft > 0)
         {
             bigLeft--;
+            BaseUnit target = PitcherManager.FindTargetByPitcher(this, transform.position.x, rowIndex);
             CreateSmallBullet(transform.position, target);
         }
         else
         {
             bigLeft = BigBulletAttackCount;
-            CreateBigBullet(transform.position, target);
+            // 对三行
+            int startIndex = Mathf.Max(0, rowIndex - 1);
+            int endIndex = Mathf.Min(6, rowIndex + 1);
+            for (int i = startIndex; i <= endIndex; i++)
+            {
+                // 先找i行没有被定身的最左单位
+                List<BaseUnit> unitList = new List<BaseUnit>();
+                foreach (var u in GameController.Instance.GetSpecificRowEnemyList(i))
+                {
+                    unitList.Add(u);
+                }
+                // 寻找本行的友方布丁单位，也一并加入
+                foreach (var u in GameController.Instance.GetSpecificRowAllyList(i))
+                {
+                    if (u.mType == (int)FoodNameTypeMap.CherryPudding)
+                        unitList.Add(u);
+                }
+                List<BaseUnit> list = UnitManager.GetList(unitList, (u) => { return u.GetNoCountUniqueStatus(StringManager.Stun) == null; });
+                BaseUnit target = PitcherManager.FindTargetByPitcher(this, transform.position.x, list, null);
+                if(target == null)
+                    target = PitcherManager.FindTargetByPitcher(this, transform.position.x, i);
+                if(target != null || i == rowIndex)
+                    CreateBigBullet(transform.position, target);
+            }
         }
         
     }
@@ -173,7 +194,7 @@ public class ChocolatePitcher : FoodUnit
     /// <param name="target"></param>
     private BaseBullet CreateSmallBullet(Vector2 startPosition, BaseUnit target)
     {
-        AllyBullet b = AllyBullet.GetInstance(SmallBulletRuntimeAnimatorController, this, mCurrentAttack);
+        AllyBullet b = AllyBullet.GetInstance(BulletStyle.Throwing, SmallBulletRuntimeAnimatorController, this, mCurrentAttack);
         b.AddSpriteOffsetY(new FloatModifier(0.5f * MapManager.gridHeight));
         b.isnDelOutOfBound = true; // 出屏不自删
 
@@ -228,7 +249,7 @@ public class ChocolatePitcher : FoodUnit
     /// <returns></returns>
     private BaseBullet CreateBigBullet(Vector2 startPosition, BaseUnit target)
     {
-        AllyBullet b = AllyBullet.GetInstance(BigBulletRuntimeAnimatorController, this, BigDamageRate*mCurrentAttack);
+        AllyBullet b = AllyBullet.GetInstance(BulletStyle.Throwing, BigBulletRuntimeAnimatorController, this, BigDamageRate*mCurrentAttack);
         b.AddSpriteOffsetY(new FloatModifier(0.5f * MapManager.gridHeight));
         b.isnDelOutOfBound = true; // 出屏不自删
 
@@ -278,13 +299,17 @@ public class ChocolatePitcher : FoodUnit
                 if (u == null || !u.IsAlive())
                     return;
 
-                // 晕住
-                u.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(u, StunTime, false));
-                if (u.NumericBox.GetBoolNumericValue(StringManager.IgnoreStun))
-                {
-                    // 若目标免疫晕眩，则造成额外伤害
-                    new DamageAction(CombatAction.ActionType.CauseDamage, this, u, BigDamageRate * mCurrentAttack).ApplyAction();
-                }
+                // 如果目标已处于定身状态则效果会延长，但最多不超过15秒
+                StatusAbility s = u.GetNoCountUniqueStatus(StringManager.Stun);
+                if (s != null)
+                    s.leftTime += Mathf.Min(60, Mathf.Max(0, 540 - s.leftTime));
+                else
+                    u.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(u, StunTime, false));
+                //if (u.NumericBox.GetBoolNumericValue(StringManager.IgnoreStun))
+                //{
+                //    // 若目标免疫晕眩，则造成额外伤害
+                //    new DamageAction(CombatAction.ActionType.CauseDamage, this, u, BigDamageRate * mCurrentAttack).ApplyAction();
+                //}
             });
         }
 

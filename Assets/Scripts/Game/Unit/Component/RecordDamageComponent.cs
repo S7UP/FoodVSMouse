@@ -37,11 +37,11 @@ public class RecordDamageComponent
         if (recordDamage >= dmg)
         {
             recordDamage -= dmg; // ½µµÍ¼ÇÂ¼Öµ
-            new DamageAction(CombatAction.ActionType.RealDamage, null, master, dmg).ApplyAction();
+            new DamageAction(CombatAction.ActionType.RecordDamage, null, master, dmg).ApplyAction();
         }
-        else
+        else if(recordDamage > 0)
         {
-            new DamageAction(CombatAction.ActionType.RealDamage, null, master, recordDamage).ApplyAction();
+            new DamageAction(CombatAction.ActionType.RecordDamage, null, master, recordDamage).ApplyAction();
             recordDamage = 0;
         }
         

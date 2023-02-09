@@ -1,3 +1,5 @@
+using System;
+
 using UnityEngine;
 /// <summary>
 /// 罐头鼠
@@ -10,7 +12,7 @@ public class CanMouse : MouseUnit
     private FloatModifier attackSpeedModifier = new FloatModifier(100); // 加攻速修饰
     private BoolModifier IgnoreBombInstantKill = new BoolModifier(true);
     private BoolModifier IgnoreSlowDown = new BoolModifier(true);
-    private BoolModifier IgnoreFrozen = new BoolModifier(true);
+    private BoolModifier IgnoreStun = new BoolModifier(true);
 
     private bool isReinstallState; // 是否为重装态
 
@@ -38,10 +40,22 @@ public class CanMouse : MouseUnit
         {
             // 起飞咯！！！！
             SetActionState(new TransitionState(this));
-            Tasker t = GameController.Instance.AddTasker(new ParabolaMovePresetTasker(this, 24.0f, 0.75f, transform.position, transform.position + (Vector3)moveRotate*3*MapManager.gridWidth, false));
+            //Tasker t = GameController.Instance.AddTasker(new ParabolaMovePresetTasker(this, 24.0f, 0.75f, transform.position, transform.position + (Vector3)moveRotate*3*MapManager.gridWidth, false));
+            //DisableMove(true);
+            //// 飞行结束时切换成丢装备且晕眩状态
+            //t.AddOtherEndEvent(delegate { SetActionState(new CastState(this)); DisableMove(false); });
+
+            float dist = 3 * MapManager.gridWidth;
+            CustomizationTask t = TaskManager.AddParabolaTask(this, dist / 60, dist / 2, transform.position, transform.position + (Vector3)moveRotate * dist, false);
             DisableMove(true);
-            // 飞行结束时切换成丢装备且晕眩状态
-            t.AddOtherEndEvent(delegate { SetActionState(new CastState(this)); DisableMove(false); });
+            Action oldExit = t.OnExitFunc;
+            t.OnExitFunc = delegate
+            {
+                if (oldExit != null)
+                    oldExit();
+                SetActionState(new CastState(this));
+                DisableMove(false);
+            };
         }
     }
 
@@ -64,7 +78,7 @@ public class CanMouse : MouseUnit
         // 免疫灰烬减速与定身
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, IgnoreBombInstantKill);
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreSlowDown, IgnoreSlowDown);
-        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozen, IgnoreFrozen);
+        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, IgnoreStun);
 
         mHertIndex = 0;
         UpdateRuntimeAnimatorController();
@@ -83,7 +97,7 @@ public class CanMouse : MouseUnit
         NumericBox.MoveSpeed.RemoveFinalPctAddModifier(moveSpeedModifier1);
         NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, IgnoreBombInstantKill);
         NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreSlowDown, IgnoreSlowDown);
-        NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreFrozen, IgnoreFrozen);
+        NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreStun, IgnoreStun);
 
 
         // 获取加速效果

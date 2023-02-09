@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 
 using UnityEngine;
@@ -32,51 +33,54 @@ public class UIFacade
         //InitMask();
     }
 
-    // 初始化遮罩
-    public void InitMask()
-    {
-
-        // mask = mGameManager.factoryManager.factoryDict[FactoryType.UIFactory].GetItem("Img_Mask");
-        // mask = mGameManager.GetGameObjectResource(FactoryType.UIFactory, "Img_Mask");
-        // mask = GetGameObjectResource(FactoryType.UIFactory, "Img_Mask");
-        //mask = CreateUIAndSetUIPosition("Img_Mask");
-        //maskImage = mask.GetComponent<Image>();
-    }
-
     // 改变当前场景的状态
-    public void ChangeSceneState(IBaseSceneState baseSceneState)
+    public IEnumerator ChangeSceneState(IBaseSceneState baseSceneState, int StayTime, int MaskTime)
     {
         lastSceneState = currentSceneState;
         //ShowMask();
         currentSceneState = baseSceneState;
+        // 渐出至加载界面
+        yield return GameManager.Instance.StartCoroutine(GameManager.Instance.ChangeToStartLoadPanel(MaskTime, delegate {
+            // 如果上一个场景是战斗场景，就回收场景的东西并调整loading面板大小
+            if (lastSceneState is GameNormalSceneState)
+            {
+                GameController.Instance.RecycleAndDestoryAllInstance();
+                GameManager.Instance.startLoadPanel.transform.localScale = new Vector2(0.78125f, 0.78125f);
+                string id = TipsManager.GetRandomExitTipsId();
+                string content = TipsManager.GetExitContent(id);
+                TipsManager.AddExitVal(id); // 添加权值
+                GameManager.Instance.startLoadPanel.ShowTips(content);
+            }
+            else
+            {
+                GameManager.Instance.startLoadPanel.transform.localScale = Vector2.one;
+            }
+            // 加载完Loading面板后，如果该场景是战斗场景，播放tips
+            if (baseSceneState is GameNormalSceneState)
+            {
+                string id = TipsManager.GetRandomEnterTipsId();
+                string content = TipsManager.GetEnterContent(id);
+                TipsManager.AddEnterVal(id); // 添加权值
+                GameManager.Instance.startLoadPanel.ShowTips(content);
+            }
+        }));
+        // 先加载这个场景
+        yield return GameManager.Instance.StartCoroutine(baseSceneState.LoadScene());
+        // 场景加载完一瞬间，如果下一个场景是战斗场景，那么缩小
+        if (baseSceneState is GameNormalSceneState) 
+            GameManager.Instance.startLoadPanel.transform.localScale = new Vector2(0.78125f, 0.78125f);
+        if (lastSceneState is GameNormalSceneState)
+            GameManager.Instance.startLoadPanel.transform.localScale = Vector2.one;
         if (lastSceneState != null)
             lastSceneState.ExitScene();
-        currentSceneState.EnterScene();
+        // 等待固定时间
+        for (int i = 0; i < StayTime; i++)
+        {
+            yield return null;
+        }
+        // 从加载界面渐出
+        yield return GameManager.Instance.StartCoroutine(GameManager.Instance.StartLoadPanelDisappear(MaskTime, delegate { currentSceneState.EnterScene(); }));
     }
-
-    //显示遮罩
-    //public void ShowMask()
-    //{
-    //    mask.transform.SetSiblingIndex(10);
-    //    Tween t = DOTween.To(() => maskImage.color, toColor => maskImage.color = toColor, new Color(0, 0, 0, 1), 2f);
-    //    // 注册事件结束时的回调事件
-    //    t.OnComplete(ExitSceneComplete);
-    //}
-
-    // 离开当前场景
-    //private void ExitSceneComplete()
-    //{
-    //    if(lastSceneState!=null)
-    //        lastSceneState.ExitScene();
-    //    currentSceneState.EnterScene();
-    //}
-
-    // 隐藏遮罩
-    //public void HideMask()
-    //{
-    //    mask.transform.SetSiblingIndex(10);
-    //    DOTween.To(() => maskImage.color, toColor => maskImage.color = toColor, new Color(0, 0, 0, 0), 2f);
-    //}
 
     //实例化当前场景所有面板，并存放字典
     public void InitDict()

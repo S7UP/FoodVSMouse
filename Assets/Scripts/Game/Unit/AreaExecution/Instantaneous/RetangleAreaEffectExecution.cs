@@ -52,26 +52,6 @@ public class RetangleAreaEffectExecution : AreaEffectExecution
         base.MUpdate();
     }
 
-    /// <summary>
-    /// 行判断（列判断已经包含在碰撞之中了，因此可以不做）
-    /// </summary>
-    /// <param name="baseUnit"></param>
-    /// <returns></returns>
-    public override bool IsMeetingCondition(BaseUnit unit)
-    {
-        if (unit.isDeathState)
-            return false;
-        //int c = (rowCount - 1) / 2;
-        //int startIndex = Mathf.Max(0, currentRowIndex - c - offsetY);
-        //int endIndex = Mathf.Min(MapController.yRow - 1, currentRowIndex + c - offsetY);
-        //int index = baseUnit.GetRowIndex();
-        //if (index >= startIndex && index <= endIndex)
-        //    return true;
-        //else
-        //    return false;
-        return true;
-    }
-
     public static RetangleAreaEffectExecution GetInstance(Vector2 pos, float colCount, float rowCount, string CollisionLayer)
     {
         RetangleAreaEffectExecution e = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "AreaEffect/RetangleAreaEffectExecution").GetComponent<RetangleAreaEffectExecution>();

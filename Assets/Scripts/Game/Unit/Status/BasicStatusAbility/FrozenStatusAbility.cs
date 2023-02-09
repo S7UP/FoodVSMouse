@@ -8,7 +8,7 @@ public class FrozenStatusAbility : StatusAbility
     // private FrozenState frozenState;
     // private BoolModifier boolModifier;
     private BoolModifier frozenBoolModifier;
-    private StunStatusAbility stunStatusAbility; // 晕眩效果
+    //private StunStatusAbility stunStatusAbility; // 晕眩效果
     private bool isForce = false; // 是否强制生效（无视免疫效果
 
     public FrozenStatusAbility(BaseUnit pmaster, float time, bool isForce) : base(pmaster, time)
@@ -39,7 +39,6 @@ public class FrozenStatusAbility : StatusAbility
     /// </summary>
     public override void OnDisableEffect()
     {
-
         if (frozenBoolModifier != null)
         {
             master.NumericBox.RemoveDecideModifierToBoolDict(StringManager.Frozen, frozenBoolModifier);
@@ -47,16 +46,11 @@ public class FrozenStatusAbility : StatusAbility
         }
         // 移除晕眩效果
         master.RemoveNoCountUniqueStatusAbility(StringManager.Stun);
-        //if (frozenState != null)
-        //{
-        //    frozenState.TryExitCurrentState();
-        //    frozenState = null;
-        //}
-        //if (boolModifier != null)
-        //{
-        //    master.RemoveDisAbleSkillModifier(boolModifier);
-        //    boolModifier = null;
-        //}
+        // 移除冰冻特效
+        if (master.IsContainEffect(StringManager.Frozen))
+        {
+            master.RemoveEffectFromDict(StringManager.Frozen);
+        }
     }
 
     /// <summary>
@@ -71,25 +65,32 @@ public class FrozenStatusAbility : StatusAbility
             master.NumericBox.AddDecideModifierToBoolDict(StringManager.Frozen, frozenBoolModifier);
         }
         // 为目标施加晕眩效果
-        if (stunStatusAbility == null)
-            stunStatusAbility = new StunStatusAbility(master, leftTime, isForce);
+        StatusAbility s = master.GetNoCountUniqueStatus(StringManager.Stun);
+        if (s == null)
+        {
+            s = new StunStatusAbility(master, leftTime, isForce);
+            master.AddNoCountUniqueStatusAbility(StringManager.Stun, s);
+        }
         else
         {
-            stunStatusAbility.leftTime = Mathf.Max(stunStatusAbility.leftTime, this.leftTime);
-            stunStatusAbility.totalTime = (stunStatusAbility.totalTime.baseValue > this.totalTime.baseValue ? stunStatusAbility.totalTime : this.totalTime);
+            s.leftTime = Mathf.Max(s.leftTime, this.leftTime);
+            s.totalTime = (s.totalTime.baseValue > this.totalTime.baseValue ? s.totalTime : this.totalTime);
         }
-        master.AddNoCountUniqueStatusAbility(StringManager.Stun, stunStatusAbility);
-
-        //// 目标动作状态转化为冻结状态
-        //if (frozenState == null)
-        //{
-        //    frozenState = new FrozenState(master, master.mCurrentActionState);
-        //    master.SetActionState(frozenState);
-        //}
-        //if (boolModifier == null)
-        //    boolModifier = master.AddDisAbleSkillModifier();
         // 添加变色效果
         master.SetFrozeSlowEffectEnable(true);
+        // 添加冰冻特效
+        if (!master.IsContainEffect(StringManager.Frozen))
+        {
+            BaseEffect e = BaseEffect.CreateInstance(GameManager.Instance.GetRuntimeAnimatorController("Effect/Frozen"), null, "Frozen", "Break", true);
+            GameController.Instance.AddEffect(e);
+            string name;
+            int order;
+            if (master.TryGetSpriteRenternerSorting(out name, out order))
+            {
+                e.SetSpriteRendererSorting(name, order + 5);
+            }
+            master.AddEffectToDict(StringManager.Frozen, e, new Vector2(0, 0));
+        }
     }
 
     /// <summary>
@@ -144,7 +145,13 @@ public class FrozenStatusAbility : StatusAbility
             FrozenStatusAbility f = (sa as FrozenStatusAbility);
             f.totalTime = (f.totalTime.baseValue > this.totalTime.baseValue ? f.totalTime : this.totalTime);
             f.leftTime = Mathf.Max(f.leftTime, this.leftTime);
-            // 之后这个对象应该会被系统抛弃，继续沿用原对象（sa)作为目标的状态，这里不需要管它是否被抛弃以及怎么抛弃，知道这件事就行了
+            // 晕眩时长也要重置！
+            StatusAbility s = master.GetNoCountUniqueStatus(StringManager.Stun);
+            if (s == null)
+                s = new StunStatusAbility(master, f.totalTime.baseValue, false);
+            s.totalTime = (s.totalTime.baseValue > this.totalTime.baseValue ? s.totalTime : this.totalTime);
+            s.leftTime = Mathf.Max(s.leftTime, this.leftTime);
+            master.AddNoCountUniqueStatusAbility(StringManager.Stun, s);
         }
     }
 }

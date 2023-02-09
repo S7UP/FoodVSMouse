@@ -122,7 +122,7 @@ public class CardBuilderManager
         CanConstructeInGridDict = new Dictionary<FoodNameTypeMap, Func<BaseGrid, bool>>();
         {
             Dictionary<FoodNameTypeMap, Func<BaseGrid, bool>> d = CanConstructeInGridDict;
-            d.Add(FoodNameTypeMap.WoodenDisk, WoodenDiskCanConstructeInGrid);
+            // d.Add(FoodNameTypeMap.WoodenDisk, WoodenDiskCanConstructeInGrid);
             d.Add(FoodNameTypeMap.CottonCandy, CottonCandyCanConstructeInGrid);
         }
     }
@@ -261,10 +261,10 @@ public class CardBuilderManager
     /// </summary>
     /// <param name="grid"></param>
     /// <returns></returns>
-    private bool WoodenDiskCanConstructeInGrid(BaseGrid grid)
-    {
-        return grid.IsContainGridType(GridType.Water);
-    }
+    //private bool WoodenDiskCanConstructeInGrid(BaseGrid grid)
+    //{
+    //    return grid.IsContainGridType(GridType.Water);
+    //}
 
     /// <summary>
     /// 种植扑克护罩后的增值效果

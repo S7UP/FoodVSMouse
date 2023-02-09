@@ -44,8 +44,12 @@ public class EnemyBullet : BaseBullet
             BaseUnit targetUnit = GetTarget(u);
             if (targetUnit!=null && UnitManager.CanBulletHit(targetUnit, this) && !unitList.Contains(targetUnit))
             {
-                unitList.Add(targetUnit);
                 TakeDamage(targetUnit);
+                unitList.Add(targetUnit);
+            }else if(UnitManager.CanBulletHit(u, this) && !unitList.Contains(u))
+            {
+                TakeDamage(u);
+                unitList.Add(u);
             }
         }else if(isAffectCharacter && collision.tag.Equals("Character"))
         {
@@ -53,8 +57,13 @@ public class EnemyBullet : BaseBullet
             BaseUnit targetUnit = GetTarget(u);
             if (targetUnit != null && UnitManager.CanBulletHit(targetUnit, this) && !unitList.Contains(targetUnit))
             {
-                unitList.Add(targetUnit);
                 TakeDamage(targetUnit);
+                unitList.Add(targetUnit);
+            }
+            else if (UnitManager.CanBulletHit(u, this) && !unitList.Contains(u))
+            {
+                TakeDamage(u);
+                unitList.Add(u);
             }
         }
     }

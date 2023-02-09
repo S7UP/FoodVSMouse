@@ -1,10 +1,12 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 /// <summary>
 /// 可选择的卡片模型
 /// </summary>
-public class Btn_AvailableCard : MonoBehaviour, ICanvasRaycastFilter
+public class Btn_AvailableCard : MonoBehaviour, ICanvasRaycastFilter, IPointerEnterHandler, IPointerExitHandler
 {
+    private RectTransform RectTrans;
     private AvailableCardInfo availableCardInfo;
     private Button button;
     private bool isSelected;
@@ -16,6 +18,7 @@ public class Btn_AvailableCard : MonoBehaviour, ICanvasRaycastFilter
 
     private void Awake()
     {
+        RectTrans = GetComponent<RectTransform>();
         button = GetComponent<Button>();
         Mask = transform.Find("Mask").gameObject;
         Img_Display = transform.Find("Img_Display").GetComponent<Image>();
@@ -118,15 +121,21 @@ public class Btn_AvailableCard : MonoBehaviour, ICanvasRaycastFilter
         return GameManager.Instance.GetGameObjectResource(FactoryType.UIFactory, "SelectPanel/Btn_AvailableCard").GetComponent<Btn_AvailableCard>();
     }
 
-    // Start is called before the first frame update
-    void Start()
+    public void OnPointerEnter(PointerEventData eventData)
     {
-        
+        int type = availableCardInfo.type;
+        int shape = availableCardInfo.maxShape;
+        if (type != -1)
+        {
+            TextArea.Instance.SetText(FoodManager.GetFoodName(type, shape) + "\n" + FoodManager.GetVerySimpleFeature((FoodNameTypeMap)type));
+            TextArea.Instance.SetLocalPosition(transform, new Vector2(RectTrans.sizeDelta.x / 2, -RectTrans.sizeDelta.y / 2), new Vector2(1, -1));
+        }
     }
 
-    // Update is called once per frame
-    void Update()
+    public void OnPointerExit(PointerEventData eventData)
     {
-        
+        int type = availableCardInfo.type;
+        if (type != -1)
+            TextArea.ExecuteRecycle();
     }
 }

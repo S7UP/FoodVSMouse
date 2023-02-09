@@ -21,9 +21,13 @@ public class CustomizationItem : BaseItem
         gameObject.layer = LayerMask.NameToLayer(layerName);
     }
 
-    public static CustomizationItem GetInstance()
+    public static CustomizationItem GetInstance(Vector2 pos, RuntimeAnimatorController runtimeAnimatorController)
     {
-        return GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Item/CustomizationItem").GetComponent<CustomizationItem>();
+        CustomizationItem item = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Item/CustomizationItem").GetComponent<CustomizationItem>();
+        item.MInit();
+        item.transform.position = pos;
+        item.animator.runtimeAnimatorController = runtimeAnimatorController;
+        return item;
     }
 
     public override void ExecuteRecycle()

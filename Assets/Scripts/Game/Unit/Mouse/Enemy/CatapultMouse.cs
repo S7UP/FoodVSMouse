@@ -41,7 +41,7 @@ public class CatapultMouse : MouseUnit
         {
             if(transform.position.x < MapManager.GetColumnX(MapController.xColumn - 1))
             {
-                targetUnit = FoodManager.GetSpecificRowFarthestLeftCanTargetedAlly(GetRowIndex(), transform.position.x);
+                targetUnit = FoodManager.GetSpecificRowFarthestLeftCanTargetedAlly(GetRowIndex(), transform.position.x, true);
                 if (targetUnit != null)
                 {
                     return true;

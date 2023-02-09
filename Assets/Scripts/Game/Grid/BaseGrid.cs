@@ -35,8 +35,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     public int currentYIndex { get; private set; }
     public bool isHeightLimit = true; // 地形效果是否只作用于特定高度
     public float mHeight = 0;
-    public List<ITask> TaskList = new List<ITask>(); // 自身挂载任务表
-    public Dictionary<string, ITask> TaskDict = new Dictionary<string, ITask>(); // 任务字典（仅记录引用不实际执行逻辑，执行逻辑在任务表中）
+    public TaskController taskController = new TaskController();
     private BoxCollider2D mBoxCollider2D;
     public GridActionPointManager gridActionPointManager = new GridActionPointManager();
 
@@ -60,8 +59,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         isHeightLimit = true;
         mHeight = 0;
         gridActionPointManager.Initialize();
-        TaskList.Clear();
-        TaskDict.Clear();
+        taskController.Initial();
         SetBoxCollider2D(Vector2.zero, new Vector2(MapManager.gridWidth, MapManager.gridHeight));
     }
 
@@ -363,6 +361,15 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         return mFoodUnitDict.ContainsKey(foodInGridType);
     }
 
+    /// <summary>
+    /// 该格子是否有人物
+    /// </summary>
+    /// <returns></returns>
+    public bool IsContainCharacter()
+    {
+        return characterUnit != null;
+    }
+
     public bool IsContainTag(ItemNameTypeMap itemInGridType)
     {
         return mItemUnitDict.ContainsKey(itemInGridType);
@@ -401,26 +408,10 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     {
         Queue<FoodInGridType> typeQueue = new Queue<FoodInGridType>();
         typeQueue.Enqueue(FoodInGridType.Shield);
-        typeQueue.Enqueue(FoodInGridType.Default);
         typeQueue.Enqueue(FoodInGridType.Bomb);
+        typeQueue.Enqueue(FoodInGridType.Default);
 
         return GetHighestAttackPriorityFoodUnit(typeQueue, attacker);
-        //if (IsContainTag(FoodInGridType.Shield) && UnitManager.CanBeSelectedAsTarget(attacker, mFoodUnitDict[FoodInGridType.Shield]))
-        //{
-        //    return mFoodUnitDict[FoodInGridType.Shield];
-        //}
-        //else if (IsContainTag(FoodInGridType.Default))
-        //{
-        //    return mFoodUnitDict[FoodInGridType.Default];
-        //}else if (characterUnit != null)
-        //{
-        //    return characterUnit;
-        //}
-        //else if (IsContainTag(FoodInGridType.Bomb))
-        //{
-        //    return mFoodUnitDict[FoodInGridType.Bomb];
-        //}
-        //return null;
     }
 
     public FoodUnit GetFoodByTag(FoodInGridType type)
@@ -453,13 +444,13 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         {
             return mFoodUnitDict[FoodInGridType.Default];
         }
-        else if (characterUnit != null)
-        {
-            return characterUnit;
-        }
         else if (IsContainTag(FoodInGridType.Bomb))
         {
             return mFoodUnitDict[FoodInGridType.Bomb];
+        }
+        else if (characterUnit != null)
+        {
+            return characterUnit;
         }
         else if (IsContainTag(FoodInGridType.WaterVehicle))
         {
@@ -493,10 +484,6 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         {
             return mFoodUnitDict[FoodInGridType.Default];
         }
-        else if (characterUnit != null)
-        {
-            return characterUnit;
-        }
         else if (IsContainTag(FoodInGridType.WaterVehicle))
         {
             return mFoodUnitDict[FoodInGridType.WaterVehicle];
@@ -520,10 +507,15 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         {
             list.Add(mFoodUnitDict[FoodInGridType.Shield]);
         }
+        if (IsContainTag(FoodInGridType.Bomb))
+        {
+            list.Add(mFoodUnitDict[FoodInGridType.Bomb]);
+        }
         if (IsContainTag(FoodInGridType.Default))
         {
             list.Add(mFoodUnitDict[FoodInGridType.Default]);
         }
+
         return list;
     }
 
@@ -537,6 +529,10 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         if (IsContainTag(FoodInGridType.Shield))
         {
             list.Add(mFoodUnitDict[FoodInGridType.Shield]);
+        }
+        if (IsContainTag(FoodInGridType.Bomb))
+        {
+            list.Add(mFoodUnitDict[FoodInGridType.Bomb]);
         }
         if (IsContainTag(FoodInGridType.Default))
         {
@@ -559,13 +555,17 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         {
             return mFoodUnitDict[FoodInGridType.Default];
         }
-        else if (IsContainTag(FoodInGridType.Shield))
+        if (IsContainTag(FoodInGridType.Bomb))
         {
-            return mFoodUnitDict[FoodInGridType.Shield];
+            return mFoodUnitDict[FoodInGridType.Bomb];
         }
         else if (characterUnit != null)
         {
             return characterUnit;
+        }
+        else if (IsContainTag(FoodInGridType.Shield))
+        {
+            return mFoodUnitDict[FoodInGridType.Shield];
         }
 
         Queue<FoodInGridType> typeQueue = new Queue<FoodInGridType>();
@@ -624,6 +624,17 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
 
     public void MUpdate()
     {
+        // 清除依附单位字典无效的单位
+        List<string> delList = new List<string>();
+        foreach (var keyValuePair in mAttachedUnitDict)
+        {
+            if (keyValuePair.Value == null || !keyValuePair.Value.IsAlive())
+                delList.Add(keyValuePair.Key);
+        }
+        foreach (var key in delList)
+        {
+            RemoveUnitFromDict(key);
+        }
         int lastXIndex = currentXIndex;
         int lastYIndex = currentYIndex;
         currentXIndex = MapManager.GetXIndex(transform.position.x);
@@ -694,7 +705,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
         }
 
         // 挂载任务更新
-        OnTaskUpdate();
+        taskController.Update();
     }
 
     public void MPause()
@@ -803,15 +814,31 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     /// <param name="key"></param>
     public BaseUnit GetUnitFromDict(string key)
     {
+        if (IsContainUnit(key))
+            return mAttachedUnitDict[key];
+        else
+            return null;
+    }
+
+    /// <summary>
+    /// 是否含有某个为key的单位引用
+    /// </summary>
+    /// <param name="key"></param>
+    /// <returns></returns>
+    public bool IsContainUnit(string key)
+    {
         if (mAttachedUnitDict.ContainsKey(key))
         {
             BaseUnit unit = mAttachedUnitDict[key];
             if (unit.IsAlive())
-                return unit;
+                return true;
             else
+            {
                 mAttachedUnitDict.Remove(key);
+                return false;
+            }
         }
-        return null;
+        return false;
     }
 
     /// <summary>
@@ -819,11 +846,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     /// </summary>
     public void AddUniqueTask(string key, ITask t)
     {
-        if (!TaskDict.ContainsKey(key))
-        {
-            TaskDict.Add(key, t);
-            AddTask(t);
-        }
+        taskController.AddUniqueTask(key, t);
     }
 
     /// <summary>
@@ -832,8 +855,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     /// <param name="t"></param>
     public void AddTask(ITask t)
     {
-        TaskList.Add(t);
-        t.OnEnter();
+        taskController.AddTask(t);
     }
 
     /// <summary>
@@ -841,11 +863,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     /// </summary>
     public void RemoveUniqueTask(string key)
     {
-        if (TaskDict.ContainsKey(key))
-        {
-            RemoveTask(TaskDict[key]);
-            TaskDict.Remove(key);
-        }
+        taskController.RemoveUniqueTask(key);
     }
 
     /// <summary>
@@ -854,8 +872,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     /// <param name="t"></param>
     public void RemoveTask(ITask t)
     {
-        TaskList.Remove(t);
-        t.OnExit();
+        taskController.RemoveTask(t);
     }
 
     /// <summary>
@@ -865,39 +882,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     /// <returns></returns>
     public ITask GetTask(string key)
     {
-        if (TaskDict.ContainsKey(key))
-            return TaskDict[key];
-        return null;
-    }
-
-    /// <summary>
-    /// Task组更新
-    /// </summary>
-    private void OnTaskUpdate()
-    {
-        List<string> deleteKeyList = new List<string>();
-        foreach (var keyValuePair in TaskDict)
-        {
-            ITask t = keyValuePair.Value;
-            if (t.IsMeetingExitCondition())
-                deleteKeyList.Add(keyValuePair.Key);
-        }
-        foreach (var key in deleteKeyList)
-        {
-            RemoveUniqueTask(key);
-        }
-        List<ITask> deleteTask = new List<ITask>();
-        foreach (var t in TaskList)
-        {
-            if (t.IsMeetingExitCondition())
-                deleteTask.Add(t);
-            else
-                t.OnUpdate();
-        }
-        foreach (var t in deleteTask)
-        {
-            RemoveTask(t);
-        }
+        return taskController.GetTask(key);
     }
 
     public void AddCanBuildFuncListener(Func<BaseGrid, FoodInGridType, bool> func)
@@ -908,5 +893,17 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     public void RemoveCanBuildFuncListener(Func<BaseGrid, FoodInGridType, bool> func)
     {
         canBuildFuncListenerList.Remove(func);
+    }
+
+    /// <summary>
+    /// 默认的对格子上的友方单位造成伤害的方法
+    /// </summary>
+    public void TakeDamage(BaseUnit master, float dmg, bool isDamageCharacter)
+    {
+        BaseUnit unit = GetHighestAttackPriorityUnit(master);
+        if (unit != null && (isDamageCharacter || !(unit is CharacterUnit)))
+        {
+            new DamageAction(CombatAction.ActionType.CauseDamage, master, unit, dmg).ApplyAction();
+        }
     }
 }

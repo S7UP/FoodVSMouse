@@ -1,7 +1,3 @@
-using UnityEngine;
-using System.Collections.Generic;
-using UnityEngine.UI;
-using DG.Tweening;
 /// <summary>
 /// 关卡配置面板
 /// </summary>
@@ -30,6 +26,7 @@ public class StageConfigPanel : BasePanel
     public override void EnterPanel()
     {
         base.EnterPanel();
+        mStageInfoUI.Initial();
         UpdateUIByChangeStage();
     }
 
@@ -47,6 +44,29 @@ public class StageConfigPanel : BasePanel
     /// </summary>
     public void OnClickStartGame()
     {
+        // 如果是从主线挑战面板进入的关卡，则会读取当前主线挑战的通过奖励并录入到playerData中
+        if (mUIFacade.currentScenePanelDict.ContainsKey(StringManager.MainlinePanel))
+        {
+            // 普通图记录
+            {
+                MainlinePanel panel = mUIFacade.currentScenePanelDict[StringManager.MainlinePanel] as MainlinePanel;
+                if (panel.isActiveAndEnabled)
+                    PlayerData.GetInstance().SetCurrentStageSuccessRewardFunc(panel.SuccessReward);
+            }
+            // 勇士挑战记录
+            {
+                WarriorChallengePanel panel = mUIFacade.currentScenePanelDict[StringManager.WarriorChallengePanel] as WarriorChallengePanel;
+                if (panel.isActiveAndEnabled)
+                    PlayerData.GetInstance().SetCurrentStageSuccessRewardFunc(panel.SuccessReward);
+            }
+            // 支线挑战记录
+            {
+                SpurlinePanel panel = mUIFacade.currentScenePanelDict[StringManager.SpurlinePanel] as SpurlinePanel;
+                if (panel.isActiveAndEnabled)
+                    PlayerData.GetInstance().SetCurrentStageSuccessRewardFunc(panel.SuccessReward);
+            }
+        }
+
         mSelectEquipmentUI.EnterCombatScene(); // 从装备选择面板中读取并传入数据到下一场景
         GameManager.Instance.EnterComBatScene();
     }

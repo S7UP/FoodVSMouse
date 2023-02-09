@@ -8,7 +8,7 @@ public class SaladPitcher : FoodUnit
     private static RuntimeAnimatorController BulletRuntimeAnimatorController;
 
     private int bounceCount; // 子弹弹跳次数
-    private float bounceDamageRate; // 后续弹跳伤害比率
+    private float[] bounceDamageRateList; // 后续弹跳伤害比率
     private Vector2 targetPosition;
 
     public override void Awake()
@@ -26,15 +26,15 @@ public class SaladPitcher : FoodUnit
         {
             case 1:
                 bounceCount = 1;
-                bounceDamageRate = 1;
+                bounceDamageRateList = new float[] { 0.5f, 1.5f  };
                 break;
             case 2:
                 bounceCount = 2;
-                bounceDamageRate = 1;
+                bounceDamageRateList = new float[] { 0.5f, 1.5f, 1 };
                 break;
             default:
                 bounceCount = 1;
-                bounceDamageRate = 0.5f;
+                bounceDamageRateList = new float[] { 0.5f, 1f };
                 break;
         }
         targetPosition = Vector2.zero;
@@ -45,7 +45,7 @@ public class SaladPitcher : FoodUnit
     /// </summary>
     public override void UpdateAttributeByLevel()
     {
-        NumericBox.Attack.SetBase((float)(attr.baseAttrbute.baseAttack + attr.valueList[mLevel]));
+        NumericBox.Attack.SetBase((float)(attr.baseAttrbute.baseAttack + attr.valueList[mLevel])*1.2f);
     }
 
     /// <summary>
@@ -145,19 +145,13 @@ public class SaladPitcher : FoodUnit
         float real_dmg = ori_dmg;
         if(mShape == 2)
         {
-            if (bounceLeft == 2)
-                real_dmg = ori_dmg;
-            else
-                real_dmg = ori_dmg * bounceDamageRate;
+            real_dmg = ori_dmg * bounceDamageRateList[2 - bounceLeft];
         }
         else if(mShape < 2)
         {
-            if (bounceLeft == 1)
-                real_dmg = ori_dmg;
-            else
-                real_dmg = ori_dmg * bounceDamageRate;
+            real_dmg = ori_dmg * bounceDamageRateList[1 - bounceLeft];
         }
-        AllyBullet b = AllyBullet.GetInstance(BulletRuntimeAnimatorController, this, real_dmg);
+        AllyBullet b = AllyBullet.GetInstance(BulletStyle.Throwing, BulletRuntimeAnimatorController, this, real_dmg);
         b.AddSpriteOffsetY(new FloatModifier(0.5f*MapManager.gridHeight));
         b.isnDelOutOfBound = true; // 出屏不自删
 

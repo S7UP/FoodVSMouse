@@ -1,3 +1,5 @@
+using System;
+
 using UnityEngine;
 /// <summary>
 /// 袋鼠类
@@ -77,9 +79,21 @@ public class KangarooMouse : MouseUnit
         {
             // 添加一个弹起任务，跳一格
             isJumping = true;
-            Tasker t = GameController.Instance.AddTasker(new ParabolaMovePresetTasker(this, 12.0f, 0.8f, transform.position, transform.position + (Vector3)moveRotate * jumpDistance * MapManager.gridWidth, false));
+            //Tasker t = GameController.Instance.AddTasker(new ParabolaMovePresetTasker(this, 12.0f, 0.8f, transform.position, transform.position + (Vector3)moveRotate * jumpDistance * MapManager.gridWidth, false));
+            //DisableMove(true);
+            //t.AddOtherEndEvent(delegate { isJumping = false; DisableMove(false); });
+
+            float dist = jumpDistance * MapManager.gridWidth;
+            CustomizationTask t = TaskManager.AddParabolaTask(this, dist / 60, dist / 2, transform.position, transform.position + (Vector3)moveRotate * dist, false, true);
             DisableMove(true);
-            t.AddOtherEndEvent(delegate { isJumping = false; DisableMove(false); });
+            Action oldExit = t.OnExitFunc;
+            t.OnExitFunc = delegate
+            {
+                if (oldExit != null)
+                    oldExit();
+                isJumping = false; 
+                DisableMove(false);
+            };
         }
     }
 

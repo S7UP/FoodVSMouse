@@ -20,6 +20,11 @@ public class WindAreaEffectExecution : RetangleAreaEffectExecution
     {
         velocity = 0;
         base.MInit();
+        AddEnemyEnterConditionFunc((m) => {
+            if (m.IsBoss())
+                return false;
+            return true;
+        });
     }
 
     public override void MUpdate()
@@ -49,7 +54,6 @@ public class WindAreaEffectExecution : RetangleAreaEffectExecution
         {
             if (!cloudGroupList.Contains(e) && e.FloatDict.ContainsKey("offsetX"))
             {
-                Debug.Log("cloudGroup!");
                 cloudGroupList.Add(e);
             }
                 
@@ -58,18 +62,6 @@ public class WindAreaEffectExecution : RetangleAreaEffectExecution
         {
             base.OnCollision(collision);
         }
-    }
-
-    public override bool IsMeetingCondition(BaseUnit unit)
-    {
-        // BOSS单位无视地形效果
-        if (unit is MouseUnit)
-        {
-            MouseUnit m = unit as MouseUnit;
-            if (m.IsBoss())
-                return false;
-        }
-        return base.IsMeetingCondition(unit);
     }
 
     public override void OnExit(Collider2D collision)

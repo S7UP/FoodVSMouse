@@ -116,7 +116,7 @@ public class WaterGridType : BaseGridType
     private class WaterTask : ITask
     {
         private FloatModifier slowDownFloatModifier = new FloatModifier(-40); // 当前提供减速效果的修饰器
-        private FloatModifier decAttackSpeedModifier = new FloatModifier(-50); // 减攻速效果修饰器
+        private FloatModifier decAttackSpeedModifier = new FloatModifier(-25); // 减攻速效果修饰器
         // 贴图变化系列
         private FloatModifier EnterWaterSpriteOffsetY = new FloatModifier(0); // 下水时的贴图Y总偏移量
         private float offsetY;
@@ -226,14 +226,14 @@ public class WaterGridType : BaseGridType
                 PlayDieInWater();
             }
             // 判断在水域中是泡在水里还是在载具上
-            else if (count== 0 || (!hasVehicle && WoodenDisk.IsBearing(unit)))
+            else if (count== 0 || (!hasVehicle && WoodenDisk.IsBearing(unit)) || UnitManager.IsFlying(unit))
             {
-                // 如果目标 接触的水域数为0 或者 在无载具的状态下被木盘子承载，则转变为正常情况
+                // 如果目标 接触的水域数为0 或者 在无载具的状态下被木盘子承载 或者滞空状态 则转变为正常情况
                 ChangeToVehicleMode();
             }
-            else if (count > 0 && hasVehicle && !WoodenDisk.IsBearing(unit))
+            else if (count > 0 && hasVehicle && !WoodenDisk.IsBearing(unit) && !UnitManager.IsFlying(unit))
             {
-                // 如果目标 接触的水域数超过0 且 在有载具的状态下不被任何木盘子承载，则转变为水蚀
+                // 如果目标 接触的水域数超过0 且 在有载具的状态下不被任何木盘子承载 且不滞空 则转变为水蚀
                 ChangeToNoVehicleMode();
             }
 
@@ -332,13 +332,13 @@ public class WaterGridType : BaseGridType
                 }
                 else
                 {
-                    EffectManager.AddWaterWaveEffectToUnit(unit); // 添加下水特效
                     // 沉下去！
                     currentTime = 0;
                     offsetY = EnterWaterSpriteOffsetY.Value;
                     offsetYEnd = minPos;
                     cutRate = currentCutRate; // 裁剪高度
                     cutRateEnd = (sprite_pivot_y - TransManager.WorldToTex(offsetYEnd)) / sprite_rect_height;
+                    EffectManager.AddWaterWaveEffectToUnit(unit, new Vector2(0, -offsetYEnd)); // 添加下水特效
                 }
             }
         }

@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Data;
 
 using UnityEngine;
 /// <summary>
@@ -342,10 +341,11 @@ public class MouseManager
         {
             int type;
             string name, descript, tip;
-            int.TryParse(csv.GetVaule(i, 0).ToString(), out type);
-            name = csv.GetVaule(i, 1).ToString();
-            descript = csv.GetVaule(i, 2).ToString();
-            tip = csv.GetVaule(i, 3).ToString();
+            int.TryParse(csv.GetValue(i, 0).ToString(), out type);
+            name = csv.GetValue(i, 1).ToString();
+            //descript = csv.GetValue(i, 2).ToString();
+            descript = csv.GetValueByReplaceAllParam(i, 2);
+            tip = csv.GetValue(i, 3).ToString();
             // 加入到字典以存储
             MouseNameTypeMap mouseType = (MouseNameTypeMap)type;
             if (!mouseTypeInfoDict.ContainsKey(mouseType))
@@ -365,11 +365,11 @@ public class MouseManager
         {
             int type, shape;
             string name, descript, tip;
-            int.TryParse(csv.GetVaule(i, 0).ToString(), out type);
-            int.TryParse(csv.GetVaule(i, 1).ToString(), out shape);
-            name = csv.GetVaule(i, 2).ToString();
-            descript = csv.GetVaule(i, 3).ToString();
-            tip = csv.GetVaule(i, 4).ToString();
+            int.TryParse(csv.GetValue(i, 0).ToString(), out type);
+            int.TryParse(csv.GetValue(i, 1).ToString(), out shape);
+            name = csv.GetValue(i, 2).ToString();
+            descript = csv.GetValue(i, 3).ToString();
+            tip = csv.GetValue(i, 4).ToString();
             // 加入到表中
             mouseTypeShapeSeqList.Add(new Vector2(type, shape));
             // 加入到字典以存储
@@ -415,6 +415,7 @@ public class MouseManager
         });
         m.NumericBox.MoveSpeed.SetBase(0);
         m.SetAlpha(0);
+        m.NumericBox.Defense.SetBase(100);
         m.HideEffect(true);
         return m;
     }

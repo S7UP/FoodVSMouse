@@ -5,7 +5,6 @@ using UnityEngine;
 /// </summary>
 public class StunStatusAbility : StatusAbility
 {
-    private FrozenState frozenState;
     private BoolModifier boolModifier;
     private BoolModifier stunBoolModifier = new BoolModifier(true);
     private bool isForce = false; // 是否强制生效（无视免疫效果
@@ -39,15 +38,20 @@ public class StunStatusAbility : StatusAbility
     public override void OnDisableEffect()
     {
         master.NumericBox.RemoveDecideModifierToBoolDict(StringManager.Stun, stunBoolModifier);
-        if (frozenState != null)
+        if (master.mCurrentActionState is FrozenState)
         {
-            frozenState.TryExitCurrentState();
-            frozenState = null;
+            (master.mCurrentActionState as FrozenState).TryExitCurrentState();
         }
         if (boolModifier != null)
         {
             master.RemoveDisAbleSkillModifier(boolModifier);
             boolModifier = null;
+        }
+
+        // 移除晕眩特效
+        if (master.IsContainEffect(StringManager.Stun))
+        {
+            master.RemoveEffectFromDict(StringManager.Stun);
         }
     }
 
@@ -60,13 +64,26 @@ public class StunStatusAbility : StatusAbility
         master.NumericBox.AddDecideModifierToBoolDict(StringManager.Stun, stunBoolModifier);
 
         // 目标动作状态转化为击晕状态
-        if (frozenState == null)
+        if (!(master.mCurrentActionState is FrozenState))
         {
-            frozenState = new FrozenState(master, master.mCurrentActionState);
-            master.SetActionState(frozenState);
+            master.SetActionState(new FrozenState(master, master.mCurrentActionState));
         }
         if (boolModifier == null)
             boolModifier = master.AddDisAbleSkillModifier();
+
+        // 添加晕眩特效
+        if (!master.IsContainEffect(StringManager.Stun))
+        {
+            BaseEffect e = BaseEffect.CreateInstance(GameManager.Instance.GetRuntimeAnimatorController("Effect/Stun"), null, "Stun", null, true);
+            string name;
+            int order;
+            if(master.TryGetSpriteRenternerSorting(out name, out order))
+            {
+                e.SetSpriteRendererSorting(name, order + 5);
+            }
+            GameController.Instance.AddEffect(e);
+            master.AddEffectToDict(StringManager.Stun, e, new Vector2(0, 0));
+        }
     }
 
     /// <summary>
@@ -100,7 +117,6 @@ public class StunStatusAbility : StatusAbility
     public override void AfterEffect()
     {
         SetEffectEnable(false);
-
         master.RemoveNoCountUniqueStatusAbility(StringManager.Stun);
     }
 
@@ -110,12 +126,11 @@ public class StunStatusAbility : StatusAbility
     public override void OnCover()
     {
         // 为对象添加这个状态前，先检查目标是否已处于这个状态了，如果是直接重置持续时间
-        StatusAbility sa = master.statusAbilityManager.GetNoCountUniqueStatus(StringManager.Stun);
-        if (sa != null)
+        StatusAbility s = master.statusAbilityManager.GetNoCountUniqueStatus(StringManager.Stun);
+        if (s != null)
         {
-            StunStatusAbility f = (sa as StunStatusAbility);
-            f.totalTime = (f.totalTime.baseValue > this.totalTime.baseValue ? f.totalTime : this.totalTime);
-            f.leftTime = Mathf.Max(f.leftTime, this.leftTime);
+            s.totalTime = (s.totalTime.baseValue > this.totalTime.baseValue ? s.totalTime : this.totalTime);
+            s.leftTime = Mathf.Max(s.leftTime, this.leftTime);
             // 之后这个对象应该会被系统抛弃，继续沿用原对象（sa)作为目标的状态，这里不需要管它是否被抛弃以及怎么抛弃，知道这件事就行了
         }
     }

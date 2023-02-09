@@ -426,6 +426,15 @@ public class FoodUnit : BaseUnit
         UpdateSpecialRenderLayer();
     }
 
+    public override bool TryGetSpriteRenternerSorting(out string name, out int order)
+    {
+        if (spriteRenderer1 == null)
+            return base.TryGetSpriteRenternerSorting(out name, out order);
+        name = spriteRenderer1.sortingLayerName;
+        order = spriteRenderer1.sortingOrder;
+        return true;
+    }
+
     /// <summary>
     /// 由子类实现，更新子类特殊组件的层数
     /// </summary>
@@ -528,6 +537,15 @@ public class FoodUnit : BaseUnit
     {
         spriteTrans.localPosition = vector2;
         rankAnimator.transform.localPosition = -0.15f*Vector2.up + vector2;
+    }
+
+    /// <summary>
+    /// 获取贴图对象相对坐标
+    /// </summary>
+    /// <returns></returns>
+    public override Vector2 GetSpriteLocalPosition()
+    {
+        return spriteTrans.localPosition;
     }
 
     /// <summary>

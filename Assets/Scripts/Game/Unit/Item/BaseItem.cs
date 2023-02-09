@@ -22,7 +22,7 @@ public class BaseItem : BaseUnit
         // 动画控制器绑定animator
         animatorController.ChangeAnimator(animator);
         mGrid = null;
-        //SetBoxCollider2DParam(Vector2.zero, new Vector2(0.5f*MapManager.gridWidth, 0.5f*MapManager.gridHeight));
+        spriteRenderer.color = new Color(1, 1, 1, 1);
     }
 
     public void SetBoxCollider2DParam(Vector2 offset, Vector2 size)
@@ -74,12 +74,31 @@ public class BaseItem : BaseUnit
         spriteRenderer.sortingOrder = LayerManager.CalculateSortingLayer(LayerManager.UnitType.Enemy, GetRowIndex(), -1, arrayIndex);
     }
 
+
+    public override bool TryGetSpriteRenternerSorting(out string name, out int order)
+    {
+        if (spriteRenderer == null)
+            return base.TryGetSpriteRenternerSorting(out name, out order);
+        name = spriteRenderer.sortingLayerName;
+        order = spriteRenderer.sortingOrder;
+        return true;
+    }
+
     /// <summary>
     /// 设置图像显示与判定中心偏移量
     /// </summary>
     public override void SetSpriteLocalPosition(Vector2 vector2)
     {
         spriteRenderer.transform.localPosition = vector2;
+    }
+
+    /// <summary>
+    /// 获取贴图对象相对坐标
+    /// </summary>
+    /// <returns></returns>
+    public override Vector2 GetSpriteLocalPosition()
+    {
+        return spriteRenderer.transform.localPosition;
     }
 
     public override void OnDieStateEnter()

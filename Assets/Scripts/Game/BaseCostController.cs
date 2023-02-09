@@ -16,6 +16,8 @@ public class BaseCostController : MonoBehaviour, IBaseCostController, IGameContr
     protected Dictionary<string, FloatNumeric> mAddCostDict = new Dictionary<string, FloatNumeric>(); // 资源系统变化字典
     protected Dictionary<string, BoolNumeric> mShieldGettingCostDict = new Dictionary<string, BoolNumeric>(); // 屏蔽获取资源系统字典
 
+    public float totalFire; // 一关统计的总火苗能量
+
     public void Awake()
     {
         mImg_FireDisplayer = transform.Find("Img_FireDisplayer").gameObject;
@@ -28,6 +30,7 @@ public class BaseCostController : MonoBehaviour, IBaseCostController, IGameContr
         mCostDict.Clear();
         mAddCostDict.Clear();
         mShieldGettingCostDict.Clear();
+        totalFire = 0;
 
         AddCostType("Fire", GameController.Instance.mCurrentStage.mStageInfo.startCost);
         // 自然回复
@@ -43,7 +46,7 @@ public class BaseCostController : MonoBehaviour, IBaseCostController, IGameContr
     /// </summary>
     public void AddCostType(string costTypeName, float initialValue)
     {
-        mCostDict.Add(costTypeName, initialValue); // 基础的火苗系统
+        mCostDict.Add(costTypeName, initialValue);
         mAddCostDict.Add(costTypeName, new FloatNumeric());
         mAddCostDict[costTypeName].Initialize();
         mShieldGettingCostDict.Add(costTypeName, new BoolNumeric());
@@ -78,6 +81,10 @@ public class BaseCostController : MonoBehaviour, IBaseCostController, IGameContr
             if (val > 0 && IsShieldAddResource(name))
                 return;
             mCostDict[name] += val;
+            if (name.Equals("Fire"))
+            {
+                totalFire += Mathf.Max(0, val);
+            }
             UpdateCostDisplayer();
         }
         else

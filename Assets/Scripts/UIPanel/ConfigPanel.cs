@@ -8,6 +8,7 @@ public class ConfigPanel : MonoBehaviour, IBasePanel
     private Toggle Toggle_BGM;
     private Toggle Toggle_SoundEffect;
     private Toggle Toggle_QuickCardRelease;
+    private Toggle Toggle_DebugMode;
 
     private Slider Slider_BGM;
     private Slider Slider_SoundEffect;
@@ -26,6 +27,7 @@ public class ConfigPanel : MonoBehaviour, IBasePanel
         Toggle_QuickCardRelease = transform.Find("Img_QuickCardRelease").Find("Toggle").GetComponent<Toggle>();
         Btn_ReturnToMain = transform.Find("Btn_ReturnToMain").GetComponent<Button>();
         Btn_RestoreTheDefaultSettings = transform.Find("Btn_RestoreTheDefaultSettings").GetComponent<Button>();
+        Toggle_DebugMode = transform.Find("Img_DebugMode").Find("Toggle").GetComponent<Toggle>();
     }
 
 
@@ -104,5 +106,9 @@ public class ConfigPanel : MonoBehaviour, IBasePanel
         Toggle_QuickCardRelease.onValueChanged.RemoveAllListeners();
         Toggle_QuickCardRelease.isOn = config.isEnableQuickReleaseCard;
         Toggle_QuickCardRelease.onValueChanged.AddListener(delegate { config.isEnableQuickReleaseCard = Toggle_QuickCardRelease.isOn; });
+        // 开发者模式
+        Toggle_DebugMode.onValueChanged.RemoveAllListeners();
+        Toggle_DebugMode.isOn = ConfigManager.IsDeveloperMode();
+        Toggle_DebugMode.onValueChanged.AddListener(delegate { ConfigManager.SetDeveloperMode(Toggle_DebugMode.isOn); });
     }
 }

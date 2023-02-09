@@ -1,3 +1,5 @@
+using System.Collections;
+
 public class BaseSceneState : IBaseSceneState
 {
     protected UIFacade mUIFacade;
@@ -5,6 +7,11 @@ public class BaseSceneState : IBaseSceneState
     public BaseSceneState(UIFacade uiFacade)
     {
         mUIFacade = uiFacade;
+    }
+
+    public virtual IEnumerator LoadScene()
+    {
+        yield return null;
     }
 
     public virtual void EnterScene()

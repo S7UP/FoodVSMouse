@@ -8,7 +8,6 @@ public class FrozenState : BaseActionState
 {
     protected IBaseActionState lastState; // 上一个状态
     private Func<bool> isMeetingExitCondition;
-    private BoolModifier boolModifier = new BoolModifier(true);
 
     public FrozenState(BaseUnit baseUnit, IBaseActionState baseActionState) : base(baseUnit)
     {
@@ -25,7 +24,7 @@ public class FrozenState : BaseActionState
     {
         mBaseUnit.OnFrozenStateEnter();
         mBaseUnit.isFrozenState = true;
-        mBaseUnit.PauseCurrentAnimatorState(boolModifier); // 停止动画
+        // mBaseUnit.PauseCurrentAnimatorState(boolModifier); // 停止动画
     }
 
     public override void OnUpdate()
@@ -55,7 +54,7 @@ public class FrozenState : BaseActionState
     {
         mBaseUnit.OnFrozenStateExit();
         mBaseUnit.isFrozenState = false;
-        mBaseUnit.ResumeCurrentAnimatorState(boolModifier); // 放开动画
+        // mBaseUnit.ResumeCurrentAnimatorState(boolModifier); // 放开动画
         mBaseUnit.SetActionState(lastState);
     }
 }

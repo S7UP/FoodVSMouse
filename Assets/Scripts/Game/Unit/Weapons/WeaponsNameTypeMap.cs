@@ -6,5 +6,8 @@ public enum WeaponsNameTypeMap
     IceSpoonCrossbowGun = 0, // ฑ๙ษืๅ๓วน
     CatGun = 1, // รจรจวน
     V5Gun = 2, // อþฮไวน
-    BunGun = 3, // ะกมýฐüวน
+    ThreeLineGun = 3, // ธึืฆวน
+    WaterPipeGun = 4, // หซฯ๒หฎวน
+    BunGun = 5, // ะกมýฐüวน
+    IceGun = 6 // ฑ๙ฟ้วน
 }

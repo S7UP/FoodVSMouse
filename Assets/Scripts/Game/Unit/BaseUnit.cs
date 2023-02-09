@@ -63,10 +63,10 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public Dictionary<string, BaseEffect> effectDict2 = new Dictionary<string, BaseEffect>(); // 自身持有唯一性特效（但是是用string作为key的）
     private bool isHideEffect = false; // 是否隐藏特效
     public AnimatorController animatorController = new AnimatorController(); // 动画播放控制器
-    public List<ITask> TaskList = new List<ITask>(); // 自身挂载任务表
-    public Dictionary<string, ITask> TaskDict = new Dictionary<string, ITask>(); // 任务字典（仅记录引用不实际执行逻辑，执行逻辑在任务表中）
+    public TaskController taskController = new TaskController();
     public HitBox hitBox = new HitBox();
     public RecordDamageComponent mRecordDamageComponent;
+    public bool isIgnoreRecordDamage; // 是否无视内伤
 
     public string mName; // 当前单位的种类名称
     public int mType; // 当前单位的种类（如不同的卡，不同的老鼠）
@@ -90,6 +90,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public List<Func<BaseUnit, BaseBullet, bool>> CanHitFuncList = new List<Func<BaseUnit, BaseBullet, bool>>(); // 单位与子弹能否相互碰撞的额外判断事件
     public List<Func<BaseUnit, BaseUnit, bool>> CanBeSelectedAsTargetFuncList = new List<Func<BaseUnit, BaseUnit, bool>>(); // 能否被选取作为目标（第一个参数代表自己，第二个参数代表其他传入者）
 
+    public Dictionary<string, BaseUnit> mAttachedUnitDict = new Dictionary<string, BaseUnit>(); // 其他附加在该单位上的单位引用
 
     protected string jsonPath
     {
@@ -164,9 +165,9 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         hitBox.Initialize();
         SpriteOffsetX.Initialize(); SpriteOffsetY.Initialize();
         SetSpriteLocalPosition(Vector2.zero);
-        TaskList.Clear();
-        TaskDict.Clear();
+        taskController.Initial();
         mRecordDamageComponent.Initilize();
+        isIgnoreRecordDamage = false;
 
         CloseCollision();
 
@@ -177,6 +178,11 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         CanBlockFuncList.Clear();
         CanHitFuncList.Clear();
         CanBeSelectedAsTargetFuncList.Clear();
+
+        mAttachedUnitDict.Clear();
+
+        // 初始化透明度
+        SetAlpha(1);
     }
 
     // 切换动作状态
@@ -191,6 +197,9 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
 
         if (state is FrozenState)
         {
+            if (isFrozenState)
+                return;
+
             if (mCurrentActionState != null)
                 mCurrentActionState.OnInterrupt();
             mCurrentActionState = state;
@@ -199,7 +208,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         }
         else
         {
-            if (mCurrentActionState != null && mCurrentActionState is FrozenState)
+            if (mCurrentActionState != null && mCurrentActionState is FrozenState && !isFrozenState)
             {
                 // 如果切换前的状态是冰冻，则不能执行OnExit（），因为其OnExit（）会包括该方法，最后会导致无限递归
                 mCurrentActionState = state;
@@ -281,7 +290,11 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         // 清除BUFF效果
         statusAbilityManager.TryEndAllStatusAbility();
         // 清除任务效果
-        TaskList.Clear();
+        taskController.Initial();
+        // 清除特效一次
+        RemoveAllEffect();
+        // 移除所有不让动画播放的修饰
+        animatorController.RemoveAllPauseModifier();
         // 进入死亡动画状态
         SetActionState(new DieState(this));
         isDeathState = true;
@@ -305,7 +318,9 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         // 再清除特效一次
         RemoveAllEffect();
         // 清除任务效果
-        TaskList.Clear();
+        taskController.Initial();
+        // 移除所有不让动画播放的修饰
+        animatorController.RemoveAllPauseModifier();
         AfterDeath();
         foreach (var item in AfterDeathEventList)
         {
@@ -353,7 +368,11 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         // 清除BUFF效果
         statusAbilityManager.TryEndAllStatusAbility();
         // 清除任务效果
-        TaskList.Clear();
+        taskController.Initial();
+        // 清除特效一次
+        RemoveAllEffect();
+        // 移除所有不让动画播放的修饰
+        animatorController.RemoveAllPauseModifier();
         // 进入死亡动画状态
         SetActionState(new BurnState(this));
         isDeathState = true;
@@ -403,7 +422,9 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         // 清除BUFF效果
         statusAbilityManager.TryEndAllStatusAbility();
         // 清除任务效果
-        TaskList.Clear();
+        taskController.Initial();
+        // 清除特效一次
+        RemoveAllEffect();
         // 进入死亡动画状态
         SetActionState(new DropState(this));
         isDeathState = true;
@@ -446,9 +467,9 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         hitBox.Initialize();
         SpriteOffsetX.Initialize(); SpriteOffsetY.Initialize();
         SetSpriteLocalPosition(Vector2.zero);
-        TaskList.Clear();
-        TaskDict.Clear();
+        taskController.Initial();
         mRecordDamageComponent.Initilize();
+        isIgnoreRecordDamage = false;
 
         typeAndShapeValue = 0; // 图层
         SetUnitType();
@@ -485,8 +506,6 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         LoadSkillAbility();
         // 启用判定
         OpenCollision();
-        // 透明度默认先写到1
-        SetAlpha(1.0f);
         // 设置Collider2D的参数
         SetCollider2DParam();
         // 大小初始化
@@ -501,12 +520,25 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         CanHitFuncList.Clear();
         CanBeSelectedAsTargetFuncList.Clear();
 
+        mAttachedUnitDict.Clear();
+
         // 初始化透明度
         SetAlpha(1);
     }
 
     public virtual void MUpdate()
     {
+        // 清除依附单位字典无效的单位
+        List<string> delList = new List<string>();
+        foreach (var keyValuePair in mAttachedUnitDict)
+        {
+            if (keyValuePair.Value == null || !keyValuePair.Value.IsAlive())
+                delList.Add(keyValuePair.Key);
+        }
+        foreach (var key in delList)
+        {
+            RemoveUnitFromDict(key);
+        }
         // 动画控制器更新
         animatorController.Update();
         // 时效性状态管理器更新
@@ -534,8 +566,8 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         // 受击进度盒子更新
         hitBox.Update();
         // 挂载任务更新
-        if(!isDeathState)
-            OnTaskUpdate();
+        if (!isDeathState)
+            taskController.Update();
         // 特效存活检测
         CheckAndUpdateEffectDict();
         // lastPosition更新放在Task后面，这样也方便内置任务获取上帧坐标
@@ -652,6 +684,17 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
 
     }
 
+    /// <summary>
+    /// 尝试获取目标SpriteRenterer的Sorting信息
+    /// </summary>
+    /// <returns></returns>
+    public virtual bool TryGetSpriteRenternerSorting(out string name, out int order)
+    {
+        name = null;
+        order = 0;
+        return false;
+    }
+
     public void AddActionPointListener(ActionPointType actionPointType, Action<CombatAction> action)
     {
         actionPointManager.AddListener(actionPointType, action);
@@ -692,6 +735,14 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     }
 
     /// <summary>
+    /// 获取正常情况下目标最终的受伤倍率
+    /// </summary>
+    public float GetFinalDamageRate()
+    {
+        return (1 - mCurrentDefense) * mDamgeRate;
+    }
+
+    /// <summary>
     /// 受到伤害时结算伤害
     /// </summary>
     /// <param name="dmg"></param>
@@ -702,16 +753,20 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
             return;
 
         // 先计算抗性减免后的伤害
-        dmg = Mathf.Max(0, dmg * (1 - mCurrentDefense) * mDamgeRate);
-        // 计算一次内伤
-        mRecordDamageComponent.TriggerRecordDamage(dmg);
+        dmg = Mathf.Max(0, dmg * GetFinalDamageRate());
+        float recordDmg = dmg;
         // 然后计算护盾吸收的伤害
         dmg = Mathf.Max(0, NumericBox.DamageShield(dmg));
         // 最后扣除本体生命值
         mCurrentHp -= dmg;
         if (mCurrentHp <= 0)
         {
+            mCurrentHp = 0;
             ExecuteDeath();
+        }
+        else if (!isIgnoreRecordDamage)
+        {
+            mRecordDamageComponent.TriggerRecordDamage(recordDmg);
         }
     }
 
@@ -726,12 +781,17 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
             return;
 
         // 先计算抗性减免后的伤害
-        dmg = Mathf.Max(0, dmg * (1 - mCurrentDefense) * mDamgeRate);
+        dmg = Mathf.Max(0, dmg * GetFinalDamageRate());
         // 直接扣除本体生命值
         mCurrentHp -= dmg;
         if (mCurrentHp <= 0)
         {
+            mCurrentHp = 0;
             ExecuteDeath();
+        }
+        else if (!isIgnoreRecordDamage)
+        {
+            mRecordDamageComponent.TriggerRecordDamage(dmg);
         }
     }
 
@@ -743,12 +803,16 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         // 如果目标含有无敌标签，则直接跳过伤害判定
         if (NumericBox.GetBoolNumericValue(StringManager.Invincibility))
             return;
-
         // 扣除本体生命值
         mCurrentHp -= dmg;
         if (mCurrentHp <= 0)
         {
+            mCurrentHp = 0;
             ExecuteDeath();
+        }
+        else if (!isIgnoreRecordDamage)
+        {
+            mRecordDamageComponent.TriggerRecordDamage(dmg);
         }
     }
 
@@ -767,7 +831,12 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         mCurrentHp -= dmg;
         if (mCurrentHp <= 0)
         {
+            mCurrentHp = 0;
             ExecuteBurn();
+        }
+        else if (!isIgnoreRecordDamage)
+        {
+            mRecordDamageComponent.TriggerRecordDamage(dmg);
         }
     }
 
@@ -778,6 +847,25 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public virtual void OnBombBurnDamage(float dmg)
     {
         OnBurnDamage(dmg);
+    }
+
+    /// <summary>
+    /// 受到标记伤害时结算伤害
+    /// </summary>
+    /// <param name="dmg"></param>
+    public virtual void OnRecordDamage(float dmg)
+    {
+        // 如果目标含有无敌标签，则直接跳过伤害判定
+        if (NumericBox.GetBoolNumericValue(StringManager.Invincibility))
+            return;
+
+        // 最后扣除本体生命值
+        mCurrentHp -= dmg;
+        if (mCurrentHp <= 0)
+        {
+            mCurrentHp = 0;
+            ExecuteDeath();
+        }
     }
 
     /// <summary>
@@ -806,11 +894,13 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public void ReceiveDamage(CombatAction combatAction)
     {
         var damageAction = combatAction as DamageAction;
-        // 如果伤害类型为灰烬伤害则执行灰烬伤害
+        // 根据伤害类型来接收伤害
         if(damageAction.mActionType == CombatAction.ActionType.BurnDamage)
             OnBurnDamage(damageAction.DamageValue);
         else if (damageAction.mActionType == CombatAction.ActionType.RealDamage)
             OnRealDamage(damageAction.DamageValue);
+        else if(damageAction.mActionType == CombatAction.ActionType.RecordDamage)
+            OnRecordDamage(damageAction.DamageValue);
         else
             OnDamage(damageAction.DamageValue);
     }
@@ -890,6 +980,11 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public StatusAbility GetNoCountUniqueStatus(string statusName)
     {
         return statusAbilityManager.GetNoCountUniqueStatus(statusName);
+    }
+
+    public bool IsContainNoCountUniqueStatus(string statusName)
+    {
+        return statusAbilityManager.IsContainNoCountUniqueStatus(statusName);
     }
 
     public void AddUniqueStatusAbility(string statusName, StatusAbility statusAbility)
@@ -1238,6 +1333,15 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     }
 
     /// <summary>
+    /// 获取贴图对象相对坐标
+    /// </summary>
+    /// <returns></returns>
+    public virtual Vector2 GetSpriteLocalPosition()
+    {
+        return Vector2.zero;
+    }
+
+    /// <summary>
     /// 获取高度
     /// </summary>
     /// <returns></returns>
@@ -1352,7 +1456,13 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public void AddEffectToDict(EffectType t, BaseEffect eff, Vector2 localPosition)
     {
         effectDict.Add(t, eff);
-        eff.transform.SetParent(transform);
+        SpriteRenderer s = GetSpriteRenderer();
+        Transform trans = null;
+        if (s != null)
+            trans = s.transform;
+        else
+            trans = transform;
+        eff.transform.SetParent(trans);
         eff.transform.localPosition = localPosition;
         if (isHideEffect)
             eff.Hide(true);
@@ -1363,7 +1473,13 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public void AddEffectToDict(string t, BaseEffect eff, Vector2 localPosition)
     {
         effectDict2.Add(t, eff);
-        eff.transform.SetParent(transform);
+        SpriteRenderer s = GetSpriteRenderer();
+        Transform trans = null;
+        if (s != null)
+            trans = s.transform;
+        else
+            trans = transform;
+        eff.transform.SetParent(trans);
         eff.transform.localPosition = localPosition;
         if (isHideEffect)
             eff.Hide(true);
@@ -1495,11 +1611,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     /// </summary>
     public void AddUniqueTask(string key, ITask t)
     {
-        if (!TaskDict.ContainsKey(key))
-        {
-            TaskDict.Add(key, t);
-            AddTask(t);
-        }
+        taskController.AddUniqueTask(key, t);
     }
 
     /// <summary>
@@ -1508,8 +1620,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     /// <param name="t"></param>
     public void AddTask(ITask t)
     {
-        TaskList.Add(t);
-        t.OnEnter();
+        taskController.AddTask(t);
     }
 
     /// <summary>
@@ -1517,11 +1628,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     /// </summary>
     public void RemoveUniqueTask(string key)
     {
-        if (TaskDict.ContainsKey(key))
-        {
-            RemoveTask(TaskDict[key]);
-            TaskDict.Remove(key);
-        }
+        taskController.RemoveUniqueTask(key);
     }
 
     /// <summary>
@@ -1530,8 +1637,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     /// <param name="t"></param>
     public void RemoveTask(ITask t)
     {
-        t.OnExit();
-        TaskList.Remove(t);
+        taskController.RemoveTask(t);
     }
 
     /// <summary>
@@ -1541,44 +1647,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     /// <returns></returns>
     public ITask GetTask(string key)
     {
-        if (TaskDict.ContainsKey(key))
-            return TaskDict[key];
-        return null;
-    }
-
-    /// <summary>
-    /// Task组更新
-    /// </summary>
-    private void OnTaskUpdate()
-    {
-        List<string> deleteKeyList = new List<string>();
-        foreach (var keyValuePair in TaskDict)
-        {
-            ITask t = keyValuePair.Value;
-            if (t.IsMeetingExitCondition())
-                deleteKeyList.Add(keyValuePair.Key);
-        }
-        foreach (var key in deleteKeyList)
-        {
-            RemoveUniqueTask(key);
-        }
-        List<ITask> deleteTask = new List<ITask>();
-        List<ITask> WillUpdateTask = new List<ITask>();
-        foreach (var t in TaskList)
-        {
-            if (t.IsMeetingExitCondition())
-                deleteTask.Add(t);
-            else
-                WillUpdateTask.Add(t);
-        }
-        foreach (var t in deleteTask)
-        {
-            RemoveTask(t);
-        }
-        foreach (var t in WillUpdateTask)
-        {
-            t.OnUpdate();
-        }
+        return taskController.GetTask(key);
     }
 
     /// <summary>
@@ -1688,9 +1757,60 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     /// <param name="value"></param>
     public virtual void AddRecordDamage(float value)
     {
-        mRecordDamageComponent.AddRecordDamage(value);
+        if(!isIgnoreRecordDamage)
+            mRecordDamageComponent.AddRecordDamage(value);
     }
 
+    /// <summary>
+    /// 添加unit引用
+    /// </summary>
+    /// <param name="unit"></param>
+    public void AddUnitToDict(string key, BaseUnit unit)
+    {
+        mAttachedUnitDict.Add(key, unit);
+    }
+
+    /// <summary>
+    /// 移除unit引用
+    /// </summary>
+    /// <param name="key"></param>
+    public void RemoveUnitFromDict(string key)
+    {
+        mAttachedUnitDict.Remove(key);
+    }
+
+    /// <summary>
+    /// 获取引用的单位（必须存活）
+    /// </summary>
+    /// <param name="key"></param>
+    public BaseUnit GetUnitFromDict(string key)
+    {
+        if (IsContainUnit(key))
+            return mAttachedUnitDict[key];
+        else
+            return null;
+    }
+
+    /// <summary>
+    /// 是否含有某个为key的单位引用
+    /// </summary>
+    /// <param name="key"></param>
+    /// <returns></returns>
+    public bool IsContainUnit(string key)
+    {
+        if (mAttachedUnitDict.ContainsKey(key))
+        {
+            BaseUnit unit = mAttachedUnitDict[key];
+            if (unit.IsAlive())
+                return true;
+            else
+            {
+                mAttachedUnitDict.Remove(key);
+                return false;
+            }
+        }
+        return false;
+    }
 
     // 继续
 }

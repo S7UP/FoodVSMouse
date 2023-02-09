@@ -46,6 +46,7 @@ public class NinjaMouse : MouseUnit
             {
                 Vector2 position = transform.position + new Vector3(pos.x * MapManager.gridWidth, pos.y * MapManager.gridHeight, 0);
                 NinjaRetinueMouse m = (NinjaRetinueMouse)GameController.Instance.CreateMouseUnit(GetRowIndex(), new BaseEnemyGroup.EnemyInfo { type = ((int)MouseNameTypeMap.NinjaRetinueMouse), shape = mShape });
+                m.SetMaxHpAndCurrentHp(m.mMaxHp*NumberManager.GetCurrentEnemyHpRate());
                 m.transform.position = position;
                 m.UpdateRenderLayer(GameController.Instance.GetSpecificRowEnemyList(m.GetRowIndex()).Count-1); // 更新一次图层
                 m.SetActionState(new TransitionState(m));

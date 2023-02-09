@@ -56,7 +56,8 @@ public class SpicyStringBoom : FoodUnit
         r.SetAffectHeight(1);
         Action<MouseUnit> action = (u) =>
         {
-            if (r.isAlive && UnitManager.CanBeSelectedAsTarget(this, u))
+            //if (r.isAlive && UnitManager.CanBeSelectedAsTarget(this, u))
+            if (r.isAlive)
             {
                 isTriggerBoom = true;
                 ExecuteDeath();

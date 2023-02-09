@@ -25,6 +25,7 @@ public class MouseUnit : BaseUnit
     public int currentXIndex; // 当前地标X下标
     public int currentYIndex; // 当前地标Y下标
     public bool isBoss; // 是否是BOSS单位
+    public bool canDrivenAway; // 能否被强制换行
 
     public string AttackClipName;
     public string IdleClipName;
@@ -74,6 +75,7 @@ public class MouseUnit : BaseUnit
         currentXIndex = 0;
         currentYIndex = 0;
         moveRotate = Vector2.left;
+        canDrivenAway = true;
 
         // 初始化
         GridDangerousWeightDict = new Dictionary<GridType, int>()
@@ -521,7 +523,7 @@ public class MouseUnit : BaseUnit
             spriteRenderer.material.SetFloat("_FlashRate", 0.5f * hitBox.GetPercent());
         }
         // 进家判定
-        if(CanTriggerLoseWhenEnterLoseLine() && transform.position.x < MapManager.GetColumnX(-1) - 0.5f * MapManager.gridWidth)
+        if(CanTriggerLoseWhenEnterLoseLine() && transform.position.x < MapManager.GetColumnX(-1.5f))
         {
             GameController.Instance.Lose();
         }
@@ -542,7 +544,7 @@ public class MouseUnit : BaseUnit
     /// <returns></returns>
     public virtual bool IsOutOfBound()
     {
-        return GetColumnIndex() > MapController.xColumn + 2;
+        return GetColumnIndex() > MapController.xColumn + 2 || GetColumnIndex() <= -2 || GetRowIndex() <= -1 || GetRowIndex() >= 7;
     }
 
     /// <summary>
@@ -673,6 +675,15 @@ public class MouseUnit : BaseUnit
         spriteRenderer.sortingOrder = LayerManager.CalculateSortingLayer(LayerManager.UnitType.Enemy, GetRowIndex(), typeAndShapeValue, arrayIndex);
     }
 
+    public override bool TryGetSpriteRenternerSorting(out string name, out int order)
+    {
+        if (spriteRenderer == null)
+            return base.TryGetSpriteRenternerSorting(out name, out order);
+        name = spriteRenderer.sortingLayerName;
+        order = spriteRenderer.sortingOrder;
+        return true;
+    }
+
     /// <summary>
     /// 启用冰冻减速效果
     /// </summary>
@@ -730,6 +741,15 @@ public class MouseUnit : BaseUnit
         spriteTrans.localPosition = vector2;
     }
 
+    /// <summary>
+    /// 获取贴图对象相对坐标
+    /// </summary>
+    /// <returns></returns>
+    public override Vector2 GetSpriteLocalPosition()
+    {
+        return spriteTrans.localPosition;
+    }
+
     public override int GetColumnIndex()
     {
         return currentXIndex;
@@ -781,7 +801,7 @@ public class MouseUnit : BaseUnit
     /// <returns></returns>
     public virtual bool CanDrivenAway()
     {
-        return true;
+        return canDrivenAway;
     }
 
     /// <summary>
@@ -875,5 +895,16 @@ public class MouseUnit : BaseUnit
     public virtual void SetGridDangerousWeightDict()
     {
 
+    }
+
+    /// <summary>
+    /// 对于BOSS单位来说，内伤就是普通伤害
+    /// </summary>
+    /// <param name="value"></param>
+    public override void AddRecordDamage(float value)
+    {
+        if (!isIgnoreRecordDamage && IsBoss())
+            OnDamage(value);
+        //mRecordDamageComponent.AddRecordDamage(value);
     }
 }

@@ -82,48 +82,9 @@ public class AbilityManager
         return AbilityDict[unitType][typeIndex];
     }
 
-    /// <summary>
-    /// ±£´æÈ«²¿
-    /// </summary>
-    public void SaveAll()
-    {
-        Save(UnitType.Food);
-        Save(UnitType.Mouse);
-    }
-
-    private void Save(UnitType unitType)
-    {
-        string unitTypeStr = "";
-        switch (unitType)
-        {
-            case UnitType.Default:
-                break;
-            case UnitType.Food:
-                unitTypeStr += "Food";
-                break;
-            case UnitType.Mouse:
-                unitTypeStr += "Mouse";
-                break;
-            default:
-                break;
-        }
-        List<List<List<SkillAbility.SkillAbilityInfo>>> typelist = AbilityDict[unitType];
-        int typeIndex = 0;
-        foreach (var shapeList in typelist)
-        {
-            int shapeIndex = 0;
-            foreach (var infoList in shapeList)
-            {
-                JsonManager.Save<List<SkillAbility.SkillAbilityInfo>>(infoList, "Skill/" + unitTypeStr + "/" + typeIndex + "/" + shapeIndex);
-                shapeIndex++;
-            }
-            typeIndex++;
-        }
-    }
-
     private List<SkillAbility.SkillAbilityInfo> Load(UnitType unitType, int type, int shape)
     {
-        string path = "Skill";
+        string path = "Skill/";
         string unitTypeStr = "";
         switch (unitType)
         {
@@ -144,8 +105,11 @@ public class AbilityManager
             default:
                 break;
         }
-        path += "/" + unitTypeStr + type + "/" + shape;
-        List<SkillAbility.SkillAbilityInfo> infoList = JsonManager.Load<List<SkillAbility.SkillAbilityInfo>>(path);
+        //path += "/" + unitTypeStr + type + "/" + shape;
+        path += unitTypeStr + type + "/" + shape;
+        //List<SkillAbility.SkillAbilityInfo> infoList = JsonManager.Load<List<SkillAbility.SkillAbilityInfo>>(path);
+        List<SkillAbility.SkillAbilityInfo> infoList;
+        JsonManager.TryLoadFromResource(path, out infoList);
         return infoList;
     }
 

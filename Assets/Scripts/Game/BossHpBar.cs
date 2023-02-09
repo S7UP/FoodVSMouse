@@ -242,16 +242,31 @@ public class BossHpBar : BaseProgressBar
             }
             Img_BossVirtualHp1.transform.localScale = new Vector3(mVirtualHpBarPercent1, 1, 1);
             Img_BossVirtualHp2.transform.localScale = new Vector3(mVirtualHpBarPercent2, 1, 1);
-            // 更新剩余血量百分比显示
-            Tex_LifePercent.text = (Mathf.Max(TargetUnit.GetHeathPercent(), 0)*100).ToString("#0.00") + "%";
 
-            if (!mUnit.IsAlive())
+
+            if (!HasTarget())
             {
                 // 没血量时都隐藏就行了
                 Img_BossHp1.SetActive(false);
                 Img_BossHp2.SetActive(false);
                 Img_BossVirtualHp1.SetActive(false);
                 Img_BossVirtualHp2.SetActive(false);
+                // 更新剩余血量百分比显示
+                Tex_LifePercent.text = "";
+                mUnit = null;
+            }
+            else
+            {
+                // 更新剩余血量百分比显示
+                Tex_LifePercent.text = mUnit.mCurrentHp.ToString("#0") + " / " + mUnit.mMaxHp.ToString("#0") + "       " + (Mathf.Max(TargetUnit.GetHeathPercent(), 0) * 100).ToString("#0.00") + "%";
+                if(mUnit.mCurrentHp <= 0)
+                {
+                    // 没血量时都隐藏就行了
+                    Img_BossHp1.SetActive(false);
+                    Img_BossHp2.SetActive(false);
+                    Img_BossVirtualHp1.SetActive(false);
+                    Img_BossVirtualHp2.SetActive(false);
+                }
             }
         }
         //else
@@ -267,7 +282,10 @@ public class BossHpBar : BaseProgressBar
     /// <returns></returns>
     public bool HasTarget()
     {
-        return mUnit != null && mUnit.IsValid();
+        bool flag = mUnit != null && mUnit.IsValid();
+        if (!flag)
+            mUnit = null;
+        return flag;
     }
 
     /// <summary>

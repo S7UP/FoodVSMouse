@@ -28,6 +28,10 @@ public class EditorPanel_MouseEditorUI_DefineParamUI : MonoBehaviour
 
     public void Initial()
     {
+        foreach (var item in itemList)
+        {
+            item.ExecuteRecycle();
+        }
         itemList.Clear();
         // 把参数字典的内容显示到UI上
         foreach (var keyValuePair in ParamDict)

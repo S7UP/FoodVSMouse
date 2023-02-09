@@ -13,6 +13,12 @@ public class EffectManager
         if (!u.IsContainEffect(EffectType.HealEffect))
         {
             BaseEffect eff = BaseEffect.CreateInstance(GameManager.Instance.GetRuntimeAnimatorController("Mouse/5/HealEffect"), null, "Heal", null, false);
+            string name;
+            int order;
+            if (u.TryGetSpriteRenternerSorting(out name, out order))
+            {
+                eff.SetSpriteRendererSorting(name, order + 4);
+            }
             GameController.Instance.AddEffect(eff);
             u.AddEffectToDict(EffectType.HealEffect, eff, Vector2.zero);
         }
@@ -22,14 +28,14 @@ public class EffectManager
     /// 水波特效给予对象（不重复）
     /// </summary>
     /// <param name="u"></param>
-    public static void AddWaterWaveEffectToUnit(BaseUnit u)
+    public static void AddWaterWaveEffectToUnit(BaseUnit u, Vector2 pos)
     {
         if (!u.IsContainEffect(EffectType.WaterWave))
         {
-            BaseEffect eff = BaseEffect.GetInstance("WaterWaveEffect");
+            BaseEffect eff = BaseEffect.CreateInstance(GameManager.Instance.GetRuntimeAnimatorController("Effect/WaterWaveEffect"), "Appear", "Idle", "Disappear", true);
             eff.SetSpriteRendererSorting("Grid", 100);
             GameController.Instance.AddEffect(eff);
-            u.AddEffectToDict(EffectType.WaterWave, eff, 0.075f*MapManager.gridHeight*Vector2.down);
+            u.AddEffectToDict(EffectType.WaterWave, eff, pos);
         }
     }
 
@@ -80,7 +86,12 @@ public class EffectManager
         if (!u.IsContainEffect(EffectType.WaterWave))
         {
             BaseEffect eff = BaseEffect.CreateInstance(GameManager.Instance.GetRuntimeAnimatorController("Effect/LavaEffect"), null, "Idle", null, true);
-            eff.SetSpriteRendererSorting("Effect", 0);
+            string name;
+            int order;
+            if (u.TryGetSpriteRenternerSorting(out name, out order))
+            {
+                eff.SetSpriteRendererSorting(name, order + 3);
+            }
             GameController.Instance.AddEffect(eff);
             u.AddEffectToDict(EffectType.Lava, eff, 0.075f * MapManager.gridHeight * Vector2.down);
         }

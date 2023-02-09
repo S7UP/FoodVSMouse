@@ -75,6 +75,15 @@ public class AnimatorController
         isPauseBoolNumeric.RemoveDecideModifier(boolModifier);
         UpdateSpeed();
     }
+    
+    /// <summary>
+    /// ÒÆ³ýÈ«ÁÆµÄÔÝÍ£ÐÞÊÎÆ÷
+    /// </summary>
+    public void RemoveAllPauseModifier()
+    {
+        isPauseBoolNumeric.Initialize();
+        UpdateSpeed();
+    }
 
     /// <summary>
     /// ÔÝÍ£Ä³¸ö¶¯»­

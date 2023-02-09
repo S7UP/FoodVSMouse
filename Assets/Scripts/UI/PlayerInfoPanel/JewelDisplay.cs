@@ -1,11 +1,13 @@
 using UnityEngine.UI;
 using UnityEngine;
+using UnityEngine.EventSystems;
 /// <summary>
 /// 宝石选择显示按钮
 /// </summary>
-public class JewelDisplay : MonoBehaviour
+public class JewelDisplay : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     private PlayerInfoPanel mPlayerInfoPanel;
+    private RectTransform RectTrans;
 
     public int type;
     private Button Btn;
@@ -16,6 +18,7 @@ public class JewelDisplay : MonoBehaviour
 
     private void Awake()
     {
+        RectTrans = GetComponent<RectTransform>();
         Btn = transform.Find("Button").GetComponent<Button>();
         Btn.onClick.AddListener(delegate
         {
@@ -65,5 +68,21 @@ public class JewelDisplay : MonoBehaviour
     public void ExecuteRecycle()
     {
         GameManager.Instance.PushGameObjectToFactory(FactoryType.UIFactory, "PlayerInfoPanel/JewelDisplay", gameObject);
+    }
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        if (type != -1)
+        {
+            TextArea.Instance.SetText(JewelManager.GetName(type) + "\n" + JewelManager.GetInfo(type));
+            TextArea.Instance.SetLocalPosition(transform, new Vector2(RectTrans.sizeDelta.x / 2, 0), new Vector2(1, -1));
+        }
+
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        if (type != -1)
+            TextArea.ExecuteRecycle();
     }
 }

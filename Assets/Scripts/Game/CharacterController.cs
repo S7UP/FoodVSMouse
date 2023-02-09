@@ -11,7 +11,8 @@ public class CharacterController:IGameControllerMember
 
     public CharacterController()
     {
-        mGameNormalPanel = (GameNormalPanel)GameManager.Instance.uiManager.mUIFacade.currentScenePanelDict[StringManager.GameNormalPanel];
+        //mGameNormalPanel = (GameNormalPanel)GameManager.Instance.uiManager.mUIFacade.currentScenePanelDict[StringManager.GameNormalPanel];
+        mGameNormalPanel = GameNormalPanel.Instance;
     }
 
     public void MInit()
@@ -35,7 +36,7 @@ public class CharacterController:IGameControllerMember
     public void MPauseUpdate()
     {
         // 当人物没死亡时且人物实例未放置于场中时，暂停代表下人
-        if(!IsCharacterDeath)
+        if(mCurrentCharacter != null && !IsCharacterDeath)
             HandleSetCharacter();
     }
 

@@ -6,7 +6,7 @@ using UnityEngine;
 public class ToastBread : FoodUnit
 {
     private const string ToastBreadHealEffectKey = "ToastBreadHealEffectKey";
-    private static Sprite HealEffect_Sprite;
+    private static RuntimeAnimatorController HealEffect_RuntimeAnimatorController;
     private int mHertIndex; // 受伤阶段 0：正常 1：小伤 2：重伤
     private int noHealTimeLeft; // 非自然回复倒计时
     private List<float> mHertRateList = new List<float>()
@@ -16,8 +16,8 @@ public class ToastBread : FoodUnit
 
     public override void Awake()
     {
-        if (HealEffect_Sprite == null)
-            HealEffect_Sprite = GameManager.Instance.GetSprite("Food/38/HealEffect");
+        if (HealEffect_RuntimeAnimatorController == null)
+            HealEffect_RuntimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Food/38/HealEffect");
         base.Awake();
     }
 
@@ -49,9 +49,15 @@ public class ToastBread : FoodUnit
         {
             if (!IsContainEffect(ToastBreadHealEffectKey))
             {
-                BaseEffect e = BaseEffect.CreateInstance(HealEffect_Sprite);
+                BaseEffect e = BaseEffect.CreateInstance(HealEffect_RuntimeAnimatorController, null, "Idle", null, true);
                 GameController.Instance.AddEffect(e);
                 AddEffectToDict(ToastBreadHealEffectKey, e, Vector2.zero);
+                string name;
+                int order;
+                if (TryGetSpriteRenternerSorting(out name, out order))
+                {
+                    e.SetSpriteRendererSorting(name, order + 1);
+                }
             }
             new CureAction(CombatAction.ActionType.GiveCure, this, this, mCurrentAttack / 60).ApplyAction();
         }

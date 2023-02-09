@@ -225,7 +225,7 @@ public class HotDog : FoodUnit
     {
         bool isAirTarget = (target != null && target.GetHeight() == 1); // 是否为空中单位
 
-        AllyBullet b = AllyBullet.GetInstance(BulletRuntimeAnimatorController, this, (isAirTarget ? airUnitDamageRate:groundUnitDamageRate) * ori_dmg);
+        AllyBullet b = AllyBullet.GetInstance(BulletStyle.Throwing, BulletRuntimeAnimatorController, this, (isAirTarget ? airUnitDamageRate:groundUnitDamageRate) * ori_dmg);
         b.AddSpriteOffsetY(new FloatModifier(0.5f * MapManager.gridHeight));
         b.SetHeight(isAirTarget ? 1:0);
         b.isnDelOutOfBound = true; // 出屏不自删

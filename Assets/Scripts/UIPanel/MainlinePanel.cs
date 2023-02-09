@@ -1,80 +1,12 @@
-using System.Collections;
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
-
-using static MainlinePanel;
 /// <summary>
 /// 主线剧情面板
 /// </summary>
 public class MainlinePanel : BasePanel
 {
-    private const string path = "Mainline/";
-    private const string localPath = "Mainline";
-    private bool isLoad; // 是否加载过了（防止重复加载）
-    
-    /// <summary>
-    /// 所有主线章节表（静态数据）
-    /// </summary>
-    [System.Serializable]
-    public struct Chapter_Static_List
-    {
-        public List<Chapter_Static> chapterList;
-    }
-
-    /// <summary>
-    /// 章节信息（静态数据）
-    /// </summary>
-    [System.Serializable]
-    public struct Chapter_Static
-    {
-        public string name;
-        public int mapId;
-        public List<StageInfo_Static> stageList;
-    }
-
-    /// <summary>
-    /// 关卡信息（静态数据）
-    /// </summary>
-    [System.Serializable]
-    public struct StageInfo_Static
-    {
-        public string id; // 自身唯一id
-        public int chapterId;
-        public int sceneId;
-        public int stageId;
-        public string unlockCondition; // 解锁的条件（仅文字说明）
-    }
-
-    /// <summary>
-    /// 关卡信息（与玩家存档相关，动态数据）
-    /// </summary>
-    [System.Serializable]
-    public class StageInfo_Local
-    {
-        public string id; // 自身唯一id（是上面静态数据的映射）
-        public bool isUnlocked; // 是否解锁
-        public int rank = -1; // 通过的最高难度(-1代表未通过）
-
-        public StageInfo_Local(string id)
-        {
-            this.id = id;
-        }
-    }
-
-    /// <summary>
-    /// 存放在本地的主线存档
-    /// </summary>
-    [System.Serializable]
-    public class MainlineSaveInLocal
-    {
-        public Dictionary<string, StageInfo_Local> localStageInfoDict = new Dictionary<string, StageInfo_Local>();
-    }
-
-    private static Chapter_Static_List chapterList;
-    private int currentIndex; // 当前选中的章节下标（就是上面标的下标）
-    private static MainlineSaveInLocal mainlineSaveInLocal;
-
     private Transform Trans_UI;
     private Image Img_Map;
     private Text Tex_Chapter;
@@ -84,6 +16,7 @@ public class MainlinePanel : BasePanel
     private Button Btn_Last;
     private Button Btn_Next;
     private Sprite[] RankSpriteArray;
+    public Func<bool> SuccessReward; // 当前选中关卡通关后的奖励
 
     protected override void Awake()
     {
@@ -106,56 +39,9 @@ public class MainlinePanel : BasePanel
     public override void InitPanel()
     {
         base.InitPanel();
-        LoadAll();
+        EnterLastAvailablePage();
         UpdateDisplay();
-    }
-
-    /// <summary>
-    /// 加载全部静态的主线关卡信息
-    /// </summary>
-    private void LoadAll()
-    {
-        if (!isLoad)
-        {
-            // 加载静态主线关卡
-            Chapter_Static_List result;
-            if (JsonManager.TryLoadFromResource(path + "ChapterList", out result))
-            {
-                chapterList = result;
-            }
-            // 从玩家存档加载关卡情况
-            {
-                if(!JsonManager.TryLoadFromLocal(localPath, out mainlineSaveInLocal))
-                {
-                    mainlineSaveInLocal = new MainlineSaveInLocal();
-                    SaveOnLocal();
-                }
-            }
-            isLoad = true;
-        }
-    }
-
-    /// <summary>
-    /// 从本地存档获取关卡的完成情况
-    /// </summary>
-    /// <param name="id"></param>
-    /// <returns></returns>
-    private StageInfo_Local GetLocalStageInfo(string id)
-    {
-        if (!mainlineSaveInLocal.localStageInfoDict.ContainsKey(id))
-        {
-            mainlineSaveInLocal.localStageInfoDict.Add(id, new StageInfo_Local(id));
-            SaveOnLocal();
-        }
-        return mainlineSaveInLocal.localStageInfoDict[id];
-    }
-
-    /// <summary>
-    /// 保存一次本地的存档
-    /// </summary>
-    private void SaveOnLocal()
-    {
-        JsonManager.SaveOnLocal<MainlineSaveInLocal>(mainlineSaveInLocal, localPath);
+        SuccessReward = null; // 重置成无奖励
     }
 
     /// <summary>
@@ -163,14 +49,14 @@ public class MainlinePanel : BasePanel
     /// </summary>
     private void UpdateDisplay()
     {
-        Chapter_Static currentChapter = GetCurrentChapter();
+        MainlineManager.Chapter_Static currentChapter = MainlineManager.GetCurrentChapter();
 
         // 更新按钮可点击情况
-        if (currentIndex <= 0)
+        if (MainlineManager.currentIndex <= 0)
             Btn_Last.interactable = false;
         else
             Btn_Last.interactable = true;
-        if (currentIndex >= chapterList.chapterList.Count-1)
+        if (MainlineManager.currentIndex >= MainlineManager.ChapterList.chapterList.Count-1)
             Btn_Next.interactable = false;
         else
             Btn_Next.interactable = true;
@@ -188,7 +74,7 @@ public class MainlinePanel : BasePanel
     /// </summary>
     private void UpdateItemListAndItsDisplay()
     {
-        Chapter_Static currentChapter = GetCurrentChapter();
+        MainlineManager.Chapter_Static currentChapter = MainlineManager.GetCurrentChapter();
 
         foreach (var item in itemList)
         {
@@ -199,11 +85,35 @@ public class MainlinePanel : BasePanel
         // 根据当前的章节信息来读取关卡和玩家存档内容
         foreach (var static_info in currentChapter.stageList)
         {
-            StageInfo_Local local_info = GetLocalStageInfo(static_info.id);
+            MainlineManager.StageInfo_Local local_info = MainlineManager.GetLocalStageInfo(static_info.id);
             BaseStage.StageInfo info = BaseStage.Load(static_info.chapterId, static_info.sceneId, static_info.stageId);
             Item_MainlinePanel item = Item_MainlinePanel.GetInstance(delegate { 
                 PlayerData.GetInstance().SetCurrentStageInfo(info);
                 mUIFacade.currentScenePanelDict[StringManager.StageConfigPanel].EnterPanel();
+                // 添加通关后的奖励
+                SuccessReward = delegate
+                {
+                    if (local_info.rank == -1)
+                    {
+                        // 首通
+                        float exp = MainlineManager.GetFirstPassExp(static_info.id);
+                        GameNormalPanel panel = mUIFacade.currentScenePanelDict[StringManager.GameNormalPanel] as GameNormalPanel;
+                        if (panel != null)
+                            panel.SetExpTips("恭喜你第一次通过本关！奖励" + exp + "点经验值！");
+                        PlayerData.GetInstance().AddExp(exp);
+                        // 更新通过最高的难度记录
+                        local_info.rank = Mathf.Max(PlayerData.GetInstance().GetDifficult(), local_info.rank);
+                        MainlineManager.Save();
+                        return true;
+                    }
+                    else
+                    {
+                        // 更新通过最高的难度记录
+                        local_info.rank = Mathf.Max(PlayerData.GetInstance().GetDifficult(), local_info.rank);
+                        MainlineManager.Save();
+                        return false;
+                    }
+                };
             },
                 local_info.rank, !local_info.isUnlocked, static_info.id + " " + info.name, static_info.unlockCondition);
             itemList.Add(item);
@@ -212,13 +122,17 @@ public class MainlinePanel : BasePanel
         }
     }
 
+
     /// <summary>
-    /// 获取当前章节信息
+    /// 进入最后一个可以进的界面（一般是根据玩家当前进度而定）
     /// </summary>
-    /// <returns></returns>
-    private Chapter_Static GetCurrentChapter()
+    public void EnterLastAvailablePage()
     {
-        return chapterList.chapterList[currentIndex];
+        int level = PlayerData.GetInstance().GetLevel();
+        if (level <= 7)
+            MainlineManager.currentIndex = 0;
+        else if(level <= 14)
+            MainlineManager.currentIndex = 1;
     }
 
     /// <summary>
@@ -234,7 +148,7 @@ public class MainlinePanel : BasePanel
     /// </summary>
     public void OnClickBtn_Last()
     {
-        currentIndex--;
+        MainlineManager.currentIndex--;
         UpdateDisplay();
     }
 
@@ -243,7 +157,7 @@ public class MainlinePanel : BasePanel
     /// </summary>
     public void OnClickBtn_Next()
     {
-        currentIndex++;
+        MainlineManager.currentIndex++;
         UpdateDisplay();
     }
 

@@ -9,7 +9,9 @@ public enum CharacterNameShapeMap
     SummerFireflies_M = 3, // 夏日萤火（男）
     ForestPrincess_F = 4, // 森林公主
     YingZhiLianQu_F = 5, // 樱之恋曲
-
+    YingZhiLianQu_M = 6, // 樱之恋曲
     BabyMouse_F = 7, // baby鼠cos
     WhiteMouse_M = 8, // 一种白色的老鼠的cos
+    MeiLianHuaYu_F = 9, // 梦恋花语（女）
+    MeiLianHuaYu_M = 10, // 梦恋花语（男）
 }

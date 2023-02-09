@@ -558,10 +558,7 @@ public class CaptainAmerica : BossUnit
     /// </summary>
     private void CreateEnemySpawner(int xIndex, int yIndex)
     {
-        CustomizationItem item = CustomizationItem.GetInstance();
-        item.MInit();
-        item.transform.position = MapManager.GetGridLocalPosition(xIndex, yIndex);
-        item.animator.runtimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Boss/20/RainBow");
+        CustomizationItem item = CustomizationItem.GetInstance(MapManager.GetGridLocalPosition(xIndex, yIndex), GameManager.Instance.GetRuntimeAnimatorController("Boss/20/RainBow"));
         CustomizationTask task = new CustomizationTask();
         task.OnEnterFunc = delegate 
         {

@@ -6,8 +6,10 @@ using UnityEngine;
 /// </summary>
 public class WaterPipeFoodUnit : FoodUnit
 {
-    private List<int> maxFrontAttackCountList = new List<int>{ 1, 2, 3};
-    private List<int> maxBackAttackCountList = new List<int> { 2, 2, 3};
+    private static RuntimeAnimatorController Bullet_RuntimeAnimatorController;
+
+    private static List<int> maxFrontAttackCountList = new List<int>{ 1, 2, 3};
+    private static List<int> maxBackAttackCountList = new List<int> { 2, 2, 3};
 
     private int maxFrontAttackCount;
     private int maxBackAttackCount;
@@ -15,6 +17,13 @@ public class WaterPipeFoodUnit : FoodUnit
     private int currentAttackCount; // 当前攻击计数器
     private float endAttackPercent; // 发射最后一发子弹时的动画播放百分比
     private List<float> attackPercentList;
+
+    public override void Awake()
+    {
+        if (Bullet_RuntimeAnimatorController == null)
+            Bullet_RuntimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Food/6/Bullet");
+        base.Awake();
+    }
 
     public override void MInit()
     {
@@ -116,16 +125,22 @@ public class WaterPipeFoodUnit : FoodUnit
         // 前攻击
         if (currentAttackCount < maxFrontAttackCount)
         {
-            BaseBullet b = GameController.Instance.CreateBullet(this, transform.position + Vector3.up*0.1f, Vector2.right, BulletStyle.Water);
-            b.SetDamage(mCurrentAttack);
-            b.SetStandardVelocity(24.0f);
+            AllyBullet b = AllyBullet.GetInstance(BulletStyle.Normal, Bullet_RuntimeAnimatorController, this, mCurrentAttack);
+            b.transform.position = transform.position;
+            b.SetSpriteLocalPosition(GetSpriteLocalPosition() + Vector2.up * 0.1f);
+            b.SetStandardVelocity(24);
+            b.SetRotate(Vector2.right);
+            GameController.Instance.AddBullet(b);
         }
         // 后攻击
         if(currentAttackCount < maxBackAttackCount)
         {
-            BaseBullet b = GameController.Instance.CreateBullet(this, transform.position, Vector2.left, BulletStyle.Water);
-            b.SetDamage(mCurrentAttack);
-            b.SetStandardVelocity(24.0f);
+            AllyBullet b = AllyBullet.GetInstance(BulletStyle.Normal, Bullet_RuntimeAnimatorController, this, mCurrentAttack);
+            b.transform.position = transform.position;
+            b.SetSpriteLocalPosition(GetSpriteLocalPosition());
+            b.SetStandardVelocity(24);
+            b.SetRotate(Vector2.left);
+            GameController.Instance.AddBullet(b);
         }
     }
 }

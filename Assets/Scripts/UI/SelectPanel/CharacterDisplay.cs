@@ -1,11 +1,13 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 /// <summary>
 /// 角色选择显示按钮
 /// </summary>
-public class CharacterDisplay : MonoBehaviour
+public class CharacterDisplay : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     private PlayerInfoPanel mPlayerInfoPanel;
+    private RectTransform RectTrans;
 
     public int type;
     private Button Btn;
@@ -16,6 +18,7 @@ public class CharacterDisplay : MonoBehaviour
 
     private void Awake()
     {
+        RectTrans = GetComponent<RectTransform>();
         Btn = transform.Find("Button").GetComponent<Button>();
         Btn.onClick.AddListener(delegate {
             if (isUpdate)
@@ -64,5 +67,24 @@ public class CharacterDisplay : MonoBehaviour
     public void ExecuteRecycle()
     {
         GameManager.Instance.PushGameObjectToFactory(FactoryType.UIFactory, "PlayerInfoPanel/CharacterDisplay", gameObject);
+    }
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        if (type != -1)
+        {
+            string name;
+            if(CharacterManager.GetAuthorName((CharacterNameShapeMap)type, out name))
+            {
+                TextArea.Instance.SetText("原作者：" + name);
+                TextArea.Instance.SetLocalPosition(transform, new Vector2(RectTrans.sizeDelta.x / 2, 0), new Vector2(1, -1));
+            }
+        }
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        if (type != -1)
+            TextArea.ExecuteRecycle();
     }
 }

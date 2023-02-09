@@ -45,7 +45,8 @@ public class MouseCatcher : FoodUnit
         r.SetAffectHeight(0);
         Action<MouseUnit> action = (u) =>
         {
-            if (r.isAlive && UnitManager.CanBeSelectedAsTarget(this, u))
+            //if (r.isAlive && UnitManager.CanBeSelectedAsTarget(this, u))
+            if (r.isAlive)
             {
                 isTriggerBoom = true;
                 ExecuteDeath();
@@ -154,7 +155,7 @@ public class MouseCatcher : FoodUnit
     private void CreateNormalBoom()
     {
         BombAreaEffectExecution bombEffect = BombAreaEffectExecution.GetInstance();
-        bombEffect.Init(this, 0, GetRowIndex(), 1.5f, 1, 0, 0, false, true);
+        bombEffect.Init(this, 90 * mCurrentAttack, GetRowIndex(), 1.5f, 1, 0, 0, false, true);
         bombEffect.transform.position = this.GetPosition();
         bombEffect.SetAffectHeight(0); // ½ö¶ÔµØ
         GameController.Instance.AddAreaEffectExecution(bombEffect);

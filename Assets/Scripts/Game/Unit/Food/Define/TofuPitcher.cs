@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 using UnityEngine;
 /// <summary>
 /// 臭豆腐投手
@@ -7,6 +10,7 @@ public class TofuPitcher : FoodUnit
     private static RuntimeAnimatorController[] GreenBulletRuntimeAnimatorControllerArray;
     private static RuntimeAnimatorController[] RedBulletRuntimeAnimatorControllerArray;
     private static RuntimeAnimatorController PoisonEffectRuntimeAnimatorController;
+    private static RuntimeAnimatorController PoisonAreaEffectRuntimeAnimatorController;
     private static string DebuffName = "臭豆腐中毒";
 
     private Vector2 targetPosition;
@@ -14,7 +18,6 @@ public class TofuPitcher : FoodUnit
     private int greenLeft; // 投掷臭豆腐前还需要的攻击次数
     private float GreenDamageRate; // 臭豆腐的伤害倍率
     private float poisonDamageRate; // 每秒中毒伤害倍率
-    private float addDamageRate; // 臭豆腐的增伤效果
     private int PoisonTime; // 中毒时间
 
     public override void Awake()
@@ -30,6 +33,7 @@ public class TofuPitcher : FoodUnit
                 RedBulletRuntimeAnimatorControllerArray[i] = GameManager.Instance.GetRuntimeAnimatorController("Food/36/" + i + "/RedBullet");
             }
             PoisonEffectRuntimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Food/36/Poison");
+            PoisonAreaEffectRuntimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Food/36/PoisonEffect");
         }
     }
 
@@ -41,24 +45,23 @@ public class TofuPitcher : FoodUnit
         {
             case 1:
                 GreenBulletAttackCount = 2;
-                PoisonTime = 240;
+                PoisonTime = 720;
                 greenLeft = 0;
                 break;
             case 2:
                 GreenBulletAttackCount = 1;
-                PoisonTime = 240;
+                PoisonTime = 720;
                 greenLeft = 0;
                 break;
             default:
                 GreenBulletAttackCount = 2;
-                PoisonTime = 180;
+                PoisonTime = 480;
                 greenLeft = GreenBulletAttackCount;
                 break;
         }
         
-        GreenDamageRate = 0.25f;
-        addDamageRate = 1.12f;
-        poisonDamageRate = 0.1f;
+        GreenDamageRate = 1.0f;
+        poisonDamageRate = 0.5f;
         targetPosition = Vector2.zero;
     }
 
@@ -186,7 +189,7 @@ public class TofuPitcher : FoodUnit
     /// <param name="target"></param>
     private BaseBullet CreateRedBullet(Vector2 startPosition, BaseUnit target, float ori_dmg)
     {
-        AllyBullet b = AllyBullet.GetInstance(RedBulletRuntimeAnimatorControllerArray[mShape], this, ori_dmg);
+        AllyBullet b = AllyBullet.GetInstance(BulletStyle.Throwing, RedBulletRuntimeAnimatorControllerArray[mShape], this, ori_dmg);
         b.AddSpriteOffsetY(new FloatModifier(0.5f * MapManager.gridHeight));
         b.isnDelOutOfBound = true; // 出屏不自删
 
@@ -234,14 +237,14 @@ public class TofuPitcher : FoodUnit
     }
 
     /// <summary>
-    /// 投掷巧克力块
+    /// 投掷臭豆腐
     /// </summary>
     /// <param name="startPosition"></param>
     /// <param name="target"></param>
     /// <returns></returns>
     private BaseBullet CreateGreenBullet(Vector2 startPosition, BaseUnit target, float ori_dmg)
     {
-        AllyBullet b = AllyBullet.GetInstance(GreenBulletRuntimeAnimatorControllerArray[mShape], this, GreenDamageRate * ori_dmg);
+        AllyBullet b = AllyBullet.GetInstance(BulletStyle.Throwing, GreenBulletRuntimeAnimatorControllerArray[mShape], this, GreenDamageRate * ori_dmg);
         b.AddSpriteOffsetY(new FloatModifier(0.5f * MapManager.gridHeight));
         b.isnDelOutOfBound = true; // 出屏不自删
 
@@ -312,73 +315,137 @@ public class TofuPitcher : FoodUnit
     /// <param name="ori_dmg"></param>
     private void CreateDebuffArea(Vector2 pos, float ori_dmg)
     {
-        RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(pos, 1, 3, "ItemCollideEnemy");
+        RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(pos, 3, 3, "ItemCollideEnemy");
         r.isAffectMouse = true;
         r.SetAffectHeight(0);
         r.SetInstantaneous();
 
-        IntModifier countModifier = new IntModifier(1);
-        FloatModifier addDmgModifier = new FloatModifier(addDamageRate);
+        //IntModifier countModifier = new IntModifier(1);
+        //FloatModifier addDmgModifier = new FloatModifier(addDamageRate);
 
         r.SetOnEnemyEnterAction((u) => {
-            // 变量定义
-            int timeLeft = PoisonTime; // 中毒剩余时间
-            int triggerPoisonDamageTimeLeft = 60; // 触发毒伤判定剩余时间
-            // 添加伤害增加效果 和 持续真实伤害效果
-            CustomizationTask t = new CustomizationTask();
-            t.OnEnterFunc = delegate {
-                if (!u.NumericBox.IntDict.ContainsKey(DebuffName))
-                {
-                    u.NumericBox.IntDict.Add(DebuffName, new IntNumeric());
-                }
-                if(u.NumericBox.IntDict[DebuffName].Value == 0)
-                {
-                    // 添加中毒特效
-                    BaseEffect e = BaseEffect.CreateInstance(PoisonEffectRuntimeAnimatorController, null, "Idle", null, true);
-                    GameController.Instance.AddEffect(e);
-                    u.AddEffectToDict(DebuffName, e, Vector2.zero);
-                }
-                u.NumericBox.IntDict[DebuffName].AddAddModifier(countModifier);
-                // 添加增伤效果
-                u.NumericBox.DamageRate.AddModifier(addDmgModifier);
-            };
-
-            t.AddTaskFunc(delegate {
-                triggerPoisonDamageTimeLeft--;
-                if (triggerPoisonDamageTimeLeft == 0)
-                {
-                    triggerPoisonDamageTimeLeft += 60;
-                    // 造成一次真实伤害
-                    new DamageAction(CombatAction.ActionType.RealDamage, null, u, poisonDamageRate*ori_dmg).ApplyAction();
-                }
-                
-                if(timeLeft > 0)
-                {
-                    timeLeft--;
-                    return false;
-                }
-                else
-                {
-                    return true;
-                }
-
-            });
-
-            t.OnExitFunc = delegate {
-                u.NumericBox.IntDict[DebuffName].RemoveAddModifier(countModifier);
-                // 移除增伤效果
-                u.NumericBox.DamageRate.RemoveModifier(addDmgModifier);
-                if (u.NumericBox.IntDict[DebuffName].Value == 0)
-                {
-                    // 移除中毒特效
-                    u.RemoveEffectFromDict(DebuffName);
-                }
-            };
-
-            u.AddTask(t);
-
+            TofuTask t;
+            if (u.GetTask(DebuffName) == null)
+            {
+                t = new TofuTask(u);
+                u.AddUniqueTask(DebuffName, t);
+            }
+            else
+            {
+                t = u.GetTask(DebuffName) as TofuTask;
+            }
+            t.AddBuff(poisonDamageRate * ori_dmg, PoisonTime);
         });
 
         GameController.Instance.AddAreaEffectExecution(r);
+
+        // 添加范围特效
+        {
+            BaseEffect e = BaseEffect.CreateInstance(PoisonAreaEffectRuntimeAnimatorController, null, "Appear", "Disappear", false);
+            e.SetSpriteRendererSorting("Unit", LayerManager.CalculateSortingLayer(LayerManager.UnitType.Enemy, 7, 0, UnityEngine.Random.Range(0, 100)));
+            e.transform.position = pos;
+            GameController.Instance.AddEffect(e);
+        }
+    }
+
+    /// <summary>
+    /// 臭豆腐BUFF任务
+    /// </summary>
+    private class TofuTask : ITask
+    {
+        private class Recorder
+        {
+            public float dmg; // 秒伤
+            public int timeLeft;
+
+            public Recorder(float dmg, int timeLeft)
+            {
+                this.dmg = dmg;
+                this.timeLeft = timeLeft;
+            }
+        }
+
+        // 每秒伤害系列
+        private const int interval = 60;
+        private int triggerDamageTimeLeft; // 触发伤害剩余时间
+        private List<Recorder> rList = new List<Recorder>();
+        private BaseUnit unit;
+
+        public TofuTask(BaseUnit unit)
+        {
+            this.unit = unit;
+            Initial();
+        }
+
+        private void Initial()
+        {
+            rList.Clear();
+            triggerDamageTimeLeft = interval;
+        }
+
+        public void OnEnter()
+        {
+            // 添加中毒特效
+            BaseEffect e = BaseEffect.CreateInstance(PoisonEffectRuntimeAnimatorController, "Appear", "Idle", "Disappear", true);
+            string name;
+            int order;
+            if (unit.TryGetSpriteRenternerSorting(out name, out order))
+            {
+                e.SetSpriteRendererSorting(name, order + 4);
+            }
+            GameController.Instance.AddEffect(e);
+            unit.AddEffectToDict(DebuffName, e, 0.3f*Vector2.up);
+        }
+
+        public void OnUpdate()
+        {
+            triggerDamageTimeLeft--;
+            if (triggerDamageTimeLeft <= 0)
+            {
+                triggerDamageTimeLeft += interval;
+                float totalDamage = 0;
+                List<Recorder> delList = new List<Recorder>();
+                foreach (var r in rList)
+                {
+                    totalDamage += r.dmg;
+                    r.timeLeft--;
+                    if (r.timeLeft <= 0)
+                        delList.Add(r);
+                }
+                foreach (var r in delList)
+                    rList.Remove(r);
+                new DamageAction(CombatAction.ActionType.CauseDamage, null, unit, totalDamage).ApplyAction();
+            }
+            else
+            {
+                List<Recorder> delList = new List<Recorder>();
+                foreach (var r in rList)
+                {
+                    r.timeLeft--;
+                    if (r.timeLeft <= 0)
+                        delList.Add(r);
+                }
+                foreach (var r in delList)
+                    rList.Remove(r);
+            }
+               
+        }
+
+        public bool IsMeetingExitCondition()
+        {
+            return rList.Count <= 0;
+        }
+
+        public void OnExit()
+        {
+            // 移除中毒特效
+            unit.RemoveEffectFromDict(DebuffName);
+        }
+
+        // 叠加一层效果
+        public void AddBuff(float dmg, int timeLeft)
+        {
+            rList.Add(new Recorder(dmg, timeLeft));
+        }
     }
 }

@@ -127,15 +127,17 @@ public class Pharaoh1 : BossUnit
         // 通用机制
         AddParamArray("AddDamageRate", new float[] { 1 }); // 诅咒增伤倍率
         AddParamArray("KilledHp", new float[] { 50 }); // 来自诅咒的斩杀血线
-        AddParamArray("DropDamage", new float[] { 900 }); // 棺材掉落伤害
-        AddParamArray("StunTime", new float[] { 4 }); // 棺材掉落晕眩时间
+        AddParamArray("CurseTime", new float[] { 15 }); // 诅咒时长
+        AddParamArray("DropDamage", new float[] { 39 }); // 棺材掉落伤害
+        AddParamArray("StunTime", new float[] { 2 }); // 棺材掉落晕眩时间
 
         AddParamArray("LidHp", new float[] { 900 }); // 盒盖生命值
         AddParamArray("BoxHp", new float[] { 300 }); // 盒体生命值
         AddParamArray("LidOpenTime", new float[] { 3 }); // 盒盖揭开等待时间
+        AddParamArray("CoffinAliveTime", new float[] { 18 }); // 棺材自毁时间
 
-        AddParamArray("MummyHp", new float[] { 100 }); // 木乃伊鼠
-        AddParamArray("MummyAliveTime", new float[] { 18 }); // 木乃伊自行解体时间
+        AddParamArray("MummyHp", new float[] { 100 }); // 木乃伊鼠最小生命值
+        AddParamArray("MummyHpPecent", new float[] { 60 }); // 木乃伊继承生命值百分比
 
         AddParamArray("BugHp", new float[] { 100 }); // 圣甲虫的生命值
 
@@ -251,38 +253,30 @@ public class Pharaoh1 : BossUnit
     /// <summary>
     /// 召唤木乃伊鼠
     /// </summary>
-    private void SummonMummy(Vector2 pos)
+    private void SummonMummy(Vector2 pos, float hp)
     {
         MouseModel m = MouseModel.GetInstance(mummyAnimatorController, new float[] { 0.5f });
         m.NumericBox.AddDecideModifierToBoolDict(IgnoreCurseKey, new BoolModifier(true)); // 免疫诅咒
-        m.SetBaseAttribute(GetParamValue("MummyHp", 0), 10, 0.5f, 0.75f, 0, 0.9f, 0);
+        m.SetBaseAttribute(hp, 10, 0.5f, 0.75f, 0, 0.9f, 0);
         m.transform.position = pos;
         m.currentYIndex = MapManager.GetYIndex(pos.y);
         m.SetActionState(new MoveState(m));
+        GameController.Instance.AddMouseUnit(m);
 
+        // 对被阻挡的单位施加诅咒
         CustomizationTask t = new CustomizationTask();
-        int aliveTimeLeft = Mathf.FloorToInt(GetParamValue("MummyAliveTime", 0) * 60);
-        t.AddTaskFunc(delegate{
-            if (aliveTimeLeft > 0)
-                aliveTimeLeft--;
-            else
-            {
-                // 时间一到就自毁
-                m.ExecuteDeath();
-                return true;
-            }
+        t.AddTaskFunc(delegate {
             if (m.IsBlock())
                 AddCurse(m.GetCurrentTarget());
             return false;
         });
         m.AddTask(t);
-        GameController.Instance.AddMouseUnit(m);
     }
 
     /// <summary>
     /// 召唤一个棺材
     /// </summary>
-    private void SummonCoffin(Vector2 pos)
+    private void SummonCoffin(Vector2 pos, float masterHp)
     {
         float LidHp = GetParamValue("LidHp", 0);
         float BoxHp = GetParamValue("BoxHp", 0);
@@ -299,82 +293,107 @@ public class Pharaoh1 : BossUnit
         m.CanBlockFuncList.Add(delegate { return false; }); // 棺材不可阻挡所以也不会攻击
         GameController.Instance.AddMouseUnit(m);
 
-        CustomizationTask t = new CustomizationTask();
-        bool dropFlag = true;
-        bool isSummon = false; // 是否已经生成木乃伊鼠
-        int timeLeft = Mathf.FloorToInt(GetParamValue("LidOpenTime", 0)*60);
-        Func<BaseUnit, BaseBullet, bool> noHitFunc = (unit, bullet) => { return false; };
-
-        int stunTime = Mathf.FloorToInt(GetParamValue("StunTime", 0) * 60);
-        // 晕眩单位
-        Action<BaseUnit> stunUnitAction = (unit) =>
+        // 一定时间自毁
         {
-            m.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(unit, stunTime, false));
-        };
-
-        t.OnEnterFunc = delegate
-        {
-            m.SetActionState(new IdleState(m));
-            // 从天上掉下来
-            m.animatorController.Play("Drop");
-            m.CanHitFuncList.Add(noHitFunc); // 起初不可击中
-        };
-        t.AddTaskFunc(delegate {
-            if (m.animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
-            {
-                m.animatorController.Play("Idle", true);
-                return true;
-            }
-            else if(m.animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime()>0.33f && dropFlag)
-            {
-                m.CanHitFuncList.Remove(noHitFunc); // 可击中
-                // 对自身为中心0.5格的单位造成范围伤害 并击晕
-                DamageAreaEffectExecution e = DamageAreaEffectExecution.GetInstance();
-                e.Init(m, CombatAction.ActionType.CauseDamage, GetParamValue("DropDamage", 0), GetRowIndex(), 0.5f, 0.5f, 0, 0, true, true);
-                e.transform.position = m.transform.position;
-                e.SetOnFoodEnterAction(stunUnitAction);
-                e.SetOnEnemyEnterAction(stunUnitAction);
-                e.AddExcludeMouseUnit(m); // 自身要被排除在外，不然伤敌八百自损一千
-                GameController.Instance.AddAreaEffectExecution(e);
-                dropFlag = false;
-            }
-            return false;
-        });
-        t.AddTaskFunc(delegate
-        {
-            if (timeLeft > 0 || m.GetCurrentHp()<=BoxHp)
-                timeLeft--;
-            else
-            {
-                if (m.GetCurrentHp() > BoxHp)
-                    m.SetMaxHpAndCurrentHp(BoxHp);
+            CustomizationTask t = new CustomizationTask();
+            int aliveTimeLeft = Mathf.FloorToInt(GetParamValue("CoffinAliveTime", 0) * 60);
+            t.AddTaskFunc(delegate {
+                if (aliveTimeLeft > 0)
+                    aliveTimeLeft--;
                 else
-                    m.NumericBox.Hp.SetBase(BoxHp);
-                m.animatorController.Play("Open");
-                return true;
-            }
-            return false;
-        });
-        t.AddTaskFunc(delegate
+                {
+                    // 时间一到就自毁
+                    m.ExecuteDeath();
+                    return true;
+                }
+                if (m.IsBlock())
+                    AddCurse(m.GetCurrentTarget());
+                return false;
+            });
+            m.AddTask(t);
+        }
+
+        // 生成木乃伊鼠
         {
-            if (m.animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
+            CustomizationTask t = new CustomizationTask();
+            bool dropFlag = true;
+            bool isSummon = false; // 是否已经生成木乃伊鼠
+            int timeLeft = Mathf.FloorToInt(GetParamValue("LidOpenTime", 0) * 60);
+            Func<BaseUnit, BaseBullet, bool> noHitFunc = (unit, bullet) => { return false; };
+
+            int stunTime = Mathf.FloorToInt(GetParamValue("StunTime", 0) * 60);
+            // 晕眩单位
+            Action<BaseUnit> stunUnitAction = (unit) =>
             {
-                // 此处真正生成木乃伊鼠
-                isSummon = true;
-                SummonMummy(m.transform.position);
-                m.animatorController.Play("Idle1", true);
-                return true;
-            }
-            return false;
-        });
-        m.AddTask(t);
-        // 如果在没有生成木乃伊鼠的情况下棺材就爆了，那么在爆炸时生成木乃伊鼠
-        m.AddBeforeDeathEvent(delegate {
-            if (!isSummon)
+                m.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(unit, stunTime, false));
+            };
+
+            t.OnEnterFunc = delegate
             {
-                SummonMummy(m.transform.position);
-            }
-        });
+                m.SetActionState(new IdleState(m));
+                // 从天上掉下来
+                m.animatorController.Play("Drop", false);
+                m.CanHitFuncList.Add(noHitFunc); // 起初不可击中
+            };
+            t.AddTaskFunc(delegate {
+                if (m.animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
+                {
+                    m.animatorController.Play("Idle", true);
+                    return true;
+                }
+                else if (m.animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime() > 0.33f && dropFlag)
+                {
+                    m.CanHitFuncList.Remove(noHitFunc); // 可击中
+                                                        // 对自身为中心0.5格的单位造成范围伤害 并击晕
+                    DamageAreaEffectExecution e = DamageAreaEffectExecution.GetInstance();
+                    e.Init(m, CombatAction.ActionType.CauseDamage, GetParamValue("DropDamage", 0), GetRowIndex(), 0.5f, 0.5f, 0, 0, true, true);
+                    e.transform.position = m.transform.position;
+                    e.SetOnFoodEnterAction(stunUnitAction);
+                    e.SetOnEnemyEnterAction(stunUnitAction);
+                    e.AddExcludeMouseUnit(m); // 自身要被排除在外，不然伤敌八百自损一千
+                    GameController.Instance.AddAreaEffectExecution(e);
+                    dropFlag = false;
+                }
+                return false;
+            });
+            t.AddTaskFunc(delegate
+            {
+                if (timeLeft > 0 && m.GetCurrentHp() >= BoxHp)
+                    timeLeft--;
+                else
+                {
+                    if (m.GetCurrentHp() > BoxHp)
+                        m.SetMaxHpAndCurrentHp(BoxHp);
+                    else
+                        m.NumericBox.Hp.SetBase(BoxHp);
+                    m.animatorController.Play("Open");
+                    return true;
+                }
+                return false;
+            });
+            t.AddTaskFunc(delegate
+            {
+                if (m.animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
+                {
+                    // 此处真正生成木乃伊鼠
+                    isSummon = true;
+                    SummonMummy(m.transform.position, Mathf.Max(GetParamValue("MummyHp", 0), masterHp * GetParamValue("MummyHpPecent", 0) / 100));
+                    m.animatorController.Play("Idle1", true);
+                    return true;
+                }
+                return false;
+            });
+            m.AddTask(t);
+            // 如果在没有生成木乃伊鼠的情况下棺材就爆了，那么在爆炸时生成木乃伊鼠
+            m.AddBeforeDeathEvent(delegate {
+                if (!isSummon)
+                {
+                    SummonMummy(m.transform.position, Mathf.Max(GetParamValue("MummyHp", 0), masterHp * GetParamValue("MummyHpPecent", 0) / 100));
+                }
+            });
+        }
+
+
     }
 
     /// <summary>
@@ -393,7 +412,7 @@ public class Pharaoh1 : BossUnit
     private void BeforeDeathWhenCursed(BaseUnit unit)
     {
         if(unit.transform.position.x > MapManager.GetColumnX(3))
-            SummonCoffin(unit.transform.position); // 原地生成一个棺材
+            SummonCoffin(unit.transform.position, unit.mMaxHp); // 原地生成一个棺材
     }
 
     /// <summary>
@@ -414,14 +433,32 @@ public class Pharaoh1 : BossUnit
 
         // 以下为施加方法
         unit.NumericBox.DamageRate.AddModifier(CurseAddDamageModifier); // 受到伤害增加
-        //unit.AddActionPointListener(ActionPointType.PostReceiveDamage, AfterDamageWhenCursed);
-        //unit.AddActionPointListener(ActionPointType.PostReceiveReboundDamage, AfterDamageWhenCursed);
         unit.AddBeforeDeathEvent(BeforeDeathWhenCursed);
         cursedUnit.Add(unit);
         // 为目标施加诅咒特效
         BaseEffect e = BaseEffect.CreateInstance(curseEffectAnimatorController, "Appear", "Idle", "Disappear", true);
-        unit.AddEffectToDict(CurseKey, e, 0f * MapManager.gridHeight * Vector2.up);
         GameController.Instance.AddEffect(e);
+        unit.AddEffectToDict(CurseKey, e, Vector2.zero);
+        string name;
+        int order;
+        if (unit.TryGetSpriteRenternerSorting(out name, out order))
+        {
+            e.SetSpriteRendererSorting(name, order + 3);
+        }
+
+        int timeLeft = Mathf.FloorToInt(GetParamValue("CurseTime", 0) * 60);
+        CustomizationTask t = new CustomizationTask();
+        t.AddTaskFunc(delegate {
+            if (timeLeft > 0)
+                timeLeft--;
+            else
+                return true;
+            return false;
+        });
+        t.OnExitFunc = delegate {
+            RemoveCurse(unit);
+        };
+        unit.AddTask(t);
     }
 
     /// <summary>
@@ -431,8 +468,6 @@ public class Pharaoh1 : BossUnit
     private void RemoveCurse(BaseUnit unit)
     {
         unit.NumericBox.DamageRate.RemoveModifier(CurseAddDamageModifier);
-        //unit.RemoveActionPointListener(ActionPointType.PostReceiveDamage, AfterDamageWhenCursed);
-        //unit.RemoveActionPointListener(ActionPointType.PostReceiveReboundDamage, AfterDamageWhenCursed);
         unit.RemoveBeforeDeathEvent(BeforeDeathWhenCursed);
         cursedUnit.Remove(unit);
         // 为目标移除诅咒特效
@@ -527,11 +562,16 @@ public class Pharaoh1 : BossUnit
             m.AddCanBlockFunc(delegate { return false; }); // 不可被阻挡
             m.AddCanHitFunc(delegate { return false; }); // 不可被子弹击中
             m.DieClipName = "Disappear";
+            // 禁止放卡
+            Func<BaseGrid, FoodInGridType, bool> noBuildFunc = delegate { return false; };
+            masterGrid.AddCanBuildFuncListener(noBuildFunc);
             // 绷带蛋正常被拆解 或 被炸毁时 会出现虫子
             Action<BaseUnit> action = delegate {
                 // 位于左侧第四列中心偏左则不生成虫子
                 if(m.transform.position.x > MapManager.GetColumnX(3))
                     SummonBug(m.transform.position);
+                // 又允许放卡了
+                masterGrid.RemoveCanBuildFuncListener(noBuildFunc);
             };
 
             m.AddBeforeDeathEvent(action);
@@ -603,18 +643,22 @@ public class Pharaoh1 : BossUnit
                 }
 
                 AddCurse(unit);
-                // 持续施加晕眩效果
-                StatusAbility s = unit.GetNoCountUniqueStatus(StringManager.Stun);
-                if (s == null)
+                // 对美食单位持续施加晕眩效果
+                if(unit is FoodUnit)
                 {
-                    s = new StunStatusAbility(unit, 1, false);
-                    unit.AddNoCountUniqueStatusAbility(StringManager.Stun, s);
+                    StatusAbility s = unit.GetNoCountUniqueStatus(StringManager.Stun);
+                    if (s == null)
+                    {
+                        s = new StunStatusAbility(unit, 1, false);
+                        unit.AddNoCountUniqueStatusAbility(StringManager.Stun, s);
+                    }
+
+                    if (s.leftTime < 2)
+                    {
+                        s.leftTime = 2;
+                    }
                 }
 
-                if (s.leftTime < 2)
-                {
-                    s.leftTime = 2;
-                }
             };
 
             r.isAffectFood = true;
@@ -974,6 +1018,13 @@ public class Pharaoh1 : BossUnit
                 {
                     flag = false;
                     ReleaseAllBandage();
+                    // 在右一列生成一堆的绷带
+                    for (int i = 0; i < 7; i++)
+                    {
+                        BaseGrid g = GameController.Instance.mMapController.GetGrid(8, i);
+                        if(g!=null)
+                            CreateBandageArea(g);
+                    }
                 }
                 return false;
             });
@@ -1035,7 +1086,7 @@ public class Pharaoh1 : BossUnit
                     }
                     else if (animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime() > rate*j && flag)
                     {
-                        BaseUnit unit = FoodManager.GetSpecificRowFarthestRightCanTargetedAlly(j, float.MinValue);
+                        BaseUnit unit = FoodManager.GetSpecificRowFarthestRightCanTargetedAlly(j, float.MinValue, false);
                         if(unit != null && unit.GetGrid() != null)
                         {
                             CreateBandageArea(unit.GetGrid());

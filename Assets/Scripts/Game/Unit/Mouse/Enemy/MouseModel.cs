@@ -51,6 +51,7 @@ public class MouseModel : MouseUnit
     public static MouseModel GetInstance(RuntimeAnimatorController runtimeAnimatorController)
     {
         MouseModel m = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Mouse/MouseModel").GetComponent<MouseModel>();
+        m.animator.runtimeAnimatorController = runtimeAnimatorController;
         m.MInit();
         m.animator.runtimeAnimatorController = runtimeAnimatorController;
         return m;
@@ -65,6 +66,7 @@ public class MouseModel : MouseUnit
     public static MouseModel GetInstance(RuntimeAnimatorController[] runtimeAnimatorControllerArray, float[] hertRateArray)
     {
         MouseModel m = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Mouse/MouseModel").GetComponent<MouseModel>();
+        m.animator.runtimeAnimatorController = runtimeAnimatorControllerArray[0];
         m.MInit();
         foreach (var item in hertRateArray)
         {

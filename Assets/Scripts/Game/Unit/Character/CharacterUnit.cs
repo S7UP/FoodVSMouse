@@ -55,8 +55,9 @@ public class CharacterUnit : BaseUnit
             weapons.DeathEvent();
         // 添加武器
         int type = data.GetWeapons();
-        weapons = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Weapons/"+type+"/0").GetComponent<BaseWeapons>();
+        weapons = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Weapons/"+type).GetComponent<BaseWeapons>();
         weapons.MInit();
+        weapons.mType = type;
         weapons.transform.SetParent(transform);
         weapons.master = this;
     }
@@ -331,6 +332,15 @@ public class CharacterUnit : BaseUnit
             weapons.SetSpriteRenderSortingOrder(spriteRenderer.sortingOrder+1);
     }
 
+    public override bool TryGetSpriteRenternerSorting(out string name, out int order)
+    {
+        if (spriteRenderer == null)
+            return base.TryGetSpriteRenternerSorting(out name, out order);
+        name = spriteRenderer.sortingLayerName;
+        order = spriteRenderer.sortingOrder;
+        return true;
+    }
+
     /// <summary>
     /// 由子类实现，更新子类特殊组件的层数
     /// </summary>
@@ -457,6 +467,15 @@ public class CharacterUnit : BaseUnit
     }
 
     /// <summary>
+    /// 获取贴图对象相对坐标
+    /// </summary>
+    /// <returns></returns>
+    public override Vector2 GetSpriteLocalPosition()
+    {
+        return spriteTrans.localPosition;
+    }
+
+    /// <summary>
     /// 获取贴图
     /// </summary>
     public SpriteRenderer GetSpriteRender()
@@ -506,16 +525,13 @@ public class CharacterUnit : BaseUnit
         return spriteRenderer;
     }
 
-    private WeaponsFrozenState frozenStatus;
-
     /// <summary>
     /// 被冻结时连带武器一起被冻结
     /// </summary>
     public override void OnFrozenStateEnter()
     {
         base.OnFrozenStateEnter();
-        frozenStatus = new WeaponsFrozenState(weapons, weapons.mCurrentActionState);
-        weapons.SetActionState(frozenStatus);
+        weapons.SetActionState(new WeaponsFrozenState(weapons, weapons.mCurrentActionState));
     }
 
     /// <summary>
@@ -524,6 +540,12 @@ public class CharacterUnit : BaseUnit
     public override void OnFrozenStateExit()
     {
         base.OnFrozenStateExit();
-        frozenStatus.TryExitCurrentState();
+        if(weapons.mCurrentActionState is WeaponsFrozenState)
+        (weapons.mCurrentActionState as WeaponsFrozenState).TryExitCurrentState();
+    }
+
+    public override void ExecuteRecycle()
+    {
+        GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, "Character/CharacterModel", gameObject);
     }
 }

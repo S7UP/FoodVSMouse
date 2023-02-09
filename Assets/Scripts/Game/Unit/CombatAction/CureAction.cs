@@ -30,8 +30,10 @@ public class CureAction : CombatAction
     private void PostProcess()
     {
         //触发 输出治疗后 行动点
-        Creator.TriggerActionPoint(ActionPointType.PostCauseCure, this);
+        if(Creator!=null)
+            Creator.TriggerActionPoint(ActionPointType.PostCauseCure, this);
         //触发 接受治疗后 行动点
-        Target.TriggerActionPoint(ActionPointType.PostReceiveCure, this);
+        if(Target!=null)
+            Target.TriggerActionPoint(ActionPointType.PostReceiveCure, this);
     }
 }

@@ -48,6 +48,7 @@ public class AirTransportMouse : MouseUnit, IFlyUnit
                 {
                     MouseUnit m = GameController.Instance.CreateMouseUnit(GetColumnIndex(), i, 
                         new BaseEnemyGroup.EnemyInfo() { type=((int)MouseNameTypeMap.AerialBombardmentMouse), shape = 0});
+                    m.SetMaxHpAndCurrentHp(m.mMaxHp * NumberManager.GetCurrentEnemyHpRate());
                     mouseList.Add(m);
                     // 确定初始坐标和最终坐标
                     startV3.Add(new Vector3(transform.position.x + 2*MapManager.gridWidth, transform.position.y, m.transform.position.z));

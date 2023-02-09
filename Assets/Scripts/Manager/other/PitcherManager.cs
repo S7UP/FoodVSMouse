@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 using UnityEngine;
@@ -6,6 +7,9 @@ using UnityEngine;
 /// </summary>
 public class PitcherManager
 {
+    private static List<FoodNameTypeMap> PitcherList = new List<FoodNameTypeMap>() { 
+        FoodNameTypeMap.SaladPitcher, FoodNameTypeMap.ChocolatePitcher, FoodNameTypeMap.TofuPitcher, FoodNameTypeMap.EggPitcher
+    };
 
     /// <summary>
     /// 添加默认的投掷飞行任务
@@ -63,13 +67,65 @@ public class PitcherManager
     /// <returns></returns>
     public static BaseUnit FindTargetByPitcher(BaseUnit unit, float minX, int rowIndex)
     {
+        //BaseUnit target = null;
+        //// 单行索敌
+        //List<BaseUnit> list = new List<BaseUnit>();
+        //// 筛选出高度为0且大于指定坐标的可选取单位
+        //foreach (var item in GameController.Instance.GetSpecificRowEnemyList(rowIndex))
+        //{
+        //    if (item.GetHeight() == 0 && UnitManager.CanBeSelectedAsTarget(unit, item) && item.transform.position.x >= minX)
+        //        list.Add(item);
+        //}
+        //// 去找坐标最小的单位
+        //if (list.Count > 0)
+        //{
+        //    foreach (var item in list)
+        //    {
+        //        if (target == null || item.transform.position.x < target.transform.position.x)
+        //        {
+        //            target = item;
+        //        }
+        //    }
+        //}
+        //// 寻找本行的友方布丁单位，如果比上述目标敌人更靠左则可以以它为目标
+        //foreach (var u in GameController.Instance.GetSpecificRowAllyList(rowIndex))
+        //{
+        //    if (u.mType == (int)FoodNameTypeMap.CherryPudding && (u.transform.position.x > minX && (target == null || u.transform.position.x < target.transform.position.x)))
+        //    {
+        //        target = u;
+        //    }
+        //}
+        //return target;
+        List<BaseUnit> unitList = new List<BaseUnit>();
+        foreach (var u in GameController.Instance.GetSpecificRowEnemyList(rowIndex))
+        {
+            unitList.Add(u);
+        }
+        // 寻找本行的友方布丁单位，也一并加入
+        foreach (var u in GameController.Instance.GetSpecificRowAllyList(rowIndex))
+        {
+            if (u.mType == (int)FoodNameTypeMap.CherryPudding)
+            {
+                unitList.Add(u);
+            }
+        }
+        return FindTargetByPitcher(unit, minX, unitList, null);
+    }
+
+
+    /// <summary>
+    /// 投手默认的索敌方式（寻找单行中指点坐标右侧所有目标中最偏左的）
+    /// </summary>
+    /// <returns></returns>
+    public static BaseUnit FindTargetByPitcher(BaseUnit unit, float minX, List<BaseUnit> EnemyList, Func<BaseUnit, BaseUnit, bool> otherConditionFunc)
+    {
         BaseUnit target = null;
         // 单行索敌
         List<BaseUnit> list = new List<BaseUnit>();
         // 筛选出高度为0且大于指定坐标的可选取单位
-        foreach (var item in GameController.Instance.GetSpecificRowEnemyList(rowIndex))
+        foreach (var item in EnemyList)
         {
-            if (item.GetHeight() == 0 && UnitManager.CanBeSelectedAsTarget(unit, item) && item.transform.position.x >= minX)
+            if (item.GetHeight() == 0 && UnitManager.CanBeSelectedAsTarget(unit, item) && item.transform.position.x >= minX && (otherConditionFunc==null|| otherConditionFunc(unit, item)))
                 list.Add(item);
         }
         // 去找坐标最小的单位
@@ -83,14 +139,12 @@ public class PitcherManager
                 }
             }
         }
-        // 寻找本行的友方布丁单位，如果比上述目标敌人更靠左则可以以它为目标
-        foreach (var u in GameController.Instance.GetSpecificRowAllyList(rowIndex))
-        {
-            if (u.mType == (int)FoodNameTypeMap.CherryPudding && (u.transform.position.x > minX && (target == null || u.transform.position.x < target.transform.position.x)))
-            {
-                target = u;
-            }
-        }
+
         return target;
+    }
+
+    public static bool IsPitcher(FoodUnit f)
+    {
+        return PitcherList.Contains((FoodNameTypeMap)f.mType);
     }
 }

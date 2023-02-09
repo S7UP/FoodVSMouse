@@ -93,7 +93,7 @@ Animator:
   m_GameObject: {fileID: 7807539521256197935}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: c2cff969c218b0943a8c35fee0e5c038, type: 2}
+  m_Controller: {fileID: 9100000, guid: 2c85618942d94844b8fddc44a65cc285, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -116,7 +116,7 @@ GameObject:
   - component: {fileID: -2461842842271423552}
   m_Layer: 17
   m_Name: EnemyBullet
-  m_TagString: EnemyBullet
+  m_TagString: Bullet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

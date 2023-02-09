@@ -5,7 +5,15 @@ using UnityEngine;
 /// </summary>
 public class ThreeLineFoodUnit : FoodUnit
 {
+    private static RuntimeAnimatorController Bullet_RuntimeAnimatorController;
     private int[] countArray;
+
+    public override void Awake()
+    {
+        if (Bullet_RuntimeAnimatorController == null)
+            Bullet_RuntimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Food/7/Bullet");
+        base.Awake();
+    }
 
     public override void MInit()
     {
@@ -119,10 +127,13 @@ public class ThreeLineFoodUnit : FoodUnit
         {
             for (int j = 0; j < countArray[i + 1]; j++)
             {
-                BaseBullet b = GameController.Instance.CreateBullet(this, transform.position, Vector2.right, BulletStyle.Wine);
-                b.SetDamage(mCurrentAttack);
-                b.SetStandardVelocity(24.0f);
-                if((rowIndex == 0 && i==1) || (rowIndex == 6 && i == -1))
+                AllyBullet b = AllyBullet.GetInstance(BulletStyle.Normal, Bullet_RuntimeAnimatorController, this, mCurrentAttack);
+                b.transform.position = transform.position;
+                b.SetSpriteLocalPosition(GetSpriteLocalPosition() + Vector2.up * 0.1f);
+                b.SetStandardVelocity(24);
+                b.SetRotate(Vector2.right);
+                GameController.Instance.AddBullet(b);
+                if ((rowIndex == 0 && i==1) || (rowIndex == 6 && i == -1))
                 {
                     // 添加一个纵向位移的任务
                     GameController.Instance.AddTasker(new StraightMovePresetTasker(b, MapManager.gridHeight / 30, 0, Vector3.up * 0, MapManager.gridHeight));

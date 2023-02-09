@@ -29,7 +29,7 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     protected List<BaseUnit> unitList = new List<BaseUnit>();
     public bool isnKillSelf;
     public bool isnUseHitEffect; // 不采用击中动画
-    public List<ITask> TaskList = new List<ITask>();
+    public TaskController taskController = new TaskController();
     public int aliveTime;
     public bool isnDelOutOfBound;
     public float mAngle; // 当前子弹角度
@@ -85,13 +85,14 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
         HitActionList.Clear();
         CanHitFuncList.Clear();
         TagDict.Clear();
-        TaskList.Clear();
+        taskController.Initial();
         unitList.Clear();
         SetCollision(true);
         SetActionState(new BulletFlyState(this));
         transform.localScale = Vector2.one;
         Trans_Sprite.transform.localRotation = new Quaternion(0, 0, 0, 0);
         isNavi = true; // 默认是同步方向
+        Show(); // 显示自己
     }
 
     /// <summary>
@@ -113,8 +114,8 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     // 子弹对目标造成伤害，TakeDamage的调用时机是敌对单位碰到了这个子弹，然后过来调用这个子弹的伤害逻辑
     public virtual void TakeDamage(BaseUnit baseUnit)
     {
-        // 子弹在死亡状态下不生效TakeDamage
-        if (isDeathState)
+        // 子弹在死亡状态下不生效TakeDamage，且每个单位只能被生效一次
+        if (isDeathState || unitList.Contains(baseUnit))
             return;
         if (baseUnit != null)
             new DamageAction(CombatAction.ActionType.CauseDamage, mMasterBaseUnit, baseUnit, mDamage).ApplyAction();
@@ -253,18 +254,7 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
             unitList.Remove(u);
         }
 
-        List<ITask> deleteTask = new List<ITask>();
-        foreach (var t in TaskList)
-        {
-            if (t.IsMeetingExitCondition())
-                deleteTask.Add(t);
-            else
-                t.OnUpdate();
-        }
-        foreach (var t in deleteTask)
-        {
-            RemoveTask(t);
-        }
+        taskController.Update();
 
         // 单位动作状态由状态机决定（如移动、攻击、待机、死亡）
         mCurrentActionState.OnUpdate();
@@ -489,8 +479,7 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     /// <param name="t"></param>
     public void AddTask(ITask t)
     {
-        TaskList.Add(t);
-        t.OnEnter();
+        taskController.AddTask(t);
     }
 
     /// <summary>
@@ -499,8 +488,7 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     /// <param name="t"></param>
     public void RemoveTask(ITask t)
     {
-        TaskList.Remove(t);
-        t.OnExit();
+        taskController.RemoveTask(t);
     }
 
     public bool IsAlive()
@@ -566,6 +554,15 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
         spriteRenderer.transform.localPosition = vector2;
     }
 
+    /// <summary>
+    /// 获取贴图对象相对坐标
+    /// </summary>
+    /// <returns></returns>
+    public virtual Vector2 GetSpriteLocalPosition()
+    {
+        return spriteRenderer.transform.localPosition;
+    }
+
     public virtual void SetSpriteRight(Vector2 vector2)
     {
         spriteRenderer.transform.right = vector2;
@@ -580,6 +577,22 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
         //Trans_Sprite.transform.localRotation = new Quaternion(0, 0, angle, 0);
         angle = angle * Mathf.PI / 180;
         Trans_Sprite.transform.right = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
+    }
+
+    /// <summary>
+    /// 隐藏自己
+    /// </summary>
+    public void Hide()
+    {
+        spriteRenderer.enabled = false;
+    }
+
+    /// <summary>
+    /// 显示自己
+    /// </summary>
+    public void Show()
+    {
+        spriteRenderer.enabled = true;
     }
 }
 

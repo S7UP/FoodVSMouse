@@ -305,7 +305,7 @@ public class RatTrain1 : BaseRatTrain
     {
         foreach (var u in retinueList)
         {
-            u.TaskList.Clear();
+            u.taskController.Initial();
             u.ExecuteDeath();
         }
         retinueList.Clear();
@@ -316,7 +316,7 @@ public class RatTrain1 : BaseRatTrain
     {
         foreach (var u in retinueList)
         {
-            u.TaskList.Clear();
+            u.taskController.Initial();
             u.ExecuteBurn();
         }
         retinueList.Clear();
@@ -327,7 +327,7 @@ public class RatTrain1 : BaseRatTrain
     {
         foreach (var u in retinueList)
         {
-            u.TaskList.Clear();
+            u.taskController.Initial();
             u.ExecuteDrop();
         }
         retinueList.Clear();

@@ -68,17 +68,6 @@ public class CardModel : MonoBehaviour, ICanvasRaycastFilter
         mSpr_Virtual.sprite = sprite;
     }
 
-    private void OnDisable()
-    {
-        
-    }
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
     // Update is called once per frame
     void Update()
     {
@@ -93,16 +82,20 @@ public class CardModel : MonoBehaviour, ICanvasRaycastFilter
         mousePosition.z = pos.z;
         mSpr_CardModel.transform.position = Camera.main.ScreenToWorldPoint(mousePosition); //将赋值了Z的鼠标屏幕坐标转世界坐标的同时赋值给对象
         // 卡片预建造位置更新（取当前鼠标悬停格）
-        BaseGrid overGrid = GameController.Instance.GetOverGrid();
-        if(overGrid != null)
+        if(GameController.Instance != null)
         {
-            mSpr_Virtual.gameObject.SetActive(true);
-            mSpr_Virtual.gameObject.transform.position = overGrid.GetUnitInPosition(Vector2.zero);
+            BaseGrid overGrid = GameController.Instance.GetOverGrid();
+            if (overGrid != null)
+            {
+                mSpr_Virtual.gameObject.SetActive(true);
+                mSpr_Virtual.gameObject.transform.position = overGrid.GetUnitInPosition(Vector2.zero);
+            }
+            else
+            {
+                mSpr_Virtual.gameObject.SetActive(false);
+            }
         }
-        else
-        {
-            mSpr_Virtual.gameObject.SetActive(false);
-        }
+
     }
 
     private void UpdateSize(Vector3 scale)

@@ -29,8 +29,12 @@ public class DamageAction : CombatAction
     //应用伤害
     public override void ApplyAction()
     {
+        // 如果伤害小于等于0那么它不会生效
+        if (DamageValue <= 0)
+            return;
         PreProcess();
-        Target.ReceiveDamage(this);
+        if(Target!=null)
+            Target.ReceiveDamage(this);
         PostProcess();
     }
 

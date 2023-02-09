@@ -81,7 +81,8 @@ public class JsonManager
         var jsonTextFile = Resources.Load<TextAsset>("Json/"+path);
         if(jsonTextFile != null)
         {
-            result = JsonUtility.FromJson<T>(jsonTextFile.text);
+            //result = JsonUtility.FromJson<T>(jsonTextFile.text);
+            result = JsonConvert.DeserializeObject<T>(jsonTextFile.text);
             return true;
         }
         else

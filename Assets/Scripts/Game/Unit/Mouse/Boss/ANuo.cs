@@ -53,7 +53,7 @@ public class ANuo : BossUnit
 
         // 霰弹枪
         AddParamArray("t0_0", new float[] { 5, 2, 0 }); // 准备时间
-        AddParamArray("num0_0", new float[] { 1, 1, 2 }); // 连射次数
+        AddParamArray("num0_0", new float[] { 3, 3, 4 }); // 连射次数
         AddParamArray("dmg0_0", new float[] { 900, 900, 900 }); // 单发大霰弹伤害
         AddParamArray("dmg0_1", new float[] { 10, 10, 10 }); // 霰弹爆破范围伤害
         AddParamArray("dmg0_2", new float[] { 25, 32, 39 }); // 单发小霰弹伤害
@@ -335,6 +335,8 @@ public class ANuo : BossUnit
     private CompoundSkillAbility Shoot(float dmg, float areaDmg, float childDmg)
     {
         bool attackFlag = true;
+        int num0_0 = Mathf.FloorToInt(GetParamValue("num0_0", mHertIndex)); // 连射次数
+        int count = 0;
 
         CompoundSkillAbility c = new CompoundSkillAbility(this);
         // 实现
@@ -342,13 +344,24 @@ public class ANuo : BossUnit
         c.BeforeSpellFunc = delegate
         {
             animatorController.Play("Attack");
+            num0_0 = Mathf.FloorToInt(GetParamValue("num0_0", mHertIndex)); // 连射次数(动态刷新！）
+            count = 1;
+            attackFlag = true;
         };
         {
             c.AddSpellingFunc(delegate
             {
                 if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
                 {
-                    return true;
+                    if (count >= num0_0)
+                        return true;
+                    else
+                    {
+                        animatorController.Play("Attack", false, 0);
+                        count++;
+                        attackFlag = true;
+                        return false;
+                    }
                 }
                 else if (animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime() > 0.57f && attackFlag)
                 {
@@ -418,13 +431,10 @@ public class ANuo : BossUnit
                 }
             });
             // 开枪
-            for (int i = 0; i < num0_0; i++)
-            {
-                c.AddSpellingFunc(delegate {
-                    c.ActivateChildAbility(Shoot(dmg0_0, dmg0_1, dmg0_2));
-                    return true;
-                });
-            }
+            c.AddSpellingFunc(delegate {
+                c.ActivateChildAbility(Shoot(dmg0_0, dmg0_1, dmg0_2));
+                return true;
+            });
             // 占位（必须）
             c.AddSpellingFunc(delegate {
                 return true;
