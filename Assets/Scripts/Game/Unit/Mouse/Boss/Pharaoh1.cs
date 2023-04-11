@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 
+using S7P.Numeric;
+
 using UnityEngine;
 /// <summary>
 /// BOSS法老
@@ -328,13 +330,13 @@ public class Pharaoh1 : BossUnit
                 m.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(unit, stunTime, false));
             };
 
-            t.OnEnterFunc = delegate
+            t.AddOnEnterAction(delegate
             {
                 m.SetActionState(new IdleState(m));
                 // 从天上掉下来
                 m.animatorController.Play("Drop", false);
                 m.CanHitFuncList.Add(noHitFunc); // 起初不可击中
-            };
+            });
             t.AddTaskFunc(delegate {
                 if (m.animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
                 {
@@ -455,9 +457,9 @@ public class Pharaoh1 : BossUnit
                 return true;
             return false;
         });
-        t.OnExitFunc = delegate {
+        t.AddOnExitAction(delegate {
             RemoveCurse(unit);
-        };
+        });
         unit.AddTask(t);
     }
 
@@ -490,12 +492,12 @@ public class Pharaoh1 : BossUnit
         CustomizationTask t = new CustomizationTask();
         int accTimeLeft = 240; // 加速时间
         float acc = TransManager.TranToVelocity(6)/accTimeLeft;
-        t.OnEnterFunc = delegate
+        t.AddOnEnterAction(delegate
         {
             m.SetActionState(new MoveState(m));
             // 自我晕眩2秒
             m.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(m, 120, false));
-        };
+        });
         t.AddTaskFunc(delegate {
             // 这个任务会在被晕眩或冰冻时暂停
             if (m.isFrozenState)
@@ -580,10 +582,10 @@ public class Pharaoh1 : BossUnit
             // 出现动画
             {
                 CustomizationTask t = new CustomizationTask();
-                t.OnEnterFunc = delegate
+                t.AddOnEnterAction(delegate
                 {
                     m.animatorController.Play("Appear");
-                };
+                });
                 t.AddTaskFunc(delegate
                 {
                     if (m.animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())

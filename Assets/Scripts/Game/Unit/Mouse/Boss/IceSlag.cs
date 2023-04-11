@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 
+using S7P.Numeric;
+
 using UnityEngine;
 /// <summary>
 /// 冰渣
@@ -704,11 +706,11 @@ public class IceSlag : BossUnit
             int accTime = 180;
             float acc = (v1 - v0) / accTime;
             int timeLeft = accTime;
-            t.OnEnterFunc = delegate
+            t.AddOnEnterAction(delegate
             {
                 m.transform.position = transform.position;
                 m.SetMoveRoate(moveRotate);
-            };
+            });
             // 加速
             t.AddTaskFunc(delegate {
                 if (timeLeft > 0)
@@ -742,10 +744,10 @@ public class IceSlag : BossUnit
                 }
                 return false;
             });
-            t2.OnExitFunc = delegate
+            t2.AddOnExitAction(delegate
             {
                 m.ExecuteDeath();
-            };
+            });
             m.AddTask(t2);
         }
 
@@ -757,11 +759,11 @@ public class IceSlag : BossUnit
             CustomizationTask t = new CustomizationTask();
             int totalTime = 30;
             int timeLeft = totalTime;
-            t.OnEnterFunc = delegate
+            t.AddOnEnterAction(delegate
             {
                 b.transform.localScale = Vector2.zero;
                 b.SetRotate(moveRotate);
-            };
+            });
             // 变大
             t.AddTaskFunc(delegate {
                 if (timeLeft > 0)
@@ -789,7 +791,7 @@ public class IceSlag : BossUnit
                 b.transform.position = m.transform.position;
                 return false;
             });
-            t2.OnExitFunc = delegate
+            t2.AddOnExitAction(delegate
             {
                 // 纠正方向
                 b.transform.right = Vector2.right;
@@ -803,7 +805,7 @@ public class IceSlag : BossUnit
                 r.SetOnEnemyEnterAction(unitAction);
                 r.SetInstantaneous();
                 GameController.Instance.AddAreaEffectExecution(r);
-            };
+            });
             b.AddTask(t2);
 
             GameController.Instance.AddBullet(b);

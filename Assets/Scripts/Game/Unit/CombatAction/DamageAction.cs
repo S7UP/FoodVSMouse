@@ -5,10 +5,12 @@ public class DamageAction : CombatAction
 {
     //伤害数值
     public float DamageValue { get; set; }
+    public float RealCauseValue; // 实际造成伤害（在对目标造成伤害后获取，否则为0）
 
     public DamageAction(ActionType actionType, BaseUnit creator, BaseUnit target, float damageValue) : base(actionType, creator, target)
     {
         DamageValue = damageValue;
+        RealCauseValue = 0;
     }
 
     //前置处理

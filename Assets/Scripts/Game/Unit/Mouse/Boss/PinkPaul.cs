@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 
+using S7P.Numeric;
+
 using UnityEngine;
 /// <summary>
 /// 粉红保罗
@@ -255,7 +257,7 @@ public class PinkPaul : BossUnit
         float max = float.MinValue;
         foreach (var g in gList1)
         {
-            BaseUnit unit = FoodManager.GetSpecificRowFarthestRightCanTargetedAlly(g.GetRowIndex(), float.MinValue, false);
+            BaseUnit unit = FoodManager.GetSpecificRowFarthestRightCanTargetedAlly(g.GetRowIndex(), float.MinValue, MapManager.GetColumnX(6.5f), false);
             if (unit != null)
             {
                 if (unit.transform.position.x > max)
@@ -275,14 +277,14 @@ public class PinkPaul : BossUnit
         {
             BaseGrid g = gList2[GetRandomNext(0, gList2.Count)];
             r2 = g.GetRowIndex();
-            c2 = Mathf.Max(1, Mathf.Min(5, FoodManager.GetSpecificRowFarthestRightCanTargetedAlly(r2, float.MinValue, false).GetColumnIndex()-1));
+            c2 = Mathf.Max(1, Mathf.Min(5, FoodManager.GetSpecificRowFarthestRightCanTargetedAlly(r2, float.MinValue, MapManager.GetColumnX(6.5f), false).GetColumnIndex()-1));
         }
         else
         {
             // 这里是保险处理，真没有合适的结果的话那就固定四路出现吧
             GetRandomNext(0, 1);
             r2 = 3;
-            BaseUnit unit = FoodManager.GetSpecificRowFarthestRightCanTargetedAlly(r2, float.MinValue, false);
+            BaseUnit unit = FoodManager.GetSpecificRowFarthestRightCanTargetedAlly(r2, float.MinValue, MapManager.GetColumnX(6.5f), false);
             if (unit != null)
                 c2 = Mathf.Max(1, Mathf.Min(5, unit.GetColumnIndex() - 1));
             else
@@ -300,8 +302,7 @@ public class PinkPaul : BossUnit
 
         MouseModel m = MouseModel.GetInstance(Bullet_AnimatorController);
         m.transform.position = pos;
-        m.mHeight = 1;
-        m.SetBaseAttribute(1, 10, 1.0f, 18.0f, 100, 0.5f, 0);
+        m.SetBaseAttribute(1, 10, 1.0f, 18.0f, 100, 0.5f, 1);
         m.SetMoveRoate(rot);
         m.canTriggerCat = false;
         m.canTriggerLoseWhenEnterLoseLine = false;
@@ -356,10 +357,10 @@ public class PinkPaul : BossUnit
                     return false;
                 }
             });
-            t.OnExitFunc = delegate
+            t.AddOnExitAction(delegate
             {
                 r.MDestory();
-            };
+            });
             r.AddTask(t);
         }
 
@@ -397,10 +398,10 @@ public class PinkPaul : BossUnit
                 }
                 return true;
             });
-            t.OnExitFunc = delegate
+            t.AddOnExitAction(delegate
             {
                 m.ExecuteDeath();
-            };
+            });
             m.AddTask(t);
         }
     }
@@ -485,19 +486,19 @@ public class PinkPaul : BossUnit
                 }
                 return true;
             });
-            t.OnExitFunc = delegate
+            t.AddOnExitAction(delegate
             {
                 r.MDestory();
-            };
+            });
             r.AddTask(t);
         };
 
         // 触手自身的行为动作
         {
             CustomizationTask t = new CustomizationTask();
-            t.OnEnterFunc = delegate {
+            t.AddOnEnterAction(delegate {
                 m.animatorController.Play("Appear");
-            };
+            });
             t.AddTaskFunc(delegate {
                 if (m.animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
                 {

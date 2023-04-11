@@ -131,6 +131,7 @@ public class WaterPipeGun : BaseWeapons
         if (currentAttackCount < maxFrontAttackCount)
         {
             AllyBullet b = AllyBullet.GetInstance(BulletStyle.Normal, Bullet_RuntimeAnimatorController, master, master.mCurrentAttack/10* dmgValue);
+            b.SetHitSoundEffect("Splat" + GameManager.Instance.rand.Next(0, 3));
             b.transform.position = transform.position;
             b.SetSpriteLocalPosition(master.GetSpriteLocalPosition());
             b.SetStandardVelocity(24);
@@ -151,6 +152,7 @@ public class WaterPipeGun : BaseWeapons
         if (currentAttackCount < maxBackAttackCount)
         {
             AllyBullet b = AllyBullet.GetInstance(BulletStyle.Normal, Bullet_RuntimeAnimatorController, master, master.mCurrentAttack/10* dmgValue);
+            b.SetHitSoundEffect("Splat" + GameManager.Instance.rand.Next(0, 3));
             b.transform.position = transform.position;
             b.SetSpriteLocalPosition(master.GetSpriteLocalPosition());
             b.SetStandardVelocity(24);
@@ -166,6 +168,7 @@ public class WaterPipeGun : BaseWeapons
                 }
             });
             GameController.Instance.AddBullet(b);
+            GameManager.Instance.audioSourceManager.PlayEffectMusic("Throw" + GameManager.Instance.rand.Next(0, 2));
         }
     }
 }

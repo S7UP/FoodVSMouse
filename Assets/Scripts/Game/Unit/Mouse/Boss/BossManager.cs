@@ -43,6 +43,32 @@ public class BossManager
             { { 0, "钢爪皮特"}
             }
         },
+        {
+            BossNameTypeMap.HellShiter, new Dictionary<int, string>()
+            { { 0, "地狱屎者"}
+            }
+        },
+        {
+            BossNameTypeMap.NeedleBaron, new Dictionary<int, string>()
+            { { 0, "针头男爵"}
+            }
+        },
+        {
+            BossNameTypeMap.MistyJulie, new Dictionary<int, string>()
+            { { 0, "迷雾朱莉"}
+            }
+        },
+        {
+            BossNameTypeMap.LieutenantHum, new Dictionary<int, string>()
+            { { 0, "嗡嗡中尉"}
+            }
+        },
+        {
+            BossNameTypeMap.GrumpyJack, new Dictionary<int, string>()
+            {
+                {0, "暴躁杰克" }
+            }
+        },
         { BossNameTypeMap.RatTrain, new Dictionary<int, string>()
             {
                 { 0, "列车初级"},

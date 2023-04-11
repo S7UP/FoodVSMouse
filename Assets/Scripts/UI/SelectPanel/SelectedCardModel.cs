@@ -55,7 +55,7 @@ public class SelectedCardModel : MonoBehaviour, IPointerEnterHandler, IPointerEx
         dataList = new List<Dropdown.OptionData>();
         for (int i = 0; i <= dict[(FoodNameTypeMap)info.type].maxShape; i++)
         {
-            dataList.Add(new Dropdown.OptionData(GameManager.Instance.GetSprite("Food/"+info.type+"/" + i + "/display")));
+            dataList.Add(new Dropdown.OptionData(GameManager.Instance.GetSprite("Food/"+info.type+"/" + i + "/icon")));
         }
         Dro_Shape.AddOptions(dataList);
         Dro_Shape.value = info.maxShape;

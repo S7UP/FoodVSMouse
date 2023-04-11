@@ -64,7 +64,7 @@ BoxCollider2D:
   m_Enabled: 1
   m_Density: 1
   m_Material: {fileID: 0}
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_UsedByEffector: 0
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0}
@@ -98,12 +98,21 @@ MonoBehaviour:
   mouseUnitList: []
   characterList: []
   gridList: []
+  bulletList: []
+  excludeFoodUnitList: []
+  excludeMouseUnitList: []
+  excludeCharacterList: []
+  excludeGridList: []
+  excludeBulletList: []
   isAlive: 1
   isAffectFood: 0
   isAffectMouse: 0
   isAffectCharacter: 0
+  isAffectGrid: 0
+  isAffectBullet: 0
   isIgnoreHeight: 0
   affectHeight: 0
+  TagList: []
   currentRowIndex: 0
   offsetX: 0
   offsetY: 0

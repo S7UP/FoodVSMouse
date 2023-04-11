@@ -1,4 +1,4 @@
-
+using S7P.Numeric;
 using UnityEngine;
 using System;
 /// <summary>
@@ -136,7 +136,7 @@ public class FogAreaEffectExecution : RetangleAreaEffectExecution
 
     public void OnUnitEnter(UnitType type, BaseUnit unit)
     {
-        // 获取目标身上唯一的荫蔽任务
+        // 获取目标身上唯一的任务
         FogTask t = null;
         if (unit.GetTask(TaskName) == null)
         {
@@ -172,6 +172,7 @@ public class FogAreaEffectExecution : RetangleAreaEffectExecution
         e.SetBoxCollider2D(Vector2.zero, new Vector2(0.51f * MapManager.gridWidth, 0.51f * MapManager.gridHeight));
         e.isAffectCharacter = true;
         e.transform.position = position;
+        e.SetCollisionLayer("BothCollide");
         return e;
     }
 
@@ -230,9 +231,14 @@ public class FogAreaEffectExecution : RetangleAreaEffectExecution
             unit.AddCanBeSelectedAsTargetFunc(noBeSelectedAsTargetFunc);
             // 添加隐匿特效
             BaseEffect e = BaseEffect.CreateInstance(GameManager.Instance.GetRuntimeAnimatorController("Effect/HiddenEffect"), "Appear", "Idle", "Disappear", true);
-            e.SetSpriteRendererSorting("Effect", 2);
+            string name;
+            int order;
+            if (unit.TryGetSpriteRenternerSorting(out name, out order))
+                e.SetSpriteRendererSorting(name, order + 1);
+            else
+                e.SetSpriteRendererSorting("Unit", 0);
             GameController.Instance.AddEffect(e);
-            unit.AddEffectToDict(EffectType.Hidden, e, new Vector2(0, 0*0.5f * MapManager.gridWidth));
+            unit.AddEffectToDict(EffectType.Hidden, e, new Vector2(0, 0));
         }
 
         public void OnUpdate()

@@ -1,3 +1,5 @@
+using UnityEngine;
+using S7P.Numeric;
 /// <summary>
 /// 冰淇淋
 /// </summary>
@@ -16,7 +18,7 @@ public class IceCream : FoodUnit
 
     public override void OnCastStateEnter()
     {
-        animatorController.Play("PreCast");
+        animatorController.Play("Cast");
     }
 
     /// <summary>
@@ -60,16 +62,24 @@ public class IceCream : FoodUnit
     }
 
     /// <summary>
-    /// 是否为伤害判定时刻（近战攻击为打出实际伤害，远程攻击为确定发射弹体）
+    /// 是否为伤害判定时刻
     /// </summary>
     /// <returns></returns>
     public override bool IsDamageJudgment()
     {
-        // 动画播放完一遍后且本格有卡片占有格子
         BaseGrid g = GetGrid();
         if (g == null)
             return false;
-        return (animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime() >= attackPercent && mAttackFlag && g.GetFoodUnitList().Count>1);
+        bool flag = false;
+        foreach (var f in g.GetAttackableFoodUnitList())
+        {
+            if(f.GetCardBuilder()!=null && !f.GetCardBuilder().IsColdDown())
+            {
+                flag = true;
+                break;
+            }
+        }
+        return (mAttackFlag && flag);
     }
 
     /// <summary>
@@ -78,7 +88,7 @@ public class IceCream : FoodUnit
     /// <returns></returns>
     public override bool IsMeetEndGeneralAttackCondition()
     {
-        return (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce() && !mAttackFlag);
+        return (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce());
     }
 
     /// <summary>
@@ -86,6 +96,9 @@ public class IceCream : FoodUnit
     /// </summary>
     public override void AfterGeneralAttack()
     {
+        // 如果不小心空放了冰淇淋还会重置CD
+        if (mAttackFlag)
+            GetCardBuilder().ResetCD();
         // 灰烬型卡片直接销毁自身
         ExecuteDeath();
     }
@@ -95,13 +108,24 @@ public class IceCream : FoodUnit
     /// </summary>
     public override void ExecuteDamage()
     {
-        //u.GetCardBuilder().ResetCD();
-        // 上面的注释已经过时了，留着是代表老版本设定，新版本设定在下面
+        int totalCD=0; // 被冷却卡片剩余CD之和统计
         // 使当前格所有卡片CD重置
         foreach (var unit in GetGrid().GetFoodUnitList())
         {
             if(unit.mType != mType)
-                unit.GetCardBuilder().ResetCD();
+            {
+                BaseCardBuilder builder = unit.GetCardBuilder();
+                totalCD += builder.mCDLeft;
+                builder.ResetCD();
+            }
+        }
+
+        // 如果是二转，可以根据被冷却的卡片在被冷却前的剩余CD来返还自身CD
+        if(mShape >= 2)
+        {
+            BaseCardBuilder builder = GetCardBuilder();
+            int returnCD = Mathf.Max(builder.mCDLeft - totalCD, 0);
+            builder.mCDLeft -= returnCD;
         }
     }
 }

@@ -1,3 +1,4 @@
+using S7P.Numeric;
 /// <summary>
 /// 飞行路障鼠
 /// </summary>
@@ -107,11 +108,11 @@ public class FlyBarrierMouse : MouseUnit, IFlyUnit
             // 移除障碍处美食
             if (b.GetGrid() != null)
             {
-                foreach (var item in b.GetGrid().GetAttackableFoodUnitList())
+                foreach (var unit in b.GetGrid().GetAttackableFoodUnitList())
                 {
-                    if (!item.NumericBox.GetBoolNumericValue(StringManager.Invincibility) && !item.tag.Equals("Character") && UnitManager.CanBeSelectedAsTarget(this, item))
+                    if (!unit.tag.Equals("Character"))
                     {
-                        item.ExecuteDeath();
+                        UnitManager.Execute(this, unit);
                     }
                 }
             }

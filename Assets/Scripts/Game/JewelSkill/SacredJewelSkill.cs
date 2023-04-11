@@ -31,9 +31,9 @@ public class SacredJewelSkill : BaseJewelSkill
         // 特效部分
         CustomizationItem item = CustomizationItem.GetInstance(new Vector2(MapManager.GetColumnX(4), MapManager.GetRowY(3)), Shooter_RuntimeAnimatorController);
         CustomizationTask t = new CustomizationTask();
-        t.OnEnterFunc = delegate {
+        t.AddOnEnterAction(delegate {
             item.animatorController.Play("Execute");
-        };
+        });
         t.AddTaskFunc(delegate {
             if (item.animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
             {
@@ -41,9 +41,9 @@ public class SacredJewelSkill : BaseJewelSkill
             }
             return false;
         });
-        t.OnExitFunc = delegate {
+        t.AddOnExitAction(delegate {
             item.ExecuteDeath();
-        };
+        });
         item.AddTask(t);
         GameController.Instance.AddItem(item);
     }

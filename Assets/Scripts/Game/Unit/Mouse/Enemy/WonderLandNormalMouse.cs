@@ -1,3 +1,4 @@
+using S7P.Numeric;
 /// <summary>
 /// 奇境基本老鼠
 /// </summary>

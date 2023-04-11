@@ -8,6 +8,7 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
+    public System.Random rand;
     public PlayerManager playerManager;
     public FactoryManager factoryManager;
     public AudioSourceManager audioSourceManager;
@@ -30,6 +31,7 @@ public class GameManager : MonoBehaviour
     {
         DontDestroyOnLoad(gameObject); // 切场景时不销毁
         _instance = this;
+        rand = new System.Random();
         playerManager = new PlayerManager();
         factoryManager = new FactoryManager();
         audioSourceManager = new AudioSourceManager();
@@ -56,8 +58,18 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void Load()
     {
+        MusicManager.Load();
         MouseManager.LoadAll();
         TipsManager.Load();
+    }
+
+    /// <summary>
+    /// 第一次进入游戏主界面前就要加载好的内容
+    /// </summary>
+    /// <returns></returns>
+    public IEnumerator LoadWhenBeforeEnterMainScene()
+    {
+        yield return SoundsManager.Load();
     }
 
     /// <summary>
@@ -194,7 +206,6 @@ public class GameManager : MonoBehaviour
     public IEnumerator LoadSceneAsync(string name)
     {
         AsyncOperation operation = SceneManager.LoadSceneAsync(name);
-        // operation.allowSceneActivation = false;
         while (!operation.isDone)
         {
             // 当场景没还没加载完
@@ -203,14 +214,6 @@ public class GameManager : MonoBehaviour
             startLoadPanel.transform.SetAsLastSibling();
             yield return null;
         }
-        //startLoadPanel.SetRealProgress(1);
-        //startLoadPanel.transform.SetAsLastSibling();
-        //while (!startLoadPanel.IsFinishProgress())
-        //{
-        //    startLoadPanel.AddFakeProgress();
-        //    startLoadPanel.transform.SetAsLastSibling();
-        //    yield return null;
-        //}
     }
 
     /// <summary>

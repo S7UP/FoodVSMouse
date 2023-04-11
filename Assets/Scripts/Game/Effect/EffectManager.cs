@@ -108,4 +108,10 @@ public class EffectManager
             u.RemoveEffectFromDict(EffectType.Lava);
         }
     }
+
+    public static BaseEffect GetFireEffect(bool isCycle)
+    {
+        BaseEffect e = BaseEffect.CreateInstance(GameManager.Instance.GetRuntimeAnimatorController("Effect/Fire"), "Appear", "Idle", "Disappear", isCycle);
+        return e;
+    }
 }

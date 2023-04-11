@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
-
+using S7P.Numeric;
 public class DongJun : BossUnit
 {
     private static RuntimeAnimatorController Cave_Road_AnimatorController;
@@ -136,14 +136,14 @@ public class DongJun : BossUnit
 
         // 添加若干时间后移除的任务
         CustomizationTask t = new CustomizationTask();
-        t.OnEnterFunc = delegate {
+        t.AddOnEnterAction(delegate {
             // 洞出现
             if(g.IsContainGridType(GridType.Water))
                 gt.animator.runtimeAnimatorController = Cave_Water_AnimatorController;
             else
                 gt.animator.runtimeAnimatorController = Cave_Road_AnimatorController;
             gt.animatorController.Play("Appear");
-        };
+        });
         t.AddTaskFunc(delegate
         {
             timeLeft--;
@@ -222,10 +222,10 @@ public class DongJun : BossUnit
         // 添加动画
         {
             CustomizationTask t = new CustomizationTask();
-            t.OnEnterFunc = delegate {
+            t.AddOnEnterAction(delegate {
                 m.SetActionState(new IdleState(m));
                 m.animatorController.Play("Appear");
-            };
+            });
             t.AddTaskFunc(delegate {
                 if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
                 {

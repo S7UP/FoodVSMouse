@@ -48,12 +48,13 @@ public class BaseGridType : MonoBehaviour, IGameControllerMember
         {
             if (!item.IsAlive())
                 delList.Add(item);
+            else
+                OnUnitStay(item);
         }
         foreach (var item in delList)
         {
             unitList.Remove(item);
         }
-
         animatorController.Update();
     }
 

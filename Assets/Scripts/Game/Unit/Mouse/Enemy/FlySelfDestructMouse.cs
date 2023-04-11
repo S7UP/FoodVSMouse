@@ -1,5 +1,5 @@
 using UnityEngine;
-
+using S7P.Numeric;
 public class FlySelfDestructMouse : MouseUnit, IFlyUnit
 {
     private bool isDrop; // ÊÇ·ñ±»»÷Âä

@@ -1,3 +1,5 @@
+using S7P.Numeric;
+
 using UnityEngine;
 /// <summary>
 /// ´ó»ðÂ¯

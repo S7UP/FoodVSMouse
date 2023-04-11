@@ -1,5 +1,5 @@
 using UnityEngine;
-
+using S7P.Numeric;
 public class BaseItem : BaseUnit
 {
     // 若依附于格子，则当前对象应当持有格子的引用，否则无
@@ -198,5 +198,10 @@ public class BaseItem : BaseUnit
     {
         if(mBoxCollider2D!=null)
             mBoxCollider2D.enabled = false;
+    }
+
+    public override void SetAlpha(float a)
+    {
+        spriteRenderer.color = new Color(1, 1, 1, a);
     }
 }

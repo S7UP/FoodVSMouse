@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 
+using S7P.Numeric;
+
 using UnityEngine;
 
 public class GameController : MonoBehaviour
@@ -813,7 +815,7 @@ public class GameController : MonoBehaviour
     {
         foreach (var item in mEnemyList)
         {
-            item.ExecuteRecycle();
+            item.MDestory();
         }
         mEnemyList.Clear();
         mEnemyChangeRowDict.Clear();
@@ -828,7 +830,7 @@ public class GameController : MonoBehaviour
         {
             foreach (var item in mAllyList[i])
             {
-                item.ExecuteRecycle();
+                item.MDestory();
             }
             mAllyList[i].Clear();
         }
@@ -1250,7 +1252,7 @@ public class GameController : MonoBehaviour
     /// <param name="boolModifier"></param>
     public void AddNoTargetAttackModeModifier(BoolModifier boolModifier)
     {
-        IsEnableNoTargetAttackModeNumeric.AddDecideModifier(boolModifier);
+        IsEnableNoTargetAttackModeNumeric.AddModifier(boolModifier);
     }
 
     /// <summary>
@@ -1259,7 +1261,7 @@ public class GameController : MonoBehaviour
     /// <param name="boolModifier"></param>
     public void RemoveNoTargetAttackModeModifier(BoolModifier boolModifier)
     {
-        IsEnableNoTargetAttackModeNumeric.RemoveDecideModifier(boolModifier);
+        IsEnableNoTargetAttackModeNumeric.RemoveModifier(boolModifier);
     }
 
     /// <summary>

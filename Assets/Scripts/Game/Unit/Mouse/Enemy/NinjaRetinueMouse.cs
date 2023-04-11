@@ -1,4 +1,6 @@
 using System;
+
+using S7P.Numeric;
 /// <summary>
 /// ÈÌÕßÊóËæ´Ó
 /// </summary>

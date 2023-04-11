@@ -101,4 +101,42 @@ public class UnitManager
     {
         return (unit.NumericBox.IntDict.ContainsKey(StringManager.Flying) && unit.NumericBox.IntDict[StringManager.Flying].Value > 0);
     }
+
+    /// <summary>
+    /// 处决某个单位
+    /// </summary>
+    /// <param name="unit"></param>
+    public static DamageAction Execute(BaseUnit master, BaseUnit unit)
+    {
+        DamageAction action = new DamageAction(CombatAction.ActionType.RealDamage, master, unit, unit.mCurrentHp);
+        action.ApplyAction();
+        return action;
+    }
+
+    /// <summary>
+    /// 触发单位全部内伤
+    /// </summary>
+    /// <param name="unit"></param>
+    public static void TriggerRecordDamage(BaseUnit unit)
+    {
+        new DamageAction(CombatAction.ActionType.RecordDamage, null, unit, unit.mRecordDamageComponent.recordDamage).ApplyAction();
+    }
+
+    /// <summary>
+    /// 获取满足特殊条件并按X升序排列的单位表（靠左的在表前面）
+    /// </summary>
+    /// <param name="ConditionFunc">特殊条件</param>
+    /// <param name="ori_list">原表</param>
+    /// <returns></returns>
+    public static List<BaseUnit> GetSortedListByXPos(Func<BaseUnit, bool> ConditionFunc, List<BaseUnit> ori_list)
+    {
+        List<BaseUnit> list = new List<BaseUnit>();
+        foreach (var u in ori_list)
+        {
+            if (ConditionFunc(u))
+                list.Add(u);
+        }
+        list.Sort((u1, u2) => { return u1.transform.position.x.CompareTo(u2.transform.position.x); });
+        return list;
+    }
 }

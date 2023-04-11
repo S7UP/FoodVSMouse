@@ -94,7 +94,9 @@ public class IceGun : BaseWeapons
     /// </summary>
     public override void ExecuteDamage()
     {
+        GameManager.Instance.audioSourceManager.PlayEffectMusic("Throw" + GameManager.Instance.rand.Next(0, 2));
         AllyBullet b = AllyBullet.GetInstance(BulletStyle.NoStrengthenNormal, Bullet_RuntimeAnimatorController, master, master.mCurrentAttack);
+        b.SetHitSoundEffect("Splat" + GameManager.Instance.rand.Next(0, 3));
         b.SetStandardVelocity(36);
         b.SetRotate(Vector2.right);
         // 击中后附带冰冻效果

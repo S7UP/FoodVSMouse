@@ -1,4 +1,4 @@
-
+using S7P.Numeric;
 using UnityEngine;
 /// <summary>
 /// 角色单位
@@ -31,14 +31,6 @@ public class CharacterUnit : BaseUnit
         defaultMaterial = spriteRenderer.material;  // 装上正常的受击材质
     }
 
-    // 单位被对象池回收时触发
-    public override void OnDisable()
-    {
-        base.OnDisable();
-        mGrid = null; // 所在的格子
-        spriteRenderer.material = defaultMaterial; // 换回来
-    }
-
     // 每次对象被创建时要做的初始化工作
     public override void MInit()
     {
@@ -60,6 +52,13 @@ public class CharacterUnit : BaseUnit
         weapons.mType = type;
         weapons.transform.SetParent(transform);
         weapons.master = this;
+    }
+
+    public override void MDestory()
+    {
+        base.MDestory();
+        mGrid = null; // 所在的格子
+        spriteRenderer.material = defaultMaterial; // 换回来
     }
 
     public override void SetUnitType()
@@ -544,7 +543,7 @@ public class CharacterUnit : BaseUnit
         (weapons.mCurrentActionState as WeaponsFrozenState).TryExitCurrentState();
     }
 
-    public override void ExecuteRecycle()
+    protected override void ExecuteRecycle()
     {
         GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, "Character/CharacterModel", gameObject);
     }

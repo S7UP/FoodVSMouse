@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 
+using S7P.Numeric;
+
 using UnityEngine;
 /// <summary>
 /// 热狗大炮
@@ -200,6 +202,7 @@ public class HotDog : FoodUnit
     /// </summary>
     public override void ExecuteDamage()
     {
+        GameManager.Instance.audioSourceManager.PlayEffectMusic("Throw" + GameManager.Instance.rand.Next(0, 2));
         // 立即进行一次索敌更新
         FindTarget();
         int c = attackCount - attackLeft; // 计算当前是第几次攻击(0,1)
@@ -226,6 +229,7 @@ public class HotDog : FoodUnit
         bool isAirTarget = (target != null && target.GetHeight() == 1); // 是否为空中单位
 
         AllyBullet b = AllyBullet.GetInstance(BulletStyle.Throwing, BulletRuntimeAnimatorController, this, (isAirTarget ? airUnitDamageRate:groundUnitDamageRate) * ori_dmg);
+        b.SetHitSoundEffect("Splat" + GameManager.Instance.rand.Next(0, 3));
         b.AddSpriteOffsetY(new FloatModifier(0.5f * MapManager.gridHeight));
         b.SetHeight(isAirTarget ? 1:0);
         b.isnDelOutOfBound = true; // 出屏不自删

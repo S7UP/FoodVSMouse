@@ -1,3 +1,6 @@
+using S7P.Numeric;
+
+using UnityEngine;
 
 public class FloatNumeric
 {
@@ -37,44 +40,50 @@ public class FloatNumeric
     }
     public void AddAddModifier(FloatModifier modifier)
     {
-        add = AddCollector.AddModifier(modifier);
+        AddCollector.AddModifier(modifier);
+        add = AddCollector.TotalValue;
         Update();
     }
     public void AddPctAddModifier(FloatModifier modifier)
     {
-        pctAdd = PctAddCollector.AddModifier(modifier);
+        PctAddCollector.AddModifier(modifier);
+        pctAdd = PctAddCollector.TotalValue;
         Update();
     }
     public void AddFinalAddModifier(FloatModifier modifier)
     {
-        finalAdd = FinalAddCollector.AddModifier(modifier);
+        FinalAddCollector.AddModifier(modifier);
+        finalAdd = FinalAddCollector.TotalValue;
         Update();
     }
     public void AddFinalPctAddModifier(FloatModifier modifier)
     {
         FinalPctAddCollector.AddModifier(modifier);
-        finalPctAdd = UnityEngine.Mathf.Max(-95, FinalPctAddCollector.GetMin());
+        finalPctAdd = Mathf.Min(0, Mathf.Max(-95, FinalPctAddCollector.MinValue));
         Update();
     }
     public void RemoveAddModifier(FloatModifier modifier)
     {
-        add = AddCollector.RemoveModifier(modifier);
+        AddCollector.RemoveModifier(modifier);
+        add = AddCollector.TotalValue;
         Update();
     }
     public void RemovePctAddModifier(FloatModifier modifier)
     {
-        pctAdd = PctAddCollector.RemoveModifier(modifier);
+        PctAddCollector.RemoveModifier(modifier);
+        pctAdd = PctAddCollector.TotalValue;
         Update();
     }
     public void RemoveFinalAddModifier(FloatModifier modifier)
     {
-        finalAdd = FinalAddCollector.RemoveModifier(modifier);
+        FinalAddCollector.RemoveModifier(modifier);
+        finalAdd = FinalAddCollector.TotalValue;
         Update();
     }
     public void RemoveFinalPctAddModifier(FloatModifier modifier)
     {
         FinalPctAddCollector.RemoveModifier(modifier);
-        finalPctAdd = UnityEngine.Mathf.Max(-95, FinalPctAddCollector.GetMin());
+        finalPctAdd = Mathf.Min(0, Mathf.Max(-95, FinalPctAddCollector.MinValue));
         Update();
     }
 

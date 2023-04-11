@@ -5,7 +5,9 @@ using System;
 /// </summary>
 public class CompoundSkillAbility : CustomizationSkillAbility
 {
-    private List<Func<bool>> OnSpellingFuncList = new List<Func<bool>>();
+    private List<Func<CustomizationTask>> CreateTaskFuncList = new List<Func<CustomizationTask>>();
+    private Queue<CustomizationTask> TaskQueue = new Queue<CustomizationTask>();
+    private CustomizationTask currentTask;
     private int index = 0;
 
     public CompoundSkillAbility(BaseUnit master):base(master)
@@ -18,7 +20,9 @@ public class CompoundSkillAbility : CustomizationSkillAbility
 
     public override void BeforeSpell()
     {
-        index = 0;
+        index = -1;
+        currentTask = null;
+        TaskQueue.Clear();
         base.BeforeSpell();
     }
 
@@ -27,15 +31,44 @@ public class CompoundSkillAbility : CustomizationSkillAbility
     /// </summary>
     public override void OnSpelling()
     {
-        if (index >= OnSpellingFuncList.Count)
-            return;
-        if (OnSpellingFuncList[index]())
+        if (currentTask == null)
+        {
             index++;
+        }else if (currentTask.IsMeetingExitCondition())
+        {
+            currentTask.OnExit();
+            currentTask = null;
+            index++;
+        }
+
+
+        if (index >= CreateTaskFuncList.Count)
+            return;
+        if(currentTask == null)
+        {
+            if (TaskQueue.Count > 0)
+                currentTask = TaskQueue.Dequeue();
+            else
+            {
+                currentTask = CreateTaskFuncList[index]();
+            }
+            currentTask.OnEnter();
+        }
+
+        currentTask.OnUpdate();
     }
 
     public override bool IsMeetCloseSpellingCondition()
     {
-        return index >= OnSpellingFuncList.Count;
+        return currentTask == null && TaskQueue.Count <= 0 && index >= CreateTaskFuncList.Count;
+    }
+
+    public void AddAction(Action action)
+    {
+        AddSpellingFunc(delegate {
+            action();
+            return true;
+        });
     }
 
     /// <summary>
@@ -43,6 +76,16 @@ public class CompoundSkillAbility : CustomizationSkillAbility
     /// </summary>
     public void AddSpellingFunc(Func<bool> func)
     {
-        OnSpellingFuncList.Add(func);
+        Func<CustomizationTask> f = delegate {
+            CustomizationTask t = new CustomizationTask();
+            t.AddTaskFunc(func);
+            return t;
+        };
+        CreateTaskFuncList.Add(f);
+    }
+
+    public void AddCreateTaskFunc(Func<CustomizationTask> func)
+    {
+        CreateTaskFuncList.Add(func);
     }
 }

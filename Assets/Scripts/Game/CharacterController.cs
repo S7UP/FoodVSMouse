@@ -111,7 +111,7 @@ public class CharacterController:IGameControllerMember
     {
         if (mCurrentCharacter != null)
         {
-            mCurrentCharacter.ExecuteRecycle();
+            mCurrentCharacter.MDestory();
         }
     }
 

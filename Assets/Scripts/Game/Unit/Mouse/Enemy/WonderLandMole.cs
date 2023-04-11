@@ -1,4 +1,5 @@
 using UnityEngine;
+using S7P.Numeric;
 /// <summary>
 /// 奇境刺猬
 /// </summary>
@@ -159,10 +160,10 @@ public class WonderLandMole : MouseUnit
     /// 受到一次灰烬伤害就出土
     /// </summary>
     /// <param name="dmg"></param>
-    public override void OnBombBurnDamage(float dmg)
+    public override float OnBombBurnDamage(float dmg)
     {
-        base.OnBombBurnDamage(dmg);
         if (dmg > 0 && !isAppear)
             ExecuteAppear(true);
+        return base.OnBombBurnDamage(dmg);
     }
 }

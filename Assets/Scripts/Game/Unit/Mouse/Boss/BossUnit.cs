@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 
+using S7P.Numeric;
+
 using UnityEngine;
 /// <summary>
 /// 敌人的BOSS单位
@@ -46,6 +48,16 @@ public class BossUnit : MouseUnit
         mSkillQueueAbilityManager.Update();
     }
 
+    public override void MDestory()
+    {
+        // 移除全场无限攻击TAG
+        GameController.Instance.RemoveNoTargetAttackModeModifier(BossNoTargetAttackModeModifier);
+        mSkillQueueAbilityManager.Initial();
+        // BOSS剩余数-1
+        GameController.Instance.mCurrentStage.DecBossCount();
+        base.MDestory();
+    }
+
     public override void BeforeDeath()
     {
         base.BeforeDeath();
@@ -60,16 +72,6 @@ public class BossUnit : MouseUnit
     public override void OnMoveState()
     {
         
-    }
-
-    public override void ExecuteRecycle()
-    {
-        // 移除全场无限攻击TAG
-        GameController.Instance.RemoveNoTargetAttackModeModifier(BossNoTargetAttackModeModifier);
-        mSkillQueueAbilityManager.Initial();
-        // BOSS剩余数-1
-        GameController.Instance.mCurrentStage.DecBossCount();
-        base.ExecuteRecycle();
     }
 
     public override void SetUnitType()
@@ -301,6 +303,11 @@ public class BossUnit : MouseUnit
             Debug.LogWarning("BOSS中未发现名为“"+key+"”的参数！");
             return 0;
         }
+    }
+
+    public float GetParamValue(string key)
+{
+        return GetParamValue(key, mHertIndex);
     }
 
     /// <summary>

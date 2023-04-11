@@ -72,7 +72,6 @@ public class ArsonMouse : MouseUnit
         else
         {
             base.OnAttackStateEnter();
-            Debug.Log("base.OnAttackStateEnter()");
         }
     }
 

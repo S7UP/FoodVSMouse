@@ -34,9 +34,9 @@ public class IceJewelSkill : BaseJewelSkill
     {
         CustomizationItem item = CustomizationItem.GetInstance(pos, Shooter_RuntimeAnimatorController);
         CustomizationTask t = new CustomizationTask();
-        t.OnEnterFunc = delegate {
+        t.AddOnEnterAction(delegate {
             item.animatorController.Play("Execute");
-        };
+        });
         t.AddTaskFunc(delegate {
             if (item.animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime() >= 0.6f)
             {
@@ -69,9 +69,9 @@ public class IceJewelSkill : BaseJewelSkill
             }
             return false;
         });
-        t.OnExitFunc = delegate {
+        t.AddOnExitAction(delegate {
             item.ExecuteDeath();
-        };
+        });
         item.AddTask(t);
         GameController.Instance.AddItem(item);
     }

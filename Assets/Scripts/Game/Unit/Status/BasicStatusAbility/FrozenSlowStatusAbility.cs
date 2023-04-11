@@ -1,3 +1,4 @@
+using S7P.Numeric;
 public class FrozenSlowStatusAbility : StatusAbility
 {
     private FloatModifier slowDownFloatModifier; // 当前提供减速效果的修饰器
@@ -40,6 +41,10 @@ public class FrozenSlowStatusAbility : StatusAbility
     /// </summary>
     public override void OnEnableEffect()
     {
+        if (!TagsManager.IsUnitFrozen(master))
+        {
+            GameManager.Instance.audioSourceManager.PlayEffectMusic("Frozen");
+        }
         // 为目标添加已冰冻减速的标签
         master.NumericBox.AddDecideModifierToBoolDict(StringManager.FrozenSlowDown, slowDownBoolModifier);
         // 减速

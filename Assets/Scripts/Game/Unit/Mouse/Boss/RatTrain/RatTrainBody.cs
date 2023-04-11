@@ -27,7 +27,7 @@ public class RatTrainBody : RatTrainComponent
         return obj;
     }
 
-    public override void ExecuteRecycle()
+    protected override void ExecuteRecycle()
     {
         GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, "Boss/19/Body", gameObject);
     }

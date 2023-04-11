@@ -1,4 +1,5 @@
 using UnityEngine;
+using S7P.Numeric;
 /// <summary>
 /// Ç±Ë®Í§Àà
 /// </summary>

@@ -104,7 +104,7 @@ public class PitcherManager
         // 寻找本行的友方布丁单位，也一并加入
         foreach (var u in GameController.Instance.GetSpecificRowAllyList(rowIndex))
         {
-            if (u.mType == (int)FoodNameTypeMap.CherryPudding)
+            if (u.mType == (int)FoodNameTypeMap.CherryPudding && !(u is CharacterUnit))
             {
                 unitList.Add(u);
             }

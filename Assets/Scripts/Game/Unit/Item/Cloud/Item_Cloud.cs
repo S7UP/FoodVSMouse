@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 
+using S7P.Numeric;
+
 using UnityEngine;
 /// <summary>
 /// 云朵
@@ -14,6 +16,11 @@ public class Item_Cloud : BaseItem
     private int timer;
     private int recoverTimeLeft; // 剩余恢复时间
 
+    private static List<FoodNameTypeMap> NoAffectFoodList = new List<FoodNameTypeMap>() 
+    { 
+        FoodNameTypeMap.CottonCandy
+    };
+
     public override void MInit()
     {
         unitList.Clear();
@@ -24,11 +31,8 @@ public class Item_Cloud : BaseItem
         recoverTimeLeft = 0;
         base.MInit();
         // 设置判定大小
-        SetBoxCollider2DParam(Vector2.zero, new Vector2(0.6f*MapManager.gridWidth, 0.6f*MapManager.gridHeight));
+        SetBoxCollider2DParam(Vector2.zero, new Vector2(0.5f*MapManager.gridWidth, 0.5f*MapManager.gridHeight));
         spriteRenderer.enabled = false;
-        // 出现时播放出现动画
-
-        // Show();
     }
 
     public override void MUpdate()
@@ -68,7 +72,7 @@ public class Item_Cloud : BaseItem
         if (unitList.Count >= maxBearCount)
         {
             isBreak = true;
-            recoverTimeLeft = 60 * 6;
+            recoverTimeLeft = 60 * 24;
             Hide();
         }
     }
@@ -82,15 +86,36 @@ public class Item_Cloud : BaseItem
 
     private void OnCollision(Collider2D collision)
     {
-        if(collision.tag.Equals("Food") || collision.tag.Equals("Mouse") || collision.tag.Equals("Barrier"))
+        if(collision.tag.Equals("Food"))
         {
-            BaseUnit unit = collision.GetComponent<BaseUnit>();
-            if(!unitList.Contains(unit) && unit.GetHeight() == 0 && !unit.NumericBox.GetBoolNumericValue(SkyGridType.NoAffect))
+            FoodUnit unit = collision.GetComponent<FoodUnit>();
+            if(CanEnter(unit) && !NoAffectFoodList.Contains((FoodNameTypeMap)unit.mType))
+            {
+                unitList.Add(unit);
+                OnUnitEnter(unit);
+            }
+        }else if (collision.tag.Equals("Mouse"))
+        {
+            MouseUnit unit = collision.GetComponent<MouseUnit>();
+            if (CanEnter(unit) && !unit.IsBoss() && MouseManager.IsGeneralMouse(unit))
+            {
+                unitList.Add(unit);
+                OnUnitEnter(unit);
+            }
+        }else if (collision.tag.Equals("Barrier"))
+        {
+            BaseItem unit = collision.GetComponent<BaseItem>();
+            if (CanEnter(unit))
             {
                 unitList.Add(unit);
                 OnUnitEnter(unit);
             }
         }
+    }
+
+    private bool CanEnter(BaseUnit unit)
+    {
+        return !unitList.Contains(unit) && unit.GetHeight() == 0 && !unit.NumericBox.GetBoolNumericValue(SkyGridType.NoAffect) && unit.IsAlive();
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -227,7 +252,7 @@ public class Item_Cloud : BaseItem
         return c;
     }
 
-    public override void ExecuteRecycle()
+    protected override void ExecuteRecycle()
     {
         GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, "Item/5/0", gameObject);
     }

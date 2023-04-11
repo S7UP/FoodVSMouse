@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 
+using S7P.Numeric;
+
 using UnityEngine;
 /// <summary>
 /// –‹√®¿‡
@@ -123,7 +125,7 @@ public class PandaMouse : MouseUnit
                 TakeDamage(GetCurrentTarget());
             }
         }
-            
+        GameManager.Instance.audioSourceManager.PlayEffectMusic("Thump");
     }
 
     /// <summary>

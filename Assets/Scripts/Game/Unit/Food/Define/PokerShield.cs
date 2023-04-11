@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 
+using S7P.Numeric;
+
 using UnityEngine;
 /// <summary>
 /// 扑克护罩
@@ -25,16 +27,10 @@ public class PokerShield : FoodUnit
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBacterialInfection, new BoolModifier(true));
     }
 
-    // 单位被对象池回收时触发
-    public override void OnDisable()
-    {
-        base.OnDisable();
-    }
-
     public override void SetCollider2DParam()
     {
-        mBoxCollider2D.offset = new Vector2(0, -0.08f * MapManager.gridHeight);
-        mBoxCollider2D.size = new Vector2(0.65f * MapManager.gridWidth, 0.33f * MapManager.gridHeight);
+        mBoxCollider2D.offset = new Vector2(0, 0);
+        mBoxCollider2D.size = new Vector2(0.65f * MapManager.gridWidth, 0.49f * MapManager.gridHeight);
     }
 
     public override void MInit()

@@ -1,3 +1,5 @@
+using UnityEngine;
+using S7P.Numeric;
 /// <summary>
 /// BUFF管理器（提供静态方法）
 /// </summary>
@@ -19,6 +21,24 @@ public class StatusManager
     {
         unit.NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreFrozen, mod);
         unit.NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreStun, mod);
+    }
+
+    /// <summary>
+    /// 添加免疫减速类效果
+    /// </summary>
+    public static void AddIgnoreSlowDownBuff(BaseUnit unit, BoolModifier mod)
+    {
+        unit.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozenSlowDown, mod);
+        unit.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreSlowDown, mod);
+    }
+
+    /// <summary>
+    /// 移除免疫减速类效果
+    /// </summary>
+    public static void RemoveIgnoreSlowDownBuff(BaseUnit unit, BoolModifier mod)
+    {
+        unit.NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreFrozenSlowDown, mod);
+        unit.NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreSlowDown, mod);
     }
 
 
@@ -77,9 +97,9 @@ public class StatusManager
     {
         FloatModifier mod = new FloatModifier(percent);
         CustomizationTask t = new CustomizationTask();
-        t.OnEnterFunc = delegate {
+        t.AddOnEnterAction(delegate {
             unit.NumericBox.AttackSpeed.AddFinalPctAddModifier(mod);
-        };
+        });
         t.AddTaskFunc(delegate {
             if(timeLeft > 0)
             {
@@ -91,9 +111,9 @@ public class StatusManager
                 return true;
             }
         });
-        t.OnExitFunc = delegate {
+        t.AddOnExitAction(delegate {
             unit.NumericBox.AttackSpeed.RemoveFinalPctAddModifier(mod);
-        };
+        });
         unit.AddTask(t);
     }
 
@@ -107,9 +127,9 @@ public class StatusManager
     {
         FloatModifier mod = new FloatModifier(percent);
         CustomizationTask t = new CustomizationTask();
-        t.OnEnterFunc = delegate {
+        t.AddOnEnterAction(delegate {
             unit.NumericBox.AttackSpeed.AddPctAddModifier(mod);
-        };
+        });
         t.AddTaskFunc(delegate {
             if (timeLeft > 0)
             {
@@ -121,9 +141,9 @@ public class StatusManager
                 return true;
             }
         });
-        t.OnExitFunc = delegate {
+        t.AddOnExitAction(delegate {
             unit.NumericBox.AttackSpeed.RemovePctAddModifier(mod);
-        };
+        });
         unit.AddTask(t);
     }
 
@@ -137,9 +157,9 @@ public class StatusManager
     {
         FloatModifier mod = new FloatModifier(percent);
         CustomizationTask t = new CustomizationTask();
-        t.OnEnterFunc = delegate {
+        t.AddOnEnterAction(delegate {
             unit.NumericBox.Attack.AddPctAddModifier(mod);
-        };
+        });
         t.AddTaskFunc(delegate {
             if (timeLeft > 0)
             {
@@ -151,9 +171,9 @@ public class StatusManager
                 return true;
             }
         });
-        t.OnExitFunc = delegate {
+        t.AddOnExitAction(delegate {
             unit.NumericBox.Attack.RemovePctAddModifier(mod);
-        };
+        });
         unit.AddTask(t);
     }
 
@@ -164,9 +184,12 @@ public class StatusManager
     {
         BoolModifier mod = new BoolModifier(true);
         CustomizationTask t = new CustomizationTask();
-        t.OnEnterFunc = delegate {
+        t.AddOnEnterAction(delegate {
             unit.NumericBox.AddDecideModifierToBoolDict(StringManager.Invincibility, mod);
-        };
+            BaseEffect e = BaseEffect.CreateInstance(GameManager.Instance.GetSprite("Effect/Shield"));
+            GameController.Instance.AddEffect(e);
+            unit.AddEffectToDict("InvincibilityBuff", e, Vector2.zero);
+        });
         t.AddTaskFunc(delegate {
             if (timeLeft > 0)
             {
@@ -178,9 +201,14 @@ public class StatusManager
                 return true;
             }
         });
-        t.OnExitFunc = delegate {
+        t.AddOnExitAction(delegate {
             unit.NumericBox.RemoveDecideModifierToBoolDict(StringManager.Invincibility, mod);
-        };
+            if (!unit.NumericBox.GetBoolNumericValue(StringManager.Invincibility))
+            {
+                // unit.RemoveEffect("InvincibilityBuff");
+                unit.RemoveEffectFromDict("InvincibilityBuff");
+            }
+        });
         unit.AddTask(t);
     }
 
@@ -194,9 +222,9 @@ public class StatusManager
     {
         FloatModifier mod = new FloatModifier(rate);
         CustomizationTask t = new CustomizationTask();
-        t.OnEnterFunc = delegate {
+        t.AddOnEnterAction(delegate {
             unit.NumericBox.DamageRate.AddModifier(mod);
-        };
+        });
         t.AddTaskFunc(delegate {
             if (timeLeft > 0)
             {
@@ -208,9 +236,9 @@ public class StatusManager
                 return true;
             }
         });
-        t.OnExitFunc = delegate {
+        t.AddOnExitAction(delegate {
             unit.NumericBox.DamageRate.RemoveModifier(mod);
-        };
+        });
         unit.AddTask(t);
     }
 
@@ -227,9 +255,9 @@ public class StatusManager
     {
         int next = interval;
         CustomizationTask t = new CustomizationTask();
-        t.OnEnterFunc = delegate {
+        t.AddOnEnterAction(delegate {
             
-        };
+        });
         t.AddTaskFunc(delegate {
             next--;
             if(next <= 0)
@@ -247,9 +275,9 @@ public class StatusManager
                 return true;
             }
         });
-        t.OnExitFunc = delegate {
+        t.AddOnExitAction(delegate {
             
-        };
+        });
         unit.AddTask(t);
     }
 }

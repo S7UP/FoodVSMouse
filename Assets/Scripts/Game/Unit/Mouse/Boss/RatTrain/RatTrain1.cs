@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 
+using S7P.Numeric;
+
 using UnityEngine;
 /// <summary>
 /// 列车二阶
@@ -416,13 +418,13 @@ public class RatTrain1 : BaseRatTrain
         }
         // 为自身添加一个任务，每帧检测激光发射器的存活情况并剔除不存活的激光发射器，在等待时间结束后释放激光
         CustomizationTask t = new CustomizationTask();
-        t.OnEnterFunc = delegate
+        t.AddOnEnterAction(delegate
         {
             foreach (var u in GetAllLaserAttacker())
             {
                 u.animatorController.Play("PreAttack");
             }
-        };
+        });
         t.AddTaskFunc(delegate
         {
             UpdateLaserAttackerPairDict();
@@ -520,12 +522,12 @@ public class RatTrain1 : BaseRatTrain
             }
             return false;
         });
-        t.OnExitFunc = delegate {
+        t.AddOnExitAction(delegate {
             foreach (var u in GetAllLaserAttacker())
             {
-                u.ExecuteRecycle(); // 直接回收，不附带死亡动画也不触发亡语（如果有）
+                u.MDestory(); // 直接回收，不附带死亡动画也不触发亡语（如果有）
             }
-        };
+        });
         AddTask(t);
     }
 
@@ -584,14 +586,14 @@ public class RatTrain1 : BaseRatTrain
         CustomizationTask task = new CustomizationTask();
         int totalTime = 90;
         int currentTime = 0;
-        task.OnEnterFunc = delegate
+        task.AddOnEnterAction(delegate
         {
             m.transform.position = startV2; // 对初始坐标进行进一步修正
             m.AddCanBeSelectedAsTargetFunc(noSelectedAsTargetFunc); // 不可作为选取的目标
             m.AddCanBlockFunc(noBlockFunc); // 不可被阻挡
             m.AddCanHitFunc(noHitFunc); // 不可被子弹击中
             m.SetAlpha(0); // 0透明度
-        };
+        });
         task.AddTaskFunc(delegate
         {
             if (currentTime <= totalTime)
@@ -604,14 +606,14 @@ public class RatTrain1 : BaseRatTrain
             }
             return true;
         });
-        task.OnExitFunc = delegate
+        task.AddOnExitAction(delegate
         {
             m.RemoveCanBeSelectedAsTargetFunc(noSelectedAsTargetFunc);
             m.RemoveCanBlockFunc(noBlockFunc);
             m.RemoveCanHitFunc(noHitFunc);
             // 自我晕眩
             m.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(m, stun_time, false));
-        };
+        });
         m.AddTask(task);
     }
 
@@ -643,10 +645,10 @@ public class RatTrain1 : BaseRatTrain
             // 动作
             {
                 CustomizationTask t = new CustomizationTask();
-                t.OnEnterFunc = delegate
+                t.AddOnEnterAction(delegate
                 {
                     m.animatorController.Play("PreAttack");
-                };
+                });
                 t.AddTaskFunc(delegate
                 {
                     if (m.animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
@@ -680,9 +682,9 @@ public class RatTrain1 : BaseRatTrain
                                     return true;
                                 return false;
                             });
-                            t.OnExitFunc = delegate {
+                            t.AddOnExitAction(delegate {
                                 e.SetDisappear();
-                            };
+                            });
                             e.AddTask(t);
                             GameController.Instance.AddAreaEffectExecution(e);
                             SpawnEnemy(pos + 0.5f * rot * MapManager.gridWidth, pos + 1.0f * rot * MapManager.gridWidth, Vector2.left, type, shape, stun_time);
@@ -699,9 +701,9 @@ public class RatTrain1 : BaseRatTrain
                     }
                     return false;
                 });
-                t.OnExitFunc = delegate {
-                    m.ExecuteRecycle(); // 直接回收，不附带死亡动画也不触发亡语（如果有）
-                };
+                t.AddOnExitAction(delegate {
+                    m.MDestory(); // 直接回收，不附带死亡动画也不触发亡语（如果有）
+                });
                 m.AddTask(t);
             }
             GameController.Instance.AddMouseUnit(m);
@@ -740,11 +742,13 @@ public class RatTrain1 : BaseRatTrain
     /// </summary>
     private MouseModel CreateProjection(RuntimeAnimatorController runtimeAnimatorController, bool isFireAttacker)
     {
+        Vector2 pos = MapManager.GetGridLocalPosition(8, 3);
         MouseModel m = MouseModel.GetInstance(runtimeAnimatorController);
         {
             BossUnit.AddBossIgnoreDebuffEffect(m);
+            m.transform.position = pos;
             m.SetBaseAttribute(mCurrentHp, 1, 1f, 0, 0, 0, 0);
-            m.currentYIndex = MapManager.GetYIndex(m.transform.position.y);
+            m.currentYIndex = MapManager.GetYIndex(pos.y);
             m.mBoxCollider2D.offset = new Vector2(0, 0);
             m.mBoxCollider2D.size = new Vector2(0.49f * MapManager.gridWidth, 0.49f * MapManager.gridHeight);
             // 伤害转移给本体的方法
@@ -894,7 +898,7 @@ public class RatTrain1 : BaseRatTrain
                 foreach (var u in compList)
                 {
                     if (u != fireBulletAttacker)
-                        u.ExecuteRecycle();
+                        u.MDestory();
                 }
                 return true;
             }
@@ -1031,7 +1035,7 @@ public class RatTrain1 : BaseRatTrain
             t.AddTaskFunc(delegate {
                 if (fireBulletAttacker.animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
                 {
-                    fireBulletAttacker.ExecuteRecycle();
+                    fireBulletAttacker.MDestory();
                     return true;
                 }
                 else
@@ -1050,7 +1054,7 @@ public class RatTrain1 : BaseRatTrain
                     BaseEffect e = BaseEffect.CreateInstance(Bomb_RuntimeAnimatorController, null, "BoomDie", null, false);
                     e.transform.position = fireBulletAttacker.transform.position;
                     GameController.Instance.AddEffect(e);
-                    fireBulletAttacker.ExecuteRecycle();
+                    fireBulletAttacker.MDestory();
                     // 产生3*3爆破效果
                     BombAreaEffectExecution r = BombAreaEffectExecution.GetInstance(this, boom_dmg, fireBulletAttacker.transform.position, 3, 3);
                     r.isAffectFood = true;
@@ -1115,9 +1119,9 @@ public class RatTrain1 : BaseRatTrain
                                     return true;
                                 return false;
                             });
-                            t.OnExitFunc = delegate {
+                            t.AddOnExitAction(delegate {
                                 e.SetDisappear();
-                            };
+                            });
                             e.AddTask(t);
                             GameController.Instance.AddAreaEffectExecution(e);
                             SpawnEnemy(pos + 0.5f * new Vector2(v2.x, v2.y * r), pos + 1.0f * new Vector2(v2.x, v2.y * r), Vector2.left, soldier_type2_0, soldier_shape2_0, stun2_0);
@@ -1299,7 +1303,7 @@ public class RatTrain1 : BaseRatTrain
         t.AddTaskFunc(delegate {
             if (fireBulletAttacker.animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
             {
-                fireBulletAttacker.ExecuteRecycle();
+                fireBulletAttacker.MDestory();
                 return true;
             }
             else

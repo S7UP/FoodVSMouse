@@ -37,9 +37,9 @@ public class BombingJewelSkill : BaseJewelSkill
     {
         CustomizationItem item = CustomizationItem.GetInstance(pos, Shooter_RuntimeAnimatorController);
         CustomizationTask t = new CustomizationTask();
-        t.OnEnterFunc = delegate {
+        t.AddOnEnterAction(delegate {
             item.animatorController.Play("Execute");
-        };
+        });
         t.AddTaskFunc(delegate {
             if (item.animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
             {
@@ -47,7 +47,7 @@ public class BombingJewelSkill : BaseJewelSkill
             }
             return false;
         });
-        t.OnExitFunc = delegate {
+        t.AddOnExitAction(delegate {
             // 产生特效
             BaseEffect e = BaseEffect.CreateInstance(Boom_RuntimeAnimatorController, null, "Boom", null, false);
             e.transform.position = item.transform.position;
@@ -57,7 +57,7 @@ public class BombingJewelSkill : BaseJewelSkill
             r.isAffectMouse = true;
             GameController.Instance.AddAreaEffectExecution(r);
             item.ExecuteDeath();
-        };
+        });
         item.AddTask(t);
         GameController.Instance.AddItem(item);
     }

@@ -87,6 +87,12 @@ public class CaptainAmerica : BossUnit
         base.MUpdate();
     }
 
+    public override void MDestory()
+    {
+        RecycleShieldBullet();
+        base.MDestory();
+    }
+
     public override void OnIdleStateEnter()
     {
 
@@ -133,11 +139,11 @@ public class CaptainAmerica : BossUnit
     /// 当处于蓄力丢盾牌状态下被炸弹攻击会被击晕3s
     /// </summary>
     /// <param name="dmg"></param>
-    public override void OnBombBurnDamage(float dmg)
+    public override float OnBombBurnDamage(float dmg)
     {
         if (isPreDrop)
             AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(this, 180, true));
-        base.OnBombBurnDamage(dmg);
+        return base.OnBombBurnDamage(dmg);
     }
 
     /// <summary>
@@ -156,15 +162,6 @@ public class CaptainAmerica : BossUnit
     {
         RecycleShieldBullet();
         base.BeforeDeath();
-    }
-
-    /// <summary>
-    /// 回收圆盾子弹
-    /// </summary>
-    public override void ExecuteRecycle()
-    {
-        RecycleShieldBullet();
-        base.ExecuteRecycle();
     }
 
     //////////////////////////////////////////////以下为BOSS技能定义////////////////////////////////////////////////////////////
@@ -495,7 +492,7 @@ public class CaptainAmerica : BossUnit
         }
         // 挂载一个任务在自己身上
         CustomizationTask task = new CustomizationTask();
-        task.OnEnterFunc = delegate 
+        task.AddOnEnterAction(delegate
         {
             // 圆盾子弹出现
             CreateShieldBullet();
@@ -504,7 +501,7 @@ public class CaptainAmerica : BossUnit
             // 
             ShieldBullet.transform.SetParent(GameController.Instance.transform);
             GameController.Instance.AddBullet(ShieldBullet);
-        };
+        });
         for (int i = 0; i < rotList.Count; i++)
         {
             Vector3 rot = rotList[i];
@@ -521,10 +518,10 @@ public class CaptainAmerica : BossUnit
                 return false;
             });
         }
-        task.OnExitFunc = delegate 
+        task.AddOnExitAction(delegate
         {
             RecycleShieldBullet();
-        };
+        });
         AddTask(task);
     }
 
@@ -560,10 +557,10 @@ public class CaptainAmerica : BossUnit
     {
         CustomizationItem item = CustomizationItem.GetInstance(MapManager.GetGridLocalPosition(xIndex, yIndex), GameManager.Instance.GetRuntimeAnimatorController("Boss/20/RainBow"));
         CustomizationTask task = new CustomizationTask();
-        task.OnEnterFunc = delegate 
+        task.AddOnEnterAction(delegate
         {
             item.animatorController.Play("RainBow");
-        };
+        });
         task.AddTaskFunc(delegate 
         {
             // 生成怪
@@ -583,10 +580,10 @@ public class CaptainAmerica : BossUnit
             }
             return false;
         });
-        task.OnExitFunc = delegate 
+        task.AddOnExitAction(delegate 
         {
-            item.ExecuteRecycle();
-        };
+            item.MDestory();
+        });
         item.AddTask(task);
         GameController.Instance.AddItem(item);
     }

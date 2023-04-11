@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 
+using S7P.Numeric;
+
 using UnityEngine;
 
 public class MouseUnit : BaseUnit
@@ -282,6 +284,7 @@ public class MouseUnit : BaseUnit
     {
         if (IsHasTarget())
             TakeDamage(GetCurrentTarget());
+        GameManager.Instance.audioSourceManager.PlayEffectMusic("Chomp" + GameManager.Instance.rand.Next(0, 3));
     }
 
 
@@ -544,7 +547,7 @@ public class MouseUnit : BaseUnit
     /// <returns></returns>
     public virtual bool IsOutOfBound()
     {
-        return GetColumnIndex() > MapController.xColumn + 2 || GetColumnIndex() <= -2 || GetRowIndex() <= -1 || GetRowIndex() >= 7;
+        return !isBoss && (GetColumnIndex() > MapController.xColumn + 2 || GetColumnIndex() <= -2 || GetRowIndex() <= -1 || GetRowIndex() >= 7);
     }
 
     /// <summary>
@@ -609,7 +612,8 @@ public class MouseUnit : BaseUnit
     public override void DuringDeath()
     {
         // 获取Die的动作信息，使得回收时机与动画显示尽可能同步
-        if(animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
+        AnimatorStateRecorder r = animatorController.GetCurrentAnimatorStateRecorder();
+        if (r==null || r.IsFinishOnce())
         {
             DeathEvent();
         }
@@ -905,6 +909,6 @@ public class MouseUnit : BaseUnit
     {
         if (!isIgnoreRecordDamage && IsBoss())
             OnDamage(value);
-        //mRecordDamageComponent.AddRecordDamage(value);
+        mRecordDamageComponent.AddRecordDamage(value);
     }
 }

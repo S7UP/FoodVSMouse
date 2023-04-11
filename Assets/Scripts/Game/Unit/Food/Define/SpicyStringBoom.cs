@@ -1,4 +1,6 @@
 using System;
+
+using S7P.Numeric;
 /// <summary>
 /// ¬È¿±ÃÃ’®µØ
 /// </summary>
@@ -61,6 +63,7 @@ public class SpicyStringBoom : FoodUnit
             {
                 isTriggerBoom = true;
                 ExecuteDeath();
+                GameManager.Instance.audioSourceManager.PlayEffectMusic("CatcherTrigger");
                 r.MDestory();
             }
         };

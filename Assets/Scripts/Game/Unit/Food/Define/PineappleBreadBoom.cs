@@ -106,6 +106,7 @@ public class PineappleBreadBoom : FoodUnit
     /// </summary>
     private void ExecuteBoom()
     {
+        GameManager.Instance.audioSourceManager.PlayEffectMusic("Boom");
         // 如果不是被打死的（比如铲子移除），则不会有爆破伤害加成
         // 而二转则会把爆破伤害加成降低至原来的50%而非没有
         if (mCurrentHp > 0)

@@ -134,7 +134,7 @@ public class FoodPanel_EncyclopediaPanel : MonoBehaviour
         int level = Dro_Rank.value;
         // 切换图标并自动同步尺寸
         float w_h_rate = RectTrans_Background.sizeDelta.x / RectTrans_Background.sizeDelta.y;
-        Img_Display.sprite = GameManager.Instance.GetSprite("Food/"+type+"/"+shape+"/display");
+        Img_Display.sprite = GameManager.Instance.GetSprite("Food/"+type+"/"+shape+"/icon");
         Img_Display.SetNativeSize();
         //float new_w_h_rate = RectTrans_Display.sizeDelta.x / RectTrans_Display.sizeDelta.y;
         //if(new_w_h_rate > w_h_rate)

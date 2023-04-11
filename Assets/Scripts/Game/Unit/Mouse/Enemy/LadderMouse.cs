@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 
+using S7P.Numeric;
+
 using UnityEngine;
 /// <summary>
 /// ÌÝ×ÓÀà
@@ -55,7 +57,7 @@ public class LadderMouse : MouseUnit
             {
                 l.SetMoveDistanceAndMaxHight(MapManager.gridWidth * 3, 1.2f);
             }
-            
+            GameManager.Instance.audioSourceManager.PlayEffectMusic("Ladder");
         }
     }
 

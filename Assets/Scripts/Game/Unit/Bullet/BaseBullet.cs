@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System;
 using UnityEngine;
-
+using S7P.Numeric;
 public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
 {
     // 来自外部引用
@@ -39,6 +39,7 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     public FloatNumeric SpriteOffsetX = new FloatNumeric();
     public FloatNumeric SpriteOffsetY = new FloatNumeric();
     public Vector2 SpriteOffset { get { return new Vector2(SpriteOffsetX.Value, SpriteOffsetY.Value); } }
+    public string hitSoundsRefName = null;
 
     // 外界给的标签
     public Dictionary<string, int> TagDict = new Dictionary<string, int>();
@@ -93,6 +94,7 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
         Trans_Sprite.transform.localRotation = new Quaternion(0, 0, 0, 0);
         isNavi = true; // 默认是同步方向
         Show(); // 显示自己
+        hitSoundsRefName = null;
     }
 
     /// <summary>
@@ -120,6 +122,8 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
         if (baseUnit != null)
             new DamageAction(CombatAction.ActionType.CauseDamage, mMasterBaseUnit, baseUnit, mDamage).ApplyAction();
         ExecuteHitAction(baseUnit);
+        if(hitSoundsRefName != null)
+            GameManager.Instance.audioSourceManager.PlayEffectMusic(hitSoundsRefName);
         if(!isnKillSelf)
             KillThis();
     }
@@ -593,6 +597,15 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     public void Show()
     {
         spriteRenderer.enabled = true;
+    }
+
+    /// <summary>
+    /// 设置击中音效（填null即为默认无）
+    /// </summary>
+    /// <param name="refName"></param>
+    public void SetHitSoundEffect(string refName)
+    {
+        hitSoundsRefName = refName;
     }
 }
 

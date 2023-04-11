@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 
+using S7P.Numeric;
+
 using UnityEngine;
 
 /// <summary>
@@ -40,7 +42,7 @@ public class AnimatorController
         if (!isUseGamePauseModifier)
         {
             isUseGamePauseModifier = true;
-            isPauseBoolNumeric.AddDecideModifier(gamePauseModifier);
+            isPauseBoolNumeric.AddModifier(gamePauseModifier);
             UpdateSpeed();
         }
     }
@@ -53,7 +55,7 @@ public class AnimatorController
         if (isUseGamePauseModifier)
         {
             isUseGamePauseModifier = false;
-            isPauseBoolNumeric.RemoveDecideModifier(gamePauseModifier);
+            isPauseBoolNumeric.RemoveModifier(gamePauseModifier);
             UpdateSpeed();
         }
     }
@@ -63,7 +65,7 @@ public class AnimatorController
     /// </summary>
     public void AddPauseModifier(BoolModifier boolModifier)
     {
-        isPauseBoolNumeric.AddDecideModifier(boolModifier);
+        isPauseBoolNumeric.AddModifier(boolModifier);
         UpdateSpeed();
     }
 
@@ -72,7 +74,7 @@ public class AnimatorController
     /// </summary>
     public void RemovePauseModifier(BoolModifier boolModifier)
     {
-        isPauseBoolNumeric.RemoveDecideModifier(boolModifier);
+        isPauseBoolNumeric.RemoveModifier(boolModifier);
         UpdateSpeed();
     }
     
@@ -243,6 +245,8 @@ public class AnimatorController
     /// <returns></returns>
     public AnimatorStateRecorder GetAnimatorStateRecorder(string aniName)
     {
+        if (aniName == null)
+            return null;
         if (taskListDict.ContainsKey(aniName))
         {
             return taskListDict[aniName];

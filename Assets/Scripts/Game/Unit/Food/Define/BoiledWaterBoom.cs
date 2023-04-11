@@ -78,6 +78,7 @@ public class BoiledWaterBoom : FoodUnit
     /// </summary>
     public override void ExecuteDamage()
     {
+        GameManager.Instance.audioSourceManager.PlayEffectMusic("Doomshroom");
         // 原地产生一个爆炸效果
         {
             BaseEffect e = BaseEffect.GetInstance("BoomEffect");

@@ -2,6 +2,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
+using S7P.Numeric;
+
 using UnityEngine;
 
 using static BaseRound;
@@ -80,7 +82,6 @@ public class BaseStage : MonoBehaviour
             // ‘§º”‘ÿBGM
             foreach (var bgm in bgmList)
             {
-                //GameManager.Instance.AsyncGetAudioClip(bgm);
                 yield return GameManager.Instance.StartCoroutine(AudioSourceManager.AsyncLoadBGMusic(bgm));
             }
         }

@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 
+using S7P.Numeric;
+
 using UnityEngine;
 /// <summary>
 /// 棉花糖
@@ -17,10 +19,47 @@ public class CottonCandy : FoodUnit
         base.MInit();
         // 免疫岩浆负面效果
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreLavaDeBuff, IgnoreLavaDeBuff);
+        // 免疫摔落
+        SkyGridType.AddNoAffectBySky(this, new BoolModifier(true));
         typeAndShapeToLayer = -1;
         // 添加岩浆灼烧特效
-        EffectManager.AddLavaEffectToUnit(this);
+        // EffectManager.AddLavaEffectToUnit(this);
+        // 创建承载检测区域
+        CreateCheckArea();
+        // 设置仅能被部分老鼠阻挡并且伤害
+        AddCanBlockFunc((self, other) =>
+        {
+            return false;
+        });
+        AddCanHitFunc((self, bullet) => {
+            return false;
+        });
+        AddCanBeSelectedAsTargetFunc((self, other) => {
+            return false;
+        });
     }
+
+    //private void OnUnitEnter(BaseUnit unit)
+    //{
+    //    // 为目标添加一层<高空承载>标签
+    //    if (!unit.NumericBox.IntDict.ContainsKey(StringManager.BearInSky))
+    //        unit.NumericBox.IntDict.Add(StringManager.BearInSky, new IntNumeric());
+    //    unit.NumericBox.IntDict[StringManager.BearInSky].AddAddModifier(BearInSkyModifier);
+    //    // 超过承受数直接隐藏（破裂）
+    //    if (unitList.Count >= maxBearCount)
+    //    {
+    //        isBreak = true;
+    //        recoverTimeLeft = 60 * 24;
+    //        Hide();
+    //    }
+    //}
+
+    //private void OnUnitExit(BaseUnit unit)
+    //{
+    //    // 移除目标一层<高空承载>标签
+    //    if (unit.NumericBox.IntDict.ContainsKey(StringManager.BearInSky))
+    //        unit.NumericBox.IntDict[StringManager.BearInSky].RemoveAddModifier(BearInSkyModifier);
+    //}
 
     /// <summary>
     /// 棉花的接触判定更大一些
@@ -57,33 +96,54 @@ public class CottonCandy : FoodUnit
         base.MUpdate();
     }
 
-    private void OnCollision(Collider2D collision)
+    /// <summary>
+    /// 创建检测区域
+    /// </summary>
+    private void CreateCheckArea()
     {
-        if(collision.tag.Equals("Food") || collision.tag.Equals("Mouse") || collision.tag.Equals("Item") || collision.tag.Equals("Character"))
-        {
-            BaseUnit unit = collision.GetComponent<BaseUnit>();
-           
-            // 只有高度为0的单位能被棉花承载
-            if (!unitList.Contains(unit) && unit.GetHeight() == 0)
+        RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 1, 1, "BothCollide");
+        r.isAffectFood = true;
+        r.isAffectMouse = true;
+        r.isAffectCharacter = true;
+        r.SetOnFoodEnterAction(OnCollision);
+        r.SetOnEnemyEnterAction(OnCollision);
+        r.SetOnCharacterEnterAction(OnCollision);
+        r.SetOnFoodStayAction(OnCollision);
+        r.SetOnEnemyStayAction(OnCollision);
+        r.SetOnCharacterStayAction(OnCollision);
+        r.SetOnFoodExitAction(OnUnitExit);
+        r.SetOnEnemyExitAction(OnUnitExit);
+        r.SetOnCharacterExitAction(OnUnitExit);
+        GameController.Instance.AddAreaEffectExecution(r);
+
+        CustomizationTask t = new CustomizationTask();
+        t.AddTaskFunc(delegate {
+            if (IsAlive())
             {
-                // 使目标的棉花糖承载数+1
-                if(!unit.NumericBox.IntDict.ContainsKey(Tag))
-                    unit.NumericBox.IntDict.Add(Tag, new IntNumeric());
-                unit.NumericBox.IntDict[Tag].AddAddModifier(VehicleModifier);
-                // 把目标对象加入自己承载的表中
-                unitList.Add(unit);
-            } 
+                r.transform.position = transform.position;
+                return false;
+            }
+            else
+                return true;
+        });
+        t.AddOnExitAction(delegate {
+            r.ExecuteRecycle();
+        });
+        r.AddTask(t);
+    }
+
+    private void OnCollision(BaseUnit unit)
+    {
+        // 只有高度为0的单位能被棉花承载
+        if (!unitList.Contains(unit) && unit.GetHeight() == 0)
+        {
+            // 使目标的棉花糖承载数+1
+            if (!unit.NumericBox.IntDict.ContainsKey(Tag))
+                unit.NumericBox.IntDict.Add(Tag, new IntNumeric());
+            unit.NumericBox.IntDict[Tag].AddAddModifier(VehicleModifier);
+            // 把目标对象加入自己承载的表中
+            unitList.Add(unit);
         }
-    }
-
-    public void OnTriggerEnter2D(Collider2D collision)
-    {
-        OnCollision(collision);
-    }
-
-    public void OnTriggerStay2D(Collider2D collision)
-    {
-        OnCollision(collision);
     }
 
     private void OnUnitExit(BaseUnit unit)
@@ -99,19 +159,8 @@ public class CottonCandy : FoodUnit
         }
     }
 
-    public void OnTriggerExit2D(Collider2D collision)
-    {
-        if (collision.tag.Equals("Food") || collision.tag.Equals("Mouse") || collision.tag.Equals("Item") || collision.tag.Equals("Character"))
-        {
-            BaseUnit unit = collision.GetComponent<BaseUnit>();
-            OnUnitExit(unit);
-        }
-    }
-
     public override void AfterDeath()
     {
-        // 移除特效
-        EffectManager.RemoveLavaEffectFromUnit(this);
         // 使表中还存在的单位执行一次离开自身的事件
         for (int i = 0; i < unitList.Count; i++)
         {

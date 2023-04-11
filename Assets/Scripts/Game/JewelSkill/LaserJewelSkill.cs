@@ -40,9 +40,9 @@ public class LaserJewelSkill : BaseJewelSkill
     {
         CustomizationItem item = CustomizationItem.GetInstance(pos, Shooter_RuntimeAnimatorController);
         CustomizationTask t = new CustomizationTask();
-        t.OnEnterFunc = delegate {
+        t.AddOnEnterAction(delegate {
             item.animatorController.Play("Execute");
-        };
+        });
         t.AddTaskFunc(delegate {
             if (item.animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime() >= 0.6f)
             {
@@ -73,10 +73,10 @@ public class LaserJewelSkill : BaseJewelSkill
                             return true;
                         }
                     });
-                    t.OnExitFunc = delegate
+                    t.AddOnExitAction(delegate
                     {
                         r.MDestory();
-                    };
+                    });
                     r.AddTask(t);
                 }
                 GameController.Instance.AddAreaEffectExecution(r);
@@ -91,9 +91,9 @@ public class LaserJewelSkill : BaseJewelSkill
             }
             return false;
         });
-        t.OnExitFunc = delegate {
+        t.AddOnExitAction(delegate {
             item.ExecuteDeath();
-        };
+        });
         item.AddTask(t);
         GameController.Instance.AddItem(item);
     }

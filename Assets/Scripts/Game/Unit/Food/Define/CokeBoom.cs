@@ -87,6 +87,7 @@ public class CokeBoom : FoodUnit
     /// </summary>
     public override void ExecuteDamage()
     {
+        GameManager.Instance.audioSourceManager.PlayEffectMusic("Boom");
         // 原地产生一个爆炸效果
         {
             BaseEffect e = BaseEffect.GetInstance("BoomEffect");

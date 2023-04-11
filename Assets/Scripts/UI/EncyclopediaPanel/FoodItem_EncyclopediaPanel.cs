@@ -26,7 +26,7 @@ public class FoodItem_EncyclopediaPanel : MonoBehaviour
     public void SetParam(int type, UnityAction call)
     {
         this.type = type;
-        Img_Display.sprite = GameManager.Instance.GetSprite("Food/" + type + "/0/display");
+        Img_Display.sprite = GameManager.Instance.GetSprite("Food/" + type + "/0/icon");
         Btn.onClick.AddListener(call);
     }
 

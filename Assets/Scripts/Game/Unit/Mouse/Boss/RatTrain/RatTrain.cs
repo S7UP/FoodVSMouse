@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 
+using S7P.Numeric;
+
 using UnityEngine;
 /// <summary>
 /// 列车一阶
@@ -431,14 +433,14 @@ public class RatTrain : BaseRatTrain
         CustomizationTask task = new CustomizationTask();
         int totalTime = 90;
         int currentTime = 0;
-        task.OnEnterFunc = delegate
+        task.AddOnEnterAction(delegate
         {
             m.transform.position = startV2; // 对初始坐标进行进一步修正
             m.AddCanBeSelectedAsTargetFunc(noSelectedAsTargetFunc); // 不可作为选取的目标
             m.AddCanBlockFunc(noBlockFunc); // 不可被阻挡
             m.AddCanHitFunc(noHitFunc); // 不可被子弹击中
             m.SetAlpha(0); // 0透明度
-        };
+        });
         task.AddTaskFunc(delegate
         {
             if (currentTime <= totalTime)
@@ -451,14 +453,14 @@ public class RatTrain : BaseRatTrain
             }
             return true;
         });
-        task.OnExitFunc = delegate
+        task.AddOnExitAction(delegate
         {
             m.RemoveCanBeSelectedAsTargetFunc(noSelectedAsTargetFunc);
             m.RemoveCanBlockFunc(noBlockFunc);
             m.RemoveCanHitFunc(noHitFunc);
             // 自我晕眩
             m.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(m, stun_time, false));
-        };
+        });
         m.AddTask(task);
     }
 
@@ -488,13 +490,13 @@ public class RatTrain : BaseRatTrain
             // 动作
             {
                 CustomizationTask t = new CustomizationTask();
-                t.OnEnterFunc = delegate
+                t.AddOnEnterAction(delegate
                 {
                     if(isLeft)
                         m.animatorController.Play("PreSpawn1");
                     else
                         m.animatorController.Play("PreSpawn0");
-                };
+                });
                 t.AddTaskFunc(delegate
                 {
                     if (m.animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
@@ -538,9 +540,9 @@ public class RatTrain : BaseRatTrain
                     }
                     return false;
                 });
-                t.OnExitFunc = delegate {
-                    m.ExecuteRecycle(); // 直接回收，不附带死亡动画也不触发亡语（如果有）
-                };
+                t.AddOnExitAction(delegate {
+                    m.MDestory(); // 直接回收，不附带死亡动画也不触发亡语（如果有）
+                });
                 m.AddTask(t);
             }
             GameController.Instance.AddMouseUnit(m);
@@ -601,10 +603,10 @@ public class RatTrain : BaseRatTrain
             // 动作
             {
                 CustomizationTask t = new CustomizationTask();
-                t.OnEnterFunc = delegate
+                t.AddOnEnterAction(delegate
                 {
                     m.animatorController.Play("PreAttack");
-                };
+                });
                 t.AddTaskFunc(delegate
                 {
                     if (m.animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
@@ -642,9 +644,9 @@ public class RatTrain : BaseRatTrain
                     }
                     return false;
                 });
-                t.OnExitFunc = delegate {
-                    m.ExecuteRecycle(); // 直接回收，不附带死亡动画也不触发亡语（如果有）
-                };
+                t.AddOnExitAction(delegate {
+                    m.MDestory(); // 直接回收，不附带死亡动画也不触发亡语（如果有）
+                });
                 m.AddTask(t);
             }
             GameController.Instance.AddMouseUnit(m);
@@ -768,8 +770,7 @@ public class RatTrain : BaseRatTrain
         {
             // 是否抵达停靠点
             c.AddSpellingFunc(delegate {
-                // if (GetHead().mCurrentActionState is MoveState || (GetHead().mCurrentActionState is TransitionState && GetHead().IsDisappear()))
-                if(GetRouteQueue().Count <= 0)
+                if (GetRouteQueue().Count <= 0)
                 {
                     if(flag)
                         dist -= GetHead().DeltaPosition.magnitude;

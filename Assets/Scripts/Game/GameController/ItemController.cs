@@ -108,7 +108,7 @@ public class ItemController : MonoBehaviour, IGameControllerMember
         {
             foreach (var item in mItemList[i])
             {
-                item.ExecuteRecycle();
+                item.MDestory();
             }
             mItemList[i].Clear();
         }

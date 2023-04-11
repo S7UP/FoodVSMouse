@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System;
 using UnityEngine;
+using S7P.Numeric;
 /// <summary>
 /// ·¢¹âÃ¹¾ú
 /// </summary>
@@ -90,18 +91,20 @@ public class LuminescentMold : FoodUnit
         InfectUnit(this);
     }
 
-    public override void OnDamage(float dmg)
+    public override float OnDamage(float dmg)
     {
         if(dmg > 0)
         {
             ExecuteDeath(); 
         }
+        return dmg;
     }
 
-    public override void OnBombBurnDamage(float dmg)
+    public override float OnBombBurnDamage(float dmg)
     {
         if(dmg > 0)
             ExecuteBurn();
+        return dmg;
     }
 
     public override void OnTransitionStateEnter()

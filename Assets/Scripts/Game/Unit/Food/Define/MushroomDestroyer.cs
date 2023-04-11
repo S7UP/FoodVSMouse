@@ -103,7 +103,7 @@ public class MushroomDestroyer : FoodUnit
                     count++;
             });
             // 爆炸结束时结算
-            e.SetOnDestoryExtraAction((e) => 
+            e.AddBeforeDestoryAction((e) => 
             {
                 count = Mathf.Min(count, 9); // count最大为9
                 // 返还10%*解除霉菌数的CD

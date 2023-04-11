@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System;
+using UnityEngine;
 /// <summary>
 /// 卡片建造器管理器（目前主要用来提供静态方法，并枚举事件）
 /// </summary>
@@ -49,6 +50,7 @@ public class CardBuilderManager
             d.Add(FoodNameTypeMap.RaidenBaguette, AfterBuildRaidenBaguette);
             d.Add(FoodNameTypeMap.IceBucket, AfterBuildIceBucketFoodUnit);
             d.Add(FoodNameTypeMap.BoiledWaterBoom, AfterBuildBoiledWaterBoom);
+            d.Add(FoodNameTypeMap.SpinCoffee, AfterBuildSpinCoffee);
         }
 
         /// <summary>
@@ -73,6 +75,7 @@ public class CardBuilderManager
             d.Add(FoodNameTypeMap.RaidenBaguette, AfterDestructeRaidenBaguette);
             d.Add(FoodNameTypeMap.IceBucket, AfterDestructeIceBucketFoodUnit);
             d.Add(FoodNameTypeMap.BoiledWaterBoom, AfterDestructeBoiledWaterBoom);
+            d.Add(FoodNameTypeMap.SpinCoffee, AfterDestructeSpinCoffee);
         }
 
         /// <summary>
@@ -123,7 +126,7 @@ public class CardBuilderManager
         {
             Dictionary<FoodNameTypeMap, Func<BaseGrid, bool>> d = CanConstructeInGridDict;
             // d.Add(FoodNameTypeMap.WoodenDisk, WoodenDiskCanConstructeInGrid);
-            d.Add(FoodNameTypeMap.CottonCandy, CottonCandyCanConstructeInGrid);
+            // d.Add(FoodNameTypeMap.CottonCandy, CottonCandyCanConstructeInGrid);
         }
     }
 
@@ -221,8 +224,12 @@ public class CardBuilderManager
         if (nextBuilder != null && !nextBuilder.IsColdDown() && icecreamBuilder != nextBuilder)
         {
             icecreamBuilder.Cost();
+            int cd = nextBuilder.mCDLeft;
             nextBuilder.ResetCD();
             GameController.Instance.mCardController.CancelSelectCard();
+            // 如果是二转冰淇淋还会返还CD
+            if (icecreamBuilder.mShape >= 2)
+                icecreamBuilder.mCDLeft = UnityEngine.Mathf.Min(icecreamBuilder.mCD, cd);
         }
     }
 
@@ -309,10 +316,10 @@ public class CardBuilderManager
     /// </summary>
     /// <param name="grid"></param>
     /// <returns></returns>
-    private bool CottonCandyCanConstructeInGrid(BaseGrid grid)
-    {
-        return grid.IsContainGridType(GridType.Lava);
-    }
+    //private bool CottonCandyCanConstructeInGrid(BaseGrid grid)
+    //{
+    //    return grid.IsContainGridType(GridType.Lava);
+    //}
 
     /// <summary>
     /// 种植巧克力面包后的增值效果
@@ -390,5 +397,21 @@ public class CardBuilderManager
     private void AfterDestructeBoiledWaterBoom(BaseCardBuilder builder)
     {
         builder.mCostDict["Fire"] = builder.mCostDict["Fire"] - 100f;
+    }
+
+    /// <summary>
+    /// 种植旋转咖啡喷壶
+    /// </summary>
+    private void AfterBuildSpinCoffee(BaseCardBuilder builder)
+    {
+        builder.mCostDict["Fire"] = (float)builder.attr.GetCost(0) + 50*Mathf.Pow(builder.GetAllProducts().Count, 2);
+    }
+
+    /// <summary>
+    /// 移除非二转大火后减值效果
+    /// </summary>
+    private void AfterDestructeSpinCoffee(BaseCardBuilder builder)
+    {
+        builder.mCostDict["Fire"] = (float)builder.attr.GetCost(0) + 50 * Mathf.Pow(builder.GetAllProducts().Count, 2);
     }
 }

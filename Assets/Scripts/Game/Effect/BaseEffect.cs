@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 using UnityEngine;
 
 /// <summary>
@@ -16,7 +19,10 @@ public class BaseEffect : MonoBehaviour, IGameControllerMember
     public bool isCycle;
     public AnimatorController animatorController = new AnimatorController();
     private SpriteRenderer spriteRenderer;
+    public TaskController taskController = new TaskController();
     private int state = 0;
+
+    public List<Action<BaseEffect>> BeforeDeathActionList = new List<Action<BaseEffect>>();
 
     public virtual void Awake()
     {
@@ -25,12 +31,9 @@ public class BaseEffect : MonoBehaviour, IGameControllerMember
 
     public void MInit()
     {
-        if(spriteRenderer != null)
-        {
-            spriteRenderer.color = new Color(1, 1, 1, 1);
-            SetSpriteRendererSorting("Effect", 0);
-        }
-            
+        taskController.Initial();
+        BeforeDeathActionList.Clear();
+
         state = 0;
         animatorController.ChangeAnimator(animator);
         if (AppearClipName != null && !AppearClipName.Equals(""))
@@ -40,9 +43,12 @@ public class BaseEffect : MonoBehaviour, IGameControllerMember
             if(clipName!=null)
                 animatorController.Play(clipName, isCycle);
             state = 1;
-        }
+}
 
         transform.localScale = Vector2.one;
+        SetSpriteRight(Vector2.right);
+        spriteRenderer.color = new Color(1, 1, 1, 1);
+        SetSpriteRendererSorting("Grid", 100);
     }
 
     public void SetSpriteRendererSorting(string LayerName, int order)
@@ -69,10 +75,17 @@ public class BaseEffect : MonoBehaviour, IGameControllerMember
             else if (state == 2)
                 Recycle();
         }
+
+        taskController.Update();
     }
 
     public void ExecuteDeath()
     {
+        foreach (var action in BeforeDeathActionList)
+        {
+            action(this);
+        }
+
         GameController.Instance.SetEffectDefaultParentTrans(this);
         if (DisappearClipName != null && !DisappearClipName.Equals(""))
         {
@@ -115,7 +128,7 @@ public class BaseEffect : MonoBehaviour, IGameControllerMember
 
     public virtual void MDestory()
     {
-        
+        Recycle();
     }
 
     public void Hide(bool enable)
@@ -127,6 +140,65 @@ public class BaseEffect : MonoBehaviour, IGameControllerMember
             spriteRenderer.enabled = false;
         else
             spriteRenderer.enabled = true;
+    }
+
+    /// <summary>
+    /// 添加唯一性任务
+    /// </summary>
+    public void AddUniqueTask(string key, ITask t)
+    {
+        taskController.AddUniqueTask(key, t);
+    }
+
+    /// <summary>
+    /// 添加一个任务
+    /// </summary>
+    /// <param name="t"></param>
+    public void AddTask(ITask t)
+    {
+        taskController.AddTask(t);
+    }
+
+    /// <summary>
+    /// 移除唯一性任务
+    /// </summary>
+    public void RemoveUniqueTask(string key)
+    {
+        taskController.RemoveUniqueTask(key);
+    }
+
+    /// <summary>
+    /// 移除一个任务
+    /// </summary>
+    /// <param name="t"></param>
+    public void RemoveTask(ITask t)
+    {
+        taskController.RemoveTask(t);
+    }
+
+    /// <summary>
+    /// 获取某个标记为key的任务
+    /// </summary>
+    /// <param name="key"></param>
+    /// <returns></returns>
+    public ITask GetTask(string key)
+    {
+        return taskController.GetTask(key);
+    }
+
+    public void AddBeforeDeathAction(Action<BaseEffect> action)
+    {
+        BeforeDeathActionList.Add(action);
+    }
+
+    public void RemoveBeforeDeathAction(Action<BaseEffect> action)
+    {
+        BeforeDeathActionList.Remove(action);
+    }
+
+    public void SetSpriteRight(Vector2 rot)
+    {
+        spriteRenderer.transform.right = rot;
     }
 
     public static BaseEffect CreateInstance(RuntimeAnimatorController r, string AppearClipName, string clipName, string DisappearClipName, bool isCycle)

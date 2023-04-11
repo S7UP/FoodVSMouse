@@ -4,12 +4,10 @@ using UnityEngine;
 /// </summary>
 public class SpinCoffee : FoodUnit
 {
-    private float dmgRate;
 
     public override void MInit()
     {
         base.MInit();
-        dmgRate = 1.0f;
         // 一转施加不会被选为攻击目标和不可被阻挡的效果
         if(mShape >= 1)
         {
@@ -21,13 +19,6 @@ public class SpinCoffee : FoodUnit
             GameController.Instance.AddEffect(e);
             AddEffectToDict("SpinCoffeeHidden", e, new Vector2(0, 0 * 0.5f * MapManager.gridWidth));
         }
-        // 二转攻击力转内伤倍率 以及最大生命值加成
-        if (mShape >= 2)
-        {
-            dmgRate = 1.5f;
-            SetMaxHpAndCurrentHp(mCurrentHp * 2.0f);
-        }
-
     }
 
     /// <summary>
@@ -76,6 +67,7 @@ public class SpinCoffee : FoodUnit
     {
         // 切换为攻击动画贴图
         SetActionState(new AttackState(this));
+        GameManager.Instance.audioSourceManager.PlayEffectMusic("Fume");
     }
 
     /// <summary>
@@ -123,12 +115,13 @@ public class SpinCoffee : FoodUnit
     /// </summary>
     public override void ExecuteDamage()
     {
-        float dmg = mCurrentAttack * dmgRate;
+        float dmg = mCurrentAttack * 0.25f;
+        float recordDmg = mCurrentAttack * 0.75f;
         RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 3, 3, "ItemCollideEnemy");
         r.isAffectMouse = true;
         r.SetOnEnemyEnterAction((u) => {
-            u.AddRecordDamage(dmg);
-            u.FlashWhenHited();
+            u.AddRecordDamage(recordDmg);
+            new DamageAction(CombatAction.ActionType.CauseDamage, this, u, dmg).ApplyAction();
         });
         r.SetInstantaneous();
         GameController.Instance.AddAreaEffectExecution(r);

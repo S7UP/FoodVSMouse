@@ -24,7 +24,9 @@ public class CatGun : BaseWeapons
     /// </summary>
     public override void ExecuteDamage()
     {
+        GameManager.Instance.audioSourceManager.PlayEffectMusic("Throw" + GameManager.Instance.rand.Next(0, 2));
         BaseBullet b = GameController.Instance.CreateBullet(this.master, transform.position, Vector2.right, BulletStyle.CatBullet);
+        b.SetHitSoundEffect("Splat" + GameManager.Instance.rand.Next(0, 3));
         b.SetDamage(0);
         b.SetStandardVelocity(24.0f);
     }

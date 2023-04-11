@@ -42,7 +42,7 @@ public class Btn_AvailableCard : MonoBehaviour, ICanvasRaycastFilter, IPointerEn
     public void UpdateByAvailableCardInfo(AvailableCardInfo info)
     {
         availableCardInfo = info;
-        Img_Display.sprite = GameManager.Instance.GetSprite("Food/"+info.type+"/"+info.maxShape+"/display");
+        Img_Display.sprite = GameManager.Instance.GetSprite("Food/"+info.type+"/"+info.maxShape+"/icon");
         Tex_Cost.text = GameManager.Instance.attributeManager.GetCardBuilderAttribute(info.type, info.maxShape).GetCost(info.maxLevel).ToString();
         Img_Level.sprite = GameManager.Instance.GetSprite("UI/Rank2/" + info.maxLevel);
     }

@@ -27,11 +27,15 @@ public abstract class RatTrainComponent : MouseModel
         base.MInit();
         // 添加等同于BOSS的免疫机制
         BossUnit.AddBossIgnoreDebuffEffect(this);
+        canTriggerCat = false;
+        canTriggerLoseWhenEnterLoseLine = false;
+        SetIsMouseUnit(false);
         // 初始隐藏，无受击判定且不可被选取
         isDisappear = false;
         isHide = false;
         Hide(true);
         isBoss = true; // 车厢也算BOSS判定
+        SetActionState(new MoveState(this));
     }
 
     public override void MUpdate()
@@ -222,44 +226,52 @@ public abstract class RatTrainComponent : MouseModel
         return 0;
     }
 
-    public override void OnDamage(float dmg)
+    public override float OnDamage(float dmg)
     {
         // boss本体取代受伤
         if (master != null)
         {
-            master.OnDamage(dmgRate * dmg);
+            dmg = master.OnDamage(dmgRate * dmg);
             master.UpdateHertMap();
+            return dmg;
         }
+        return 0;
     }
 
-    public override void OnDamgeIgnoreShield(float dmg)
+    public override float OnDamgeIgnoreShield(float dmg)
     {
         // boss本体取代受伤
         if (master != null)
         {
-            master.OnDamgeIgnoreShield(dmgRate * dmg);
+            dmg = master.OnDamgeIgnoreShield(dmgRate * dmg);
             master.UpdateHertMap();
+            return dmg;
         }
+        return 0;
     }
 
-    public override void OnRealDamage(float dmg)
+    public override float OnRealDamage(float dmg)
     {
         // boss本体取代受伤
         if (master != null)
         {
-            master.OnRealDamage(dmgRate * dmg);
+            dmg = master.OnRealDamage(dmgRate * dmg);
             master.UpdateHertMap();
+            return dmg;
         }
+        return 0;
     }
 
-    public override void OnBombBurnDamage(float dmg)
+    public override float OnBombBurnDamage(float dmg)
     {
         // boss本体取代受伤
         if (master != null)
         {
-            master.OnBombBurnDamage(burnDmgRate * dmg);
+            dmg = master.OnBombBurnDamage(burnDmgRate * dmg);
             master.UpdateHertMap();
+            return dmg;
         }
+        return 0;
     }
 
     public override void AddRecordDamage(float value)

@@ -7,6 +7,7 @@ public class MouseModel : MouseUnit
 {
     public bool canTriggerCat;
     public bool canTriggerLoseWhenEnterLoseLine;
+    private bool isnMouseUnit; // 是否不属于老鼠单位
 
     public override void MInit()
     {
@@ -14,10 +15,12 @@ public class MouseModel : MouseUnit
         mShape = -1;
         canTriggerCat = true;
         canTriggerLoseWhenEnterLoseLine = true;
+        isnMouseUnit = false;
         base.MInit();
 
         spriteRenderer.sprite = null;
         animator.runtimeAnimatorController = null;
+        SetActionState(new BlockState()); // 默认为空白状态，即什么也不做
     }
 
     /// <summary>
@@ -43,7 +46,7 @@ public class MouseModel : MouseUnit
 
     }
 
-    public override void ExecuteRecycle()
+    protected override void ExecuteRecycle()
     {
         GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, "Mouse/MouseModel", this.gameObject);
     }
@@ -120,5 +123,23 @@ public class MouseModel : MouseUnit
     public override bool CanTriggerLoseWhenEnterLoseLine()
     {
         return canTriggerLoseWhenEnterLoseLine;
+    }
+
+    /// <summary>
+    /// 是否算老鼠单位
+    /// </summary>
+    /// <returns></returns>
+    public bool IsMouseUnit()
+    {
+        return !isnMouseUnit;
+    }
+
+    /// <summary>
+    /// 设置是否为老鼠单位
+    /// </summary>
+    /// <param name="isMouseUnit"></param>
+    public void SetIsMouseUnit(bool isMouseUnit)
+    {
+        isnMouseUnit = !isMouseUnit;
     }
 }

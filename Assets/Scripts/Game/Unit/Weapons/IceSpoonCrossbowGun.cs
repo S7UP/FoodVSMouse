@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System;
 using UnityEngine;
+using S7P.Numeric;
 /// <summary>
 /// 冰勺弩枪
 /// </summary>
@@ -82,6 +83,7 @@ public class IceSpoonCrossbowGun : BaseWeapons
     /// </summary>
     public override void ExecuteDamage()
     {
+        GameManager.Instance.audioSourceManager.PlayEffectMusic("Throw" + GameManager.Instance.rand.Next(0, 2));
         // 选择目标
         BaseUnit target = PitcherManager.FindTargetByPitcher(master, transform.position.x, GetRowIndex());
         CreateBullet(transform.position, 4*master.mCurrentAttack, target);
@@ -96,6 +98,7 @@ public class IceSpoonCrossbowGun : BaseWeapons
     private BaseBullet CreateBullet(Vector2 startPosition, float ori_dmg, BaseUnit target)
     {
         AllyBullet b = AllyBullet.GetInstance(BulletStyle.Throwing, IceEggBullet_RuntimeAnimatorController, master, ori_dmg);
+        b.SetHitSoundEffect("Eggimpact" + GameManager.Instance.rand.Next(0, 2));
         b.AddSpriteOffsetY(new FloatModifier(0.5f * MapManager.gridHeight));
         b.isnDelOutOfBound = true; // 出屏不自删
         // 冰勺击中效果
@@ -141,10 +144,10 @@ public class IceSpoonCrossbowGun : BaseWeapons
             {
                 return !pudding.IsAlive();
             });
-            t.OnExitFunc = delegate
+            t.AddOnExitAction(delegate
             {
                 pudding = null; // 如果目标布丁不存活，则取消其引用
-            };
+            });
             b.AddTask(t);
 
             // 定义与添加重定向任务

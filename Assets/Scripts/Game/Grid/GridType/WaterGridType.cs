@@ -1,5 +1,7 @@
 using System;
 
+using S7P.Numeric;
+
 using UnityEngine;
 
 public class WaterGridType : BaseGridType
@@ -302,6 +304,7 @@ public class WaterGridType : BaseGridType
         {
             if (hasVehicle)
             {
+                GameManager.Instance.audioSourceManager.PlayEffectMusic("EnterWater");
                 hasVehicle = false;
                 // BUFF效果改变
                 triggerDamageTimeLeft = TotalTime;
@@ -350,6 +353,7 @@ public class WaterGridType : BaseGridType
         {
             if (!hasVehicle)
             {
+                GameManager.Instance.audioSourceManager.PlayEffectMusic("EnterWater");
                 hasVehicle = true;
                 // BUFF效果改变
                 if (!unit.NumericBox.GetBoolNumericValue(StringManager.IgnoreWaterGridState))

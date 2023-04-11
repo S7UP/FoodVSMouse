@@ -1,5 +1,7 @@
 using System;
 
+using S7P.Numeric;
+
 using UnityEngine;
 /// <summary>
 /// ¿œ Ûº–◊”
@@ -49,6 +51,7 @@ public class MouseCatcher : FoodUnit
             if (r.isAlive)
             {
                 isTriggerBoom = true;
+                GameManager.Instance.audioSourceManager.PlayEffectMusic("CatcherTrigger");
                 ExecuteDeath();
                 r.MDestory();
             }

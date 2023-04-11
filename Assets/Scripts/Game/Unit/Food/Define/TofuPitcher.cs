@@ -1,5 +1,6 @@
-using System;
 using System.Collections.Generic;
+
+using S7P.Numeric;
 
 using UnityEngine;
 /// <summary>
@@ -165,6 +166,7 @@ public class TofuPitcher : FoodUnit
     /// </summary>
     public override void ExecuteDamage()
     {
+        GameManager.Instance.audioSourceManager.PlayEffectMusic("Throw" + GameManager.Instance.rand.Next(0, 2));
         // 选择目标
         BaseUnit target = PitcherManager.FindTargetByPitcher(this, transform.position.x, GetRowIndex());
 
@@ -190,6 +192,7 @@ public class TofuPitcher : FoodUnit
     private BaseBullet CreateRedBullet(Vector2 startPosition, BaseUnit target, float ori_dmg)
     {
         AllyBullet b = AllyBullet.GetInstance(BulletStyle.Throwing, RedBulletRuntimeAnimatorControllerArray[mShape], this, ori_dmg);
+        b.SetHitSoundEffect("Splat" + GameManager.Instance.rand.Next(0, 3));
         b.AddSpriteOffsetY(new FloatModifier(0.5f * MapManager.gridHeight));
         b.isnDelOutOfBound = true; // 出屏不自删
 
@@ -205,10 +208,10 @@ public class TofuPitcher : FoodUnit
             {
                 return !pudding.IsAlive();
             });
-            t.OnExitFunc = delegate
+            t.AddOnExitAction(delegate
             {
                 pudding = null; // 如果目标布丁不存活，则取消其引用
-            };
+            });
             b.AddTask(t);
 
             // 定义与添加重定向任务
@@ -245,6 +248,7 @@ public class TofuPitcher : FoodUnit
     private BaseBullet CreateGreenBullet(Vector2 startPosition, BaseUnit target, float ori_dmg)
     {
         AllyBullet b = AllyBullet.GetInstance(BulletStyle.Throwing, GreenBulletRuntimeAnimatorControllerArray[mShape], this, GreenDamageRate * ori_dmg);
+        b.SetHitSoundEffect("Splat" + GameManager.Instance.rand.Next(0, 3));
         b.AddSpriteOffsetY(new FloatModifier(0.5f * MapManager.gridHeight));
         b.isnDelOutOfBound = true; // 出屏不自删
 
@@ -267,10 +271,10 @@ public class TofuPitcher : FoodUnit
             {
                 return !pudding.IsAlive();
             });
-            t.OnExitFunc = delegate
+            t.AddOnExitAction(delegate
             {
                 pudding = null; // 如果目标布丁不存活，则取消其引用
-            };
+            });
             b.AddTask(t);
 
             // 定义与添加重定向任务

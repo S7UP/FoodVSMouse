@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 using UnityEngine;
 using UnityEngine.UI;
+using S7P.Numeric;
 
 public class BaseCostController : MonoBehaviour, IBaseCostController, IGameControllerMember
 {
@@ -138,7 +139,7 @@ public class BaseCostController : MonoBehaviour, IBaseCostController, IGameContr
     /// <param name="boolModifier"></param>
     public void AddShieldModifier(string name, BoolModifier boolModifier)
     {
-        mShieldGettingCostDict[name].AddDecideModifier(boolModifier);
+        mShieldGettingCostDict[name].AddModifier(boolModifier);
         UpdateAddFireDisplayer();
     }
 
@@ -149,7 +150,7 @@ public class BaseCostController : MonoBehaviour, IBaseCostController, IGameContr
     /// <param name="boolModifier"></param>
     public void RemoveShieldModifier(string name, BoolModifier boolModifier)
     {
-        mShieldGettingCostDict[name].RemoveDecideModifier(boolModifier);
+        mShieldGettingCostDict[name].RemoveModifier(boolModifier);
         UpdateAddFireDisplayer();
     }
 

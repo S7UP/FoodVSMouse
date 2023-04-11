@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 
+using S7P.Numeric;
+
 using UnityEngine;
 /// <summary>
 /// 雷电长棍面包
@@ -38,6 +40,12 @@ public class RaidenBaguette : FoodUnit
     public override void MUpdate()
     {
         base.MUpdate();
+    }
+
+    public override void MDestory()
+    {
+        base.MDestory();
+        GetThisUnitList().Remove(this);
     }
 
     /// <summary>
@@ -149,17 +157,12 @@ public class RaidenBaguette : FoodUnit
     public override void ExecuteDamage()
     {
         ExecuteAttack();
+        GameManager.Instance.audioSourceManager.PlayEffectMusic("Lighting");
     }
 
     public override void AfterDeath()
     {
         base.AfterDeath();
-        GetThisUnitList().Remove(this);
-    }
-
-    public override void ExecuteRecycle()
-    {
-        base.ExecuteRecycle();
         GetThisUnitList().Remove(this);
     }
 
@@ -267,10 +270,10 @@ public class RaidenBaguette : FoodUnit
                             return true;
                         return false;
                     });
-                    t.OnExitFunc = delegate
+                    t.AddOnExitAction(delegate
                     {
                         l.ExecuteRecycle();
-                    };
+                    });
                     l.AddTask(t);
 
                     GameController.Instance.AddLaser(l);

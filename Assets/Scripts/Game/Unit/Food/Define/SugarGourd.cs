@@ -127,7 +127,9 @@ public class SugarGourd : FoodUnit
     /// </summary>
     public override void ExecuteDamage()
     {
+        GameManager.Instance.audioSourceManager.PlayEffectMusic("Swing");
         TrackingBullets b = (TrackingBullets)GameController.Instance.CreateBullet(this, transform.position + Vector3.up * MapManager.gridHeight/2, Vector2.up, BulletStyle.SugarGourd);
+        b.SetHitSoundEffect("Splat"+GameManager.Instance.rand.Next(0, 3));
         b.animator.runtimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Bullet/"+ ((int)BulletStyle.SugarGourd)+"/"+mShape);
         b.SetHeight(1); // 设置高度为对空高度
         b.SetSearchEnemyEnable(true); // 开启索敌模式

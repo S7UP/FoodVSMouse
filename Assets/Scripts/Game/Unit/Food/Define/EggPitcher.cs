@@ -1,5 +1,7 @@
 using System;
 
+using S7P.Numeric;
+
 using UnityEngine;
 /// <summary>
 /// 煮蛋器投手
@@ -133,6 +135,7 @@ public class EggPitcher : FoodUnit
     /// </summary>
     public override void ExecuteDamage()
     {
+        GameManager.Instance.audioSourceManager.PlayEffectMusic("Throw" + GameManager.Instance.rand.Next(0, 2));
         // 选择目标
         BaseUnit target = PitcherManager.FindTargetByPitcher(this, transform.position.x, GetRowIndex());
 
@@ -150,6 +153,7 @@ public class EggPitcher : FoodUnit
         AllyBullet b = AllyBullet.GetInstance(BulletStyle.Throwing, BulletRuntimeAnimatorControllerArray[mShape], this, mainDamageRate * ori_dmg);
         b.AddSpriteOffsetY(new FloatModifier(0.5f * MapManager.gridHeight));
         b.isnDelOutOfBound = true; // 出屏不自删
+        b.SetHitSoundEffect("Eggimpact"+GameManager.Instance.rand.Next(0, 2));
 
         // 定义击中后的效果
         Action<BaseBullet, BaseUnit> hitEnemyAction = null;
@@ -182,10 +186,10 @@ public class EggPitcher : FoodUnit
             {
                 return !pudding.IsAlive();
             });
-            t.OnExitFunc = delegate
+            t.AddOnExitAction(delegate
             {
                 pudding = null; // 如果目标布丁不存活，则取消其引用
-            };
+            });
             b.AddTask(t);
 
             // 定义与添加重定向任务
@@ -236,7 +240,7 @@ public class EggPitcher : FoodUnit
         r.SetAffectHeight(0);
         r.SetInstantaneous();
         r.SetOnEnemyEnterAction((u) => {
-            // new DamageAction(CombatAction.ActionType.CauseDamage, this, u, Mathf.Min(aoeDamageRate * ori_dmg, u.mMaxHp*0.1f)).ApplyAction();
+            u.FlashWhenHited();
             // 添加内伤
             u.AddRecordDamage(aoeDamageRate * ori_dmg);
         });

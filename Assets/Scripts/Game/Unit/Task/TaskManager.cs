@@ -1,5 +1,7 @@
 using System;
 
+using S7P.Numeric;
+
 using UnityEngine;
 /// <summary>
 /// 任务管理器（提供一些静态任务）
@@ -28,9 +30,9 @@ public class TaskManager
         Func<BaseBullet, BaseUnit, bool> noHitFunc = delegate { return false; };
 
         CustomizationTask t = new CustomizationTask();
-        t.OnEnterFunc = delegate {
+        t.AddOnEnterAction(delegate {
             master.transform.position = firstPosition;
-            totalTimer = Mathf.CeilToInt(Mathf.Abs(targetPosition.x - firstPosition.x) / horizontalVelocity);
+            totalTimer = Mathf.CeilToInt((targetPosition - firstPosition).magnitude / horizontalVelocity);
             // 计算得出重力加速度（向下）
             g = 8 * height / (totalTimer * totalTimer);
             // 为垂直方向的初速度赋值
@@ -38,7 +40,7 @@ public class TaskManager
             last_vector = master.transform.position;
             master.AddCanHitFunc(noHitFunc);
             master.AddCanHitFunc(hitCondition);
-        };
+        });
         t.AddTaskFunc(delegate {
             if (currentTimer >= totalTimer)
             {
@@ -62,14 +64,14 @@ public class TaskManager
                 master.SetSpriteRight(dv + Vector3.up * velocityVertical);
             return false;
         });
-        t.OnExitFunc = delegate
+        t.AddOnExitAction(delegate
         {
             master.SetSpriteRight(Vector2.right);
             if (!notEndWithTakeDamage)
                 master.TakeDamage(null);
             master.RemoveSpriteOffsetY(yPosModifier);
             master.RemoveCanHitFunc(hitCondition);
-        };
+        });
         master.AddTask(t);
         return t;
     }
@@ -86,61 +88,6 @@ public class TaskManager
     /// <returns></returns>
     public static CustomizationTask AddParabolaTask(BaseBullet master, float horizontalVelocity, float height, Vector3 firstPosition, Vector3 targetPosition, bool isNavi, bool notEndWithTakeDamage)
     {
-        //int totalTimer = 0; // 初始点到目标点用时
-        //int currentTimer = 0; // 当前用时
-        //float g = 0; // 加速度
-        //float velocityVertical = 0; // 垂直方向的速度
-        //FloatModifier yPosModifier = new FloatModifier(0);
-
-        //Vector3 last_vector = Vector3.zero;
-        //Func<BaseBullet, BaseUnit, bool> noHitFunc = delegate { return false; };
-
-        //CustomizationTask t = new CustomizationTask();
-        //t.OnEnterFunc = delegate {
-        //    master.transform.position = firstPosition;
-        //    totalTimer = Mathf.CeilToInt(Mathf.Abs(targetPosition.x - firstPosition.x) / horizontalVelocity);
-        //    // 计算得出重力加速度（向下）
-        //    g = 8 * height / (totalTimer * totalTimer);
-        //    // 为垂直方向的初速度赋值
-        //    velocityVertical = g * totalTimer / 2;
-        //    last_vector = master.transform.position;
-
-        //    master.AddCanHitFunc(noHitFunc);
-        //};
-        //t.AddTaskFunc(delegate {
-        //    if (currentTimer >= totalTimer)
-        //    {
-        //        return true;
-        //    }
-        //    else if (currentTimer >= totalTimer - 4)
-        //    {
-        //        // 开判定
-        //        master.RemoveCanHitFunc(noHitFunc);
-        //    }
-        //    velocityVertical -= g;
-        //    Vector3 v = Vector3.Lerp(firstPosition, targetPosition, (float)currentTimer / totalTimer);
-        //    Vector3 dv = v - last_vector;
-        //    master.RemoveSpriteOffsetY(yPosModifier);
-        //    yPosModifier.Value += velocityVertical;
-        //    master.AddSpriteOffsetY(yPosModifier);
-        //    master.transform.position += dv;
-        //    currentTimer++;
-        //    last_vector = v;
-        //    if (isNavi)
-        //        master.SetSpriteRight(dv + Vector3.up * velocityVertical);
-        //        //master.transform.right = dv + Vector3.up * velocityVertical;
-        //    return false;
-        //});
-        //t.OnExitFunc = delegate
-        //{
-        //    master.SetSpriteRight(Vector2.right);
-        //    if (!notEndWithTakeDamage)
-        //        master.TakeDamage(null);
-        //    master.RemoveSpriteOffsetY(yPosModifier);
-        //};
-        //master.AddTask(t);
-        //return t;
-
         return AddParabolaTask(master, horizontalVelocity, height, firstPosition, targetPosition, isNavi, notEndWithTakeDamage, delegate { return true; });
     }
 
@@ -184,9 +131,9 @@ public class TaskManager
         Vector3 CurrentDelta = Vector3.zero;
 
         CustomizationTask t = new CustomizationTask();
-        t.OnEnterFunc = delegate {
+        t.AddOnEnterAction(delegate {
             CurrentDelta = Vector2.zero;
-        };
+        });
         t.AddTaskFunc(delegate {
             // 当原运动生命周期结束或者目标失效时，该任务也自动结束
             if (oriTask.IsEnd() || !target.IsAlive())
@@ -199,10 +146,10 @@ public class TaskManager
             CurrentDelta -= deltaV2;
             return false;
         });
-        t.OnExitFunc = delegate
+        t.AddOnExitAction(delegate
         {
 
-        };
+        });
         master.AddTask(t);
         return t;
     }
@@ -225,72 +172,12 @@ public class TaskManager
     /// <returns></returns>
     public static CustomizationTask AddParabolaTask(BaseUnit master, float horizontalVelocity, float height, Vector3 firstPosition, Vector3 targetPosition, bool isNavi)
     {
-        //int totalTimer = 0; // 初始点到目标点用时
-        //int currentTimer = 0; // 当前用时
-        //float g = 0; // 加速度
-        //float velocityVertical = 0; // 垂直方向的速度
-        //FloatModifier yPosModifier = new FloatModifier(0);
-        //IntModifier flyIntModifier = new IntModifier(1);
-
-        //Vector3 last_vector = Vector3.zero;
-        //Func<BaseUnit, BaseBullet, bool> noHitFunc = delegate { return false; };
-        //Func<BaseUnit, BaseUnit, bool> noBlockFunc = delegate { return false; };
-
-        //CustomizationTask t = new CustomizationTask();
-        //t.OnEnterFunc = delegate {
-        //    // 为目标添加一个Flying字段
-        //    if (!master.NumericBox.IntDict.ContainsKey(StringManager.Flying))
-        //        master.NumericBox.IntDict.Add(StringManager.Flying, new IntNumeric());
-        //    master.NumericBox.IntDict[StringManager.Flying].AddAddModifier(flyIntModifier);
-
-        //    master.transform.position = firstPosition;
-        //    totalTimer = Mathf.CeilToInt(Mathf.Abs(targetPosition.x - firstPosition.x) / horizontalVelocity);
-        //    // 计算得出重力加速度（向下）
-        //    g = 8 * height / (totalTimer * totalTimer);
-        //    // 为垂直方向的初速度赋值
-        //    velocityVertical = g * totalTimer / 2;
-        //    last_vector = master.transform.position;
-        //    // 关判定
-        //    master.AddCanHitFunc(noHitFunc);
-        //    master.AddCanBlockFunc(noBlockFunc);
-        //};
-        //t.AddTaskFunc(delegate {
-        //    if (currentTimer >= totalTimer)
-        //    {
-        //        return true;
-        //    }
-        //    velocityVertical -= g;
-        //    Vector3 v = Vector3.Lerp(firstPosition, targetPosition, (float)currentTimer / totalTimer);
-        //    Vector3 dv = v - last_vector;
-        //    master.RemoveSpriteOffsetY(yPosModifier);
-        //    yPosModifier.Value = yPosModifier.Value + velocityVertical;
-        //    master.AddSpriteOffsetY(yPosModifier);
-        //    master.transform.position += dv;
-        //    currentTimer++;
-        //    last_vector = v;
-        //    if (isNavi)
-        //        master.transform.right = dv;
-        //    return false;
-        //});
-        //t.OnExitFunc = delegate
-        //{
-        //    if(isNavi)
-        //        master.transform.right = Vector2.right;
-        //    master.RemoveSpriteOffsetY(yPosModifier);
-        //    // 开判定
-        //    master.RemoveCanHitFunc(noHitFunc);
-        //    master.RemoveCanBlockFunc(noBlockFunc);
-        //    // 为目标移除当前的Flying字段
-        //    if (master.NumericBox.IntDict.ContainsKey(StringManager.Flying))
-        //        master.NumericBox.IntDict[StringManager.Flying].RemoveAddModifier(flyIntModifier);
-        //};
-        //master.AddTask(t);
-        //return t;
         return AddParabolaTask(master, horizontalVelocity, height, firstPosition, targetPosition, isNavi, false);
     }
 
     public static CustomizationTask AddParabolaTask(BaseUnit master, float horizontalVelocity, float height, Vector3 firstPosition, Vector3 targetPosition, bool isNavi, bool isOpenCollide)
     {
+        int ori_height = master.mHeight;
         int totalTimer = 0; // 初始点到目标点用时
         int currentTimer = 0; // 当前用时
         float g = 0; // 加速度
@@ -303,14 +190,14 @@ public class TaskManager
         Func<BaseUnit, BaseUnit, bool> noBlockFunc = delegate { return isOpenCollide; };
 
         CustomizationTask t = new CustomizationTask();
-        t.OnEnterFunc = delegate {
+        t.AddOnEnterAction(delegate {
             // 为目标添加一个Flying字段
             if (!master.NumericBox.IntDict.ContainsKey(StringManager.Flying))
                 master.NumericBox.IntDict.Add(StringManager.Flying, new IntNumeric());
             master.NumericBox.IntDict[StringManager.Flying].AddAddModifier(flyIntModifier);
 
             master.transform.position = firstPosition;
-            totalTimer = Mathf.CeilToInt(Mathf.Abs(targetPosition.x - firstPosition.x) / horizontalVelocity);
+            totalTimer = Mathf.CeilToInt((targetPosition - firstPosition).magnitude / horizontalVelocity);
             // 计算得出重力加速度（向下）
             g = 8 * height / (totalTimer * totalTimer);
             // 为垂直方向的初速度赋值
@@ -319,7 +206,7 @@ public class TaskManager
             // 关判定
             master.AddCanHitFunc(noHitFunc);
             master.AddCanBlockFunc(noBlockFunc);
-        };
+        });
         t.AddTaskFunc(delegate {
             if (currentTimer >= totalTimer)
             {
@@ -338,7 +225,7 @@ public class TaskManager
                 master.transform.right = dv;
             return false;
         });
-        t.OnExitFunc = delegate
+        t.AddOnExitAction(delegate
         {
             if (isNavi)
                 master.transform.right = Vector2.right;
@@ -349,7 +236,7 @@ public class TaskManager
             // 为目标移除当前的Flying字段
             if (master.NumericBox.IntDict.ContainsKey(StringManager.Flying))
                 master.NumericBox.IntDict[StringManager.Flying].RemoveAddModifier(flyIntModifier);
-        };
+        });
         master.AddTask(t);
         return t;
     }
@@ -437,5 +324,25 @@ public class TaskManager
         });
         b.AddTask(t);
         return t;
+    }
+
+    public static void GetMoveToTask(Transform trans, Vector2 endPos, int t, out CustomizationTask task)
+    {
+        int time = 0;
+        Vector2 startPos = Vector2.zero;
+        task = new CustomizationTask();
+        task.AddOnEnterAction(delegate {
+            startPos = trans.position;
+            time = 0;
+        });
+        task.AddTaskFunc(delegate {
+            time++;
+            float rate = Mathf.Min(1, (float)time / t);
+            trans.transform.position = Vector2.Lerp(startPos, endPos, rate);
+            if (time >= t)
+                return true;
+            else
+                return false;
+        });
     }
 }

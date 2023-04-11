@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using S7P.Numeric;
 /// <summary>
 /// 风域
 /// </summary>
@@ -56,7 +57,6 @@ public class WindAreaEffectExecution : RetangleAreaEffectExecution
             {
                 cloudGroupList.Add(e);
             }
-                
         }
         else
         {
@@ -134,11 +134,11 @@ public class WindAreaEffectExecution : RetangleAreaEffectExecution
     /// <summary>
     /// 设置风域为经典运作模式
     /// </summary>
-    /// <param name="e">受影响的风狱</param>
+    /// <param name="e">受影响的风域</param>
     /// <param name="StayTime">静止等待时间</param>
     /// <param name="ChangeTime">加减速时间</param>
     /// <param name="UniformTime">匀速时间</param>
-    /// <param name="isLeftStart">是否从左向移动开始</param>
+    /// <param name="isMoveRightStart">是否从右向移动开始</param>
     public static void SetClassicalWindAreaEffectMode(WindAreaEffectExecution e, int startState, int StayTime, int ChangeTime, int UniformTime, bool isMoveRightStart)
     {
         // 风域方向变化周期
@@ -149,81 +149,70 @@ public class WindAreaEffectExecution : RetangleAreaEffectExecution
         else
             rotate_x = -1;
         int timeLeft = 0;
-        GameController.Instance.AddTasker(
-            //Action InitAction, 
-            delegate
-            {
-                timeLeft = StayTime;
-                state = startState;
-            },
-            //Action UpdateAction, 
-            delegate
-            {
-                if (timeLeft > 0)
-                    timeLeft--;
-                else
-                {
-                    state++;
-                    if (state == 4)
-                    {
-                        rotate_x = -rotate_x;
-                        state = 0;
-                    }
 
-                    // 下一个阶段经过的时间
-                    switch (state)
-                    {
-                        case 0:
-                            timeLeft = StayTime;
-                            break;
-                        case 1:
-                            timeLeft = ChangeTime;
-                            break;
-                        case 2:
-                            timeLeft = UniformTime;
-                            break;
-                        case 3:
-                            timeLeft = ChangeTime;
-                            break;
-                        default:
-                            // 虽然走正常逻辑不会遇到Default情况
-                            state = 0;
-                            timeLeft = StayTime;
-                            break;
-                    }
+        CustomizationTask t = new CustomizationTask();
+        t.AddOnEnterAction(delegate {
+            timeLeft = StayTime;
+            state = startState;
+        });
+        t.AddTaskFunc(delegate
+        {
+            if (timeLeft > 0)
+                timeLeft--;
+            else
+            {
+                state++;
+                if (state == 4)
+                {
+                    rotate_x = -rotate_x;
+                    state = 0;
                 }
 
-                // 以下，根据情况做事
+                // 下一个阶段经过的时间
                 switch (state)
                 {
-                    // 加速
+                    case 0:
+                        timeLeft = StayTime;
+                        break;
                     case 1:
-                        {
-                            float r = 1 - (float)timeLeft / ChangeTime;
-                            e.SetVelocity(TransManager.TranToVelocity(1f) * r * rotate_x);
-                        }
+                        timeLeft = ChangeTime;
                         break;
-                    // 减速
+                    case 2:
+                        timeLeft = UniformTime;
+                        break;
                     case 3:
-                        {
-                            float r = (float)timeLeft / ChangeTime;
-                            e.SetVelocity(TransManager.TranToVelocity(1f) * r * rotate_x);
-                        }
+                        timeLeft = ChangeTime;
                         break;
-                    default: break;
+                    default:
+                        // 虽然走正常逻辑不会遇到Default情况
+                        state = 0;
+                        timeLeft = StayTime;
+                        break;
                 }
-            },
-            //Func<bool> EndCondition, 
-            delegate
-            {
-                return false;
-            },
-            //Action EndEvent
-            delegate
-            {
-
             }
-            );
+
+            // 以下，根据情况做事
+            switch (state)
+            {
+                // 加速
+                case 1:
+                    {
+                        float r = 1 - (float)timeLeft / ChangeTime;
+                        e.SetVelocity(TransManager.TranToVelocity(1f) * r * rotate_x);
+                    }
+                    break;
+                // 减速
+                case 3:
+                    {
+                        float r = (float)timeLeft / ChangeTime;
+                        e.SetVelocity(TransManager.TranToVelocity(1f) * r * rotate_x);
+                    }
+                    break;
+                default: break;
+            }
+            return false;
+        });
+        e.AddTask(t);
     }
 
     public static void SetClassicalWindAreaEffectMode(WindAreaEffectExecution e, int startState, int StayTime, int ChangeTime, int UniformTime)

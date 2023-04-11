@@ -20,12 +20,6 @@ public class MelonShield : FoodUnit
         typeAndShapeToLayer = 1; // 渲染层级应该要大一点s
     }
 
-    // 单位被对象池回收时触发
-    public override void OnDisable()
-    {
-        base.OnDisable();
-    }
-
     public override void MInit()
     {
         mHertIndex = 0;
@@ -44,8 +38,8 @@ public class MelonShield : FoodUnit
 
     public override void SetCollider2DParam()
     {
-        mBoxCollider2D.offset = new Vector2(0, -0.08f * MapManager.gridHeight);
-        mBoxCollider2D.size = new Vector2(0.65f * MapManager.gridWidth, 0.33f * MapManager.gridHeight);
+        mBoxCollider2D.offset = new Vector2(0, 0);
+        mBoxCollider2D.size = new Vector2(0.65f * MapManager.gridWidth, 0.49f * MapManager.gridHeight);
     }
 
     /// <summary>
@@ -117,12 +111,20 @@ public class MelonShield : FoodUnit
         {
             // 添加对应的判定检测器
             {
-                DamageAreaEffectExecution dmgEffect = DamageAreaEffectExecution.GetInstance();
-                // 反弹伤害不应该超过自身当前生命值（划去）
-                // 现在没了，上面那个注释别吊它！
-                dmgEffect.Init(this, CombatAction.ActionType.ReboundDamage, dmgAction.DamageValue * mCurrentAttack/10, GetRowIndex(), 3, 3, 0, 0, false, true);
-                dmgEffect.transform.position = this.GetPosition();
-                GameController.Instance.AddAreaEffectExecution(dmgEffect);
+                //DamageAreaEffectExecution dmgEffect = DamageAreaEffectExecution.GetInstance();
+                //// 反弹伤害不应该超过自身当前生命值（划去）
+                //// 现在没了，上面那个注释别吊它！
+                //dmgEffect.Init(this, CombatAction.ActionType.ReboundDamage, dmgAction.DamageValue * mCurrentAttack/10, GetRowIndex(), 3, 3, 0, 0, false, true);
+                //dmgEffect.transform.position = this.GetPosition();
+                //GameController.Instance.AddAreaEffectExecution(dmgEffect);
+
+                RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 3, 3, "ItemCollideEnemy");
+                r.SetInstantaneous();
+                r.isAffectMouse = true;
+                r.SetOnEnemyEnterAction((u) => {
+                    new ReboundDamageAction(CombatAction.ActionType.RealDamage, this, u, dmgAction.DamageValue * mCurrentAttack / 10).ApplyAction();
+                });
+                GameController.Instance.AddAreaEffectExecution(r);
             }
         }
     }
@@ -144,12 +146,22 @@ public class MelonShield : FoodUnit
     {
         if (mShape>0 && mCurrentHp > 0)
         {
+            float dmg = Mathf.Max(0, mCurrentHp) * mCurrentAttack / 10;
             // 添加对应的判定检测器
             {
-                DamageAreaEffectExecution dmgEffect = DamageAreaEffectExecution.GetInstance();
-                dmgEffect.Init(this, CombatAction.ActionType.ReboundDamage, Mathf.Max(0, mCurrentHp) * mCurrentAttack / 10, GetRowIndex(), 3, 3, 0, 0, false, true);
-                dmgEffect.transform.position = this.GetPosition();
-                GameController.Instance.AddAreaEffectExecution(dmgEffect);
+                RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 3, 3, "ItemCollideEnemy");
+                r.SetInstantaneous();
+                r.isAffectMouse = true;
+                r.SetOnEnemyEnterAction((u) => {
+                    new ReboundDamageAction(CombatAction.ActionType.RealDamage, this, u, dmg).ApplyAction();
+                });
+                GameController.Instance.AddAreaEffectExecution(r);
+
+
+                //DamageAreaEffectExecution dmgEffect = DamageAreaEffectExecution.GetInstance();
+                //dmgEffect.Init(this, CombatAction.ActionType.ReboundDamage, Mathf.Max(0, mCurrentHp) * mCurrentAttack / 10, GetRowIndex(), 3, 3, 0, 0, false, true);
+                //dmgEffect.transform.position = this.GetPosition();
+                //GameController.Instance.AddAreaEffectExecution(dmgEffect);
             }
         }
     }

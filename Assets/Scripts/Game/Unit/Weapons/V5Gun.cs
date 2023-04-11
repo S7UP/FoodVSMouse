@@ -102,9 +102,11 @@ public class V5Gun : BaseWeapons
     /// </summary>
     public override void ExecuteDamage()
     {
+        GameManager.Instance.audioSourceManager.PlayEffectMusic("Throw" + GameManager.Instance.rand.Next(0, 2));
         if (currentAttackCount < maxAttackCount)
         {
             AllyBullet b = AllyBullet.GetInstance(BulletStyle.NoStrengthenNormal, Bullet_RuntimeAnimatorController, master, 0);
+            b.SetHitSoundEffect("Splat" + GameManager.Instance.rand.Next(0, 3));
             float ori_dmg = master.mCurrentAttack;
             b.SetStandardVelocity(36);
             b.SetRotate(Vector2.right);

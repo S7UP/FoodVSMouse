@@ -22,7 +22,7 @@ public class ChocolateBread : FoodUnit
     public override void Awake()
     {
         if (Shield_Sprite == null)
-            Shield_Sprite = GameManager.Instance.GetSprite("Food/39/Shield");
+            Shield_Sprite = GameManager.Instance.GetSprite("Effect/Shield");
         base.Awake();
     }
 

@@ -130,6 +130,7 @@ public class WaterPipeFoodUnit : FoodUnit
             b.SetSpriteLocalPosition(GetSpriteLocalPosition() + Vector2.up * 0.1f);
             b.SetStandardVelocity(24);
             b.SetRotate(Vector2.right);
+            b.SetHitSoundEffect("Splat" + GameManager.Instance.rand.Next(0, 3));
             GameController.Instance.AddBullet(b);
         }
         // ºó¹¥»÷
@@ -140,7 +141,9 @@ public class WaterPipeFoodUnit : FoodUnit
             b.SetSpriteLocalPosition(GetSpriteLocalPosition());
             b.SetStandardVelocity(24);
             b.SetRotate(Vector2.left);
+            b.SetHitSoundEffect("Splat" + GameManager.Instance.rand.Next(0, 3));
             GameController.Instance.AddBullet(b);
+            GameManager.Instance.audioSourceManager.PlayEffectMusic("Throw"+GameManager.Instance.rand.Next(0, 2));
         }
     }
 }

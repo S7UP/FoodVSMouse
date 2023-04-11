@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using S7P.Numeric;
 /// <summary>
 /// 小火炉
 /// </summary>
@@ -89,6 +90,7 @@ public class SmallStove : FoodUnit
         e.transform.Find("Img_AddFireEffect").Find("Text").GetComponent<Text>().text = "+" + (int)replyCount;
         // 实际回复
         GameController.Instance.AddFireResource(replyCount);
+        GameManager.Instance.audioSourceManager.PlayEffectMusic("Points");
     }
 
     /// <summary>

@@ -54,11 +54,9 @@ public class BaseLadder : BaseItem
             CustomizationTask t = TaskManager.AddParabolaTask(m, TransManager.TranToVelocity(12), maxHight, m.transform.position, m.transform.position + (Vector3)m.moveRotate * moveDistance, false);
             // ÇÒ½ûÖ¹ÒÆ¶¯
             m.DisableMove(true);
-            Action oldExitFunc = t.OnExitFunc;
-            t.OnExitFunc = delegate {
-                oldExitFunc();
+            t.AddOnExitAction(delegate {
                 m.DisableMove(false);
-            };
+            });
         }
     }
 

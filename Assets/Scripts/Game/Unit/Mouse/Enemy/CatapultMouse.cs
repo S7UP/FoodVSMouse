@@ -1,4 +1,6 @@
 
+using System.Collections.Generic;
+
 using UnityEngine;
 /// <summary>
 /// 投石车类老鼠
@@ -6,6 +8,20 @@ using UnityEngine;
 public class CatapultMouse : MouseUnit
 {
     private BaseUnit targetUnit; // 非阻挡态下攻击目标
+    private RuntimeAnimatorController[] RunArray;
+
+    public override void Awake()
+    {
+        if(RunArray == null)
+        {
+            RunArray = new RuntimeAnimatorController[3];
+            for (int i = 0; i < RunArray.Length; i++)
+            {
+                RunArray[i] = GameManager.Instance.GetRuntimeAnimatorController("Mouse/15/" + i + "/Bullet");
+            }
+        }
+        base.Awake();
+    }
 
     public override void AfterGeneralAttack()
     {
@@ -44,6 +60,7 @@ public class CatapultMouse : MouseUnit
                 targetUnit = FoodManager.GetSpecificRowFarthestLeftCanTargetedAlly(GetRowIndex(), transform.position.x, true);
                 if (targetUnit != null)
                 {
+                    UpdateTargetUnit();
                     return true;
                 }
                 return false;
@@ -57,41 +74,63 @@ public class CatapultMouse : MouseUnit
     /// </summary>
     public override void ExecuteDamage()
     {
-        RuntimeAnimatorController run = GameManager.Instance.GetRuntimeAnimatorController("Bullet/6/" + mShape);
+        float dmg = mCurrentAttack;
+        GameManager.Instance.audioSourceManager.PlayEffectMusic("Basketball");
 
         // 阻挡优先级大于远程攻击优先级
         if (IsHasTarget())
         {
             BaseUnit u = GetCurrentTarget();
-            EnemyBullet b = EnemyBullet.GetInstance(run, this, mCurrentAttack);
-            // 修改攻击优先级，这种投掷攻击优先攻击护罩里的东西
-            b.GetTargetFunc = (unit) => {
-                BaseGrid g = unit.GetGrid();
+            EnemyBullet b = EnemyBullet.GetInstance(RunArray[mShape], this, 0);
+            b.AddHitAction((b, u) =>
+            {
+                BaseGrid g = u.GetGrid();
                 if (g != null)
                 {
-                    return g.GetThrowHighestAttackPriorityUnitInclude(this);
+                    BaseUnit target = g.GetThrowHighestAttackPriorityUnitInclude(this);
+                    new DamageAction(CombatAction.ActionType.CauseDamage, this, target, dmg).ApplyAction();
                 }
-                return unit;
-            };
+            });
             TaskManager.AddParabolaTask(b, TransManager.TranToVelocity(24f), 0.25f, transform.position, u, false);
             GameController.Instance.AddBullet(b);
 
         }
         else if(targetUnit != null &&  targetUnit.IsAlive())
         {
+            UpdateTargetUnit();
             float v = TransManager.TranToStandardVelocity(Mathf.Abs(targetUnit.transform.position.x - transform.position.x)/90f);
-            EnemyBullet b = EnemyBullet.GetInstance(run, this, mCurrentAttack);
-            // 修改攻击优先级，这种投掷攻击优先攻击护罩里的东西
-            b.GetTargetFunc = (unit) => {
-                BaseGrid g = unit.GetGrid();
+            EnemyBullet b = EnemyBullet.GetInstance(RunArray[mShape], this, 0);
+            b.AddHitAction((b, u) =>
+            {
+                if (u == null)
+                    return;
+                BaseGrid g = u.GetGrid();
                 if (g != null)
                 {
-                    return g.GetThrowHighestAttackPriorityUnitInclude(this);
+                    BaseUnit target = g.GetThrowHighestAttackPriorityUnitInclude(this);
+                    new DamageAction(CombatAction.ActionType.CauseDamage, this, target, dmg).ApplyAction();
                 }
-                return unit;
-            };
+            });
             TaskManager.AddParabolaTask(b, TransManager.TranToVelocity(v), 2.0f, transform.position, targetUnit, false);
             GameController.Instance.AddBullet(b);
+        }
+    }
+
+    public override void OnDieStateEnter()
+    {
+        GameManager.Instance.audioSourceManager.PlayEffectMusic("Explosion");
+        base.OnDieStateEnter();
+    }
+
+    private void UpdateTargetUnit()
+    {
+        if (targetUnit != null && targetUnit.IsAlive())
+        {
+            Queue<FoodInGridType> queue = new Queue<FoodInGridType>();
+            queue.Enqueue(FoodInGridType.Bomb);
+            queue.Enqueue(FoodInGridType.Default);
+            queue.Enqueue(FoodInGridType.Shield);
+            targetUnit = targetUnit.GetGrid().GetHighestAttackPriorityFoodUnit(queue, this);
         }
     }
 }

@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 
+using S7P.Numeric;
+
 using UnityEngine;
 /// <summary>
 /// 列车终极
@@ -347,11 +349,11 @@ public class RatTrain2 : BaseRatTrain
             // 如果列车不在传送状态，则转化为炸弹，否则直接消失
             if (!(b.mCurrentActionState is TransitionState))
             {
-                task.OnEnterFunc = delegate
+                task.AddOnEnterAction(delegate
                 {
                     // 丢弃的车厢任务
                     b.animatorController.Play("Bomb");
-                };
+                });
                 task.AddTaskFunc(delegate
                 {
                     if (b.animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
@@ -381,10 +383,10 @@ public class RatTrain2 : BaseRatTrain
             }
             else
             {
-                task.OnEnterFunc = delegate
+                task.AddOnEnterAction(delegate
                 {
 
-                };
+                });
                 // 动画播放完就可以消失了
                 task.AddTaskFunc(delegate
                 {
@@ -397,11 +399,11 @@ public class RatTrain2 : BaseRatTrain
             }
 
             // 回收
-            task.OnExitFunc = delegate {
+            task.AddOnExitAction(delegate {
                 b.SetMaster(null);
                 // 自爆动画播放完后直接回收
                 b.DeathEvent();
-            };
+            });
             b.AddTask(task);
         }
     }
@@ -579,14 +581,14 @@ public class RatTrain2 : BaseRatTrain
             CustomizationTask task = new CustomizationTask();
             int totalTime = 90;
             int currentTime = 0;
-            task.OnEnterFunc = delegate
+            task.AddOnEnterAction(delegate
             {
                 m.transform.position = startV2; // 对初始坐标进行进一步修正
                 m.AddCanBeSelectedAsTargetFunc(noSelectedAsTargetFunc); // 不可作为选取的目标
                 m.AddCanBlockFunc(noBlockFunc); // 不可被阻挡
                 m.AddCanHitFunc(noHitFunc); // 不可被子弹击中
                 m.SetAlpha(0); // 0透明度
-            };
+            });
             task.AddTaskFunc(delegate
             {
                 if(currentTime <= totalTime)
@@ -599,13 +601,13 @@ public class RatTrain2 : BaseRatTrain
                 }
                 return true;
             });
-            task.OnExitFunc = delegate
+            task.AddOnExitAction(delegate
             {
                 // 启用判定
                 m.RemoveCanBeSelectedAsTargetFunc(noSelectedAsTargetFunc);
                 m.RemoveCanBlockFunc(noBlockFunc);
                 m.RemoveCanHitFunc(noHitFunc);
-            };
+            });
             m.AddTask(task);
         }
     }

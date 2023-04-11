@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+
+using S7P.Numeric;
 /// <summary>
 /// Œœ≈£≥µ Û
 /// </summary>
@@ -48,5 +50,11 @@ public class SnailMouse : MouseUnit
         {
             releaseMucusSkillAbility.EndActivate();
         }
+    }
+
+    public override void OnDieStateEnter()
+    {
+        GameManager.Instance.audioSourceManager.PlayEffectMusic("Explosion");
+        base.OnDieStateEnter();
     }
 }

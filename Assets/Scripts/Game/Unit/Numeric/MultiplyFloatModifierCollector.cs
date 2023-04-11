@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 
+using S7P.Numeric;
 /// <summary>
 /// 单浮点形修饰器的收集器（使用乘算）
 /// </summary>

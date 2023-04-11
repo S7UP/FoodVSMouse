@@ -116,7 +116,7 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
 
     
     public FoodUnit mProduct; // 当前卡片实体产品
-    public List<FoodUnit> mProductList = new List<FoodUnit>(); // 当前存在的所有同类型卡片集合
+    private List<FoodUnit> mProductList = new List<FoodUnit>(); // 当前存在的所有同类型卡片集合
     
     // 基础属性
     public Dictionary<string, float> mBaseCostDict = new Dictionary<string, float>(); // 基础费用
@@ -217,7 +217,7 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
         isDisable = false; // 禁用标志
 
         // 卡片图片显示
-        mImg_Card.GetComponent<Image>().sprite = GameManager.Instance.GetSprite("Food/"+mType+"/"+mShape+"/display");
+        mImg_Card.GetComponent<Image>().sprite = GameManager.Instance.GetSprite("Food/"+mType+"/"+mShape+"/icon");
 
         UpdateDisplayer();
     }

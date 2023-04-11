@@ -1,3 +1,4 @@
+using S7P.Numeric;
 public class IntNumeric
 {
     // ×îÖÕÊýÖµ
@@ -31,42 +32,50 @@ public class IntNumeric
     }
     public void AddAddModifier(IntModifier modifier)
     {
-        add = AddCollector.AddModifier(modifier);
+        AddCollector.AddModifier(modifier);
+        add = AddCollector.TotalValue;
         Update();
     }
     public void AddPctAddModifier(IntModifier modifier)
     {
-        pctAdd = PctAddCollector.AddModifier(modifier);
+        PctAddCollector.AddModifier(modifier);
+        pctAdd = PctAddCollector.TotalValue;
         Update();
     }
     public void AddFinalAddModifier(IntModifier modifier)
     {
-        finalAdd = FinalAddCollector.AddModifier(modifier);
+        FinalAddCollector.AddModifier(modifier);
+        finalAdd = FinalAddCollector.TotalValue;
         Update();
     }
     public void AddFinalPctAddModifier(IntModifier modifier)
     {
-        finalPctAdd = FinalPctAddCollector.AddModifier(modifier);
+        FinalPctAddCollector.AddModifier(modifier);
+        finalPctAdd = FinalPctAddCollector.TotalValue;
         Update();
     }
     public void RemoveAddModifier(IntModifier modifier)
     {
-        add = AddCollector.RemoveModifier(modifier);
+        AddCollector.RemoveModifier(modifier);
+        add = AddCollector.TotalValue;
         Update();
     }
     public void RemovePctAddModifier(IntModifier modifier)
     {
-        pctAdd = PctAddCollector.RemoveModifier(modifier);
+        PctAddCollector.RemoveModifier(modifier);
+        pctAdd = PctAddCollector.TotalValue;
         Update();
     }
     public void RemoveFinalAddModifier(IntModifier modifier)
     {
-        finalAdd = FinalAddCollector.RemoveModifier(modifier);
+        FinalAddCollector.RemoveModifier(modifier);
+        finalAdd = FinalAddCollector.TotalValue;
         Update();
     }
     public void RemoveFinalPctAddModifier(IntModifier modifier)
     {
-        finalPctAdd = FinalPctAddCollector.RemoveModifier(modifier);
+        FinalPctAddCollector.RemoveModifier(modifier);
+        finalPctAdd = FinalPctAddCollector.TotalValue;
         Update();
     }
 

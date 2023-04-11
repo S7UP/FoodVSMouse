@@ -1,4 +1,3 @@
-using System;
 
 using UnityEngine;
 /// <summary>
@@ -81,13 +80,11 @@ public class ThrowLittleMouseSkillAbility : SkillAbility
             CustomizationTask t = TaskManager.AddParabolaTask(m, dist/60, dist/2, m.transform.position, targetPosition, false);
             // 且禁止移动
             m.DisableMove(true);
-            Action oldExitFunc = t.OnExitFunc;
-            t.OnExitFunc = delegate {
-                oldExitFunc();
+            t.AddOnExitAction(delegate {
                 m.DisableMove(false);
                 // 但是落地后晕眩2s
                 m.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(m, 120, false));
-            };
+            });
         }
     }
 

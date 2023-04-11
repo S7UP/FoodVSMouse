@@ -86,8 +86,9 @@ public class ThreeLineFoodUnit : FoodUnit
         {
             mAttackFlag = false;
             ExecuteDamage();
+            GameManager.Instance.audioSourceManager.PlayEffectMusic("Swing");
         }
-    }
+    }   
 
     /// <summary>
     /// 退出普通攻击的条件
@@ -132,6 +133,7 @@ public class ThreeLineFoodUnit : FoodUnit
                 b.SetSpriteLocalPosition(GetSpriteLocalPosition() + Vector2.up * 0.1f);
                 b.SetStandardVelocity(24);
                 b.SetRotate(Vector2.right);
+                b.SetHitSoundEffect("Splat"+GameManager.Instance.rand.Next(0, 3));
                 GameController.Instance.AddBullet(b);
                 if ((rowIndex == 0 && i==1) || (rowIndex == 6 && i == -1))
                 {

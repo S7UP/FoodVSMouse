@@ -1,4 +1,4 @@
-using System;
+using S7P.Numeric;
 
 using UnityEngine;
 /// <summary>
@@ -31,32 +31,25 @@ public class CanMouse : MouseUnit
     /// 受到灰烬伤害时
     /// </summary>
     /// <param name="dmg"></param>
-    public override void OnBombBurnDamage(float dmg)
+    public override float OnBombBurnDamage(float dmg)
     {
-        // 原先的伤害执行
-        base.OnBombBurnDamage(dmg);
         // 处于重装状态但不能是飞行动画期间
         if (isReinstallState && !(mCurrentActionState is TransitionState))
         {
             // 起飞咯！！！！
             SetActionState(new TransitionState(this));
-            //Tasker t = GameController.Instance.AddTasker(new ParabolaMovePresetTasker(this, 24.0f, 0.75f, transform.position, transform.position + (Vector3)moveRotate*3*MapManager.gridWidth, false));
-            //DisableMove(true);
-            //// 飞行结束时切换成丢装备且晕眩状态
-            //t.AddOtherEndEvent(delegate { SetActionState(new CastState(this)); DisableMove(false); });
 
             float dist = 3 * MapManager.gridWidth;
             CustomizationTask t = TaskManager.AddParabolaTask(this, dist / 60, dist / 2, transform.position, transform.position + (Vector3)moveRotate * dist, false);
             DisableMove(true);
-            Action oldExit = t.OnExitFunc;
-            t.OnExitFunc = delegate
+            t.AddOnExitAction(delegate
             {
-                if (oldExit != null)
-                    oldExit();
                 SetActionState(new CastState(this));
                 DisableMove(false);
-            };
+            });
         }
+        // 原先的伤害执行
+        return base.OnBombBurnDamage(dmg);
     }
 
     /// <summary>

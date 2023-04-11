@@ -1,4 +1,5 @@
 using UnityEngine;
+using S7P.Numeric;
 /// <summary>
 /// 高空地块
 /// </summary>
@@ -25,6 +26,11 @@ public class SkyGridType : BaseGridType
     {
         unit.NumericBox.RemoveDecideModifierToBoolDict(NoAffect, boolModifier); 
         unit.NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreDropFromSky, boolModifier); 
+    }
+
+    public static bool IsIgnoreDrop(BaseUnit unit)
+    {
+        return unit.NumericBox.GetBoolNumericValue(StringManager.IgnoreDropFromSky);
     }
 
     public override void OnCollision(Collider2D collision)
@@ -65,7 +71,7 @@ public class SkyGridType : BaseGridType
         if(unit is MouseUnit)
         {
             MouseUnit m = unit as MouseUnit;
-            if (m.IsBoss())
+            if (m.IsBoss() || !MouseManager.IsGeneralMouse(unit))
                 return false;
         }
 
@@ -147,7 +153,7 @@ public class SkyGridType : BaseGridType
         {
             // 如果目标 没有被空载 且 不免疫摔落 那么直接摔死吧
             if((!unit.NumericBox.IntDict.ContainsKey(StringManager.BearInSky) || unit.NumericBox.IntDict[StringManager.BearInSky].Value <= 0)
-                && !unit.NumericBox.GetBoolNumericValue(StringManager.IgnoreDropFromSky))
+                && !IsIgnoreDrop(unit) && !CottonCandy.IsBearing(unit) && !UnitManager.IsFlying(unit))
             {
                 unit.ExecuteDrop();
             }

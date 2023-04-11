@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 
+using S7P.Numeric;
+
 using UnityEngine;
 /// <summary>
 /// ¸Ö×¦Æ¤ÌØ
@@ -148,10 +150,10 @@ public class SteelClawPete : BossUnit
                 }
                 return true;
             });
-            t.OnExitFunc = delegate
+            t.AddOnExitAction(delegate
             {
                 r.MDestory();
-            };
+            });
             r.AddTask(t);
         };
 
@@ -159,9 +161,9 @@ public class SteelClawPete : BossUnit
         {
             int timeLeft = Mathf.FloorToInt(GetParamValue("prepareTime", mHertIndex) * 60);
             CustomizationTask t = new CustomizationTask();
-            t.OnEnterFunc = delegate {
+            t.AddOnEnterAction(delegate {
                 m.animatorController.Play("Prepare", true);
-            };
+            });
             t.AddTaskFunc(delegate {
                 m.transform.position = g.transform.position;
                 timeLeft--;
@@ -217,9 +219,9 @@ public class SteelClawPete : BossUnit
                 }
                 return false;
             });
-            t.OnExitFunc = delegate {
+            t.AddOnExitAction(delegate {
                 m.DeathEvent();
-            };
+            });
             m.AddTask(t);
         }
     }
@@ -301,9 +303,9 @@ public class SteelClawPete : BossUnit
             int timeLeft = Mathf.FloorToInt(GetParamValue("t3", mHertIndex) * 60);
 
             CustomizationTask t = new CustomizationTask();
-            t.OnEnterFunc = delegate {
+            t.AddOnEnterAction(delegate {
                 m.animatorController.Play("Appear");
-            };
+            });
             t.AddTaskFunc(delegate {
                 m.animatorController.Play("Appear");
                 return true;
@@ -324,9 +326,9 @@ public class SteelClawPete : BossUnit
                     return true;
                 return false;
             });
-            t.OnExitFunc = delegate {
+            t.AddOnExitAction(delegate {
                 m.ExecuteDeath();
-            };
+            });
             m.AddTask(t);
         }
 

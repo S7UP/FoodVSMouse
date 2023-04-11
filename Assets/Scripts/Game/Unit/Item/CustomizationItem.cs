@@ -30,7 +30,7 @@ public class CustomizationItem : BaseItem
         return item;
     }
 
-    public override void ExecuteRecycle()
+    protected override void ExecuteRecycle()
     {
         GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, "Item/CustomizationItem", gameObject);
     }

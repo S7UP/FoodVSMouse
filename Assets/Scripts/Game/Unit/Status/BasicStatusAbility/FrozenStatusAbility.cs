@@ -1,5 +1,5 @@
 using UnityEngine;
-
+using S7P.Numeric;
 /// <summary>
 /// ±ù¶³×´Ì¬
 /// </summary>
@@ -81,6 +81,8 @@ public class FrozenStatusAbility : StatusAbility
         // Ìí¼Ó±ù¶³ÌØÐ§
         if (!master.IsContainEffect(StringManager.Frozen))
         {
+            GameManager.Instance.audioSourceManager.PlayEffectMusic("Frozen");
+
             BaseEffect e = BaseEffect.CreateInstance(GameManager.Instance.GetRuntimeAnimatorController("Effect/Frozen"), null, "Frozen", "Break", true);
             GameController.Instance.AddEffect(e);
             string name;

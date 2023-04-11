@@ -9,6 +9,7 @@ public class AudioSourceManager
     private List<AudioClip> audioClipList = new List<AudioClip>();
     private AudioSource[] MusicAudioSource = new AudioSource[2]; // 背景音乐播放器（一般只播一首，但可以实现两首音乐的渐入渐出切换）
     private float[] musicVolume = new float[2] { 1, 0 }; // 管理背景音乐当前相对播放音量
+    private float[] musicVolumeRate = new float[2] { 1, 1 }; // 管理背景音效的播放音量倍率（与传入的音频剪辑预设有关）
     private AudioSource SeAudioSource; // 音效播放器
     private AudioSource currentAudioSource; // 当前正在播放的背景音乐播放器（主播放器）
     private Dictionary<string, float> startTimeDict = new Dictionary<string, float>(); // 记录音乐剪辑起始点
@@ -57,7 +58,19 @@ public class AudioSourceManager
         if (info != null)
         {
             yield return GameManager.Instance.StartCoroutine(GameManager.Instance.AsyncGetAudioClip(info.resPath));
-            // AudioClip audioClip = GameManager.Instance.GetAudioClip(info.resPath);
+        }
+        else
+        {
+            yield return null;
+        }
+    }
+
+    public static IEnumerator AsyncLoadEffectMusic(string refenceName)
+    {
+        SoundsInfo info = SoundsManager.GetSoundsInfo(refenceName);
+        if (info != null)
+        {
+            yield return GameManager.Instance.StartCoroutine(GameManager.Instance.AsyncGetAudioClip(info.resPath));
         }
         else
         {
@@ -72,6 +85,7 @@ public class AudioSourceManager
         {
             AudioClip audioClip = GameManager.Instance.GetAudioClip(info.resPath);
             PlayBGMusic(audioClip);
+            musicVolumeRate[currentAudioSourceIndex] = info.volume;
         }
     }
 
@@ -109,12 +123,26 @@ public class AudioSourceManager
         currentAudioSource.time = GetLoopStartTime(audioClip.name); // 设置循环点
     }
 
+    /// <summary>
+    /// 播放音效
+    /// </summary>
+    /// <param name="refenceName"></param>
+    public void PlayEffectMusic(string refenceName)
+    {
+        SoundsInfo info = SoundsManager.GetSoundsInfo(refenceName);
+        if(info != null)
+        {
+            AudioClip audioClip = GameManager.Instance.GetAudioClip(info.resPath);
+            PlayEffectMusic(audioClip, info.volume * GameManager.Instance.configManager.mConfig.SEVolume);
+        }
+    }
+
     // 播放音效
-    public void PlayEffectMusic(AudioClip audioClip)
+    public void PlayEffectMusic(AudioClip audioClip, float volume)
     {
         if (!playEffectMusic)
             return;
-        SeAudioSource.PlayOneShot(audioClip);
+        SeAudioSource.PlayOneShot(audioClip, volume);
     }
 
     /// <summary>
@@ -233,8 +261,8 @@ public class AudioSourceManager
         }
 
         // 调整音量
-        MusicAudioSource[currentAudioSourceIndex].volume = musicVolume[currentAudioSourceIndex] * config.BGMVolume;
-        MusicAudioSource[1-currentAudioSourceIndex].volume = musicVolume[1-currentAudioSourceIndex] * config.BGMVolume;
+        MusicAudioSource[currentAudioSourceIndex].volume = musicVolume[currentAudioSourceIndex] * config.BGMVolume * musicVolumeRate[currentAudioSourceIndex];
+        MusicAudioSource[1-currentAudioSourceIndex].volume = musicVolume[1-currentAudioSourceIndex] * config.BGMVolume * musicVolumeRate[1-currentAudioSourceIndex];
         // 调整音效音量
         SeAudioSource.volume = config.SEVolume;
     }

@@ -1,14 +1,30 @@
+using System.Collections.Generic;
+
+using S7P.Numeric;
+
+using UnityEngine;
 /// <summary>
 /// 咖啡粉
 /// </summary>
 public class CoffeePowder : FoodUnit
 {
-    private static FloatModifier attackSpeedModifier = new FloatModifier(50);
-    private static FloatModifier attackModifier = new FloatModifier(100);
+    private static FloatModifier attackSpeedModifier = new FloatModifier(10);
+    private static FloatModifier attackModifier = new FloatModifier(10);
     private static BoolModifier boolModifier = new BoolModifier(true);
+    private int totalTime;
+    private const string BuffKey = "CoffeePowder_Buff";
+    private static RuntimeAnimatorController Run;
+
+    public override void Awake()
+    {
+        if (Run == null)
+            Run = GameManager.Instance.GetRuntimeAnimatorController("Food/3/0");
+        base.Awake();
+    }
 
     public override void MInit()
     {
+        totalTime = 0;
         base.MInit();
         // 获取100%减伤，以及免疫灰烬秒杀效果
         NumericBox.Defense.SetBase(1);
@@ -16,6 +32,11 @@ public class CoffeePowder : FoodUnit
         NumericBox.AddDecideModifierToBoolDict(StringManager.Invincibility, new BoolModifier(true));
         // 不可选取
         CloseCollision();
+    }
+
+    public override void UpdateAttributeByLevel()
+    {
+        totalTime = Mathf.FloorToInt(60 * attr.valueList[mLevel]);
     }
 
     public override void OnCastStateEnter()
@@ -37,6 +58,8 @@ public class CoffeePowder : FoodUnit
     /// </summary>
     public override void BeforeGeneralAttack()
     {
+        // 对当前格卡片施加效果
+        ExecuteDamage();
         // 切换为攻击动画贴图
         SetActionState(new CastState(this));
     }
@@ -68,8 +91,6 @@ public class CoffeePowder : FoodUnit
     /// </summary>
     public override void AfterGeneralAttack()
     {
-        // 对当前格卡片施加效果
-        ExecuteDamage();
         // 直接销毁自身
         ExecuteDeath();
     }
@@ -79,40 +100,86 @@ public class CoffeePowder : FoodUnit
     /// </summary>
     public override void ExecuteDamage()
     {
-        // 使当前格拥有最高受击优先级的卡片CD重置
-        BaseGrid g = GetGrid();
-        if (g != null)
-        {
-            foreach (var unit in g.GetAttackableFoodUnitList())
+        int count = 0;
+        Vector2 pos = transform.position;
+        List<Vector2> effPosList = new List<Vector2>();
+
+        RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(pos, 2.75f, 2.75f, "EnemyAllyGrid");
+        r.isAffectGrid = true;
+        r.SetInstantaneous();
+        r.SetOnGridEnterAction((g) => {
+            bool flag = false;
+            foreach (var u in g.GetAttackableFoodUnitList())
             {
-                // 移除这些卡的负面控制效果
-                StatusManager.RemoveAllSettleDownDebuff(unit);
-                // 增加攻击攻速效果
-                int timeLeft = 10 * 60;
-                CustomizationTask t = new CustomizationTask();
-                t.OnEnterFunc = delegate {
-                    unit.NumericBox.AttackSpeed.AddPctAddModifier(attackSpeedModifier);
-                    unit.NumericBox.Attack.AddPctAddModifier(attackModifier);
-
-                    unit.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozen, boolModifier);
-                    unit.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, boolModifier);
-                };
-                t.AddTaskFunc(delegate {
-                    if (timeLeft > 0)
-                        timeLeft--;
-                    else
-                        return true;
-                    return false;
-                });
-                t.OnExitFunc = delegate {
-                    unit.NumericBox.AttackSpeed.RemovePctAddModifier(attackSpeedModifier);
-                    unit.NumericBox.Attack.RemovePctAddModifier(attackModifier);
-
-                    unit.NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreFrozen, boolModifier);
-                    unit.NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreStun, boolModifier);
-                };
-                unit.AddTask(t);
+                ITask task = u.GetTask(BuffKey);
+                if (task == null)
+                {
+                    task = new BuffTask(u, totalTime);
+                    u.AddUniqueTask(BuffKey, task);
+                }
+                else
+                {
+                    BuffTask buffTask = task as BuffTask;
+                    buffTask.timeLeft = Mathf.Max(buffTask.timeLeft, totalTime);
+                }
+                flag = true;
             }
+            if (flag)
+            {
+                effPosList.Add(g.transform.position);
+                count++;
+            }
+        });
+        r.AddBeforeDestoryAction(delegate {
+            float reply = (9 - count) * 50;
+            if(reply > 0)
+                SmallStove.CreateAddFireEffect(pos, reply);
+            foreach (var v2 in effPosList)
+            {
+                BaseEffect eff = BaseEffect.CreateInstance(Run, null, "Cast", null, false);
+                GameController.Instance.AddEffect(eff);
+                eff.transform.position = v2;
+            }
+        });
+        GameController.Instance.AddAreaEffectExecution(r);
+    }
+
+
+    private class BuffTask : ITask
+    {
+        private BaseUnit master;
+        public int timeLeft;
+
+        public BuffTask(BaseUnit master, int timeLeft)
+        {
+            this.master = master;
+            this.timeLeft = timeLeft;
+        }
+
+        public void OnEnter()
+        {
+            // 移除这些卡的负面控制效果
+            StatusManager.RemoveAllSettleDownDebuff(master);
+            master.NumericBox.AttackSpeed.AddPctAddModifier(attackSpeedModifier);
+            master.NumericBox.Attack.AddPctAddModifier(attackModifier);
+            StatusManager.AddIgnoreSettleDownBuff(master, boolModifier);
+        }
+
+        public void OnUpdate()
+        {
+            timeLeft--;
+        }
+
+        public bool IsMeetingExitCondition()
+        {
+            return timeLeft <= 0;
+        }
+
+        public void OnExit()
+        {
+            master.NumericBox.AttackSpeed.RemovePctAddModifier(attackSpeedModifier);
+            master.NumericBox.Attack.RemovePctAddModifier(attackModifier);
+            StatusManager.RemoveIgnoreSettleDownBuff(master, boolModifier);
         }
     }
 }

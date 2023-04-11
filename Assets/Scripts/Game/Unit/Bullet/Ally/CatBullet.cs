@@ -1,3 +1,4 @@
+using S7P.Numeric;
 /// <summary>
 /// Ã¨Ã¨µ¯
 /// </summary>

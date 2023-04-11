@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 
+using S7P.Numeric;
 /// <summary>
 /// 战斗数值匣子，在这里管理所有角色战斗数值的存储、变更、刷新等
 /// </summary>
@@ -63,34 +64,34 @@ public class CombatNumericBox
     public float DamageShield(float dmg)
     {
         // 遍历所有BUFF类护盾
-        while (Shield.FinalAddCollector.Modifiers.Count > 0)
+        while (Shield.FinalAddCollector.GetModifierList().Count > 0)
         {
-            float realShieldValue = Shield.FinalAddCollector.Modifiers[0].Value * (1 + Shield.FinalPctAddCollector.TotalValue);
+            float realShieldValue = Shield.FinalAddCollector.GetModifier(0).Value * (1 + Shield.FinalPctAddCollector.TotalValue);
             if (realShieldValue > dmg) // 护盾能够抵挡全部伤害
             {
-                Shield.FinalAddCollector.Modifiers[0].Value = (realShieldValue - dmg) / (1 + Shield.FinalPctAddCollector.TotalValue); // 护盾剩余值计算
+                Shield.FinalAddCollector.GetModifier(0).Value = (realShieldValue - dmg) / (1 + Shield.FinalPctAddCollector.TotalValue); // 护盾剩余值计算
                 return dmg - realShieldValue;
             }
             else
             {
                 dmg -= realShieldValue;
-                Shield.FinalAddCollector.Modifiers.RemoveAt(0); // 移除本层护盾
+                Shield.FinalAddCollector.RemoveModifier(Shield.FinalAddCollector.GetModifier(0)); // 移除本层护盾
             }
         }
 
         // 遍历所有装备类护盾
-        while (Shield.AddCollector.Modifiers.Count > 0)
+        while (Shield.AddCollector.GetModifierList().Count > 0)
         {
-            float realShieldValue = Shield.AddCollector.Modifiers[0].Value * (1+Shield.PctAddCollector.TotalValue) *(1 + Shield.FinalPctAddCollector.TotalValue);
+            float realShieldValue = Shield.AddCollector.GetModifier(0).Value * (1+Shield.PctAddCollector.TotalValue) *(1 + Shield.FinalPctAddCollector.TotalValue);
             if (realShieldValue > dmg) // 护盾能够抵挡全部伤害
             {
-                Shield.AddCollector.Modifiers[0].Value = (realShieldValue - dmg) / (1 + Shield.FinalPctAddCollector.TotalValue)/ (1 + Shield.PctAddCollector.TotalValue); // 护盾剩余值计算
+                Shield.AddCollector.GetModifier(0).Value = (realShieldValue - dmg) / (1 + Shield.FinalPctAddCollector.TotalValue)/ (1 + Shield.PctAddCollector.TotalValue); // 护盾剩余值计算
                 return dmg - realShieldValue;
             }
             else
             {
                 dmg -= realShieldValue;
-                Shield.AddCollector.Modifiers.RemoveAt(0); // 移除本层护盾
+                Shield.AddCollector.RemoveModifier(Shield.FinalAddCollector.GetModifier(0)); // 移除本层护盾
             }
         }
         return dmg;
@@ -103,18 +104,7 @@ public class CombatNumericBox
     public BoolModifier AddDisAbleSkillModifier()
     {
         BoolModifier boolModifier = new BoolModifier(true);
-        IsDisableSkill.AddDecideModifier(boolModifier);
-        return boolModifier;
-    }
-
-    /// <summary>
-    /// 添加免疫禁用技能效果（沉默免疫）
-    /// </summary>
-    /// <returns></returns>
-    public BoolModifier AddImmuneDisAbleSkillModifier()
-    {
-        BoolModifier boolModifier = new BoolModifier(true);
-        IsDisableSkill.AddImmuneModifier(boolModifier);
+        IsDisableSkill.AddModifier(boolModifier);
         return boolModifier;
     }
 
@@ -124,16 +114,7 @@ public class CombatNumericBox
     /// <returns></returns>
     public void RemoveDisAbleSkillModifier(BoolModifier boolModifier)
     {
-        IsDisableSkill.RemoveDecideModifier(boolModifier);
-    }
-
-    /// <summary>
-    /// 移除免疫禁用技能效果（沉默免疫）
-    /// </summary>
-    /// <returns></returns>
-    public void RemoveImmuneDisAbleSkillModifier(BoolModifier boolModifier)
-    {
-        IsDisableSkill.RemoveImmuneModifier(boolModifier);
+        IsDisableSkill.RemoveModifier(boolModifier);
     }
 
     public bool GetBoolNumericValue(string key)
@@ -156,19 +137,7 @@ public class CombatNumericBox
         {
             BoolDict.Add(key, new BoolNumeric());
         }
-        BoolDict[key].AddDecideModifier(boolModifier);
-    }
-
-    /// <summary>
-    /// 添加免疫生效布尔修饰器
-    /// </summary>
-    public void AddImmuneModifierToBoolDict(string key, BoolModifier boolModifier)
-    {
-        if (!BoolDict.ContainsKey(key))
-        {
-            BoolDict.Add(key, new BoolNumeric());
-        }
-        BoolDict[key].AddImmuneModifier(boolModifier);
+        BoolDict[key].AddModifier(boolModifier);
     }
 
     /// <summary>
@@ -180,28 +149,11 @@ public class CombatNumericBox
     {
         if (BoolDict.ContainsKey(key))
         {
-            BoolDict[key].RemoveDecideModifier(boolModifier);
-            if (BoolDict[key].DecideCollector.Modifiers.Count <= 0 && BoolDict[key].ImmuneCollector.Modifiers.Count <= 0)
-            {
-                BoolDict.Remove(key);
-            }
-        }
-    }
-
-    /// <summary>
-    /// 移除免疫生效布尔修饰器
-    /// </summary>
-    /// <param name="key"></param>
-    /// <param name="value"></param>
-    public void RemoveImmuneModifierToBoolDict(string key, BoolModifier boolModifier)
-    {
-        if (!BoolDict.ContainsKey(key))
-        {
-            BoolDict[key].RemoveImmuneModifier(boolModifier);
-            if (BoolDict[key].DecideCollector.Modifiers.Count <= 0 && BoolDict[key].ImmuneCollector.Modifiers.Count <= 0)
-            {
-                BoolDict.Remove(key);
-            }
+            BoolDict[key].RemoveModifier(boolModifier);
+            //if (BoolDict[key].DecideCollector.Modifiers.Count <= 0)
+            //{
+            //    BoolDict.Remove(key);
+            //}
         }
     }
 }

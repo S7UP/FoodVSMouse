@@ -135,9 +135,9 @@ public class BlondeMary : BossUnit
                     return true;
                 return false;
             });
-            t.OnExitFunc = delegate {
+            t.AddOnExitAction(delegate {
                 m.ExecuteDeath();
-            };
+            });
             m.AddTask(t);
         }
 
@@ -166,9 +166,9 @@ public class BlondeMary : BossUnit
                     return true;
                 return false;
             });
-            t.OnExitFunc = delegate {
+            t.AddOnExitAction(delegate {
                 r.MDestory();
-            };
+            });
             r.AddTask(t);
         }
         return m;
@@ -216,9 +216,9 @@ public class BlondeMary : BossUnit
                     return true;
                 return false;
             });
-            t.OnExitFunc = delegate {
+            t.AddOnExitAction(delegate {
                 b.ExecuteRecycle();
-            };
+            });
             b.AddTask(t);
             GameController.Instance.AddBullet(b);
         }
@@ -251,9 +251,9 @@ public class BlondeMary : BossUnit
                 }
                 return true;
             });
-            t.OnExitFunc = delegate {
+            t.AddOnExitAction(delegate {
                 r.MDestory();
-            };
+            });
             r.AddTask(t);
         }
         return b;

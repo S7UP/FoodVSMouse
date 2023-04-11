@@ -483,4 +483,13 @@ public class MouseManager
         }
         return target;
     }
+
+    /// <summary>
+    /// 目标是否是常规的老鼠（一般是能从图鉴里看到的）
+    /// </summary>
+    /// <returns></returns>
+    public static bool IsGeneralMouse(BaseUnit u)
+    {
+        return u.mType >= 0;
+    }
 }

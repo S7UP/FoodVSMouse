@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-using UnityEngine;
+using S7P.Numeric;
 /// <summary>
 /// 木盘子
 /// </summary>
@@ -86,9 +86,9 @@ public class WoodenDisk : FoodUnit
             else
                 return true;
         });
-        t.OnExitFunc = delegate {
+        t.AddOnExitAction(delegate {
             r.ExecuteRecycle();
-        };
+        });
         r.AddTask(t);
     }
 
@@ -150,9 +150,6 @@ public class WoodenDisk : FoodUnit
 
     public override void AfterDeath()
     {
-        // 移除水波纹效果
-        // EffectManager.RemoveWaterWaveEffectFromUnit(this);
-
         // 移除表中还存在的单位身上的由该盘子产生的免疫水蚀标签
         for (int i = 0; i < unitList.Count; i++)
         {

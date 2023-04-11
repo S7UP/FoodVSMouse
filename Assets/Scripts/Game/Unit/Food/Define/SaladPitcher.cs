@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using S7P.Numeric;
 /// <summary>
 /// 色拉投手
 /// </summary>
@@ -126,6 +127,7 @@ public class SaladPitcher : FoodUnit
     /// </summary>
     public override void ExecuteDamage()
     {
+        GameManager.Instance.audioSourceManager.PlayEffectMusic("Throw" + GameManager.Instance.rand.Next(0, 2));
         // 选择目标
         BaseUnit target = PitcherManager.FindTargetByPitcher(this, transform.position.x, GetRowIndex());
 
@@ -152,6 +154,7 @@ public class SaladPitcher : FoodUnit
             real_dmg = ori_dmg * bounceDamageRateList[1 - bounceLeft];
         }
         AllyBullet b = AllyBullet.GetInstance(BulletStyle.Throwing, BulletRuntimeAnimatorController, this, real_dmg);
+        b.SetHitSoundEffect("Splat" + GameManager.Instance.rand.Next(0, 3));
         b.AddSpriteOffsetY(new FloatModifier(0.5f*MapManager.gridHeight));
         b.isnDelOutOfBound = true; // 出屏不自删
 
@@ -207,10 +210,10 @@ public class SaladPitcher : FoodUnit
             {
                 return !pudding.IsAlive();
             });
-            t.OnExitFunc = delegate
+            t.AddOnExitAction(delegate
             {
                 pudding = null; // 如果目标布丁不存活，则取消其引用
-            };
+            });
             b.AddTask(t);
 
             // 定义与添加重定向任务

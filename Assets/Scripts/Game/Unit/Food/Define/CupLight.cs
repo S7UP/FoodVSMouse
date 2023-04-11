@@ -1,4 +1,5 @@
 using UnityEngine;
+using S7P.Numeric;
 /// <summary>
 /// ¾Æ±­µÆ
 /// </summary>
@@ -93,6 +94,7 @@ public class CupLight : FoodUnit
     {
         fireValue = 44;
         animatorController.Play("Grow");
+        GameManager.Instance.audioSourceManager.PlayEffectMusic("Grow");
     }
 
     public override void OnTransitionState()

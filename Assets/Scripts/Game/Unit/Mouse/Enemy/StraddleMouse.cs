@@ -1,4 +1,3 @@
-using System;
 
 using UnityEngine;
 /// <summary>
@@ -41,33 +40,14 @@ public class StraddleMouse : MouseUnit
             // 跳跃格子数等于 0.75*当前移动速度标准值
             float v = TransManager.TranToStandardVelocity(GetMoveSpeed());
             float dist = 0.75f* v * MapManager.gridWidth;
-            //Tasker t = GameController.Instance.AddTasker(new ParabolaMovePresetTasker(this, 12.0f, 0.8f, transform.position, transform.position + (Vector3)moveRotate * dist * MapManager.gridWidth, false));
-            //// 跳跃期间不可被阻挡也不能被常规子弹击中
-            //Func<BaseUnit, BaseUnit, bool> noBlockFunc = delegate { return false; };
-            //Func<BaseUnit, BaseBullet, bool> noHitFunc = delegate { return false; };
-            //AddCanBlockFunc(noBlockFunc);
-            //AddCanHitFunc(noHitFunc);
-
-            //DisableMove(true);
-            //t.AddOtherEndEvent(delegate 
-            //{
-            //    //OpenCollision();
-            //    RemoveCanBlockFunc(noBlockFunc);
-            //    RemoveCanHitFunc(noHitFunc);
-            //    NumericBox.MoveSpeed.SetBase(TransManager.TranToVelocity(1.0f));
-            //    DisableMove(false);
-            //});
-
             CustomizationTask t = TaskManager.AddParabolaTask(this, dist/60, dist/2, transform.position, transform.position + (Vector3)moveRotate * dist, false);
             DisableMove(true);
-            Action oldExit = t.OnExitFunc;
-            t.OnExitFunc = delegate
+            t.AddOnExitAction(delegate
             {
-                if (oldExit != null)
-                    oldExit();
                 DisableMove(false);
                 NumericBox.MoveSpeed.SetBase(TransManager.TranToVelocity(1.0f));
-            };
+            });
+            GameManager.Instance.audioSourceManager.PlayEffectMusic("Jump");
         }
         else
         {

@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 
+using S7P.Numeric;
+
 using UnityEngine;
 
 public class FoodUnit : BaseUnit
@@ -44,16 +46,6 @@ public class FoodUnit : BaseUnit
         mBoxCollider2D = transform.GetComponent<BoxCollider2D>();
     }
 
-    // 单位被对象池回收时触发
-    public override void OnDisable()
-    {
-        base.OnDisable();
-        mGrid = null; // 卡片所在的格子（单格卡)
-        mGridList = null; // 卡片所在的格子（多格卡）
-        isUseSingleGrid = false; // 是否只占一格
-
-    }
-
     // 每次对象被创建时要做的初始化工作
     public override void MInit()
     {
@@ -76,6 +68,14 @@ public class FoodUnit : BaseUnit
         spriteRenderer2.enabled = true; // 激活星级动画
         // 装上正常的受击材质
         spriteRenderer1.material = GameManager.Instance.GetMaterial("Hit");
+    }
+
+    public override void MDestory()
+    {
+        base.MDestory();
+        mGrid = null; // 卡片所在的格子（单格卡)
+        mGridList = null; // 卡片所在的格子（多格卡）
+        isUseSingleGrid = false; // 是否只占一格
     }
 
     /// <summary>
@@ -551,7 +551,7 @@ public class FoodUnit : BaseUnit
     /// <summary>
     /// 执行该单位回收事件
     /// </summary>
-    public override void ExecuteRecycle()
+    protected override void ExecuteRecycle()
     {
         // 如果目标有其建造器，则走建造器的销毁流程，否则走默认回收流程
         if (mBuilder != null)

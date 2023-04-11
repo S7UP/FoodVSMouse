@@ -9,4 +9,5 @@ public class MusicInfo
     public string author; // 作者
     public string resPath; // BGM源文件存放地址（相对路径）
     public float loopStartTime; // 循环播放时起始点（秒）
+    public float volume;
 }

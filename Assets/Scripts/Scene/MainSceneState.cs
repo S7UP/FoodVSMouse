@@ -1,7 +1,11 @@
 using System.Collections;
 
+using UnityEngine;
+
 public class MainSceneState : BaseSceneState
 {
+    private bool isFirstLoad = true;
+
     public MainSceneState(UIFacade uiFacade) : base(uiFacade)
     {
 
@@ -9,14 +13,19 @@ public class MainSceneState : BaseSceneState
 
     public override IEnumerator LoadScene()
     {
+        if (isFirstLoad)
+        {
+            Debug.Log("MainSceneFirstLoad!");
+            yield return GameManager.Instance.StartCoroutine(GameManager.Instance.LoadWhenBeforeEnterMainScene());
+            isFirstLoad = false;
+        }
+
         yield return GameManager.Instance.StartCoroutine(AudioSourceManager.AsyncLoadBGMusic("MainScene")); // 载入主菜单BGM
         yield return GameManager.Instance.StartCoroutine(GameManager.Instance.LoadSceneAsync("MainScene"));
     }
 
     public override void EnterScene()
     {
-        //SceneManager.LoadScene("MainScene");
-        //GameManager.Instance.LoadSceneAsync("MainScene");
         // 播放主菜单BGM
         GameManager.Instance.audioSourceManager.PlayBGMusic("MainScene");
         mUIFacade.AddPanelToDict(StringManager.MainPanel);

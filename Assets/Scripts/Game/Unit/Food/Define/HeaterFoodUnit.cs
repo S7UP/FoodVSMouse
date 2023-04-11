@@ -7,7 +7,8 @@ using UnityEngine;
 /// </summary>
 public class HeaterFoodUnit : FoodUnit
 {
-    private static RuntimeAnimatorController Bullet_RuntimeAnimatorController;
+    private static RuntimeAnimatorController[] Bullet_RunArray;
+    private static RuntimeAnimatorController SpBullet_Run;
 
     /// <summary>
     /// 可以通过火盆的子弹类型表
@@ -16,13 +17,17 @@ public class HeaterFoodUnit : FoodUnit
         BulletStyle.Normal
     };
 
-
-    private float mulRate; //伤害倍化倍率
-
     public override void Awake()
     {
-        if (Bullet_RuntimeAnimatorController == null)
-            Bullet_RuntimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Food/8/Bullet");
+        if (Bullet_RunArray == null)
+        {
+            Bullet_RunArray = new RuntimeAnimatorController[4];
+            for (int i = 0; i < Bullet_RunArray.Length; i++)
+            {
+                Bullet_RunArray[i] = GameManager.Instance.GetRuntimeAnimatorController("Food/8/Bullet"+i);
+            }
+            SpBullet_Run = GameManager.Instance.GetRuntimeAnimatorController("Food/8/SpBullet");
+        }
         base.Awake();
     }
 
@@ -30,15 +35,20 @@ public class HeaterFoodUnit : FoodUnit
     {
         base.MInit();
         CreateCheckArea();
+        if(mShape >= 2)
+        {
+            // 二转下场时有3秒无敌
+            StatusManager.AddInvincibilityBuff(this, 180);
+        }
     }
 
     /// <summary>
     /// 根据等级表和等级来更新对应数据
     /// </summary>
-    public override void UpdateAttributeByLevel()
-    {
-        mulRate = (float)attr.valueList[mLevel];
-    }
+    //public override void UpdateAttributeByLevel()
+    //{
+        
+    //}
 
     /// <summary>
     /// 检测传入子弹是否能穿过
@@ -69,7 +79,7 @@ public class HeaterFoodUnit : FoodUnit
     /// 获取倍率
     /// </summary>
     /// <returns></returns>
-    public float GetDamageRate()
+    public float GetDamageRate(float mulRate)
     {
         return 1 + Mathf.Min(1, mCurrentAttackSpeed) * Mathf.Min(1, mCurrentAttack / 10) * (mulRate - 1);
     }
@@ -96,9 +106,9 @@ public class HeaterFoodUnit : FoodUnit
                     return true;
                 }
             });
-            t.OnExitFunc = delegate {
+            t.AddOnExitAction(delegate {
                 r.MDestory();
-            };
+            });
             r.AddTask(t);
         }
         GameController.Instance.AddAreaEffectExecution(r);
@@ -108,11 +118,36 @@ public class HeaterFoodUnit : FoodUnit
     {
         if (CanThrought(b)) // 检测子弹能否穿过
         {
+            float ori_dmg = b.GetDamage();
             // 强制把子弹贴图改为火弹（但是不改变原始style值）
-            b.animator.runtimeAnimatorController = Bullet_RuntimeAnimatorController;
-            b.SetDamage(b.GetDamage() * GetDamageRate()); // 倍化伤害
+            if (mShape >= 3)
+            {
+                b.SetDamage(ori_dmg * GetDamageRate(3.0f)); // 倍化伤害
+                b.animator.runtimeAnimatorController = SpBullet_Run;
+                float dist = 2*MapManager.gridWidth;
+                CustomizationTask t = new CustomizationTask();
+                t.AddTaskFunc(delegate {
+                    dist -= b.GetVelocity();
+                    if (dist <= 0)
+                        return true;
+                    return false;
+                });
+                t.AddOnExitAction(delegate {
+                    // 伤害和贴图恢复
+                    b.SetDamage(ori_dmg * GetDamageRate(2.0f));
+                    if(b.IsAlive())
+                        b.animator.runtimeAnimatorController = Bullet_RunArray[mShape];
+                });
+                b.AddTask(t);
+            }
+            else
+            {
+                b.SetDamage(ori_dmg * GetDamageRate(2.0f)); // 倍化伤害
+                b.animator.runtimeAnimatorController = Bullet_RunArray[mShape];
+            }
             b.SetVelocity(b.GetVelocity() * 1.5f); // 加速
             b.AddTag(StringManager.BulletDamgeIncreasement); // 为子弹打上已增幅的标记，防止多次过火
+            b.SetHitSoundEffect("FireHit"+GameManager.Instance.rand.Next(0, 2)); // 设置音效为火弹击中
         }
     }
 

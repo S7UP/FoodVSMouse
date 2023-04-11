@@ -89,6 +89,7 @@ public class WiskyBoom : FoodUnit
     /// </summary>
     public override void ExecuteDamage()
     {
+        GameManager.Instance.audioSourceManager.PlayEffectMusic("Fire");
         // 原地产生一个爆炸效果
         {
             BaseEffect e = BaseEffect.GetInstance("FireVertical");

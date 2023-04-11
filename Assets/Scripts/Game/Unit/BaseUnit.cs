@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 
-
+using S7P.Numeric;
+using S7P.Component;
+using S7P.State;
 using UnityEngine;
 /// <summary>
 /// 战斗场景中最基本的游戏单位
@@ -92,6 +94,10 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
 
     public Dictionary<string, BaseUnit> mAttachedUnitDict = new Dictionary<string, BaseUnit>(); // 其他附加在该单位上的单位引用
 
+    public StateController mStateController = new StateController();
+    public ComponentController mComponentController = new ComponentController();
+    
+
     protected string jsonPath
     {
         get
@@ -129,31 +135,13 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         mRecordDamageComponent = new RecordDamageComponent(this);
     }
 
-    // 单位被对象池重新取出或者刚创建时触发
-    public virtual void OnEnable()
+    public virtual void MInit()
     {
-        // MInit();
-    }
-
-    // 单位被对象池回收时触发
-    public virtual void OnDisable()
-    {
-        // 管理的变量
-        mCurrentHp = 0; //+ 当前生命值
-        attackPercent = 0; // 攻击动画播放进度到attackPercent以上时允许出真正的攻击
-        mAttackFlag = false; // 作用于一次攻击能否打出来的flag
-        mHeight = 0; //+ 高度
-        isDeathState = true;
-        isFrozenState = false;
-
-        mName = null; // 当前单位的种类名称
-
-        mCurrentActionState = null; //+ 当前动作状态
-        currentStateTimer = 0; // 当前状态的持续时间（切换状态时会重置）
         aliveTime = 0;
         lastPosition = Vector2.one;
         DeltaPosition = Vector2.one;
 
+        // 几个管理器初始化
         NumericBox.Initialize();
         actionPointManager.Initialize();
         skillAbilityManager.Initialize();
@@ -169,7 +157,47 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         mRecordDamageComponent.Initilize();
         isIgnoreRecordDamage = false;
 
-        CloseCollision();
+        typeAndShapeValue = 0; // 图层
+        SetUnitType();
+
+        mAttackFlag = true; // 作用于一次攻击能否打出来的flag
+        if (mType >= 0)
+        {
+            BaseUnit.Attribute attr = GameController.Instance.GetBaseAttribute();
+            if (jsonPath == null)
+                attr = new BaseUnit.Attribute();
+            else
+                attr = GameController.Instance.GetBaseAttribute();
+            // 种类
+            mType = attr.type;
+            mShape = attr.shape;
+
+            SetBaseAttribute((float)attr.baseHP, (float)attr.baseAttack, (float)attr.baseAttackSpeed, (float)attr.baseMoveSpeed, (float)attr.baseDefense, (float)attr.attackPercent, attr.baseHeight);
+        }
+        else
+        {
+            SetBaseAttribute(100, 10, 1, 1, 0, 0.5f, 0);
+        }
+
+        // 死亡状态
+        isDeathState = false;
+        disableMove = false;
+
+        // 初始化当前动作状态
+        mCurrentActionState = null;
+        SetActionState(new BaseActionState(this));
+        // 设置动作点
+        SetActionPointManager();
+        // 读取技能信息
+        LoadSkillAbility();
+        // 启用判定
+        OpenCollision();
+        // 设置Collider2D的参数
+        SetCollider2DParam();
+        // 大小初始化
+        SetLocalScale(Vector2.one);
+        SetSpriteLocalScale(Vector2.one);
+        transform.right = Vector2.right;
 
         BeforeDeathEventList.Clear();
         BeforeBurnEventList.Clear();
@@ -183,7 +211,131 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
 
         // 初始化透明度
         SetAlpha(1);
+
+        mStateController.Initial();
+        mComponentController.Initial();
     }
+
+    public virtual void MUpdate()
+    {
+        // 清除依附单位字典无效的单位
+        List<string> delList = new List<string>();
+        foreach (var keyValuePair in mAttachedUnitDict)
+        {
+            if (keyValuePair.Value == null || !keyValuePair.Value.IsAlive())
+                delList.Add(keyValuePair.Key);
+        }
+        foreach (var key in delList)
+        {
+            RemoveUnitFromDict(key);
+        }
+        // 动画控制器更新
+        animatorController.Update();
+        // 时效性状态管理器更新
+        statusAbilityManager.Update();
+        // 技能管理器更新
+        if (!isDisableSkill)
+            skillAbilityManager.Update();
+        // 当不处于冻结状态时，当前状态计时器每帧都+1
+        if (!isFrozenState)
+            currentStateTimer += 1;
+        // 单位动作状态由状态机决定（如移动、攻击、待机、冻结、死亡）
+        if (mCurrentActionState != null)
+            mCurrentActionState.OnUpdate();
+        // 当前位置状态更新
+        if (aliveTime <= 0)
+        {
+            lastPosition = transform.position;
+            DeltaPosition = Vector2.zero;
+        }
+        else
+        {
+            DeltaPosition = (Vector2)transform.position - lastPosition;
+        }
+
+        // 受击进度盒子更新
+        hitBox.Update();
+        // 挂载任务更新
+        if (!isDeathState)
+            taskController.Update();
+        // 特效存活检测
+        CheckAndUpdateEffectDict();
+        // lastPosition更新放在Task后面，这样也方便内置任务获取上帧坐标
+        lastPosition = transform.position;
+
+        mStateController.Update();
+        mComponentController.Update();
+
+        // 最后更新存活时间
+        aliveTime++;
+    }
+
+    public virtual void MPause()
+    {
+        animatorController.Pause();
+    }
+
+    public virtual void MResume()
+    {
+        animatorController.Resume();
+    }
+
+    public virtual void MDestory()
+    {
+        //// 管理的变量
+        //mCurrentHp = 0; //+ 当前生命值
+        //attackPercent = 0; // 攻击动画播放进度到attackPercent以上时允许出真正的攻击
+        //mAttackFlag = false; // 作用于一次攻击能否打出来的flag
+        //mHeight = 0; //+ 高度
+        //isDeathState = true;
+        //isFrozenState = false;
+
+        //mName = null; // 当前单位的种类名称
+
+        //mCurrentActionState = null; //+ 当前动作状态
+        //currentStateTimer = 0; // 当前状态的持续时间（切换状态时会重置）
+        //aliveTime = 0;
+        //lastPosition = Vector2.one;
+        //DeltaPosition = Vector2.one;
+
+        //NumericBox.Initialize();
+        //actionPointManager.Initialize();
+        //skillAbilityManager.Initialize();
+        //statusAbilityManager.Initialize();
+        //effectDict.Clear();
+        //effectDict2.Clear();
+        //isHideEffect = false;
+        //animatorController.Initialize();
+        //hitBox.Initialize();
+        //SpriteOffsetX.Initialize(); SpriteOffsetY.Initialize();
+        //SetSpriteLocalPosition(Vector2.zero);
+        //taskController.Initial();
+        //mRecordDamageComponent.Initilize();
+        //isIgnoreRecordDamage = false;
+
+        //CloseCollision();
+
+        //BeforeDeathEventList.Clear();
+        //BeforeBurnEventList.Clear();
+        //AfterDeathEventList.Clear();
+
+        //CanBlockFuncList.Clear();
+        //CanHitFuncList.Clear();
+        //CanBeSelectedAsTargetFuncList.Clear();
+
+        //mAttachedUnitDict.Clear();
+
+        // 初始化透明度
+        SetAlpha(1);
+
+        mStateController.Destory();
+        mComponentController.Destory();
+
+        if (GetSpriteRenderer() != null)
+            GetSpriteRenderer().sprite = null;
+        ExecuteRecycle();
+    }
+
 
     // 切换动作状态
     public void SetActionState(IBaseActionState state)
@@ -290,7 +442,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         // 清除BUFF效果
         statusAbilityManager.TryEndAllStatusAbility();
         // 清除任务效果
-        taskController.Initial();
+        // taskController.Initial();
         // 清除特效一次
         RemoveAllEffect();
         // 移除所有不让动画播放的修饰
@@ -327,9 +479,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
             item(this);
         }
         // 然后安心去世吧
-        ExecuteRecycle();
-        if (GetSpriteRenderer() != null)
-            GetSpriteRenderer().sprite = null;
+        MDestory();
     }
 
     /// <summary>
@@ -343,7 +493,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     /// <summary>
     /// 执行该单位回收事件
     /// </summary>
-    public virtual void ExecuteRecycle()
+    protected virtual void ExecuteRecycle()
     {
         GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, mPreFabPath, this.gameObject);
     }
@@ -368,7 +518,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         // 清除BUFF效果
         statusAbilityManager.TryEndAllStatusAbility();
         // 清除任务效果
-        taskController.Initial();
+        // taskController.Initial();
         // 清除特效一次
         RemoveAllEffect();
         // 移除所有不让动画播放的修饰
@@ -422,7 +572,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         // 清除BUFF效果
         statusAbilityManager.TryEndAllStatusAbility();
         // 清除任务效果
-        taskController.Initial();
+        // taskController.Initial();
         // 清除特效一次
         RemoveAllEffect();
         // 进入死亡动画状态
@@ -447,137 +597,6 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     }
 
     /// <summary>
-    /// 根据GameController的指示，系统做的初始化工作
-    /// </summary>
-    public virtual void MInit()
-    {
-        aliveTime = 0;
-        lastPosition = Vector2.one;
-        DeltaPosition = Vector2.one;
-
-        // 几个管理器初始化
-        NumericBox.Initialize();
-        actionPointManager.Initialize();
-        skillAbilityManager.Initialize();
-        statusAbilityManager.Initialize();
-        effectDict.Clear();
-        effectDict2.Clear();
-        isHideEffect = false;
-        animatorController.Initialize();
-        hitBox.Initialize();
-        SpriteOffsetX.Initialize(); SpriteOffsetY.Initialize();
-        SetSpriteLocalPosition(Vector2.zero);
-        taskController.Initial();
-        mRecordDamageComponent.Initilize();
-        isIgnoreRecordDamage = false;
-
-        typeAndShapeValue = 0; // 图层
-        SetUnitType();
-
-        mAttackFlag = true; // 作用于一次攻击能否打出来的flag
-        if (mType >= 0)
-        {
-            BaseUnit.Attribute attr = GameController.Instance.GetBaseAttribute();
-            if (jsonPath == null)
-                attr = new BaseUnit.Attribute();
-            else
-                attr = GameController.Instance.GetBaseAttribute();
-            // 种类
-            mType = attr.type;
-            mShape = attr.shape;
-
-            SetBaseAttribute((float)attr.baseHP, (float)attr.baseAttack, (float)attr.baseAttackSpeed, (float)attr.baseMoveSpeed, (float)attr.baseDefense, (float)attr.attackPercent, attr.baseHeight);
-        }
-        else
-        {
-            SetBaseAttribute(100, 10, 1, 1, 0, 0.5f, 0);
-        }
-
-        // 死亡状态
-        isDeathState = false;
-        disableMove = false;
-
-        // 初始化当前动作状态
-        mCurrentActionState = null;
-        SetActionState(new BaseActionState(this));
-        // 设置动作点
-        SetActionPointManager();
-        // 读取技能信息
-        LoadSkillAbility();
-        // 启用判定
-        OpenCollision();
-        // 设置Collider2D的参数
-        SetCollider2DParam();
-        // 大小初始化
-        SetLocalScale(Vector2.one);
-        transform.right = Vector2.right;
-
-        BeforeDeathEventList.Clear();
-        BeforeBurnEventList.Clear();
-        AfterDeathEventList.Clear();
-
-        CanBlockFuncList.Clear();
-        CanHitFuncList.Clear();
-        CanBeSelectedAsTargetFuncList.Clear();
-
-        mAttachedUnitDict.Clear();
-
-        // 初始化透明度
-        SetAlpha(1);
-    }
-
-    public virtual void MUpdate()
-    {
-        // 清除依附单位字典无效的单位
-        List<string> delList = new List<string>();
-        foreach (var keyValuePair in mAttachedUnitDict)
-        {
-            if (keyValuePair.Value == null || !keyValuePair.Value.IsAlive())
-                delList.Add(keyValuePair.Key);
-        }
-        foreach (var key in delList)
-        {
-            RemoveUnitFromDict(key);
-        }
-        // 动画控制器更新
-        animatorController.Update();
-        // 时效性状态管理器更新
-        statusAbilityManager.Update();
-        // 技能管理器更新
-        if (!isDisableSkill)
-            skillAbilityManager.Update();
-        // 当不处于冻结状态时，当前状态计时器每帧都+1
-        if (!isFrozenState)
-            currentStateTimer += 1;
-        // 单位动作状态由状态机决定（如移动、攻击、待机、冻结、死亡）
-        if(mCurrentActionState != null)
-            mCurrentActionState.OnUpdate();
-        // 当前位置状态更新
-        if(aliveTime <= 0)
-        {
-            lastPosition = transform.position;
-            DeltaPosition = Vector2.zero;
-        }
-        else
-        {
-            DeltaPosition = (Vector2)transform.position - lastPosition;
-        }
-        
-        // 受击进度盒子更新
-        hitBox.Update();
-        // 挂载任务更新
-        if (!isDeathState)
-            taskController.Update();
-        // 特效存活检测
-        CheckAndUpdateEffectDict();
-        // lastPosition更新放在Task后面，这样也方便内置任务获取上帧坐标
-        lastPosition = transform.position;
-
-        // 最后更新存活时间
-        aliveTime++;
-    }
-
-    /// <summary>
     /// 由子类Override，设置大分类
     /// </summary>
     public virtual void SetUnitType()
@@ -591,27 +610,6 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public virtual void LoadSkillAbility()
     {
 
-    }
-
-    public virtual void MDestory()
-    {
-
-    }
-
-    /// <summary>
-    /// 当游戏暂停时
-    /// </summary>
-    public virtual void MPause()
-    {
-        animatorController.Pause();
-    }
-
-    /// <summary>
-    /// 当游戏取消暂停时
-    /// </summary>
-    public virtual void MResume()
-    {
-        animatorController.Resume();
     }
 
     /// <summary>
@@ -746,17 +744,18 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     /// 受到伤害时结算伤害
     /// </summary>
     /// <param name="dmg"></param>
-    public virtual void OnDamage(float dmg)
+    public virtual float OnDamage(float dmg)
     {
         // 如果目标含有无敌标签，则直接跳过伤害判定
         if (NumericBox.GetBoolNumericValue(StringManager.Invincibility))
-            return;
+            return 0;
 
         // 先计算抗性减免后的伤害
         dmg = Mathf.Max(0, dmg * GetFinalDamageRate());
         float recordDmg = dmg;
         // 然后计算护盾吸收的伤害
         dmg = Mathf.Max(0, NumericBox.DamageShield(dmg));
+        dmg = Mathf.Min(dmg, mCurrentHp);
         // 最后扣除本体生命值
         mCurrentHp -= dmg;
         if (mCurrentHp <= 0)
@@ -768,20 +767,22 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         {
             mRecordDamageComponent.TriggerRecordDamage(recordDmg);
         }
+        return dmg;
     }
 
     /// <summary>
     /// 受到无视护盾的伤害
     /// </summary>
     /// <param name="dmg"></param>
-    public virtual void OnDamgeIgnoreShield(float dmg)
+    public virtual float OnDamgeIgnoreShield(float dmg)
     {
         // 如果目标含有无敌标签，则直接跳过伤害判定
         if (NumericBox.GetBoolNumericValue(StringManager.Invincibility))
-            return;
+            return 0;
 
         // 先计算抗性减免后的伤害
         dmg = Mathf.Max(0, dmg * GetFinalDamageRate());
+        dmg = Mathf.Min(dmg, mCurrentHp);
         // 直接扣除本体生命值
         mCurrentHp -= dmg;
         if (mCurrentHp <= 0)
@@ -793,16 +794,18 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         {
             mRecordDamageComponent.TriggerRecordDamage(dmg);
         }
+        return dmg;
     }
 
     /// <summary>
     /// 受到真实伤害
     /// </summary>
-    public virtual void OnRealDamage(float dmg)
+    public virtual float OnRealDamage(float dmg)
     {
         // 如果目标含有无敌标签，则直接跳过伤害判定
         if (NumericBox.GetBoolNumericValue(StringManager.Invincibility))
-            return;
+            return 0;
+        dmg = Mathf.Min(dmg, mCurrentHp);
         // 扣除本体生命值
         mCurrentHp -= dmg;
         if (mCurrentHp <= 0)
@@ -814,19 +817,21 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         {
             mRecordDamageComponent.TriggerRecordDamage(dmg);
         }
+        return dmg;
     }
 
     /// <summary>
     /// 受到灰烬伤害
     /// </summary>
     /// <param name="dmg"></param>
-    public virtual void OnBurnDamage(float dmg)
+    public virtual float OnBurnDamage(float dmg)
     {
         // 如果目标含有无敌标签，则直接跳过伤害判定
         if (NumericBox.GetBoolNumericValue(StringManager.Invincibility))
-            return;
+            return 0;
 
         // 灰烬伤害为真实伤害
+        dmg = Mathf.Min(dmg, mCurrentHp);
         // 扣除本体生命值
         mCurrentHp -= dmg;
         if (mCurrentHp <= 0)
@@ -838,27 +843,28 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         {
             mRecordDamageComponent.TriggerRecordDamage(dmg);
         }
+        return dmg;
     }
 
     /// <summary>
     /// 受到来自炸弹的灰烬伤害
     /// </summary>
     /// <param name="dmg"></param>
-    public virtual void OnBombBurnDamage(float dmg)
+    public virtual float OnBombBurnDamage(float dmg)
     {
-        OnBurnDamage(dmg);
+        return OnBurnDamage(dmg);
     }
 
     /// <summary>
     /// 受到标记伤害时结算伤害
     /// </summary>
     /// <param name="dmg"></param>
-    public virtual void OnRecordDamage(float dmg)
+    public virtual float OnRecordDamage(float dmg)
     {
         // 如果目标含有无敌标签，则直接跳过伤害判定
         if (NumericBox.GetBoolNumericValue(StringManager.Invincibility))
-            return;
-
+            return 0;
+        dmg = Mathf.Min(dmg, mCurrentHp);
         // 最后扣除本体生命值
         mCurrentHp -= dmg;
         if (mCurrentHp <= 0)
@@ -866,6 +872,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
             mCurrentHp = 0;
             ExecuteDeath();
         }
+        return dmg;
     }
 
     /// <summary>
@@ -896,13 +903,13 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         var damageAction = combatAction as DamageAction;
         // 根据伤害类型来接收伤害
         if(damageAction.mActionType == CombatAction.ActionType.BurnDamage)
-            OnBurnDamage(damageAction.DamageValue);
+            damageAction.RealCauseValue = OnBurnDamage(damageAction.DamageValue);
         else if (damageAction.mActionType == CombatAction.ActionType.RealDamage)
-            OnRealDamage(damageAction.DamageValue);
+            damageAction.RealCauseValue = OnRealDamage(damageAction.DamageValue);
         else if(damageAction.mActionType == CombatAction.ActionType.RecordDamage)
-            OnRecordDamage(damageAction.DamageValue);
+            damageAction.RealCauseValue = OnRecordDamage(damageAction.DamageValue);
         else
-            OnDamage(damageAction.DamageValue);
+            damageAction.RealCauseValue = OnDamage(damageAction.DamageValue);
     }
 
     /// <summary>
@@ -912,7 +919,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public void ReceiveBombBurnDamage(CombatAction combatAction)
     {
         var damageAction = combatAction as BombDamageAction;
-        OnBombBurnDamage(damageAction.DamageValue);
+        damageAction.RealCauseValue = OnBombBurnDamage(damageAction.DamageValue);
     }
 
     /// <summary>
@@ -1018,30 +1025,12 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     }
 
     /// <summary>
-    /// 添加免疫禁用技能效果（沉默免疫）
-    /// </summary>
-    /// <returns></returns>
-    public BoolModifier AddImmuneDisAbleSkillModifier()
-    {
-        return NumericBox.AddImmuneDisAbleSkillModifier();
-    }
-
-    /// <summary>
     /// 移除禁用技能效果（沉默）
     /// </summary>
     /// <returns></returns>
     public void RemoveDisAbleSkillModifier(BoolModifier boolModifier)
     {
         NumericBox.RemoveDisAbleSkillModifier(boolModifier);
-    }
-
-    /// <summary>
-    /// 移除免疫禁用技能效果（沉默免疫）
-    /// </summary>
-    /// <returns></returns>
-    public void RemoveImmuneDisAbleSkillModifier(BoolModifier boolModifier)
-    {
-        NumericBox.RemoveImmuneDisAbleSkillModifier(boolModifier);
     }
 
     /// <summary>
@@ -1656,6 +1645,12 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public virtual void SetLocalScale(Vector2 scale)
     {
         transform.localScale = scale;
+    }
+
+    public virtual void SetSpriteLocalScale(Vector2 scale)
+    {
+        if (GetSpriteRenderer() != null)
+            GetSpriteRenderer().transform.localScale = scale;
     }
 
 

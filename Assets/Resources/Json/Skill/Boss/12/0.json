@@ -1,0 +1,4 @@
+[{"name":"熔岩重击","needEnergy":1.0,"startEnergy":0.0,"energyRegeneration":0.0,"skillType":1,"isExclusive":true,"canActiveInDeathState":false,"priority":9},
+{"name":"熔岩战车","needEnergy":1.0,"startEnergy":0.0,"energyRegeneration":0.0,"skillType":1,"isExclusive":true,"canActiveInDeathState":false,"priority":8},
+{"name":"陨石雨","needEnergy":1.0,"startEnergy":0.0,"energyRegeneration":0.0,"skillType":1,"isExclusive":true,"canActiveInDeathState":false,"priority":7},
+{"name":"炎息","needEnergy":1.0,"startEnergy":0.0,"energyRegeneration":0.0,"skillType":1,"isExclusive":true,"canActiveInDeathState":false,"priority":6}]

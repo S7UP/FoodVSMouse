@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System;
 using UnityEngine;
-
+using S7P.Numeric;
 /// <summary>
 /// 美食管理器（静态存储美食相关信息）
 /// </summary>
@@ -13,7 +13,7 @@ public class FoodManager
         { FoodNameTypeMap.BigStove, new List<string>(){"大火炉","高能火炉","超能燃气炉" } },
         { FoodNameTypeMap.CoffeePowder, new List<string>(){"咖啡粉" } },
         { FoodNameTypeMap.CherryPudding, new List<string>(){"樱桃反弹布丁","节能反弹布丁" } },
-        { FoodNameTypeMap.IceCream, new List<string>(){"冰淇淋","果蔬冰淇淋" } },
+        { FoodNameTypeMap.IceCream, new List<string>(){"冰淇淋","果蔬冰淇淋","极寒冰沙" } },
         { FoodNameTypeMap.WaterPipe, new List<string>(){"双向水管","控温双向水管","合金水管" } },
         { FoodNameTypeMap.ThreeLinesVine, new List<string>(){"三线酒架","强力三线酒架","终结者酒架" } },
         { FoodNameTypeMap.Heater, new List<string>(){"火盆","电子烤盘","熔岩烤盘","金牛座精灵" } },
@@ -22,7 +22,7 @@ public class FoodManager
         { FoodNameTypeMap.IceBucket, new List<string>(){"冰桶炸弹" } },
         { FoodNameTypeMap.MelonShield, new List<string>(){"瓜皮护罩","尖刺瓜皮护罩" } },
         { FoodNameTypeMap.Takoyaki, new List<string>(){"章鱼烧","两栖章鱼烧","火影章鱼烧" } },
-        //{ FoodNameTypeMap.FlourBag, new List<string>(){"面粉袋" } },
+        { FoodNameTypeMap.FlourBag, new List<string>(){"面粉袋","超重面粉袋","粉碎性骨折铅袋" } },
         { FoodNameTypeMap.WineBottleBoom, new List<string>(){"酒瓶炸弹" } },
         { FoodNameTypeMap.CokeBoom, new List<string>(){"可乐炸弹" } },
         { FoodNameTypeMap.BoiledWaterBoom, new List<string>(){"开水壶炸弹" } },
@@ -32,6 +32,7 @@ public class FoodManager
         //{ FoodNameTypeMap.Fan, new List<string>(){"换气扇" } },
         { FoodNameTypeMap.MouseCatcher, new List<string>(){"老鼠夹子","节能老鼠夹子","黑猫老鼠夹子" } },
         { FoodNameTypeMap.SpicyStringBoom, new List<string>(){"麻辣串炸弹" } },
+        { FoodNameTypeMap.CoffeeCup, new List<string>(){ "咖啡杯","花纹咖啡杯","骨瓷咖啡杯" } },
         { FoodNameTypeMap.SugarGourd, new List<string>(){"糖葫芦炮弹","水果糖葫芦炮弹","七彩糖葫芦炮弹" } },
         { FoodNameTypeMap.MushroomDestroyer, new List<string>(){ "毒菌破坏者" } },
         { FoodNameTypeMap.PokerShield, new List<string>(){ "扑克护罩" } },
@@ -57,7 +58,8 @@ public class FoodManager
     /// </summary>
     public static List<FoodNameTypeMap> AttackLevelMap = new List<FoodNameTypeMap>() {
         FoodNameTypeMap.WaterPipe, FoodNameTypeMap.ThreeLinesVine, FoodNameTypeMap.Takoyaki, FoodNameTypeMap.SpinCoffee, FoodNameTypeMap.SugarGourd,
-        FoodNameTypeMap.SaladPitcher, FoodNameTypeMap.ChocolatePitcher, FoodNameTypeMap.TofuPitcher, FoodNameTypeMap.EggPitcher, FoodNameTypeMap.HotDog
+        FoodNameTypeMap.SaladPitcher, FoodNameTypeMap.ChocolatePitcher, FoodNameTypeMap.TofuPitcher, FoodNameTypeMap.EggPitcher, FoodNameTypeMap.HotDog,
+        FoodNameTypeMap.CoffeeCup
     };
 
     /// <summary>
@@ -379,14 +381,39 @@ public class FoodManager
     /// <returns>返回最靠右的可攻击的友方单位，若为空则没有目标</returns>
     public static BaseUnit GetSpecificRowFarthestRightCanTargetedAlly(int rowIndex, float start_temp_x, bool canSelectedCharacter)
     {
+        //BaseUnit targetUnit = null;
+        //List<BaseUnit> list = GameController.Instance.GetSpecificRowAllyList(rowIndex);
+        //float temp_x = start_temp_x;
+        //foreach (var item in list)
+        //{
+        //    // 三个基础条件：可被选取、是美食或者人物单位、必须存活
+        //    // 外加一个比较条件，就是单位横坐标比当前比较横坐标大
+        //    if (UnitManager.CanBeSelectedAsTarget(null, item) && (item is FoodUnit || (canSelectedCharacter && item is CharacterUnit)) && item.IsAlive() && item.transform.position.x > temp_x)
+        //    {
+        //        // 如果目标是美食单位，则需要判断目标必须为默认类型卡片或者护罩类型卡片或者炸弹类型卡片，否则不能作为选取目标
+        //        if (item is FoodUnit)
+        //        {
+        //            FoodUnit f = item as FoodUnit;
+        //            if (!f.GetFoodInGridType().Equals(FoodInGridType.Default) && !f.GetFoodInGridType().Equals(FoodInGridType.Shield) && !f.GetFoodInGridType().Equals(FoodInGridType.Bomb))
+        //                continue;
+        //        }
+        //        temp_x = item.transform.position.x;
+        //        targetUnit = item;
+        //    }
+        //}
+        return GetSpecificRowFarthestRightCanTargetedAlly(rowIndex, start_temp_x, float.MaxValue, canSelectedCharacter);
+    }
+
+    public static BaseUnit GetSpecificRowFarthestRightCanTargetedAlly(int rowIndex, float min_x, float max_x, bool canSelectedCharacter)
+    {
         BaseUnit targetUnit = null;
         List<BaseUnit> list = GameController.Instance.GetSpecificRowAllyList(rowIndex);
-        float temp_x = start_temp_x;
+        float temp_x = min_x;
         foreach (var item in list)
         {
             // 三个基础条件：可被选取、是美食或者人物单位、必须存活
             // 外加一个比较条件，就是单位横坐标比当前比较横坐标大
-            if (UnitManager.CanBeSelectedAsTarget(null, item) && (item is FoodUnit || (canSelectedCharacter && item is CharacterUnit)) && item.IsAlive() && item.transform.position.x > temp_x)
+            if (UnitManager.CanBeSelectedAsTarget(null, item) && (item is FoodUnit || (canSelectedCharacter && item is CharacterUnit)) && item.IsAlive() && item.transform.position.x > temp_x && item.transform.position.x <= max_x)
             {
                 // 如果目标是美食单位，则需要判断目标必须为默认类型卡片或者护罩类型卡片或者炸弹类型卡片，否则不能作为选取目标
                 if (item is FoodUnit)
@@ -442,7 +469,6 @@ public class FoodManager
     {
         List<int> list = new List<int>();
         int min = int.MaxValue;
-        // for (int rowIndex = 0; rowIndex < GameController.Instance.mAllyList.Length; rowIndex++)
         foreach (var rowIndex in rowList)
         {
             int count = 0;
@@ -505,29 +531,6 @@ public class FoodManager
     /// <returns></returns>
     public static List<int> GetRowListWhichHasMinConditionAllyCount(Func<BaseUnit, bool> ConditionFunc)
     {
-        //List<int> list = new List<int>();
-        //int min = int.MaxValue;
-        //for (int rowIndex = 0; rowIndex < GameController.Instance.mAllyList.Length; rowIndex++)
-        //{
-        //    int count = 0;
-        //    foreach (var unit in GameController.Instance.mAllyList[rowIndex])
-        //    {
-        //        // 如果目标在传入的条件判断中为真，则计数+1
-        //        if (ConditionFunc(unit))
-        //            count++;
-        //    }
-        //    if (count == min)
-        //    {
-        //        list.Add(rowIndex);
-        //    }
-        //    else if (count < min)
-        //    {
-        //        list.Clear();
-        //        list.Add(rowIndex);
-        //        min = count;
-        //    }
-        //}
-        //return list;
         return GetRowListWhichHasMinConditionAllyCount(new List<int>() { 0, 1, 2, 3, 4, 5, 6 }, ConditionFunc);
     }
 
@@ -702,6 +705,20 @@ public class FoodManager
             (s, level, shape)=> {
                 double dmgRate = GetAttribute(FoodNameTypeMap.Heater, shape).valueList[level];
                 return ParamManager.GetStringByReplaceParam(s, "dmgRate", dmgRate.ToString("#0.00"));
+            },
+            // 小贴士
+            null }
+        },
+        { FoodNameTypeMap.CoffeePowder, new Func<string, int, int, string>[3]{
+            // 功能（简洁）
+            (s, level, shape)=> {
+                double time = GetAttribute(FoodNameTypeMap.CoffeePowder, shape).valueList[level];
+                return ParamManager.GetStringByReplaceParam(s, "time", time.ToString("#0.0"));
+            },
+            // 功能（详细）
+            (s, level, shape)=> {
+                double time = GetAttribute(FoodNameTypeMap.CoffeePowder, shape).valueList[level];
+                return ParamManager.GetStringByReplaceParam(s, "time", time.ToString("#0.0"));
             },
             // 小贴士
             null }

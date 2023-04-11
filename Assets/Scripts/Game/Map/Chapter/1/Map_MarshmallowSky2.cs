@@ -60,7 +60,7 @@ public class Map_MarshmallowSky2 : ChapterMap
 
             // 添加风域
             WindAreaEffectExecution e = WindAreaEffectExecution.GetInstance(8.6f, 7, new Vector2(MapManager.GetColumnX(4f), MapManager.GetRowY(3)));
-            WindAreaEffectExecution.SetClassicalWindAreaEffectMode(e, 0, 360, 120, 360, true); // 等待时间、速度变化时间、匀速时间
+            WindAreaEffectExecution.SetClassicalWindAreaEffectMode(e, 0, 360, 120, 1440, true); // 等待时间、速度变化时间、匀速时间
             GameController.Instance.AddAreaEffectExecution(e);
         }
     }

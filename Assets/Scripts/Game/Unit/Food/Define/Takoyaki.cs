@@ -134,6 +134,7 @@ public class Takoyaki : FoodUnit
     /// </summary>
     public override void ExecuteDamage()
     {
+        GameManager.Instance.audioSourceManager.PlayEffectMusic("Throw" + GameManager.Instance.rand.Next(0, 2));
         CreateBullet();
     }
 
@@ -149,6 +150,7 @@ public class Takoyaki : FoodUnit
         b.transform.position = transform.position;
         b.SetStandardVelocity(36);
         b.SetRotate(Vector2.right);
+        b.SetHitSoundEffect("Hit");
         b.AddHitAction((b, u) => {
             if(mShape > 0 && u.GetHeathPercent() <= hpRate)
                 new DamageAction(CombatAction.ActionType.CauseDamage, this, u, addDamage*dmg).ApplyAction();

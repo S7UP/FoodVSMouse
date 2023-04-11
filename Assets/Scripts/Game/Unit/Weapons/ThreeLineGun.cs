@@ -127,6 +127,7 @@ public class ThreeLineGun : BaseWeapons
     /// </summary>
     public override void ExecuteDamage()
     {
+        GameManager.Instance.audioSourceManager.PlayEffectMusic("Swing");
         int rowIndex = GetRowIndex(); // 获取当前行
 
         for (int i = -1; i <= 1; i++)
@@ -134,6 +135,7 @@ public class ThreeLineGun : BaseWeapons
             for (int j = 0; j < countArray[i + 1]; j++)
             {
                 AllyBullet b = AllyBullet.GetInstance(BulletStyle.Normal, Bullet_RuntimeAnimatorController, master, master.mCurrentAttack / 10 * dmgValue);
+                b.SetHitSoundEffect("Splat" + GameManager.Instance.rand.Next(0, 3));
                 b.transform.position = master.transform.position;
                 b.SetSpriteLocalPosition(master.GetSpriteLocalPosition());
                 b.SetStandardVelocity(24);

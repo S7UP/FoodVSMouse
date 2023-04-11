@@ -1,4 +1,3 @@
-using System;
 
 using UnityEngine;
 /// <summary>
@@ -60,14 +59,12 @@ public class MagicianMouse : MouseUnit
         CustomizationTask t = TaskManager.AddParabolaTask(m, distance/60, distance/2, m.transform.position, m.transform.position + distance * (Vector3)moveRotate, false);
         m.SetActionState(new TransitionState(m));
         m.animatorController.Play("Fly", true);
-        Action oldExitFunc = t.OnExitFunc;
-        t.OnExitFunc = delegate
+        t.AddOnExitAction(delegate
         {
-            oldExitFunc();
             m.SetActionState(new MoveState(m));
             // 但是落地后晕眩2s
             m.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(m, 120, false));
-        };
+        });
     }
 
 

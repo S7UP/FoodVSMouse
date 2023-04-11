@@ -111,9 +111,9 @@ public class CherryPuddingFoodUnit : FoodUnit
                     return true;
                 }
             });
-            t.OnExitFunc = delegate {
+            t.AddOnExitAction(delegate {
                 r.MDestory();
-            };
+            });
             r.AddTask(t);
         }
         GameController.Instance.AddAreaEffectExecution(r);

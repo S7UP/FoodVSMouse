@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using S7P.Numeric;
 /// <summary>
 /// ˜˙ Û¿‡
 /// </summary>
@@ -38,6 +39,7 @@ public class Mole : MouseUnit
         AddCanBeSelectedAsTargetFunc(noBeSelectedAsTargetFunc);
         AddCanHitFunc(noHitFunc);
         AddCanBlockFunc(noBlockFunc);
+        GameManager.Instance.audioSourceManager.PlayEffectMusic("Dig");
     }
 
     /// <summary>

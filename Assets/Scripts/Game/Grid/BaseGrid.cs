@@ -10,7 +10,6 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     public static List<ItemNameTypeMap> NoAllowBuildTagList = new List<ItemNameTypeMap>()
     {
         ItemNameTypeMap.Barrier,
-        ItemNameTypeMap.WindCave, 
     };
 
     /// <summary>
@@ -18,8 +17,7 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     /// </summary>
     public static List<GridType> NoAllowBuildGridType = new List<GridType>() 
     { 
-        GridType.NotBuilt, 
-        GridType.Teleport
+        GridType.NotBuilt,
     };
 
     protected Dictionary<GridType, BaseGridType> mGridTypeDict = new Dictionary<GridType, BaseGridType>(); // 依附于格子的地形状态
@@ -898,12 +896,35 @@ public class BaseGrid : MonoBehaviour, IGameControllerMember
     /// <summary>
     /// 默认的对格子上的友方单位造成伤害的方法
     /// </summary>
-    public void TakeDamage(BaseUnit master, float dmg, bool isDamageCharacter)
+    public bool TakeDamage(BaseUnit master, float dmg, bool isDamageCharacter)
+    {
+        //BaseUnit unit = GetHighestAttackPriorityUnit(master);
+        //if (unit != null && (isDamageCharacter || !(unit is CharacterUnit)))
+        //{
+        //    new DamageAction(CombatAction.ActionType.CauseDamage, master, unit, dmg).ApplyAction();
+        //}
+        return TakeAction(master, (u)=> { new DamageAction(CombatAction.ActionType.CauseDamage, master, u, dmg).ApplyAction(); }, isDamageCharacter);
+    }
+
+    /// <summary>
+    /// 默认的对格子上的友方单位做一些不可描述的事的方法
+    /// </summary>
+    /// <param name="master"></param>
+    /// <param name="action"></param>
+    /// <param name="isDamageCharacter"></param>
+    public bool TakeAction(BaseUnit master, Action<BaseUnit> action, bool isAffectCharacter)
     {
         BaseUnit unit = GetHighestAttackPriorityUnit(master);
-        if (unit != null && (isDamageCharacter || !(unit is CharacterUnit)))
+        if (unit != null && (isAffectCharacter || !(unit is CharacterUnit)))
         {
-            new DamageAction(CombatAction.ActionType.CauseDamage, master, unit, dmg).ApplyAction();
+            action(unit);
+            return true;
         }
+        return false;
+    }
+
+    public bool IsAlive()
+    {
+        return isActiveAndEnabled;
     }
 }

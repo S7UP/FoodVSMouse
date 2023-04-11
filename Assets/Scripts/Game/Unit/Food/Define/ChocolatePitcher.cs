@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 
+using S7P.Numeric;
+
 using UnityEngine;
 /// <summary>
 /// 巧克力投手
@@ -149,6 +151,7 @@ public class ChocolatePitcher : FoodUnit
     /// </summary>
     public override void ExecuteDamage()
     {
+        GameManager.Instance.audioSourceManager.PlayEffectMusic("Throw" + GameManager.Instance.rand.Next(0, 2));
         int rowIndex = GetRowIndex();
         if(bigLeft > 0)
         {
@@ -195,6 +198,7 @@ public class ChocolatePitcher : FoodUnit
     private BaseBullet CreateSmallBullet(Vector2 startPosition, BaseUnit target)
     {
         AllyBullet b = AllyBullet.GetInstance(BulletStyle.Throwing, SmallBulletRuntimeAnimatorController, this, mCurrentAttack);
+        b.SetHitSoundEffect("Splat" + GameManager.Instance.rand.Next(0, 3));
         b.AddSpriteOffsetY(new FloatModifier(0.5f * MapManager.gridHeight));
         b.isnDelOutOfBound = true; // 出屏不自删
 
@@ -210,10 +214,10 @@ public class ChocolatePitcher : FoodUnit
             {
                 return !pudding.IsAlive();
             });
-            t.OnExitFunc = delegate
+            t.AddOnExitAction(delegate
             {
                 pudding = null; // 如果目标布丁不存活，则取消其引用
-            };
+            });
             b.AddTask(t);
 
             // 定义与添加重定向任务
@@ -250,6 +254,7 @@ public class ChocolatePitcher : FoodUnit
     private BaseBullet CreateBigBullet(Vector2 startPosition, BaseUnit target)
     {
         AllyBullet b = AllyBullet.GetInstance(BulletStyle.Throwing, BigBulletRuntimeAnimatorController, this, BigDamageRate*mCurrentAttack);
+        b.SetHitSoundEffect("Butter");
         b.AddSpriteOffsetY(new FloatModifier(0.5f * MapManager.gridHeight));
         b.isnDelOutOfBound = true; // 出屏不自删
 
@@ -272,10 +277,10 @@ public class ChocolatePitcher : FoodUnit
             {
                 return !pudding.IsAlive();
             });
-            t.OnExitFunc = delegate
+            t.AddOnExitAction(delegate
             {
                 pudding = null; // 如果目标布丁不存活，则取消其引用
-            };
+            });
             b.AddTask(t);
 
             // 定义与添加重定向任务

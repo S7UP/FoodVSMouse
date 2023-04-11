@@ -48,21 +48,21 @@ public class Thundered : BossUnit
         AddParamArray("hpRate", new float[] { 0.5f, 0.2f });
         // 高空压制
         AddParamArray("t0_0", new float[] { 1, 0.5f,0 }); // 升空时的观察时间
-        AddParamArray("t0_1", new float[] { 4, 3, 2 }); // 移动时间
+        AddParamArray("t0_1", new float[] { 4, 3, 3 }); // 移动时间
         AddParamArray("t0_2", new float[] { 1, 0.5f, 0 }); // 下降前停留时间
         AddParamArray("dmg0_0", new float[] { 900, 900, 900 }); // 下压伤害
         AddParamArray("t0_3", new float[] { 3, 1.5f, 0.5f }); // 下压完后原地停滞时间
         // 导弹攻击
         AddParamArray("t1_0", new float[] { 1, 0.5f, 0 }); // 升空时的观察时间
-        AddParamArray("t1_1", new float[] { 4, 3, 2 }); // 移动时间
+        AddParamArray("t1_1", new float[] { 4, 3, 3 }); // 移动时间
         AddParamArray("dmg1_0", new float[] { 900, 900, 900 }); // 导弹伤害
         AddParamArray("t1_2", new float[] { 3, 1.5f, 0.5f }); // 导弹发射完后的停滞时间
         AddParamArray("stun1_0", new float[] { 9, 9, 9 }); // 导弹对人物的晕眩时间
         // 毁灭激光
         AddParamArray("t2_0", new float[] { 1, 0.5f, 0 }); // 升空时的观察时间
-        AddParamArray("t2_1", new float[] { 4, 3, 2 }); // 移动时间
+        AddParamArray("t2_1", new float[] { 4, 3, 3 }); // 移动时间
         AddParamArray("t2_2", new float[] { 9, 6, 3 }); // 激光蓄力时间
-        AddParamArray("dmg2_0", new float[] { 900, 900, 900 }); // 激光伤害
+        AddParamArray("dmg2_0", new float[] { 600, 600, 600 }); // 激光伤害
         AddParamArray("t2_3", new float[] { 2, 2, 2 }); // 激光后原地停滞时间
     }
 
@@ -154,9 +154,12 @@ public class Thundered : BossUnit
                 else
                 {
                     // 设置取随机算法，保证2*2压制的区域位于左一列到右三列之间
-                    SetNextGridIndexByRandom(0, 5, 1, 6);
-                    Vector2 v2 = GetNextGridIndex();
-                    targetPos = MapManager.GetGridLocalPosition(v2.x, v2.y);
+                    //SetNextGridIndexByRandom(0, 5, 1, 6);
+                    //Vector2 v2 = GetNextGridIndex();
+                    int rowIndex;
+                    int colIndex;
+                    FindR0C0(out rowIndex, out colIndex);
+                    targetPos = MapManager.GetGridLocalPosition(colIndex, rowIndex);
                     startPos = transform.position;
                     if((targetPos - startPos).x <= 0)
                         animatorController.Play("FlyAhead", true);
@@ -203,11 +206,31 @@ public class Thundered : BossUnit
                 {
                     isFly = false;
                     mHeight = 0;
-                    DamageAreaEffectExecution e = DamageAreaEffectExecution.GetInstance();
-                    e.Init(this, CombatAction.ActionType.CauseDamage, dmg0_0 * (mCurrentAttack/10), GetRowIndex(), 2, 2, 0.5f, 0.5f, true, true);
-                    e.transform.position = transform.position;
-                    e.AddExcludeMouseUnit(this); // 自身要被排除在外，不然伤敌八百自损一千
-                    GameController.Instance.AddAreaEffectExecution(e);
+                    //DamageAreaEffectExecution e = DamageAreaEffectExecution.GetInstance();
+                    //e.Init(this, CombatAction.ActionType.CauseDamage, dmg0_0 * (mCurrentAttack/10), GetRowIndex(), 1.75f, 1.75f, 0.5f, 0.5f, true, true);
+                    //e.transform.position = transform.position;
+                    //e.AddExcludeMouseUnit(this); // 自身要被排除在外，不然伤敌八百自损一千
+                    //GameController.Instance.AddAreaEffectExecution(e);
+
+                    RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position + 0.5f*new Vector3(MapManager.gridWidth, MapManager.gridHeight), 1.75f, 1.75f, "EnemyAllyGrid");
+                    r.SetInstantaneous();
+                    r.isAffectMouse = true;
+                    r.SetOnEnemyEnterAction((m) => {
+                        new DamageAction(CombatAction.ActionType.CauseDamage, this, m, dmg0_0 * (mCurrentAttack / 10)).ApplyAction();
+                    });
+                    r.isAffectGrid = true;
+                    r.SetOnGridEnterAction((g) => {
+                        BaseUnit u = g.GetHighestAttackPriorityUnit(this);
+                        if(u !=null && !(u is CharacterUnit))
+                        {
+                            float dmg = u.mCurrentHp;
+                            DamageAction DmgAction = new DamageAction(CombatAction.ActionType.RealDamage, this, u, dmg);
+                            DmgAction.ApplyAction();
+                            new ReboundDamageAction(CombatAction.ActionType.ReboundDamage, this, u, DmgAction.RealCauseValue).ApplyAction();
+                        }
+                    });
+                    r.AddExcludeMouseUnit(this); // 自身要被排除在外，不然伤敌八百自损一千
+                    GameController.Instance.AddAreaEffectExecution(r);
                 }
                 else if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
                 {
@@ -624,5 +647,47 @@ public class Thundered : BossUnit
         c.OnNoSpellingFunc = delegate { };
         c.AfterSpellFunc = delegate { };
         return c;
+    }
+
+
+    private void FindR0C0(out int rowIndex, out int colIndex)
+    {
+        // 然后找有最右边卡的行
+        List<int> list = new List<int>();
+        float max = float.MinValue;
+        for (int row = 0; row < 7; row++)
+        {
+            BaseUnit unit = FoodManager.GetSpecificRowFarthestRightCanTargetedAlly(row, float.MinValue, MapManager.GetColumnX(6.5f), false);
+            if (unit != null)
+            {
+                if (unit.transform.position.x > max)
+                {
+                    max = unit.transform.position.x;
+                    list.Clear();
+                    list.Add(row);
+                }
+                else if (unit.transform.position.x == max)
+                {
+                    list.Add(row);
+                }
+            }
+        }
+        // 在这些行里随机挑一行吧
+        if (list.Count > 0)
+        {
+            rowIndex = Mathf.Max(1, Mathf.Min(6, list[GetRandomNext(0, list.Count)]));
+            colIndex = Mathf.Max(0, Mathf.Min(5, FoodManager.GetSpecificRowFarthestRightCanTargetedAlly(rowIndex, float.MinValue, MapManager.GetColumnX(6.5f), false).GetColumnIndex() - 1));
+        }
+        else
+        {
+            // 这里是保险处理，真没有合适的结果的话那就固定四路出现吧
+            GetRandomNext(0, 1);
+            rowIndex = 3;
+            BaseUnit unit = FoodManager.GetSpecificRowFarthestRightCanTargetedAlly(rowIndex, float.MinValue, MapManager.GetColumnX(6.5f), false);
+            if (unit != null)
+                colIndex = Mathf.Max(1, Mathf.Min(5, unit.GetColumnIndex() - 1));
+            else
+                colIndex = 5;
+        }
     }
 }

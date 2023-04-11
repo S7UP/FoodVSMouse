@@ -1,6 +1,6 @@
-using System;
 
 using UnityEngine;
+using S7P.Numeric;
 /// <summary>
 /// ¥¸ Û¿‡
 /// </summary>
@@ -86,14 +86,11 @@ public class KangarooMouse : MouseUnit
             float dist = jumpDistance * MapManager.gridWidth;
             CustomizationTask t = TaskManager.AddParabolaTask(this, dist / 60, dist / 2, transform.position, transform.position + (Vector3)moveRotate * dist, false, true);
             DisableMove(true);
-            Action oldExit = t.OnExitFunc;
-            t.OnExitFunc = delegate
+            t.AddOnExitAction(delegate
             {
-                if (oldExit != null)
-                    oldExit();
                 isJumping = false; 
                 DisableMove(false);
-            };
+            });
         }
     }
 

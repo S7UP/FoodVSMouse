@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 5349666142578115513}
   - component: {fileID: -555202113151931730}
   - component: {fileID: 2000635976235884176}
-  m_Layer: 10
+  m_Layer: 12
   m_Name: 0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -147,10 +147,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mType: 0
   mShape: 0
+  masterGird: {fileID: 0}
   mBoxCollider2D: {fileID: 0}
   spriteRenderer: {fileID: 0}
   animator: {fileID: 0}
   unitList: []
+  isOpen: 0
 --- !u!95 &2000635976235884176
 Animator:
   serializedVersion: 3

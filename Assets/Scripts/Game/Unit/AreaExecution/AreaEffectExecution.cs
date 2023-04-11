@@ -61,7 +61,7 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
     private Action<BaseGrid> OnGridExitAction;
     private Action<BaseBullet> OnBulletExitAction;
 
-    private Action<AreaEffectExecution> OnDestoryExtraAction;
+    private List<Action<AreaEffectExecution>> BeforeDestoryActionList = new List<Action<AreaEffectExecution>>();
 
     public TaskController taskController = new TaskController();
 
@@ -120,14 +120,14 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
         OnGridExitAction = null;
         OnBulletExitAction = null;
 
-        OnDestoryExtraAction = null;
+        BeforeDestoryActionList.Clear();
 
         FloatDict.Clear();
         TagList.Clear();
 
         taskController.Initial();
 
-        transform.right = Vector2.right;
+        SetRight(Vector2.right);
     }
 
     /// <summary>
@@ -220,9 +220,9 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
         OnBulletExitAction = action;
     }
 
-    public void SetOnDestoryExtraAction(Action<AreaEffectExecution> action)
+    public void AddBeforeDestoryAction(Action<AreaEffectExecution> action)
     {
-        OnDestoryExtraAction = action;
+        BeforeDestoryActionList.Add(action);
     }
 
     public virtual void OnCollision(Collider2D collision)
@@ -337,7 +337,7 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
 
     private bool IsMeetingCondition(FoodUnit u)
     {
-        if (foodUnitList.Contains(u) || excludeFoodUnitList.Contains(u) || !(isIgnoreHeight || u.GetHeight() == affectHeight))
+        if (foodUnitList.Contains(u) || excludeFoodUnitList.Contains(u) || !(isIgnoreHeight || u.GetHeight() == affectHeight) || !u.IsAlive())
             return false;
         // 附加一个条件，Food必须是可被攻击类型的
         if (!FoodManager.IsAttackableFoodType(u))
@@ -352,7 +352,7 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
 
     private bool IsMeetingCondition(MouseUnit u)
     {
-        if (mouseUnitList.Contains(u) || excludeMouseUnitList.Contains(u) || !(isIgnoreHeight || u.GetHeight() == affectHeight))
+        if (mouseUnitList.Contains(u) || excludeMouseUnitList.Contains(u) || !(isIgnoreHeight || u.GetHeight() == affectHeight) || !u.IsAlive())
             return false;
 
         foreach (var func in EnemyEnterConditionFuncList)
@@ -365,7 +365,7 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
 
     private bool IsMeetingCondition(CharacterUnit u)
     {
-        if (characterList.Contains(u) || excludeCharacterList.Contains(u) || !(isIgnoreHeight || u.GetHeight() == affectHeight))
+        if (characterList.Contains(u) || excludeCharacterList.Contains(u) || !(isIgnoreHeight || u.GetHeight() == affectHeight) || !u.IsAlive())
             return false;
 
         foreach (var func in CharacterEnterConditionFuncList)
@@ -401,7 +401,7 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
     /// <returns></returns>
     private bool IsMeetingCondition(BaseBullet bullet)
     {
-        if (bulletList.Contains(bullet) || excludeBulletList.Contains(bullet))
+        if (bulletList.Contains(bullet) || excludeBulletList.Contains(bullet) || !bullet.IsAlive())
             return false;
 
         foreach (var func in BulletEnterConditionFuncList)
@@ -753,6 +753,11 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
     public void MDestory()
     {
         isAlive = false;
+        foreach (var action in BeforeDestoryActionList)
+        {
+            action(this);
+        }
+
         // 释放自身范围内的所有单位，执行一次OnExit
         foreach (var item in foodUnitList)
         {
@@ -779,8 +784,6 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
             OnBulletExit(item);
         }
         bulletList.Clear();
-        if (OnDestoryExtraAction != null)
-            OnDestoryExtraAction(this);
         ExecuteRecycle();
     }
 
@@ -901,5 +904,10 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
     public ITask GetTask(string key)
     {
         return taskController.GetTask(key);
+    }
+
+    public void SetRight(Vector2 v2)
+    {
+        transform.right = v2;
     }
 }
