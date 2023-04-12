@@ -6,7 +6,7 @@ using S7P.Numeric;
 /// </summary>
 public class StunStatusAbility : StatusAbility
 {
-    private BoolModifier boolModifier;
+    private BoolModifier disableSkillMod = new BoolModifier(true);
     private BoolModifier stunBoolModifier = new BoolModifier(true);
     private bool isForce = false; // 是否强制生效（无视免疫效果
 
@@ -43,11 +43,7 @@ public class StunStatusAbility : StatusAbility
         {
             (master.mCurrentActionState as FrozenState).TryExitCurrentState();
         }
-        if (boolModifier != null)
-        {
-            master.RemoveDisAbleSkillModifier(boolModifier);
-            boolModifier = null;
-        }
+        master.NumericBox.IsDisableSkill.RemoveModifier(disableSkillMod);
 
         // 移除晕眩特效
         if (master.IsContainEffect(StringManager.Stun))
@@ -69,8 +65,8 @@ public class StunStatusAbility : StatusAbility
         {
             master.SetActionState(new FrozenState(master, master.mCurrentActionState));
         }
-        if (boolModifier == null)
-            boolModifier = master.AddDisAbleSkillModifier();
+
+        master.NumericBox.IsDisableSkill.AddModifier(disableSkillMod);
 
         // 添加晕眩特效
         if (!master.IsContainEffect(StringManager.Stun))

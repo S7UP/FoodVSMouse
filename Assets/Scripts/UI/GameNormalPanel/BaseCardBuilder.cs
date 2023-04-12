@@ -356,8 +356,12 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
 
     public static void InitInstance(FoodUnit unit, int type, int shape, BaseGrid grid, int level, BaseCardBuilder builder)
     {
-        GameController.Instance.SetFoodAttribute(GameManager.Instance.attributeManager.GetFoodUnitAttribute(type, shape));
+        FoodUnit.Attribute attr = GameManager.Instance.attributeManager.GetFoodUnitAttribute(type, shape);
+        unit.mType = type;
+        unit.mShape = shape;
+        unit.SetAttribute(attr);
         unit.MInit();
+        unit.SetAttribute(attr);
         unit.SetLevel(level);
         if (builder != null)
         {

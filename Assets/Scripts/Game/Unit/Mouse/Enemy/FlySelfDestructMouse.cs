@@ -15,6 +15,7 @@ public class FlySelfDestructMouse : MouseUnit, IFlyUnit
         isDrop = false;
         dropColumn = 3; // 降落列默认为3，即左四列
         base.MInit();
+        mHeight = 1;
         // 初始免疫炸弹秒杀效果
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, IgnoreBombInstantKill);
         // 在受到伤害结算之后，直接判定为击坠状态

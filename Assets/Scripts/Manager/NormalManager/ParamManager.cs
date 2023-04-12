@@ -1,8 +1,44 @@
+using System.Collections.Generic;
 /// <summary>
 /// 参数管理器（提供静态方法）
 /// </summary>
 public class ParamManager
 {
+    /// <summary>
+    /// 获取某段字符串中的参数表示，并将其读取转化到字典里去
+    /// </summary>
+    /// <param name="s">传进来的："………${a=(1/2/3)}……${b=(1/2/3)}………"，主要是要识别a和b以及它对应的数组</param>
+    /// <param name="ParamDict">把上面的东西识别出来，然后作为变量存到字典里去，如：{"a", {1,2,3}}, {"b", {1,2,3}}</param>
+    /// <returns></returns>
+    public static void GetStringParamArray(string s, out Dictionary<string, float[]> ParamDict)
+    {
+        // 先作一次分割，以"${"的组合作为识别标志，把可能出现参数的位置都分出来
+        string[] strs1 = s.Split(new string[] { "${" }, System.StringSplitOptions.RemoveEmptyEntries);
+        ParamDict = new Dictionary<string, float[]>();
+        // 在舍去第一段后，对每段处理，去找"}"，以确定参数段
+        for (int i = 1; i < strs1.Length; i++)
+        {
+            string str = strs1[i];
+            int endIndex = str.IndexOf('}');
+            str = str.Substring(0, endIndex);
+            // 现在应该剥得只剩a=(1/2/3)这样了，然后我们就可以去和ParamManager中的Parse方法作对接了
+            string paramName;
+            float[] array;
+            if (Parse(str, out paramName, out array))
+            {
+                if (ParamDict.ContainsKey(paramName))
+                {
+                    if (array != null)
+                        ParamDict[paramName] = array;
+                }
+                else if (array != null)
+                {
+                    ParamDict.Add(paramName, array);
+                }
+            }
+        }
+    }
+
     /// <summary>
     /// 从字符串中解析参数
     /// </summary>

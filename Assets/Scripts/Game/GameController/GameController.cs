@@ -14,10 +14,8 @@ public class GameController : MonoBehaviour
     // 引用
     public static GameController Instance { get => _instance; } //+ 自身单例
     public BaseGrid overGrid; // 当前鼠标悬停的格子
-    protected BaseUnit.Attribute baseAttribute;
-    protected FoodUnit.Attribute foodAttribute;
-    protected MouseUnit.Attribute mouseAttribute;
 
+    public MouseFactory mMouseFactory = new MouseFactory();
 
     // 由编辑器给定的引用
     public GameObject gridListGo; // 用于存放地图格子的对象
@@ -309,71 +307,12 @@ public class GameController : MonoBehaviour
     }
 
     /// <summary>
-    /// 在通知卡片控制器创建卡片之前，先让系统知道下一个要建造卡片的属性
-    /// </summary>
-    public void SetFoodAttribute(FoodUnit.Attribute attr)
-    {
-        foodAttribute = attr;
-        baseAttribute = foodAttribute.baseAttrbute;
-    }
-
-    public void SetMouseAttribute(MouseUnit.Attribute attr)
-    {
-        mouseAttribute = attr;
-        baseAttribute = mouseAttribute.baseAttrbute;
-    }
-
-    /// <summary>
-    /// 同上，不过是设置道具的
-    /// </summary>
-    public void SetItemAttribute(BaseUnit.Attribute attr)
-    {
-        baseAttribute = attr;
-    }
-
-    /// <summary>
-    /// 同上，不过是设置角色的
-    /// </summary>
-    public void SetCharacterAttribute(BaseUnit.Attribute attr)
-    {
-        baseAttribute = attr;
-    }
-
-    /// <summary>
-    /// 获取基础属性，然后用来初始化对象
-    /// </summary>
-    /// <returns></returns>
-    public BaseUnit.Attribute GetBaseAttribute()
-    {
-        return baseAttribute;
-    }
-
-    public FoodUnit.Attribute GetFoodAttribute()
-    {
-        return foodAttribute;
-    }
-
-    public MouseUnit.Attribute GetMouseAttribute()
-    {
-        return mouseAttribute;
-    }
-
-    /// <summary>
     /// 获取当前火苗数
     /// </summary>
     /// <returns></returns>
     public float GetFire()
     {
         return mCostController.GetCost("Fire");
-    }
-
-    /// <summary>
-    /// 获取焦点目标
-    /// </summary>
-    /// <returns></returns>
-    public BaseUnit GetFocusTarget()
-    {
-        return focusTarget;
     }
 
     /// <summary>
@@ -402,8 +341,6 @@ public class GameController : MonoBehaviour
         if(grid!=null && grid.isActiveAndEnabled)
         {
             FoodUnit unit = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Food/" + (int)type).GetComponent<FoodUnit>();
-            unit.mType = (int)type;
-            unit.mShape = shape;
             BaseCardBuilder.InitInstance(unit, (int)type, shape, grid, level, null);
             return unit;
         }
@@ -419,9 +356,7 @@ public class GameController : MonoBehaviour
     /// <returns></returns>
     public MouseUnit CreateMouseUnit(int xIndex, int yIndex, BaseEnemyGroup.EnemyInfo enemyInfo)
     {
-        SetMouseAttribute(GameManager.Instance.attributeManager.GetMouseUnitAttribute(enemyInfo.type, enemyInfo.shape));
-        MouseUnit mouse = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Mouse/"+enemyInfo.type).GetComponent<MouseUnit>();
-        mouse.MInit();
+        MouseUnit mouse = mMouseFactory.GetMouse(enemyInfo.type, enemyInfo.shape);
         mouse.transform.position = MapManager.GetGridLocalPosition(xIndex, yIndex) + new Vector3(Vector2.right.x * MapManager.gridWidth, Vector2.right.y * MapManager.gridHeight) / 2;
         mouse.currentXIndex = xIndex;
         mouse.currentYIndex = yIndex;
@@ -448,8 +383,9 @@ public class GameController : MonoBehaviour
     /// <returns></returns>
     public BossUnit CreateBossUnit(int firstColumn, int firstRow, BaseEnemyGroup.EnemyInfo enemyInfo, float hp, int barNumber)
     {
-        SetMouseAttribute(GameManager.Instance.attributeManager.GetBossUnitAttribute(enemyInfo.type, enemyInfo.shape));
         BossUnit boss = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Boss/" + enemyInfo.type + "/" + enemyInfo.shape).GetComponent<BossUnit>();
+        boss.mType = enemyInfo.type;
+        boss.mShape = enemyInfo.shape;
         boss.transform.SetParent(enemyListTrans);
         boss.MInit();
         boss.SetMaxHpAndCurrentHp(hp);
@@ -533,10 +469,15 @@ public class GameController : MonoBehaviour
     /// <returns></returns>
     public BaseUnit CreateItem(int xIndex, int yIndex, int type, int shape)
     {
-        //SetItemAttribute(JsonManager.Load<BaseUnit.Attribute>("Item/" + type + "/" + shape + "")); // 准备先持有要创建实例的初始化信息
-        SetItemAttribute(GameManager.Instance.attributeManager.GetItemUnitAttribute(type, shape)); // 准备先持有要创建实例的初始化信息
+        // SetItemAttribute(JsonManager.Load<BaseUnit.Attribute>("Item/" + type + "/" + shape + "")); // 准备先持有要创建实例的初始化信息
+        // SetItemAttribute(GameManager.Instance.attributeManager.GetItemUnitAttribute(type, shape)); // 准备先持有要创建实例的初始化信息
+        BaseUnit.Attribute attr = GameManager.Instance.attributeManager.GetItemUnitAttribute(type, shape);
+
         BaseUnit item = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Item/" + type + "/"+shape).GetComponent<BaseUnit>();
+        item.mType = type;
+        item.mShape = shape;
         item.MInit();
+        item.SetBaseAttribute((float)attr.baseHP, (float)attr.baseAttack, (float)attr.baseAttackSpeed, (float)attr.baseMoveSpeed, (float)attr.baseDefense, (float)attr.attackPercent, attr.baseHeight);
         AddItem(item, xIndex, yIndex);
         return item;
     }
@@ -551,9 +492,14 @@ public class GameController : MonoBehaviour
     public BaseUnit CreateItem(Vector2 position, int type, int shape)
     {
         //SetItemAttribute(JsonManager.Load<BaseUnit.Attribute>("Item/" + type + "/" + shape + "")); // 准备先持有要创建实例的初始化信息
-        SetItemAttribute(GameManager.Instance.attributeManager.GetItemUnitAttribute(type, shape)); // 准备先持有要创建实例的初始化信息
+        //SetItemAttribute(GameManager.Instance.attributeManager.GetItemUnitAttribute(type, shape)); // 准备先持有要创建实例的初始化信息
+        BaseUnit.Attribute attr = GameManager.Instance.attributeManager.GetItemUnitAttribute(type, shape);
+
         BaseUnit item = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Item/" + type + "/" + shape).GetComponent<BaseUnit>();
+        item.mType = type;
+        item.mShape = shape;
         item.MInit();
+        item.SetBaseAttribute((float)attr.baseHP, (float)attr.baseAttack, (float)attr.baseAttackSpeed, (float)attr.baseMoveSpeed, (float)attr.baseDefense, (float)attr.attackPercent, attr.baseHeight);
         item.transform.position = position;
         AddItem(item);
         return item;
@@ -605,21 +551,9 @@ public class GameController : MonoBehaviour
     /// <returns></returns>
     public CharacterUnit CreateCharacter(int type)
     {
-        SetCharacterAttribute(new BaseUnit.Attribute() {
-            name = "玩家",
-            type = type, 
-            shape = 0,
-
-            baseHP = 1200,
-            baseAttack = 10,
-            baseAttackSpeed = 1,
-            attackPercent = 0.5f,
-            baseMoveSpeed = 1.0f,
-            baseDefense = 0,
-            baseRange = 0,
-            baseHeight = 0
-        }); // 准备先持有要创建实例的初始化信息
         CharacterUnit c = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Character/CharacterModel").GetComponent<CharacterUnit>();
+        c.mType = type;
+        c.mShape = 0;
         c.MInit();
         return c;
     }

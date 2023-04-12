@@ -15,7 +15,7 @@ public class BaseCat : BaseItem
         isTrigger = false;
         mBoxCollider2D.size = new Vector2(MapManager.gridWidth/2, MapManager.gridHeight/2);
         moveRotate = Vector2.right; // 默认方向为向右
-        NumericBox.MoveSpeed.SetBase(TransManager.TranToVelocity(12.0f)); // 默认移速为2格/s
+        
     }
 
     /// <summary>
@@ -35,6 +35,7 @@ public class BaseCat : BaseItem
         if (!isTrigger)
         {
             isTrigger = true;
+            NumericBox.MoveSpeed.SetBase(TransManager.TranToVelocity(12.0f)); // 默认移速为2格/s
             SetActionState(new TransitionState(this));
         }
     }

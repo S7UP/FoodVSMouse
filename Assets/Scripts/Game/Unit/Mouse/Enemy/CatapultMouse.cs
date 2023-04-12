@@ -23,6 +23,15 @@ public class CatapultMouse : MouseUnit
         base.Awake();
     }
 
+    /// <summary>
+    /// 设置判定参数
+    /// </summary>
+    public override void SetCollider2DParam()
+    {
+        mBoxCollider2D.offset = new Vector2(-0.25f* MapManager.gridWidth, 0);
+        mBoxCollider2D.size = new Vector2(0.75f * MapManager.gridWidth, 0.49f * MapManager.gridHeight);
+    }
+
     public override void AfterGeneralAttack()
     {
         mAttackFlag = true;

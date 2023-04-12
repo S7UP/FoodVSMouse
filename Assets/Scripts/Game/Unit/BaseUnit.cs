@@ -37,11 +37,12 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public float mCurrentAttack { get { return NumericBox.Attack.Value; } } // 当前攻击力
     public float mBaseAttackSpeed { get { return NumericBox.AttackSpeed.baseValue; } } // 基础攻击速度
     public float mCurrentAttackSpeed { get { return NumericBox.AttackSpeed.Value; } } // 当前攻击速度
-    public float mCurrentDefense { get { return NumericBox.Defense.Value; } } //防御
-    public float mCurrentRange { get { return NumericBox.Range.Value; } } //射程
+    public float mCurrentDefense { get { return NumericBox.Defense.Value; } } // 防御
     public float mBaseMoveSpeed { get { return NumericBox.MoveSpeed.baseValue; } } // 基础移动速度
     public float mCurrentMoveSpeed { get { return NumericBox.MoveSpeed.Value; } } // 当前移动速度
     public float mDamgeRate { get { return NumericBox.DamageRate.TotalValue; } } // 伤害比率
+    public float mBurnRate { get { return NumericBox.BurnRate.TotalValue; } } // 灰烬伤害比率
+    public float mAoeRate { get { return NumericBox.AoeRate.TotalValue; } } // 范围伤害比率
 
     public float mCurrentTotalShieldValue;
 
@@ -161,23 +162,6 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         SetUnitType();
 
         mAttackFlag = true; // 作用于一次攻击能否打出来的flag
-        if (mType >= 0)
-        {
-            BaseUnit.Attribute attr = GameController.Instance.GetBaseAttribute();
-            if (jsonPath == null)
-                attr = new BaseUnit.Attribute();
-            else
-                attr = GameController.Instance.GetBaseAttribute();
-            // 种类
-            mType = attr.type;
-            mShape = attr.shape;
-
-            SetBaseAttribute((float)attr.baseHP, (float)attr.baseAttack, (float)attr.baseAttackSpeed, (float)attr.baseMoveSpeed, (float)attr.baseDefense, (float)attr.attackPercent, attr.baseHeight);
-        }
-        else
-        {
-            SetBaseAttribute(100, 10, 1, 1, 0, 0.5f, 0);
-        }
 
         // 死亡状态
         isDeathState = false;
@@ -282,49 +266,6 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
 
     public virtual void MDestory()
     {
-        //// 管理的变量
-        //mCurrentHp = 0; //+ 当前生命值
-        //attackPercent = 0; // 攻击动画播放进度到attackPercent以上时允许出真正的攻击
-        //mAttackFlag = false; // 作用于一次攻击能否打出来的flag
-        //mHeight = 0; //+ 高度
-        //isDeathState = true;
-        //isFrozenState = false;
-
-        //mName = null; // 当前单位的种类名称
-
-        //mCurrentActionState = null; //+ 当前动作状态
-        //currentStateTimer = 0; // 当前状态的持续时间（切换状态时会重置）
-        //aliveTime = 0;
-        //lastPosition = Vector2.one;
-        //DeltaPosition = Vector2.one;
-
-        //NumericBox.Initialize();
-        //actionPointManager.Initialize();
-        //skillAbilityManager.Initialize();
-        //statusAbilityManager.Initialize();
-        //effectDict.Clear();
-        //effectDict2.Clear();
-        //isHideEffect = false;
-        //animatorController.Initialize();
-        //hitBox.Initialize();
-        //SpriteOffsetX.Initialize(); SpriteOffsetY.Initialize();
-        //SetSpriteLocalPosition(Vector2.zero);
-        //taskController.Initial();
-        //mRecordDamageComponent.Initilize();
-        //isIgnoreRecordDamage = false;
-
-        //CloseCollision();
-
-        //BeforeDeathEventList.Clear();
-        //BeforeBurnEventList.Clear();
-        //AfterDeathEventList.Clear();
-
-        //CanBlockFuncList.Clear();
-        //CanHitFuncList.Clear();
-        //CanBeSelectedAsTargetFuncList.Clear();
-
-        //mAttachedUnitDict.Clear();
-
         // 初始化透明度
         SetAlpha(1);
 
@@ -626,7 +567,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     /// <returns></returns>
     public virtual bool IsAlive()
     {
-        return !isDeathState;
+        return !isDeathState && isActiveAndEnabled;
     }
 
     /// <summary>
@@ -1012,25 +953,6 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public void RemoveNoCountUniqueStatusAbility(string statusName)
     {
         statusAbilityManager.RemoveNoCountUniqueStatusAbility(statusName);
-    }
-
-
-    /// <summary>
-    /// 添加禁用技能效果（沉默）
-    /// </summary>
-    /// <returns></returns>
-    public BoolModifier AddDisAbleSkillModifier()
-    {
-        return NumericBox.AddDisAbleSkillModifier();
-    }
-
-    /// <summary>
-    /// 移除禁用技能效果（沉默）
-    /// </summary>
-    /// <returns></returns>
-    public void RemoveDisAbleSkillModifier(BoolModifier boolModifier)
-    {
-        NumericBox.RemoveDisAbleSkillModifier(boolModifier);
     }
 
     /// <summary>

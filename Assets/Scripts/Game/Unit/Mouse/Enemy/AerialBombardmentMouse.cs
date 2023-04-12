@@ -16,6 +16,7 @@ public class AerialBombardmentMouse : MouseUnit, IFlyUnit
     public override void MInit()
     {
         base.MInit();
+        mHeight = 1;
         isDrop = false;
         // ·À±¬
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, new BoolModifier(true));

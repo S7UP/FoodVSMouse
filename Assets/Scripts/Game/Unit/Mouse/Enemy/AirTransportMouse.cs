@@ -14,6 +14,7 @@ public class AirTransportMouse : MouseUnit, IFlyUnit
     public override void MInit()
     {
         base.MInit();
+        mHeight = 1;
         // ∑¿±¨
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, new BoolModifier(true));
         // Õº≤„»®÷ÿ-1

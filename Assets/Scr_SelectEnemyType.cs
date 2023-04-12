@@ -256,9 +256,10 @@ public class Scr_SelectEnemyType : MonoBehaviour
     private void ConstructView()
     {
         // ¶ÁÈ¡Ð¡±ø
-        foreach (var keyValuePair in MouseManager.GetMouseTypeNameDict())
+        foreach (var keyValuePair in MouseManager.GetAttributeDict())
         {
             MouseNameTypeMap type = keyValuePair.Key;
+            Dictionary<int, MouseManager.MouseAttribute> shapeAttrDict = keyValuePair.Value;
             MouseUnit.Attribute attr = GameManager.Instance.attributeManager.GetMouseUnitAttribute((int)type, 0);
             typeList.Add(new SelectEnemyInfo()
             {
@@ -268,7 +269,7 @@ public class Scr_SelectEnemyType : MonoBehaviour
 
             List<SelectEnemyInfo> oneShapeList = new List<SelectEnemyInfo>();
             shapeList.Add(oneShapeList);
-            foreach (var keyValuePair2 in MouseManager.GetShapeNameDict(type))
+            foreach (var keyValuePair2 in shapeAttrDict)
             {
                 int shape = keyValuePair2.Key;
                 MouseUnit.Attribute attr2 = GameManager.Instance.attributeManager.GetMouseUnitAttribute((int)type, shape);

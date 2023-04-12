@@ -18,12 +18,14 @@ public class CombatNumericBox
     public MultiplyFloatModifierCollector DamageRate = new MultiplyFloatModifierCollector();
     // 移动速度(格/秒)
     public FloatNumeric MoveSpeed = new FloatNumeric();
-    // 射程（格）
-    public FloatNumeric Range = new FloatNumeric();
     // 护盾值
     public FloatNumeric Shield = new FloatNumeric();
     // 禁用主动技能决定器
     public BoolNumeric IsDisableSkill = new BoolNumeric();
+    // 灰烬比率
+    public MultiplyFloatModifierCollector BurnRate = new MultiplyFloatModifierCollector();
+    // 群伤比率
+    public MultiplyFloatModifierCollector AoeRate = new MultiplyFloatModifierCollector();
 
     // 其他自定义属性
     public Dictionary<string, IntNumeric> IntDict = new Dictionary<string, IntNumeric>();
@@ -38,10 +40,11 @@ public class CombatNumericBox
         AttackSpeed.Initialize();
         Defense.Initialize();
         MoveSpeed.Initialize();
-        Range.Initialize();
         Shield.Initialize();
         IsDisableSkill.Initialize();
         DamageRate.Clear();
+        BurnRate.Clear();
+        AoeRate.Clear();
 
         IntDict.Clear();
         FloatDict.Clear();
@@ -97,26 +100,6 @@ public class CombatNumericBox
         return dmg;
     }
 
-    /// <summary>
-    /// 添加禁用技能效果（沉默）
-    /// </summary>
-    /// <returns></returns>
-    public BoolModifier AddDisAbleSkillModifier()
-    {
-        BoolModifier boolModifier = new BoolModifier(true);
-        IsDisableSkill.AddModifier(boolModifier);
-        return boolModifier;
-    }
-
-    /// <summary>
-    /// 移除禁用技能效果（沉默）
-    /// </summary>
-    /// <returns></returns>
-    public void RemoveDisAbleSkillModifier(BoolModifier boolModifier)
-    {
-        IsDisableSkill.RemoveModifier(boolModifier);
-    }
-
     public bool GetBoolNumericValue(string key)
     {
         if (BoolDict.ContainsKey(key))
@@ -150,10 +133,6 @@ public class CombatNumericBox
         if (BoolDict.ContainsKey(key))
         {
             BoolDict[key].RemoveModifier(boolModifier);
-            //if (BoolDict[key].DecideCollector.Modifiers.Count <= 0)
-            //{
-            //    BoolDict.Remove(key);
-            //}
         }
     }
 }

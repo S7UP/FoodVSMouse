@@ -42,6 +42,19 @@ public class MouseUnit : BaseUnit
     // 地形危险度权重表，可以修改特定值使得某些类型的敌人有特殊地形的趋向
     public Dictionary<GridType, int> GridDangerousWeightDict;
 
+    /// <summary>
+    /// 只有对象被创建时做一次，主要是用来获取各组件的引用
+    /// </summary>
+    public override void Awake()
+    {
+        base.Awake();
+        // 组件获取
+        rigibody2D = gameObject.GetComponent<Rigidbody2D>();
+        animator = gameObject.transform.Find("Ani_Mouse").gameObject.GetComponent<Animator>();
+        spriteRenderer = gameObject.transform.Find("Ani_Mouse").gameObject.GetComponent<SpriteRenderer>();
+        mBoxCollider2D = gameObject.GetComponent<BoxCollider2D>();
+        spriteTrans = transform.Find("Ani_Mouse");
+    }
 
     /// <summary>
     /// 老鼠每次被投入战场时要做的初始化工作，要确定其各种属性
@@ -63,16 +76,6 @@ public class MouseUnit : BaseUnit
         animatorController.ChangeAnimator(animator);
 
         mHertRateList.Clear();
-        // 从Json中读取的属性以及相关的初始化
-        if(mType >= 0)
-        {
-            MouseUnit.Attribute attr = GameController.Instance.GetMouseAttribute();
-            foreach (var item in attr.hertRateList)
-            {
-                mHertRateList.Add(item);
-            }
-        }
-
         mHertIndex = 0;
         currentXIndex = 0;
         currentYIndex = 0;
@@ -93,7 +96,6 @@ public class MouseUnit : BaseUnit
         // 初始为移动状态
         SetActionState(new MoveState(this));
 
-
         // 添加几个行动点响应事件
         // 在受到伤害结算之后，更新受伤贴图状态
         AddActionPointListener(ActionPointType.PostReceiveDamage, delegate { UpdateHertMap(); });
@@ -109,6 +111,46 @@ public class MouseUnit : BaseUnit
         SetGridDangerousWeightDict();
     }
 
+    public override void MUpdate()
+    {
+        base.MUpdate();
+        int lastXIndex = currentXIndex;
+        int lastYIndex = currentYIndex;
+        currentXIndex = MapManager.GetXIndex(transform.position.x);
+        currentYIndex = MapManager.GetYIndex(transform.position.y);
+        // 当格子的判定坐标发生改变
+        if (lastYIndex != currentYIndex)
+        {
+            // 换行
+            GameController.Instance.ChangeEnemyRow(lastYIndex, this);
+        }
+        // 更新受击闪烁状态
+        if (hitBox.GetPercent() > 0)
+        {
+            spriteRenderer.material.SetFloat("_FlashRate", 0.5f * hitBox.GetPercent());
+        }
+        // 进家判定
+        if (CanTriggerLoseWhenEnterLoseLine() && transform.position.x < MapManager.GetColumnX(-1.5f))
+        {
+            GameController.Instance.Lose();
+        }
+        else
+        {
+            // 出屏判定
+            if (IsOutOfBound())
+            {
+                DeathEvent();
+            }
+        }
+
+    }
+
+    public override void MDestory()
+    {
+        NumericBox.Initialize();
+        base.MDestory();
+    }
+
     public override void SetUnitType()
     {
         mUnitType = UnitType.Mouse;
@@ -121,22 +163,6 @@ public class MouseUnit : BaseUnit
     {
         mBoxCollider2D.offset = new Vector2(0, 0);
         mBoxCollider2D.size = new Vector2(0.49f*MapManager.gridWidth, 0.49f*MapManager.gridHeight);
-    }
-
-
-
-    /// <summary>
-    /// 只有对象被创建时做一次，主要是用来获取各组件的引用
-    /// </summary>
-    public override void Awake()
-    {
-        base.Awake();
-        // 组件获取
-        rigibody2D = gameObject.GetComponent<Rigidbody2D>();
-        animator = gameObject.transform.Find("Ani_Mouse").gameObject.GetComponent<Animator>();
-        spriteRenderer = gameObject.transform.Find("Ani_Mouse").gameObject.GetComponent<SpriteRenderer>();
-        mBoxCollider2D = gameObject.GetComponent<BoxCollider2D>();
-        spriteTrans = transform.Find("Ani_Mouse");
     }
 
     /// <summary>
@@ -161,15 +187,6 @@ public class MouseUnit : BaseUnit
     {
         new DamageAction(CombatAction.ActionType.CauseDamage, this, unit, mCurrentAttack).ApplyAction();
     }
-
-
-    // 注：一个Collider2D不应该直接使用Transform或者其offset属性来移动它，而是应该使用Rigidbody2D的移动代替之。这样会得到最好的表现和正确的碰撞检测。
-    // 因此，操作老鼠移动不应该用上面的transform,而是用下面的rigibody2D
-    //public override void SetPosition(Vector3 V3)
-    //{
-    //    //rigibody2D.MovePosition(V3);
-        
-    //}
 
     /// <summary>
     /// 是否满足普通攻击的条件
@@ -376,11 +393,7 @@ public class MouseUnit : BaseUnit
     /// <param name="action"></param>
     public void FlashWhenHited(CombatAction action)
     {
-        // 当存在攻击来源时
-        // if (action.Creator != null)
-        {
-            hitBox.OnHit();
-        }
+        hitBox.OnHit();
     }
 
     /// <summary>
@@ -398,14 +411,7 @@ public class MouseUnit : BaseUnit
     /// </summary>
     public virtual void OnUpdateRuntimeAnimatorController()
     {
-        // demo...
-        //switch (mHertIndex)
-        //{
-        //    case 0:
-        //        break;
-        //    default:
-        //        break;
-        //}
+
     }
 
     /// <summary>
@@ -505,40 +511,6 @@ public class MouseUnit : BaseUnit
     public virtual void OnTriggerExit2D(Collider2D collision)
     {
         OnAllyTriggerExit(collision);
-    }
-
-    public override void MUpdate()
-    {
-        base.MUpdate();
-        int lastXIndex = currentXIndex;
-        int lastYIndex = currentYIndex;
-        currentXIndex = MapManager.GetXIndex(transform.position.x);
-        currentYIndex = MapManager.GetYIndex(transform.position.y);
-        // 当格子的判定坐标发生改变
-        if (lastYIndex != currentYIndex)
-        {
-            // 换行
-            GameController.Instance.ChangeEnemyRow(lastYIndex, this);
-        }
-        // 更新受击闪烁状态
-        if (hitBox.GetPercent() > 0)
-        {
-            spriteRenderer.material.SetFloat("_FlashRate", 0.5f * hitBox.GetPercent());
-        }
-        // 进家判定
-        if(CanTriggerLoseWhenEnterLoseLine() && transform.position.x < MapManager.GetColumnX(-1.5f))
-        {
-            GameController.Instance.Lose();
-        }
-        else
-        {
-            // 出屏判定
-            if (IsOutOfBound())
-            {
-                DeathEvent();
-            }
-        }
-
     }
 
     /// <summary>
@@ -910,5 +882,30 @@ public class MouseUnit : BaseUnit
         if (!isIgnoreRecordDamage && IsBoss())
             OnDamage(value);
         mRecordDamageComponent.AddRecordDamage(value);
+    }
+
+    /// <summary>
+    /// 设置怪的属性（会完全刷新目标的战斗盒子数据）
+    /// </summary>
+    /// <param name="attr"></param>
+    public void SetAttribute(MouseManager.MouseAttribute attr)
+    {
+        // 血量
+        NumericBox.Hp.SetBase(attr.hp);
+        mCurrentHp = mMaxHp;
+        // 攻击力
+        NumericBox.Attack.SetBase(attr.attack);
+        // 攻击速度与攻击间隔
+        NumericBox.AttackSpeed.SetBase(attr.attackSpeed);
+        NumericBox.MoveSpeed.SetBase(TransManager.TranToVelocity(attr.moveSpeed));
+        attackPercent = attr.attackPercent; // 攻击动画播放进度到attackPercent以上时允许出真正的攻击
+
+        if (attr.burnDefence != 0)
+            NumericBox.BurnRate.AddModifier(new FloatModifier(1-attr.burnDefence));
+        mHertRateList.Clear();
+        foreach (var item in attr.mHertRateList)
+        {
+            mHertRateList.Add(item);
+        }
     }
 }

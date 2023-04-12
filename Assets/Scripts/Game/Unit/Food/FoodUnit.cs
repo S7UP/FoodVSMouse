@@ -25,7 +25,6 @@ public class FoodUnit : BaseUnit
     public Transform spriteTrans;
 
     // 其他
-    public FoodType mFoodType; // 美食职业划分
     public BaseCardBuilder mBuilder; // 建造自身的建造器
     public int mLevel; //星级
     public int typeAndShapeToLayer = 0; // 种类与变种对图层的加权等级
@@ -53,8 +52,6 @@ public class FoodUnit : BaseUnit
         // 动画控制器绑定animator
         animatorController.ChangeAnimator(animator);
         mBuilder = null;
-        attr = GameController.Instance.GetFoodAttribute();
-        mFoodType = attr.foodType;
 
         mGridList = new List<BaseGrid>();
         isUseSingleGrid = true;
@@ -387,34 +384,6 @@ public class FoodUnit : BaseUnit
         animatorController.SetSpeed(attackClipName, speed);
     }
 
-    public static void SaveNewFoodInfo()
-    {
-        FoodUnit.Attribute attr = new FoodUnit.Attribute()
-        {
-            baseAttrbute = new BaseUnit.Attribute()
-            {
-                name = "终结者酒架", // 单位的具体名称
-                type = 7, // 单位属于的分类
-                shape = 2, // 单位在当前分类的变种编号
-
-                baseHP = 50, // 基础血量
-                baseAttack = 0, // 基础攻击
-                baseAttackSpeed = 1.05, // 基础攻击速度
-                attackPercent = 0.5,
-                baseDefense = 0,
-                baseMoveSpeed = 0,
-                baseRange = 9,
-                baseHeight = 0, // 基础高度
-            },
-            valueList = new float[] {10, 12, 14, 15, 18, 20, 22, 26, 32, 40, 55, 70, 85, 100, 115, 130, 145 },
-            foodType = FoodType.Shooter
-        };
-
-        //Debug.Log("开始存档美食信息！");
-        JsonManager.Save(attr, "Food/" + attr.baseAttrbute.type + "/" + attr.baseAttrbute.shape + "");
-        //Debug.Log("美食信息存档完成！");
-    }
-
     /// <summary>
     /// 设置渲染层级
     /// </summary>
@@ -611,5 +580,11 @@ public class FoodUnit : BaseUnit
     public FoodInGridType GetFoodInGridType()
     {
         return BaseCardBuilder.GetFoodInGridType(mType);
+    }
+
+    public void SetAttribute(Attribute attr)
+    {
+        this.attr = attr;
+        SetBaseAttribute((float)attr.baseAttrbute.baseHP, (float)attr.baseAttrbute.baseAttack, (float)attr.baseAttrbute.baseAttackSpeed, (float)attr.baseAttrbute.baseMoveSpeed, (float)attr.baseAttrbute.baseDefense, (float)attr.baseAttrbute.attackPercent, attr.baseAttrbute.baseHeight);
     }
 }

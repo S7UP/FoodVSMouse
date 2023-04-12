@@ -94,6 +94,20 @@ public class CharacterController:IGameControllerMember
     /// <returns></returns>
     public void ExecuteSetCharacter()
     {
+        // 准备先持有要创建实例的初始化信息
+        BaseUnit.Attribute attr = new BaseUnit.Attribute()
+        {
+            name = "玩家",
+            baseHP = 1200,
+            baseAttack = 10,
+            baseAttackSpeed = 1,
+            attackPercent = 0.5f,
+            baseMoveSpeed = 1.0f,
+            baseDefense = 0,
+            baseRange = 0,
+            baseHeight = 0
+        }; 
+
         // 退出角色放置模式
         mGameNormalPanel.ExitCharacterConstructMode();
         // 解除暂停
@@ -101,6 +115,7 @@ public class CharacterController:IGameControllerMember
         BaseGrid g = GameController.Instance.GetOverGrid();
         mCurrentCharacter.gameObject.SetActive(true);
         mCurrentCharacter.MInit();
+        mCurrentCharacter.SetBaseAttribute((float)attr.baseHP, (float)attr.baseAttack, (float)attr.baseAttackSpeed, (float)attr.baseMoveSpeed, (float)attr.baseDefense, (float)attr.attackPercent, attr.baseHeight);
         GameController.Instance.AddCharacter(mCurrentCharacter, g.GetColumnIndex(), g.GetRowIndex());
     }
 
