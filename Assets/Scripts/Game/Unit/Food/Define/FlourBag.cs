@@ -113,20 +113,12 @@ public class FlourBag : FoodUnit
                 if(mShape >= 1)
                     m.AddStatusAbility(new FrozenSlowStatusAbility(-90, m, 240));
 
-                if (m.NumericBox.GetBoolNumericValue(StringManager.IgnoreBombInstantKill))
-                {
-                    new DamageAction(CombatAction.ActionType.RealDamage, this, m, 90 * mCurrentAttack).ApplyAction();
-                    UnitManager.TriggerRecordDamage(m);
-                }
-                else
-                {
-                    UnitManager.Execute(this, m);
-                }
+                new DamageAction(CombatAction.ActionType.RealDamage, this, m, m.mMaxHp* m.NumericBox.BurnRate.TotalValue).ApplyAction();
+                UnitManager.TriggerRecordDamage(m);
             });
             r.AddBeforeDestoryAction(delegate {
                 if (builder != null)
                 {
-                    Debug.Log("count="+count);
                     float percent = Mathf.Min(0.75f, 0.15f*count);
                     builder.AddLeftCDPercent(-percent);
                 }

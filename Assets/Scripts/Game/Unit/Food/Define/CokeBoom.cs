@@ -1,3 +1,5 @@
+using UnityEngine;
+
 public class CokeBoom : FoodUnit
 {
     public override void MInit()
@@ -98,10 +100,13 @@ public class CokeBoom : FoodUnit
         }
         // 原地产生一个爆炸效果
         {
-            BombAreaEffectExecution bombEffect = BombAreaEffectExecution.GetInstance();
-            bombEffect.Init(this, 900 * mCurrentAttack / 10, GetRowIndex(), 4, 3, -0.5f, 0, false, true);
-            bombEffect.transform.position = this.GetPosition();
-            GameController.Instance.AddAreaEffectExecution(bombEffect);
+            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position + 0.5f*Vector3.left*MapManager.gridWidth, 4, 3, "ItemCollideEnemy");
+            r.isAffectMouse = true;
+            r.SetInstantaneous();
+            r.SetOnEnemyEnterAction((u)=>{
+                BurnManager.BurnDamage(this, u);
+            });
+            GameController.Instance.AddAreaEffectExecution(r);
         }
     }
 

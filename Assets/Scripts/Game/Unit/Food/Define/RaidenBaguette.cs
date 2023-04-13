@@ -216,8 +216,8 @@ public class RaidenBaguette : FoodUnit
                     r.SetOnEnemyEnterAction((u)=> {
                         if (hitedUnitList.Contains(u))
                             return;
-                        // 造成一次伤害为900*(两者当前攻击力之和/20)的爆破灰烬效果
-                        CombatActionManager.BombBurnDamageUnit(null, u, 900*(u1.mCurrentAttack+u2.mCurrentAttack)/20);
+                        // CombatActionManager.BombBurnDamageUnit(null, u, 900*(u1.mCurrentAttack+u2.mCurrentAttack)/20);
+                        BurnManager.BurnDamage(null, u);
                         // 如果是二转，还可以附加唯一的1秒80%减速效果和3秒的20%增伤效果
                         if (u1.mShape >= 2)
                         {
@@ -289,7 +289,8 @@ public class RaidenBaguette : FoodUnit
                     if (hitedUnitList.Contains(u))
                         return;
                     // 造成一次伤害为900*(当前攻击力/20)的爆破灰烬效果
-                    CombatActionManager.BombBurnDamageUnit(null, u, 900 * currentUnit.mCurrentAttack / 10);
+                    // CombatActionManager.BombBurnDamageUnit(null, u, 900 * currentUnit.mCurrentAttack / 10);
+                    BurnManager.BurnDamage(null, u);
                     // 如果是二转，还可以附加唯一的1秒80%减速效果和3秒的20%增伤效果
                     if (currentUnit.mShape >= 2)
                     {

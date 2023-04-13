@@ -64,7 +64,7 @@ public class BlondeMary : BossUnit
     /// <summary>
     /// 初始化BOSS的参数
     /// </summary>
-    public override void InitBossParam()
+    protected override void InitBossParam()
     {
         // 切换阶段血量百分比
         AddParamArray("hpRate", new float[] { 0.5f, 0.2f });
@@ -125,6 +125,7 @@ public class BlondeMary : BossUnit
 
         // 生成一个隐形挨炸的老鼠
         MouseUnit m = MouseManager.GetBombedToolMouse();
+        m.SetMaxHpAndCurrentHp(mMaxHp);
         m.transform.position = transform.position;
         {
             CustomizationTask t = new CustomizationTask();

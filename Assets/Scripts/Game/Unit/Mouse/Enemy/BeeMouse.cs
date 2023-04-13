@@ -1,7 +1,5 @@
 using System.Collections.Generic;
 
-using S7P.Numeric;
-
 using UnityEngine;
 /// <summary>
 /// ¥Û√€∑‰ Û
@@ -40,7 +38,6 @@ public class BeeMouse : MouseUnit
     {
         base.MInit();
         isUseRangedAttack = false;
-        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, new BoolModifier(true));
     }
 
     public override void OnAttackStateEnter()

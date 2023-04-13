@@ -1,6 +1,4 @@
 using System.Collections.Generic;
-
-using S7P.Numeric;
 /// <summary>
 /// Œœ≈£≥µ Û
 /// </summary>
@@ -12,8 +10,6 @@ public class SnailMouse : MouseUnit
     public override void MInit()
     {
         base.MInit();
-        // ∑¿÷π’®µØ√Î…±–ßπ˚
-        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, new BoolModifier(true));
     }
 
     /// <summary>

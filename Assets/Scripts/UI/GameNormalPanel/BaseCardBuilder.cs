@@ -257,10 +257,6 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
         {
             GameController.Instance.mCardController.SelectCard(arrayIndex); // 通知建造控制器选取自身
         }
-        else
-        {
-            Debug.Log("不可选取，原因是：");
-        }
     }
 
     public void SetPosition(Vector3 v3)

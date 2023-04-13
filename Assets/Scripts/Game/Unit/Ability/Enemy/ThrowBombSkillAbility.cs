@@ -76,7 +76,7 @@ public class ThrowBombSkillAbility : SkillAbility
                 canThrowEntity = false;
                 BombBullet bombBullet = GameController.Instance.CreateBullet(master, master.transform.position, Vector2.right, BulletStyle.Bomb) as BombBullet;
                 bombBullet.SetHitSoundEffect("Bomb");
-                bombBullet.SetAttribute(24.0f, true, 1.5f, bombBullet.transform.position, targetPosition, master.GetRowIndex());
+                bombBullet.SetAttribute(36.0f, true, 1.5f, bombBullet.transform.position, targetPosition, master.GetRowIndex());
             }
         }
         else

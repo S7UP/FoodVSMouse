@@ -106,7 +106,7 @@ public class MouseUnit : BaseUnit
         AddActionPointListener(ActionPointType.PostReceiveCure, delegate { UpdateHertMap(); });
         // 装上正常的受击材质
         spriteRenderer.material = GameManager.Instance.GetMaterial("Hit");
-        UpdateRuntimeAnimatorController(); // 更新贴图
+        OnHertStageChanged(); // 更新贴图
         // 修改地形危险度权值表
         SetGridDangerousWeightDict();
     }
@@ -367,14 +367,14 @@ public class MouseUnit : BaseUnit
         }
         // 有切换通知时才切换
         if (flag)
-            UpdateRuntimeAnimatorController();
+            OnHertStageChanged();
     }
 
     /// <summary>
-    /// 自动更新贴图
+    /// 当受伤阶段点切换时
     /// </summary>
     /// <param name="collision"></param>
-    public virtual void UpdateRuntimeAnimatorController()
+    public virtual void OnHertStageChanged()
     {
         AnimatorStateRecorder a = animatorController.GetCurrentAnimatorStateRecorder(); // 获取当前在播放的动画
         animator.runtimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Mouse/" + mType + "/" + mShape + "/" + mHertIndex);

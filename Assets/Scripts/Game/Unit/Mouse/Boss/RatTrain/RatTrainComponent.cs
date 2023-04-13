@@ -262,6 +262,18 @@ public abstract class RatTrainComponent : MouseModel
         return 0;
     }
 
+    public override float OnBurnDamage(float dmg)
+    {
+        // boss本体取代受伤
+        if (master != null)
+        {
+            dmg = master.OnBombBurnDamage(burnDmgRate * dmg);
+            master.UpdateHertMap();
+            return dmg;
+        }
+        return 0;
+    }
+
     public override float OnBombBurnDamage(float dmg)
     {
         // boss本体取代受伤

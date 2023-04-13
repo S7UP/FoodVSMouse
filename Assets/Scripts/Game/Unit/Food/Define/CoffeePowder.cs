@@ -26,9 +26,8 @@ public class CoffeePowder : FoodUnit
     {
         totalTime = 0;
         base.MInit();
-        // 获取100%减伤，以及免疫灰烬秒杀效果
+        // 获取100%减伤
         NumericBox.Defense.SetBase(1);
-        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, new BoolModifier(true));
         NumericBox.AddDecideModifierToBoolDict(StringManager.Invincibility, new BoolModifier(true));
         // 不可选取
         CloseCollision();

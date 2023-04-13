@@ -67,11 +67,25 @@ public class FlyBombBullet : BaseBullet
     public override void TakeDamage(BaseUnit baseUnit)
     {
         // 原地产生一个爆炸效果
-        BombAreaEffectExecution bombEffect = BombAreaEffectExecution.GetInstance();
-        bombEffect.Init(this.mMasterBaseUnit, 900, GetRowIndex(), 1, 1, 0, 0, true, false);
+        //BombAreaEffectExecution bombEffect = BombAreaEffectExecution.GetInstance();
+        //bombEffect.Init(this.mMasterBaseUnit, 900, GetRowIndex(), 1, 1, 0, 0, true, false);
+        
+        RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 0.5f, 1, "BothCollide");
+        r.SetInstantaneous();
+        r.isAffectMouse = true;
+        r.isAffectFood = true;
+        r.SetAffectHeight(0);
+        r.SetOnFoodEnterAction((u) => {
+            BurnManager.BurnDamage(mMasterBaseUnit, u);
+        });
+        r.SetOnEnemyEnterAction((u) => {
+            BurnManager.BurnDamage(mMasterBaseUnit, u);
+        });
+        GameController.Instance.AddAreaEffectExecution(r);
+
         // 位于格子正中心爆炸
-        bombEffect.transform.position = MapManager.GetGridLocalPosition(GetColumnIndex(), GetRowIndex());
-        GameController.Instance.AddAreaEffectExecution(bombEffect);
+        //bombEffect.transform.position = MapManager.GetGridLocalPosition(GetColumnIndex(), GetRowIndex());
+        //GameController.Instance.AddAreaEffectExecution(bombEffect);
         ExecuteHitAction(baseUnit);
         KillThis();
     }

@@ -48,7 +48,7 @@ public class StringManager
     public const string IgnoreSlowDown = "¼õËÙÃâÒß";
     public const string IgnoreDecAttackSpeed = "¹¥ËÙ½µµÍÃâÒß";
     public const string IgnoreStun = "ÔÎÑ£ÃâÒß";
-    public const string IgnoreBombInstantKill = "ÃâÒßÕ¨µ¯µÄÃëÉ±Ğ§¹û";
+    // public const string IgnoreBombInstantKill = "ÃâÒßÕ¨µ¯µÄÃëÉ±Ğ§¹û";
     public const string Invincibility = "ÃâÒßÉËº¦£¨ÎŞµĞ£©";
     public const string IgnoreDropFromSky = "ÃâÒß¸ß¿Õ×¹Âä";
 }

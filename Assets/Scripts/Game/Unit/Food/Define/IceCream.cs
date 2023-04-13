@@ -10,7 +10,6 @@ public class IceCream : FoodUnit
         base.MInit();
         // 获取100%减伤，接近无限的生命值，以及免疫灰烬秒杀效果
         NumericBox.Defense.SetBase(1);
-        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, new BoolModifier(true));
         NumericBox.AddDecideModifierToBoolDict(StringManager.Invincibility, new BoolModifier(true));
         // 不可选取
         CloseCollision();

@@ -81,7 +81,7 @@ public class ShadeAreaEffectExecution : RetangleAreaEffectExecution
         // 获取目标身上唯一的荫蔽任务
         if (unit.GetTask(TaskName) == null)
         {
-            Debug.LogWarning("目标在没有荫蔽任务的情况下就退出了荫蔽区域！");
+            // Debug.LogWarning("目标在没有荫蔽任务的情况下就退出了荫蔽区域！");
         }
         else
         {

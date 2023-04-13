@@ -12,6 +12,7 @@ public class MouseCatcher : FoodUnit
     private int totalPrepareTime; // 总准备时间
     private bool isTriggerBoom; // 是否被触爆
     private BoolModifier boolModifier = new BoolModifier(true);
+    private FloatModifier burnMod = new FloatModifier(0);
 
     public override void MInit()
     {
@@ -98,7 +99,7 @@ public class MouseCatcher : FoodUnit
         prepareTime = 0;
         // 在准备动画几帧内，进入无敌、免疫灰烬秒杀、免疫冻结效果
         NumericBox.AddDecideModifierToBoolDict(StringManager.Invincibility, boolModifier);
-        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, boolModifier);
+        NumericBox.BurnRate.AddModifier(burnMod);
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozen, boolModifier);
     }
 
@@ -112,7 +113,7 @@ public class MouseCatcher : FoodUnit
     {
         // 移除这些效果
         NumericBox.RemoveDecideModifierToBoolDict(StringManager.Invincibility, boolModifier);
-        NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, boolModifier);
+        NumericBox.BurnRate.RemoveModifier(burnMod);
         NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreFrozen, boolModifier);
         // 添加检测效果
         CreateCheckArea();
@@ -157,11 +158,14 @@ public class MouseCatcher : FoodUnit
     /// <returns></returns>
     private void CreateNormalBoom()
     {
-        BombAreaEffectExecution bombEffect = BombAreaEffectExecution.GetInstance();
-        bombEffect.Init(this, 90 * mCurrentAttack, GetRowIndex(), 1.5f, 1, 0, 0, false, true);
-        bombEffect.transform.position = this.GetPosition();
-        bombEffect.SetAffectHeight(0); // 仅对地
-        GameController.Instance.AddAreaEffectExecution(bombEffect);
+        RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 1.5f, 1, "ItemCollideEnemy");
+        r.SetInstantaneous();
+        r.isAffectMouse = true;
+        r.SetAffectHeight(0);
+        r.SetOnEnemyEnterAction((u) => {
+            BurnManager.BurnDamage(this, u);
+        });
+        GameController.Instance.AddAreaEffectExecution(r);
     }
 
     /// <summary>
@@ -171,33 +175,29 @@ public class MouseCatcher : FoodUnit
     {
         // 对地秒杀非BOSS效果
         {
-            BombAreaEffectExecution bombEffect = BombAreaEffectExecution.GetInstance();
-            bombEffect.Init(this, 900 * mCurrentAttack / 10, GetRowIndex(), 1.5f, 1, 0, 0, false, true);
-            bombEffect.transform.position = this.GetPosition();
-            bombEffect.SetAffectHeight(0); // 仅对地
-            bombEffect.SetOnEnemyEnterAction(BurnNoBossEnemyUnit);
-            GameController.Instance.AddAreaEffectExecution(bombEffect);
+            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 1.5f, 1, "ItemCollideEnemy");
+            r.SetInstantaneous();
+            r.isAffectMouse = true;
+            r.SetAffectHeight(0);
+            r.SetOnEnemyEnterAction((u) => {
+                if (!u.IsBoss())
+                    new DamageAction(CombatAction.ActionType.BurnDamage, this, u, u.mCurrentHp).ApplyAction();
+                else
+                    BurnManager.BurnDamage(this, u);
+            });
+            GameController.Instance.AddAreaEffectExecution(r);
         }
 
-        // 3*3一次900灰烬伤害
+        // 3*3
         {
-            BombAreaEffectExecution bombEffect = BombAreaEffectExecution.GetInstance();
-            bombEffect.Init(this, 900 * mCurrentAttack / 10, GetRowIndex(), 3, 3, 0, 0, false, true);
-            bombEffect.transform.position = this.GetPosition();
-            bombEffect.SetAffectHeight(0); // 仅对地
-            GameController.Instance.AddAreaEffectExecution(bombEffect);
+            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 3, 3, "ItemCollideEnemy");
+            r.SetInstantaneous();
+            r.isAffectMouse = true;
+            r.SetAffectHeight(0);
+            r.SetOnEnemyEnterAction((u) => {
+                BurnManager.BurnDamage(this, u);
+            });
+            GameController.Instance.AddAreaEffectExecution(r);
         }
-    }
-
-    /// <summary>
-    /// 直接秒杀非BOSS敌人单位
-    /// </summary>
-    private void BurnNoBossEnemyUnit(MouseUnit m)
-    {
-        if(!m.IsBoss())
-            new BombDamageAction(CombatAction.ActionType.CauseDamage, this, m, m.mCurrentHp).ApplyAction();
-        else
-            // 对BOSS造成900点灰烬伤害
-            new BombDamageAction(CombatAction.ActionType.CauseDamage, this, m, 900 * mCurrentAttack / 10).ApplyAction();
     }
 }

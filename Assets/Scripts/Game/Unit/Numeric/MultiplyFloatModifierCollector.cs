@@ -55,6 +55,11 @@ public class MultiplyFloatModifierCollector
         return TotalValue;
     }
 
+    public List<FloatModifier> GetModifierList()
+    {
+        return Modifiers;
+    }
+
     public void Update()
     {
         TotalValue = 1;

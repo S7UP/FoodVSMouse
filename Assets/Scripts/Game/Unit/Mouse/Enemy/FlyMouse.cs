@@ -16,9 +16,6 @@ public class FlyMouse : MouseUnit, IFlyUnit
         dropColumn = 0; // 降落列默认为0，即左一列
         // 飞行状态下获取100%移速加成
         NumericBox.MoveSpeed.AddPctAddModifier(floatModifier);
-        // 6号是机械举旗鼠，免疫炸弹直接秒杀效果
-        if (mShape == 6)
-            NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, new BoolModifier(true));
     }
 
     public override void MUpdate()

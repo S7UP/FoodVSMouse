@@ -26,8 +26,7 @@ public class RowboatMouse : MouseUnit, IInWater
         moveTimeLeft = 0;
         isAdvance = false;
         base.MInit();
-        // 免疫灰烬秒杀效果、水蚀效果
-        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, new BoolModifier(true));
+        // 免疫灰烬水蚀效果
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreWaterGridState, new BoolModifier(true));
         // 初始为出水状态
         SetActionState(new TransitionState(this));

@@ -10,7 +10,7 @@ public class CanMouse : MouseUnit
     private FloatModifier moveSpeedModifier1 = new FloatModifier(-50); // 减速修饰
     private FloatModifier moveSpeedModifier2 = new FloatModifier(300); // 加速修饰
     private FloatModifier attackSpeedModifier = new FloatModifier(100); // 加攻速修饰
-    private BoolModifier IgnoreBombInstantKill = new BoolModifier(true);
+    private FloatModifier burnRateMod = new FloatModifier(0);
     private BoolModifier IgnoreSlowDown = new BoolModifier(true);
     private BoolModifier IgnoreStun = new BoolModifier(true);
 
@@ -68,13 +68,14 @@ public class CanMouse : MouseUnit
         NumericBox.Defense.AddAddModifier(defenseModifier);
         // 总移速降低效果
         NumericBox.MoveSpeed.AddFinalPctAddModifier(moveSpeedModifier1);
-        // 免疫灰烬减速与定身
-        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, IgnoreBombInstantKill);
+        // 免疫减速与定身
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreSlowDown, IgnoreSlowDown);
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, IgnoreStun);
+        // 100%灰烬抗性
+        NumericBox.BurnRate.AddModifier(burnRateMod);
 
         mHertIndex = 0;
-        UpdateRuntimeAnimatorController();
+        OnHertStageChanged();
     }
 
     /// <summary>
@@ -88,10 +89,9 @@ public class CanMouse : MouseUnit
         // 重装效果移除
         NumericBox.Defense.RemoveAddModifier(defenseModifier);
         NumericBox.MoveSpeed.RemoveFinalPctAddModifier(moveSpeedModifier1);
-        NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, IgnoreBombInstantKill);
         NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreSlowDown, IgnoreSlowDown);
         NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreStun, IgnoreStun);
-
+        NumericBox.BurnRate.RemoveModifier(burnRateMod);
 
         // 获取加速效果
         NumericBox.MoveSpeed.AddPctAddModifier(moveSpeedModifier2);
@@ -99,7 +99,7 @@ public class CanMouse : MouseUnit
         NumericBox.AttackSpeed.AddPctAddModifier(attackSpeedModifier);
 
         mHertIndex = 1;
-        UpdateRuntimeAnimatorController();
+        OnHertStageChanged();
     }
 
 

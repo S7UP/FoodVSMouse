@@ -4,7 +4,7 @@ public class FlySelfDestructMouse : MouseUnit, IFlyUnit
 {
     private bool isDrop; // 是否被击落
     private int dropColumn; // 降落列
-    private BoolModifier IgnoreBombInstantKill = new BoolModifier(true); // 免疫炸弹秒杀效果
+    private FloatModifier burnRateMod = new FloatModifier(0.01f); // 免疫炸弹秒杀效果
     private BoolModifier IgnoreFrozen = new BoolModifier(true); // 免疫冻结
     private Vector2 start_position; // 起始坠机点
     private Vector2 target_position; // 目标落点
@@ -17,7 +17,7 @@ public class FlySelfDestructMouse : MouseUnit, IFlyUnit
         base.MInit();
         mHeight = 1;
         // 初始免疫炸弹秒杀效果
-        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, IgnoreBombInstantKill);
+        NumericBox.BurnRate.AddModifier(burnRateMod);
         // 在受到伤害结算之后，直接判定为击坠状态
         AddActionPointListener(ActionPointType.PostReceiveDamage, delegate { ExecuteDestruct(); });
         AddActionPointListener(ActionPointType.PostReceiveReboundDamage, delegate { ExecuteDestruct(); });
@@ -51,9 +51,9 @@ public class FlySelfDestructMouse : MouseUnit, IFlyUnit
             AddCanBeSelectedAsTargetFunc(delegate { return false; });
             AddCanHitFunc(delegate { return false; });
             // 标记已坠机，此后该实例一些行为会发生变化
-            isDrop = true; 
+            isDrop = true;
             // 移除免疫炸弹秒杀效果
-            NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, IgnoreBombInstantKill);
+            NumericBox.BurnRate.RemoveModifier(burnRateMod);
             // 添加冻结免疫效果
             NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozen, IgnoreFrozen);
             NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, IgnoreFrozen);

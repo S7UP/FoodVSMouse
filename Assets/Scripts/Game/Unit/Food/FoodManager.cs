@@ -334,7 +334,7 @@ public class FoodManager
     {
         // 获取100%减伤，以及免疫灰烬秒杀效果
         unit.NumericBox.Defense.SetBase(1);
-        unit.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, new BoolModifier(true));
+        unit.NumericBox.BurnRate.AddModifier(new FloatModifier(0));
         unit.NumericBox.AddDecideModifierToBoolDict(StringManager.Invincibility, new BoolModifier(true));
         unit.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozen, new BoolModifier(true));
         unit.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, new BoolModifier(true));

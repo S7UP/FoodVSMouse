@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 
 using UnityEngine;
-
-using static ExcelManager;
 /// <summary>
 /// 老鼠管理器（静态存储老鼠相关信息）
 /// </summary>

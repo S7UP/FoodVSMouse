@@ -123,7 +123,7 @@ public class BombAreaEffectExecution : RetangleAreaEffectExecution
     /// <returns>对目标造成的实际伤害</returns>
     private float BombDamageUnit(BaseUnit unit)
     {
-        return CombatActionManager.BombBurnDamageUnit(creator, unit, damage);
+        return BurnManager.BurnDamage(null, unit).RealCauseValue;
     }
 
     public override void OnEnemyEnter(MouseUnit unit)

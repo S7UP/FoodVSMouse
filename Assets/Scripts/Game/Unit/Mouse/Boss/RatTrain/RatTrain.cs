@@ -69,7 +69,7 @@ public class RatTrain : BaseRatTrain
     /// <summary>
     /// 初始化BOSS的参数
     /// </summary>
-    public override void InitBossParam()
+    protected override void InitBossParam()
     {
         // 切换阶段血量百分比
         AddParamArray("hpRate", new float[] { 0.667f, 0.333f });
@@ -564,10 +564,17 @@ public class RatTrain : BaseRatTrain
         b.transform.position = pos;
         b.SetRotate(rotate);
         b.AddHitAction((b, u)=> {
-            BombAreaEffectExecution r = BombAreaEffectExecution.GetInstance(master, dmg, u.transform.position, 1, 1);
-            r.isAffectFood = true;
-            r.isAffectCharacter = false;
+            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 0.5f, 0.5f, "BothCollide");
+            r.SetInstantaneous();
             r.isAffectMouse = true;
+            r.isAffectFood = true;
+            r.SetAffectHeight(0);
+            r.SetOnFoodEnterAction((u) => {
+                BurnManager.BurnDamage(master, u);
+            });
+            r.SetOnEnemyEnterAction((u) => {
+                BurnManager.BurnDamage(master, u);
+            });
             GameController.Instance.AddAreaEffectExecution(r);
         });
         GameController.Instance.AddBullet(b);

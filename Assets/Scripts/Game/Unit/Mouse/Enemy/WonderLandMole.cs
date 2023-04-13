@@ -24,7 +24,6 @@ public class WonderLandMole : MouseUnit
         // 初始在地下时免疫冰冻效果 以及灰烬秒杀效果
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozen, IgnoreFrozen);
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozenSlowDown, IgnoreFrozenSlowDown);
-        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, IgnoreBombInstantKill);
         // 初始在地下时增加基础移速300%
         speedModifier = new FloatModifier(300f);
         NumericBox.MoveSpeed.AddPctAddModifier(speedModifier);
@@ -79,7 +78,6 @@ public class WonderLandMole : MouseUnit
         // 不再免疫冻结状态和灰烬秒杀
         NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreFrozen, IgnoreFrozen);
         NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreFrozenSlowDown, IgnoreFrozenSlowDown);
-        NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, IgnoreBombInstantKill);
         // 移除加速效果
         NumericBox.MoveSpeed.RemovePctAddModifier(speedModifier);
         // 高度置为正常高度0

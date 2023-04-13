@@ -286,35 +286,17 @@ public class BaseRound
         {
             BossUnit b = GameController.Instance.CreateBossUnit(realEnemyList.Get(i), realEnemyList.enemyInfo, hp, -1);
             b.SetMaxHpAndCurrentHp(b.mMaxHp * enemyAttribute.HpRate * NumberManager.GetCurrentEnemyHpRate()); // 对老鼠最大生命值进行修正
-            // 要是把上面那行注释了，然后把下面这个语句块取消注释，就能还原原版的卡暴击方法
-            // 认真的吗？原版的BUG也还原给你看
-            //{
-            //    int timeLeft = 60;
-            //    CustomizationTask t = new CustomizationTask();
-            //    t.AddTaskFunc(delegate {
-            //        if (timeLeft > 0)
-            //            timeLeft--;
-            //        else
-            //        {
-            //            b.SetMaxHpAndCurrentHp(b.mMaxHp * enemyAttribute.HpRate); // 对老鼠最大生命值进行修正
-            //            return true;
-            //        }
-            //        return false;
-            //    });
-            //}
-
             b.NumericBox.MoveSpeed.SetBase(b.NumericBox.MoveSpeed.baseValue * enemyAttribute.MoveSpeedRate); // 对老鼠移动速度修正
             b.NumericBox.Attack.SetBase(b.mBaseAttack * enemyAttribute.AttackRate); // 对老鼠攻击力修正
             b.NumericBox.Defense.SetBase(enemyAttribute.Defence); // 对老鼠减伤修正
 
-            //Debug.Log("开始覆盖特殊参数");
             // 覆盖特殊参数
             foreach (var keyValuePair in enemyAttribute.ParamDict)
             {
-                //Debug.Log("Key="+ keyValuePair.Key);
                 b.AddParamArray(keyValuePair.Key, keyValuePair.Value);
             }
-            //Debug.Log("覆盖特殊参数结束");
+            // 覆盖完后可以让它再刷新一次状态
+            b.OnHertStageChanged();
         }
     }
 

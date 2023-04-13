@@ -100,10 +100,18 @@ public class WineBottleBoom : FoodUnit
         }
         // 添加对应的判定检测器
         {
-            BombAreaEffectExecution bombEffect = BombAreaEffectExecution.GetInstance();
-            bombEffect.Init(this, 900 * mCurrentAttack / 10, GetRowIndex(), int.MaxValue, 1, 0, 0, false, true);
-            bombEffect.transform.position = this.GetPosition();
-            GameController.Instance.AddAreaEffectExecution(bombEffect);
+            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, int.MaxValue, 1, "ItemCollideEnemy");
+            r.isAffectMouse = true;
+            r.SetInstantaneous();
+            r.SetOnEnemyEnterAction((u) => {
+                BurnManager.BurnDamage(this, u);
+            });
+            GameController.Instance.AddAreaEffectExecution(r);
+
+            //BombAreaEffectExecution bombEffect = BombAreaEffectExecution.GetInstance();
+            //bombEffect.Init(this, 900 * mCurrentAttack / 10, GetRowIndex(), int.MaxValue, 1, 0, 0, false, true);
+            //bombEffect.transform.position = this.GetPosition();
+            //GameController.Instance.AddAreaEffectExecution(bombEffect);
         }
     }
 

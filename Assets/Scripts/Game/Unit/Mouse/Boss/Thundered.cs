@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System;
 using UnityEngine;
-using static BombAreaEffectExecution;
 /// <summary>
 /// 轰隆隆
 /// </summary>
@@ -42,7 +41,7 @@ public class Thundered : BossUnit
     /// <summary>
     /// 初始化BOSS的参数
     /// </summary>
-    public override void InitBossParam()
+    protected override void InitBossParam()
     {
         // 切换阶段血量百分比
         AddParamArray("hpRate", new float[] { 0.5f, 0.2f });
@@ -609,20 +608,35 @@ public class Thundered : BossUnit
                     GameController.Instance.AddEffect(e);
                     // 一行灰烬效果
                     {
-                        // 对友方单位
-                        BombAreaEffectExecution bombEffect = BombAreaEffectExecution.GetInstance(this, dmg2_0 * mCurrentAttack / 10, transform.position, 9, 0.5f, GridDamageAllyRange.Attackable, GridDamageAllyType.AscendingOrder);
-                        bombEffect.transform.position = new Vector2(MapManager.GetColumnX(4.0f), MapManager.GetRowY(GetRowIndex()));
-                        GameController.Instance.AddAreaEffectExecution(bombEffect);
+                        RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(new Vector2(MapManager.GetColumnX(4.0f), MapManager.GetRowY(GetRowIndex())), 9, 0.5f, "EnemyAllyGrid");
+                        r.SetInstantaneous();
+                        r.isAffectFood = false;
+                        r.isAffectMouse = true;
+                        r.isAffectGrid = true;
+                        r.SetOnGridEnterAction((g) => {
+                            BaseUnit u = g.GetHighestAttackPriorityUnit(this);
+                            if (u != null)
+                                BurnManager.BurnDamage(this, u);
+                        });
+                        r.SetOnEnemyEnterAction((u) => {
+                            BurnManager.BurnDamage(this, u);
+                        });
+                        GameController.Instance.AddAreaEffectExecution(r);
+
+                        //// 对友方单位
+                        //BombAreaEffectExecution bombEffect = BombAreaEffectExecution.GetInstance(this, dmg2_0 * mCurrentAttack / 10, transform.position, 9, 0.5f, GridDamageAllyRange.Attackable, GridDamageAllyType.AscendingOrder);
+                        //bombEffect.transform.position = new Vector2(MapManager.GetColumnX(4.0f), MapManager.GetRowY(GetRowIndex()));
+                        //GameController.Instance.AddAreaEffectExecution(bombEffect);
                     }
 
-                    {
-                        // 对敌方单位
-                        BombAreaEffectExecution bombEffect = BombAreaEffectExecution.GetInstance(this, dmg2_0 * mCurrentAttack / 10, transform.position, 9, 1);
-                        bombEffect.isAffectMouse = true;
-                        bombEffect.transform.position = new Vector2(MapManager.GetColumnX(4.0f), MapManager.GetRowY(GetRowIndex()));
-                        bombEffect.AddExcludeMouseUnit(this);
-                        GameController.Instance.AddAreaEffectExecution(bombEffect);
-                    }
+                    //{
+                    //    // 对敌方单位
+                    //    BombAreaEffectExecution bombEffect = BombAreaEffectExecution.GetInstance(this, dmg2_0 * mCurrentAttack / 10, transform.position, 9, 1);
+                    //    bombEffect.isAffectMouse = true;
+                    //    bombEffect.transform.position = new Vector2(MapManager.GetColumnX(4.0f), MapManager.GetRowY(GetRowIndex()));
+                    //    bombEffect.AddExcludeMouseUnit(this);
+                    //    GameController.Instance.AddAreaEffectExecution(bombEffect);
+                    //}
 
                     animatorController.Play("Idle0", true);
                     timeLeft = t2_3;

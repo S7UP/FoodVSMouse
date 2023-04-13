@@ -56,7 +56,7 @@ public class MistyJulie : BossUnit
     /// <summary>
     /// 初始化BOSS的参数
     /// </summary>
-    public override void InitBossParam()
+    protected override void InitBossParam()
     {
         // 切换阶段血量百分比
         AddParamArray("hpRate", new float[] { 0.5f, 0.2f });

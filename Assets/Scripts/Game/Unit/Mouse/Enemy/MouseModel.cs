@@ -41,7 +41,7 @@ public class MouseModel : MouseUnit
         }));
     }
 
-    public override void UpdateRuntimeAnimatorController()
+    public override void OnHertStageChanged()
     {
 
     }

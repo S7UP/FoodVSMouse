@@ -17,13 +17,15 @@ public class LadderMouse : MouseUnit
     public override void MInit()
     {
         base.MInit();
-        // 变种之弹簧鼠防爆
-        if (mShape == 1)
-            NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, new BoolModifier(true));
-        old_P2_HpRate = (float)mHertRateList[1];
         velocityBuffModifier = new FloatModifier(100);
         NumericBox.MoveSpeed.AddPctAddModifier(velocityBuffModifier); // 初始获得100%移速
 
+        CustomizationTask t = new CustomizationTask();
+        t.AddTaskFunc(delegate {
+            old_P2_HpRate = (float)mHertRateList[1];
+            return false;
+        });
+        AddTask(t);
     }
 
     /// <summary>

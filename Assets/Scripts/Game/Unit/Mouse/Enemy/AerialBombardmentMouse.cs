@@ -1,7 +1,5 @@
 using System.Collections.Generic;
 
-using S7P.Numeric;
-
 using UnityEngine;
 /// <summary>
 /// »úÐµÍ¶µ¯Êó
@@ -18,8 +16,6 @@ public class AerialBombardmentMouse : MouseUnit, IFlyUnit
         base.MInit();
         mHeight = 1;
         isDrop = false;
-        // ·À±¬
-        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, new BoolModifier(true));
     }
 
     public override void MUpdate()

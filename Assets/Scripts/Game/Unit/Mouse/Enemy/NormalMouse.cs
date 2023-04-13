@@ -1,4 +1,3 @@
-using S7P.Numeric;
 /// <summary>
 /// ∆’Õ®¿œ Û
 /// </summary>
@@ -10,9 +9,5 @@ public class NormalMouse : MouseUnit
     public override void MInit()
     {
         base.MInit();
-        if(mShape>=6 && mShape <= 8)
-        {
-            NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, new BoolModifier(true));
-        }
     }
 }

@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 
-using S7P.Numeric;
-
 using UnityEngine;
 /// <summary>
 /// 空中运输型
@@ -15,8 +13,6 @@ public class AirTransportMouse : MouseUnit, IFlyUnit
     {
         base.MInit();
         mHeight = 1;
-        // 防爆
-        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, new BoolModifier(true));
         // 图层权重-1
         typeAndShapeValue = -1;
     }

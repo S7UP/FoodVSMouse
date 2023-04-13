@@ -72,7 +72,7 @@ public class RatTrain2 : BaseRatTrain
     /// <summary>
     /// 初始化BOSS的参数
     /// </summary>
-    public override void InitBossParam()
+    protected override void InitBossParam()
     {
         // 切换阶段血量百分比
         AddParamArray("hpRate", new float[] { 0.65f, 0.4f, 0.2f, 0.05f });
@@ -86,9 +86,9 @@ public class RatTrain2 : BaseRatTrain
         AddParamArray("tail_burn", new float[] { 10.0f }); // 车尾10倍爆破伤害
     }
 
-    public override void UpdateRuntimeAnimatorController()
+    public override void OnHertStageChanged()
     {
-        base.UpdateRuntimeAnimatorController();
+        base.OnHertStageChanged();
         // 总生命值每降低20%则会<准备脱落>最后一节车厢,并获得16.7%移动速度提升
         if (mHertIndex >= 1 && mHertIndex < 4)
         {
@@ -362,11 +362,26 @@ public class RatTrain2 : BaseRatTrain
                         b.animatorController.Play("BoomDie");
                         b.CloseCollision();
                         // 产生一个爆炸效果
-                        BombAreaEffectExecution bombEffect = BombAreaEffectExecution.GetInstance();
-                        bombEffect.Init(b, 3600, b.GetRowIndex(), 3, 3, 0, 0, true, true);
-                        bombEffect.transform.position = b.transform.position;
-                        bombEffect.SetOnEnemyEnterAction((m)=> m.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(m, 360, false)));
-                        GameController.Instance.AddAreaEffectExecution(bombEffect);
+                        RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(b.transform.position, 3, 3, "BothCollide");
+                        r.SetInstantaneous();
+                        r.isAffectMouse = true;
+                        r.isAffectFood = true;
+                        r.SetAffectHeight(0);
+                        r.SetOnFoodEnterAction((u) => {
+                            BurnManager.BurnDamage(this, u);
+                            u.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(u, 360, false));
+                        });
+                        r.SetOnEnemyEnterAction((u) => {
+                            BurnManager.BurnDamage(this, u);
+                            u.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(u, 360, false));
+                        });
+                        GameController.Instance.AddAreaEffectExecution(r);
+
+                        //BombAreaEffectExecution bombEffect = BombAreaEffectExecution.GetInstance();
+                        //bombEffect.Init(b, 3600, b.GetRowIndex(), 3, 3, 0, 0, true, true);
+                        //bombEffect.transform.position = b.transform.position;
+                        //bombEffect.SetOnEnemyEnterAction((m)=> m.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(m, 360, false)));
+                        //GameController.Instance.AddAreaEffectExecution(bombEffect);
                         return true;
                     }
                     return false;

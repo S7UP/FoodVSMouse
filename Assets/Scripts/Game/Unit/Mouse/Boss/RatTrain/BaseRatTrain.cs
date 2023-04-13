@@ -105,6 +105,21 @@ public class BaseRatTrain : BossUnit
         
         // 自身实际坐标固定在0
         transform.position = Vector3.zero;
+
+        // 第一帧强制设置所有车厢生命值与灰烬抗生同步自身
+        CustomizationTask t = new CustomizationTask();
+        t.AddTaskFunc(delegate {
+            foreach (var comp in GetAllRatTrainComponent())
+            {
+                foreach (var mod in NumericBox.BurnRate.GetModifierList())
+                {
+                    comp.NumericBox.BurnRate.AddModifier(mod);
+                }
+                comp.SetMaxHpAndCurrentHp(mMaxHp);
+            }
+            return true;
+        });
+        AddTask(t);
     }
 
     /// <summary>

@@ -100,7 +100,7 @@ public class PinkPaul : BossUnit
     /// <summary>
     /// 初始化BOSS的参数
     /// </summary>
-    public override void InitBossParam()
+    protected override void InitBossParam()
     {
         // 切换阶段血量百分比
         AddParamArray("hpRate", new float[] { 0.5f, 0.2f });
@@ -421,7 +421,7 @@ public class PinkPaul : BossUnit
 
         MouseModel m = MouseModel.GetInstance(Tentacle_AnimatorController);
         m.transform.position = pos;
-        m.SetBaseAttribute(1, 10, 1.0f, GetParamValue("v1", mHertIndex), 100, 0.5f, 0);
+        m.SetBaseAttribute(mMaxHp*NumericBox.BurnRate.TotalValue, 10, 1.0f, GetParamValue("v1", mHertIndex), 75, 0.5f, 0);
         m.SetMoveRoate(Vector2.left);
         StatusManager.AddIgnoreSettleDownBuff(m, new BoolModifier(true));
         m.canDrivenAway = false;

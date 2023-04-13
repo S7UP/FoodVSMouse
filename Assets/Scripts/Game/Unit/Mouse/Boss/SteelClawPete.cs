@@ -72,7 +72,7 @@ public class SteelClawPete : BossUnit
     /// <summary>
     /// 初始化BOSS的参数
     /// </summary>
-    public override void InitBossParam()
+    protected override void InitBossParam()
     {
         // 切换阶段血量百分比
         AddParamArray("hpRate", new float[] { 0.5f, 0.2f });
@@ -253,11 +253,18 @@ public class SteelClawPete : BossUnit
                 new DamageAction(CombatAction.ActionType.BurnDamage, this, u, GetParamValue("dmg2", mHertIndex)).ApplyAction();
             }
             // 对一格老鼠造成爆破灰烬效果
-            BombAreaEffectExecution bomb = BombAreaEffectExecution.GetInstance(this, GetParamValue("dmg2", mHertIndex), b.transform.position, 1, 1);
-            bomb.isAffectMouse = true;
-            bomb.isAffectFood = false;
-            bomb.isAffectCharacter = false;
-            GameController.Instance.AddAreaEffectExecution(bomb);
+            //BombAreaEffectExecution bomb = BombAreaEffectExecution.GetInstance(this, GetParamValue("dmg2", mHertIndex), b.transform.position, 1, 1);
+            //bomb.isAffectMouse = true;
+            //bomb.isAffectFood = false;
+            //bomb.isAffectCharacter = false;
+            //GameController.Instance.AddAreaEffectExecution(bomb);
+            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(b.transform.position, 1, 1, "ItemCollideEnemy");
+            r.isAffectMouse = true;
+            r.SetInstantaneous();
+            r.SetOnEnemyEnterAction((u) => {
+                BurnManager.BurnDamage(this, u);
+            });
+            GameController.Instance.AddAreaEffectExecution(r);
         });
         int t = 120;
         Vector2 startPos = transform.position + 2*MapManager.gridHeight*Vector3.up;
@@ -275,9 +282,9 @@ public class SteelClawPete : BossUnit
 
         MouseModel m = MouseModel.GetInstance(Barrier_AnimatorController);
         m.transform.position = g.transform.position;
-        m.SetBaseAttribute(GetParamValue("hp3", mHertIndex), 10.0f, 1.0f, 0, 100, 0.5f, 0);
+        m.SetBaseAttribute(mMaxHp * NumericBox.BurnRate.TotalValue, 10.0f, 1.0f, 0, 100, 0.5f, 0);
+        m.NumericBox.BurnRate.AddModifier(new FloatModifier(1-0.01f*GetParamValue("burn_defence3")));
         StatusManager.AddIgnoreSettleDownBuff(m, new BoolModifier(true));
-        m.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, new BoolModifier(true));
         m.canDrivenAway = false;
         m.isIgnoreRecordDamage = true;
         m.AddCanBlockFunc(delegate { return false; });

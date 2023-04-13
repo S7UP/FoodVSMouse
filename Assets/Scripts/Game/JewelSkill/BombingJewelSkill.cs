@@ -53,8 +53,15 @@ public class BombingJewelSkill : BaseJewelSkill
             e.transform.position = item.transform.position;
             GameController.Instance.AddEffect(e);
             // ²úÉú±¬Õ¨ÅÐ¶¨
-            BombAreaEffectExecution r = BombAreaEffectExecution.GetInstance(null, GetParamValue("dmg", 0), (Vector2)item.transform.position + Vector2.left*MapManager.gridWidth/2, 4, 3);
+            //BombAreaEffectExecution r = BombAreaEffectExecution.GetInstance(null, GetParamValue("dmg", 0), (Vector2)item.transform.position + Vector2.left*MapManager.gridWidth/2, 4, 3);
+            //r.isAffectMouse = true;
+            //GameController.Instance.AddAreaEffectExecution(r);
+            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(item.transform.position + 0.5f * Vector3.left * MapManager.gridWidth, 4, 3, "ItemCollideEnemy");
             r.isAffectMouse = true;
+            r.SetInstantaneous();
+            r.SetOnEnemyEnterAction((u) => {
+                BurnManager.BurnDamage(item, u);
+            });
             GameController.Instance.AddAreaEffectExecution(r);
             item.ExecuteDeath();
         });

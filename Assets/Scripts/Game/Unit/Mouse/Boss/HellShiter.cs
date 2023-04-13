@@ -101,7 +101,7 @@ public class HellShiter : BossUnit
     /// <summary>
     /// 初始化BOSS的参数
     /// </summary>
-    public override void InitBossParam()
+    protected override void InitBossParam()
     {
         // 切换阶段血量百分比
         AddParamArray("hpRate", new float[] { 0.5f, 0.2f });
@@ -432,11 +432,11 @@ public class HellShiter : BossUnit
         m.DieClipName = "Disappear";
         mSceptre = m;
         m.transform.position = pos;
-        m.SetBaseAttribute(GetParamValue("hp1", mHertIndex), 10, 1.0f, 0f, 100, 0.5f, 0);
+        m.SetBaseAttribute(mMaxHp * NumericBox.BurnRate.TotalValue, 10, 1.0f, 0f, 100, 0.5f, 0);
+        m.NumericBox.BurnRate.AddModifier(new FloatModifier(1 - 0.01f * GetParamValue("burn_defence1")));
         m.canTriggerCat = false;
         m.canTriggerLoseWhenEnterLoseLine = false;
         m.isIgnoreRecordDamage = true;
-        m.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, new BoolModifier(true));
         StatusManager.AddIgnoreSettleDownBuff(m, new BoolModifier(true));
         m.AddCanBlockFunc(delegate { return false; });
         WaterGridType.AddNoAffectByWater(m, new BoolModifier(true)); // 标记免疫水蚀

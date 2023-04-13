@@ -126,7 +126,7 @@ public class SkyGridType : BaseGridType
         }
         else
         {
-            Debug.LogWarning("为什么有东西可以没带高空任务出高空？");
+            // Debug.LogWarning("为什么有东西可以没带高空任务出高空？");
         }
     }
 

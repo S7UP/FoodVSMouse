@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+
+using UnityEngine;
 /// <summary>
 /// 菠萝爆炸面包
 /// </summary>
@@ -127,11 +129,19 @@ public class PineappleBreadBoom : FoodUnit
         }
         // 原地产生一个爆炸伤害判定效果
         {
-            BombAreaEffectExecution bombEffect = BombAreaEffectExecution.GetInstance();
-            //Debug.Log("当前爆炸可造成伤害：" + mCurrentAttack * (1 + pctAddValue / 100));
-            bombEffect.Init(this, mCurrentAttack*(1 + pctAddValue/100), GetRowIndex(), 4, 3, -0.5f, 0, false, true);
-            bombEffect.transform.position = this.GetPosition();
-            GameController.Instance.AddAreaEffectExecution(bombEffect);
+            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position + 0.5f*Vector3.left*MapManager.gridWidth, 4, 3, "ItemCollideEnemy");
+            r.SetInstantaneous();
+            r.isAffectMouse = true;
+            r.SetOnEnemyEnterAction((u) => {
+                BurnManager.BurnDamage(this, u);
+                new DamageAction(CombatAction.ActionType.BurnDamage, this, u, mCurrentAttack * (1 + pctAddValue / 100)).ApplyAction();
+            });
+            GameController.Instance.AddAreaEffectExecution(r);
+
+            //BombAreaEffectExecution bombEffect = BombAreaEffectExecution.GetInstance();
+            //bombEffect.Init(this, mCurrentAttack*(1 + pctAddValue/100), GetRowIndex(), 4, 3, -0.5f, 0, false, true);
+            //bombEffect.transform.position = this.GetPosition();
+            //GameController.Instance.AddAreaEffectExecution(bombEffect);
         }
     }
 }

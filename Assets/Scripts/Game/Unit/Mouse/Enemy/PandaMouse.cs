@@ -1,7 +1,5 @@
 using System.Collections.Generic;
 
-using S7P.Numeric;
-
 using UnityEngine;
 /// <summary>
 /// –‹√®¿‡
@@ -16,8 +14,6 @@ public class PandaMouse : MouseUnit
     public override void MInit()
     {
         base.MInit();
-        // ∑¿±¨
-        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, new BoolModifier(true));
         throwPercent = 0.5f;
     }
 

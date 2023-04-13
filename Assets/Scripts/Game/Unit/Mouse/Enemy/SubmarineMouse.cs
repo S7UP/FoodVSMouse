@@ -13,7 +13,6 @@ public class SubmarineMouse : MouseUnit, IInWater
         isEnterWater = false;
         base.MInit();
         // 免疫灰烬秒杀效果、水蚀效果
-        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, new BoolModifier(true));
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreWaterGridState, new BoolModifier(true));
     }
 
@@ -49,9 +48,9 @@ public class SubmarineMouse : MouseUnit, IInWater
         SetActionState(new TransitionState(this));
     }
 
-    public override void UpdateRuntimeAnimatorController()
+    public override void OnHertStageChanged()
     {
-        base.UpdateRuntimeAnimatorController();
+        base.OnHertStageChanged();
         // 当切换成受伤阶段时取消移速加成，但如果从受伤态切换为普通态则判定一次是否在水中，如果在的话则把移速加成回调
         if(mHertIndex == 0 && isEnterWater)
         {

@@ -84,7 +84,7 @@ public class RatTrain1 : BaseRatTrain
     /// <summary>
     /// 初始化BOSS的参数
     /// </summary>
-    public override void InitBossParam()
+    protected override void InitBossParam()
     {
         // 切换阶段血量百分比
         AddParamArray("hpRate", new float[] { 0.667f, 0.333f });
@@ -346,31 +346,16 @@ public class RatTrain1 : BaseRatTrain
             m.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozen, new BoolModifier(true)); // 免疫冻结
             m.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, new BoolModifier(true)); // 免疫晕眩
             m.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozenSlowDown, new BoolModifier(true)); // 免疫冰冻减速
-            m.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, new BoolModifier(true)); // 免疫灰烬秒杀
+            m.NumericBox.BurnRate.AddModifier(new FloatModifier(0.5f));
             m.SetBaseAttribute(laser_hp, 1, 1f, 0, 0, 0, 0);
             m.transform.position = master.transform.position;
             m.currentYIndex = MapManager.GetYIndex(m.transform.position.y);
             m.transform.right = -master.moveRotate;
             m.transform.localScale = new Vector2(1, (isLeft ? -1 : 1) * Mathf.Sign(master.moveRotate.x));
-            // m.AddCanBeSelectedAsTargetFunc(delegate { return false; }); // 不可作为选取的目标
             m.AddCanBlockFunc(delegate { return false; }); // 不可被阻挡
-            // m.AddCanHitFunc(delegate { return false; }); // 不可被子弹击中
             m.mBoxCollider2D.offset = new Vector2(0, 1.0f * MapManager.gridHeight);
             m.mBoxCollider2D.size = new Vector2(0.49f * MapManager.gridWidth, 0.49f * MapManager.gridHeight);
             m.isBoss = true;
-            // 受到一次灰烬伤害后固定损失50%最大生命值真实伤害
-            Action<CombatAction> OnBombDamage = (action) => {
-                if (action is DamageAction)
-                {
-                    var damageAction = action as DamageAction;
-                    if(damageAction is BombDamageAction)
-                    {
-                        damageAction.DamageValue = Mathf.Max(damageAction.DamageValue, 0.5f * m.mMaxHp); // 伤害值转为50%最大生命值伤害与原伤害较小者
-                    }
-                }
-            };
-            m.AddActionPointListener(ActionPointType.PreReceiveDamage, OnBombDamage);
-            m.AddActionPointListener(ActionPointType.PreReceiveReboundDamage, OnBombDamage);
             // 收纳为自身随从
             retinueList.Add(m);
         }
@@ -491,10 +476,20 @@ public class RatTrain1 : BaseRatTrain
                             GameController.Instance.AddEffect(e);
                             u.AddEffectToDict(LaserEffectKey, e, 1.5f*Vector2.up * MapManager.gridHeight);
                             // 产生真正的激光判定
-                            BombAreaEffectExecution r = BombAreaEffectExecution.GetInstance(this, dmg, new Vector2(u.transform.position.x, MapManager.GetRowY(3)), 0.5f, 5);
-                            r.isAffectFood = true;
+                            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(new Vector2(u.transform.position.x, MapManager.GetRowY(3)), 0.5f, 5, "BothCollide");
+                            r.SetInstantaneous();
                             r.isAffectMouse = true;
-                            r.isAffectCharacter = false;
+                            r.isAffectFood = true;
+                            r.SetOnFoodEnterAction((u) => {
+                                BurnManager.BurnDamage(this, u);
+                            });
+                            r.SetOnEnemyEnterAction((u) => {
+                                BurnManager.BurnDamage(this, u);
+                            });
+                            //BombAreaEffectExecution r = BombAreaEffectExecution.GetInstance(this, dmg, new Vector2(u.transform.position.x, MapManager.GetRowY(3)), 0.5f, 5);
+                            //r.isAffectFood = true;
+                            //r.isAffectMouse = true;
+                            //r.isAffectCharacter = false;
                             foreach (var laserUnit in retinueList)
                             {
                                 if(laserUnit is MouseUnit)
@@ -627,7 +622,6 @@ public class RatTrain1 : BaseRatTrain
             m.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozen, new BoolModifier(true)); // 免疫冻结
             m.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, new BoolModifier(true)); // 免疫晕眩
             m.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozenSlowDown, new BoolModifier(true)); // 免疫冰冻减速
-            m.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, new BoolModifier(true)); // 免疫灰烬秒杀
             m.SetBaseAttribute(hp, 1, 1f, 0, 0, 0, 0);
             m.transform.position = master.transform.position;
             m.currentYIndex = MapManager.GetYIndex(m.transform.position.y);
@@ -727,11 +721,24 @@ public class RatTrain1 : BaseRatTrain
         b.SetRotate(rotate);
         b.mCircleCollider2D.radius = 0.25f*MapManager.gridWidth;
         b.AddHitAction((b, u)=> {
-            BombAreaEffectExecution r = BombAreaEffectExecution.GetInstance(master, dmg, u.transform.position, 0.75f, 0.75f);
-            r.isAffectFood = true;
-            r.isAffectCharacter = false;
+            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(u.transform.position, 0.5f, 0.5f, "BothCollide");
+            r.SetInstantaneous();
             r.isAffectMouse = true;
+            r.isAffectFood = true;
+            r.SetAffectHeight(0);
+            r.SetOnFoodEnterAction((u) => {
+                BurnManager.BurnDamage(master, u);
+            });
+            r.SetOnEnemyEnterAction((u) => {
+                BurnManager.BurnDamage(master, u);
+            });
             GameController.Instance.AddAreaEffectExecution(r);
+
+            //BombAreaEffectExecution r = BombAreaEffectExecution.GetInstance(master, dmg, u.transform.position, 0.75f, 0.75f);
+            //r.isAffectFood = true;
+            //r.isAffectCharacter = false;
+            //r.isAffectMouse = true;
+            //GameController.Instance.AddAreaEffectExecution(r);
         });
         GameController.Instance.AddBullet(b);
         return b;
@@ -747,7 +754,11 @@ public class RatTrain1 : BaseRatTrain
         {
             BossUnit.AddBossIgnoreDebuffEffect(m);
             m.transform.position = pos;
-            m.SetBaseAttribute(mCurrentHp, 1, 1f, 0, 0, 0, 0);
+            m.SetBaseAttribute(mMaxHp, 1, 1f, 0, 0, 0, 0);
+            foreach (var mod in NumericBox.BurnRate.GetModifierList())
+            {
+                m.NumericBox.BurnRate.AddModifier(mod);
+            }
             m.currentYIndex = MapManager.GetYIndex(pos.y);
             m.mBoxCollider2D.offset = new Vector2(0, 0);
             m.mBoxCollider2D.size = new Vector2(0.49f * MapManager.gridWidth, 0.49f * MapManager.gridHeight);
@@ -756,7 +767,11 @@ public class RatTrain1 : BaseRatTrain
                 if(action is DamageAction)
                 {
                     var damageAction = action as DamageAction;
-                    float dmg = damageAction.DamageValue*((isFireAttacker && damageAction is BombDamageAction) ? GetParamValue("tail_burn", mHertIndex) : GetParamValue("tail_normal", mHertIndex));
+                    float dmg;
+                    if(isFireAttacker)
+                        dmg = damageAction.DamageValue * (damageAction.mActionType.Equals(CombatAction.ActionType.BurnDamage) ? GetParamValue("tail_burn", mHertIndex) : GetParamValue("tail_normal", mHertIndex));
+                    else
+                        dmg = damageAction.DamageValue * (damageAction.mActionType.Equals(CombatAction.ActionType.BurnDamage) ? GetParamValue("body_burn", mHertIndex) : GetParamValue("body_normal", mHertIndex));
                     new DamageAction(action.mActionType, action.Creator, this, dmg).ApplyAction();
                 }
             };
@@ -1056,9 +1071,21 @@ public class RatTrain1 : BaseRatTrain
                     GameController.Instance.AddEffect(e);
                     fireBulletAttacker.MDestory();
                     // 产生3*3爆破效果
-                    BombAreaEffectExecution r = BombAreaEffectExecution.GetInstance(this, boom_dmg, fireBulletAttacker.transform.position, 3, 3);
-                    r.isAffectFood = true;
+                    //BombAreaEffectExecution r = BombAreaEffectExecution.GetInstance(this, boom_dmg, fireBulletAttacker.transform.position, 3, 3);
+                    //r.isAffectFood = true;
+                    //r.isAffectMouse = true;
+                    //GameController.Instance.AddAreaEffectExecution(r);
+
+                    RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(fireBulletAttacker.transform.position, 3, 3, "BothCollide");
+                    r.SetInstantaneous();
                     r.isAffectMouse = true;
+                    r.isAffectFood = true;
+                    r.SetOnFoodEnterAction((u) => {
+                        BurnManager.BurnDamage(this, u);
+                    });
+                    r.SetOnEnemyEnterAction((u) => {
+                        BurnManager.BurnDamage(this, u);
+                    });
                     GameController.Instance.AddAreaEffectExecution(r);
                     return true;
                 }
@@ -1083,8 +1110,10 @@ public class RatTrain1 : BaseRatTrain
         float fog_hp2_0 = GetParamValue("fog_hp2_0", mHertIndex);
         BaseUnit[] arr = new BaseUnit[2];
         arr[0] = CreateFogCreator(master, fog_hp2_0, true, t2_1, soldier_type2_0, soldier_shape2_0, stun2_0, fog2_0);
+        arr[0].NumericBox.BurnRate.AddModifier(new FloatModifier(0.25f));
         arr[0].GetSpriteRenderer().sortingOrder = sortingOrder;
         arr[1] = CreateFogCreator(master, fog_hp2_0, false, t2_1, soldier_type2_0, soldier_shape2_0, stun2_0, fog2_0);
+        arr[1].NumericBox.BurnRate.AddModifier(new FloatModifier(0.25f));
         arr[1].GetSpriteRenderer().sortingOrder = sortingOrder;
         int timeLeft = 67 + t2_1;
         CustomizationTask t = new CustomizationTask();

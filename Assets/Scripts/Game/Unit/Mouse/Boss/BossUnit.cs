@@ -16,6 +16,7 @@ public class BossUnit : MouseUnit
     protected Dictionary<string, float[]> BossParamArrayDict = new Dictionary<string, float[]>(); // boss参数字典
 
     private BoolModifier BossNoTargetAttackModeModifier = new BoolModifier(true); // BOSS无限攻击tag
+    private FloatModifier burnRateMod = new FloatModifier(0.05f); // BOSS受灰烬效果比率
 
     public override void Awake()
     {
@@ -30,13 +31,15 @@ public class BossUnit : MouseUnit
         seedDict.Clear();
         nextGridStack.Clear();
         BossParamArrayDict.Clear();
-        InitBossParam(); // 初始化BOSS参数字典，由具体的BOSS类内部实现
+        BossParamInit(); // 初始化BOSS参数
         base.MInit();
         InitHertRateList();
         isBoss = true;
         // 免疫控制效果
         AddBossIgnoreDebuffEffect(this);
         // BOSS不执行正常敌人前进逻辑
+        NumericBox.Attack.SetBase(10);
+        NumericBox.AttackSpeed.SetBase(1);
         NumericBox.MoveSpeed.SetBase(0);
         // 为全场添加无限攻击TAG
         GameController.Instance.AddNoTargetAttackModeModifier(BossNoTargetAttackModeModifier);
@@ -154,22 +157,21 @@ public class BossUnit : MouseUnit
     /// <summary>
     /// 自动更新贴图
     /// </summary>
-    public override void UpdateRuntimeAnimatorController()
+    public override void OnHertStageChanged()
     {
-        //AnimatorStateRecorder a = animatorController.GetCurrentAnimatorStateRecorder(); // 获取当前在播放的动画
-        //animator.runtimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Boss/" + mType + "/" + mShape + "/" + mHertIndex);
-        //animatorController.ChangeAnimator(animator);
-        //// 保持当前动画播放
-        //if (a != null)
-        //{
-        //    animatorController.Play(a.aniName, a.isCycle, a.GetNormalizedTime());
-        //}
         OnUpdateRuntimeAnimatorController();
         // 锁定前几个阶段
         for (int i = 0; i < mHertIndex; i++)
         {
             mHertRateList[i] = float.MaxValue;
         }
+        // 更新灰烬抗性
+        //if (GetParamValue("burn_defence") <= 0) // 小于等于0代表没有灰烬抗性，BOSS是不可能一炸就死的，所以这种情况就直接按默认值（95%抗性）处理了
+        //    burnRateMod.Value = 0.05f;
+        //else
+            burnRateMod.Value = 1 - GetParamValue("burn_defence");
+        NumericBox.BurnRate.RemoveModifier(burnRateMod);
+        NumericBox.BurnRate.AddModifier(burnRateMod);
         // 重载技能组（狂暴）
         LoadSkillAbility();
     }
@@ -208,7 +210,6 @@ public class BossUnit : MouseUnit
         unit.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozenSlowDown, IgnoreSomeEffectModifier);
         unit.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreSlowDown, IgnoreSomeEffectModifier);
         unit.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, IgnoreSomeEffectModifier);
-        unit.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, IgnoreSomeEffectModifier);
         unit.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreWaterGridState, IgnoreSomeEffectModifier);
     }
 
@@ -235,13 +236,20 @@ public class BossUnit : MouseUnit
         return false;
     }
 
-    /// <summary>
-    /// 初始化BOSS的参数
-    /// </summary>
-    public virtual void InitBossParam()
+    private void BossParamInit()
     {
         // 切换阶段血量百分比
         AddParamArray("hpRate", new float[] { 0.5f, 0.2f });
+        AddParamArray("burn_defence", new float[] { 0.95f });
+        InitBossParam();
+    }
+
+    /// <summary>
+    /// 初始化BOSS的参数
+    /// </summary>
+    protected virtual void InitBossParam()
+    {
+
     }
 
     /// <summary>

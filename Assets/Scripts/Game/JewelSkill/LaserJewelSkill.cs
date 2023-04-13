@@ -58,7 +58,7 @@ public class LaserJewelSkill : BaseJewelSkill
                 RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(b.transform.position, 1, 1, "ItemCollideEnemy");
                 r.isAffectMouse = true;
                 r.SetOnEnemyEnterAction((u) => {
-                    CombatActionManager.BombBurnDamageUnit(null, u, GetParamValue("dmg", 0));
+                    BurnManager.BurnDamage(null, u);
                 });
                 {
                     CustomizationTask t = new CustomizationTask();

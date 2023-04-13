@@ -93,7 +93,7 @@ public class GrumpyJack : BossUnit
     /// <summary>
     /// 初始化BOSS的参数
     /// </summary>
-    public override void InitBossParam()
+    protected override void InitBossParam()
     {
         // 切换阶段血量百分比
         AddParamArray("hpRate", new float[] { 0.5f, 0.2f });
@@ -201,7 +201,6 @@ public class GrumpyJack : BossUnit
         m.AttackClipName = "Move";
         m.DieClipName = null;
         m.AddCanBlockFunc(delegate { return false; });
-        m.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreBombInstantKill, new BoolModifier(true));
         m.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozen, new BoolModifier(true));
         m.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozenSlowDown, new BoolModifier(true));
         m.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, new BoolModifier(true));
@@ -328,18 +327,28 @@ public class GrumpyJack : BossUnit
     
     private BaseUnit CreateBody(Vector2 pos)
     {
-        return CreateComponent(Body_Run, pos, GetParamValue("p_hp1"), GetParamValue("p_defence1"), GetParamValue("p_dmg1"), 0.01f * GetParamValue("p_dmg_trans1"));
+        BaseUnit u = CreateComponent(Body_Run, pos, GetParamValue("p_hp1"), GetParamValue("p_defence1"), GetParamValue("p_dmg1"), 0.01f * GetParamValue("p_dmg_trans1"));
+        u.NumericBox.BurnRate.AddModifier(new FloatModifier(1-GetParamValue("p_burn_defence1")*0.01f));
+        return u;
     } 
 
     private BaseUnit CreateHead(Vector2 pos)
     {
-        return CreateComponent(Head_Run, pos, GetParamValue("p_hp1"), GetParamValue("p_defence1"), GetParamValue("p_dmg1"), 0.01f * GetParamValue("p_dmg_trans1"));
+        BaseUnit u = CreateComponent(Head_Run, pos, GetParamValue("p_hp1"), GetParamValue("p_defence1"), GetParamValue("p_dmg1"), 0.01f * GetParamValue("p_dmg_trans1"));
+        u.NumericBox.BurnRate.AddModifier(new FloatModifier(1 - GetParamValue("p_burn_defence1") * 0.01f));
+        return u;
     }
 
     private BaseUnit CreateHeart(Vector2 pos)
     {
         BaseUnit u = CreateComponent(Heart_Run, pos, mMaxHp, 100, GetParamValue("p_dmg2"), 0.01f * GetParamValue("p_dmg_trans2"));
         CustomizationTask t = new CustomizationTask();
+        t.AddOnEnterAction(delegate {
+            foreach (var mod in NumericBox.BurnRate.GetModifierList())
+            {
+                u.NumericBox.BurnRate.AddModifier(mod);
+            }
+        });
         t.AddTaskFunc(delegate {
             u.mCurrentHp = mCurrentHp;
             return false;
@@ -616,6 +625,7 @@ public class GrumpyJack : BossUnit
             d.isAffectFood = true;
             d.isAffectMouse = true;
             d.isAffectCharacter = false;
+            d.AddExcludeMouseUnit((MouseUnit)u);
             GameController.Instance.AddAreaEffectExecution(d);
         });
         task.AddTaskFunc(delegate {
@@ -636,7 +646,7 @@ public class GrumpyJack : BossUnit
     }
     #endregion
 
-    #region
+    #region 三技能
     private CompoundSkillAbility Skill2Init(SkillAbility.SkillAbilityInfo info)
     {
         int interval = Mathf.FloorToInt(GetParamValue("interval2") * 60);
@@ -796,6 +806,7 @@ public class GrumpyJack : BossUnit
             d.isAffectFood = true;
             d.isAffectMouse = true;
             d.isAffectCharacter = false;
+            d.AddExcludeMouseUnit((MouseUnit)u);
             GameController.Instance.AddAreaEffectExecution(d);
         });
         task.AddTaskFunc(delegate {
@@ -812,5 +823,5 @@ public class GrumpyJack : BossUnit
         });
         return task;
     }
-    #endregion
+    #endregion 
 }

@@ -122,7 +122,7 @@ public class Pharaoh1 : BossUnit
     /// <summary>
     /// 初始化BOSS的参数
     /// </summary>
-    public override void InitBossParam()
+    protected override void InitBossParam()
     {
         // 切换阶段血量百分比
         AddParamArray("hpRate", new float[] { 0.8f, 0.65f, 0.5f, 0.2f });
@@ -170,6 +170,7 @@ public class Pharaoh1 : BossUnit
         if(mHertIndex == 3)
         {
             // 获得100%减伤
+            NumericBox.DamageRate.RemoveModifier(DecDmgModifier);
             NumericBox.DamageRate.AddModifier(DecDmgModifier);
             ChangeToRealMode(); // 添加切换为真身的任务
             mSkillQueueAbilityManager.SetNextSkillIndex(-1); // 技能下标要置-1
