@@ -29,7 +29,6 @@ public class ToastBread : FoodUnit
 
         // 在受到伤害结算之后，更新受伤贴图状态
         AddActionPointListener(ActionPointType.PostReceiveDamage, delegate { UpdateHertMap(); noHealTimeLeft = 300; });
-        AddActionPointListener(ActionPointType.PostReceiveReboundDamage, delegate { UpdateHertMap(); noHealTimeLeft = 300; });
         // 在接收治疗结算之后，更新受伤贴图状态
         AddActionPointListener(ActionPointType.PostReceiveCure, delegate { UpdateHertMap(); });
     }

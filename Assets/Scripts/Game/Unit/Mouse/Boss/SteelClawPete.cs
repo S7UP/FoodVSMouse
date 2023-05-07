@@ -282,7 +282,7 @@ public class SteelClawPete : BossUnit
 
         MouseModel m = MouseModel.GetInstance(Barrier_AnimatorController);
         m.transform.position = g.transform.position;
-        m.SetBaseAttribute(mMaxHp * NumericBox.BurnRate.TotalValue, 10.0f, 1.0f, 0, 100, 0.5f, 0);
+        m.SetBaseAttribute(mMaxHp * mBurnRate, 10.0f, 1.0f, 0, 100, 0.5f, 0);
         m.NumericBox.BurnRate.AddModifier(new FloatModifier(1-0.01f*GetParamValue("burn_defence3")));
         StatusManager.AddIgnoreSettleDownBuff(m, new BoolModifier(true));
         m.canDrivenAway = false;
@@ -302,7 +302,6 @@ public class SteelClawPete : BossUnit
             }
         };
         m.AddActionPointListener(ActionPointType.PostReceiveDamage, hitAction);
-        m.AddActionPointListener(ActionPointType.PostReceiveReboundDamage, hitAction);
         GameController.Instance.AddMouseUnit(m);
 
         // 自身的行为动作
@@ -553,7 +552,7 @@ public class SteelClawPete : BossUnit
         c.IsMeetSkillConditionFunc = delegate { return true; };
         c.BeforeSpellFunc = delegate
         {
-            animatorController.Play("Disappear");
+            animatorController.Play("Jump");
         };
         {
             c.AddSpellingFunc(delegate
@@ -564,7 +563,7 @@ public class SteelClawPete : BossUnit
                     int R0;
                     FindR0(out R0);
                     transform.position = MapManager.GetGridLocalPosition(5, R0);
-                    animatorController.Play("Appear");
+                    animatorController.Play("Drop");
                     return true;
                 }
                 return false;
@@ -598,6 +597,7 @@ public class SteelClawPete : BossUnit
                     // 对3*3格子造成范围伤害
                     {
                         RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 2.5f, 2.5f, "EnemyAllyGrid");
+                        r.SetInstantaneous();
                         r.isAffectFood = false;
                         r.SetAffectHeight(0);
                         r.isAffectMouse = true;
@@ -609,6 +609,7 @@ public class SteelClawPete : BossUnit
                             g.TakeDamage(this, dmg, false);
                         });
                         r.isAffectCharacter = false;
+                        GameController.Instance.AddAreaEffectExecution(r);
                     }
                     animatorController.Play("PreCast");
                     return true;
@@ -658,7 +659,7 @@ public class SteelClawPete : BossUnit
         c.IsMeetSkillConditionFunc = delegate { return true; };
         c.BeforeSpellFunc = delegate
         {
-            animatorController.Play("Disappear");
+            animatorController.Play("Jump");
         };
         {
             c.AddSpellingFunc(delegate
@@ -669,7 +670,7 @@ public class SteelClawPete : BossUnit
                     int R1_0;
                     FindR1_0(out R1_0);
                     transform.position = MapManager.GetGridLocalPosition(5, R1_0);
-                    animatorController.Play("Appear");
+                    animatorController.Play("Drop");
                     return true;
                 }
                 return false;
@@ -741,7 +742,7 @@ public class SteelClawPete : BossUnit
         c.IsMeetSkillConditionFunc = delegate { return true; };
         c.BeforeSpellFunc = delegate
         {
-            animatorController.Play("Disappear");
+            animatorController.Play("Jump");
             queue = null;
             list = null;
         };
@@ -754,7 +755,7 @@ public class SteelClawPete : BossUnit
                     int R2;
                     FindR2(out R2);
                     transform.position = MapManager.GetGridLocalPosition(8, R2);
-                    animatorController.Play("Appear");
+                    animatorController.Play("Drop");
                     return true;
                 }
                 return false;
@@ -895,7 +896,7 @@ public class SteelClawPete : BossUnit
         c.IsMeetSkillConditionFunc = delegate { return true; };
         c.BeforeSpellFunc = delegate
         {
-            animatorController.Play("Disappear");
+            animatorController.Play("Jump");
             barrierList = null;
         };
         {
@@ -907,7 +908,7 @@ public class SteelClawPete : BossUnit
                     int R3;
                     FindR3(out R3);
                     transform.position = MapManager.GetGridLocalPosition(5, R3);
-                    animatorController.Play("Appear");
+                    animatorController.Play("Drop");
                     return true;
                 }
                 return false;

@@ -1,9 +1,12 @@
+using S7P.Numeric;
+
 using UnityEngine;
 /// <summary>
 /// Ðý×ª¿§·ÈÅçºø
 /// </summary>
 public class SpinCoffee : FoodUnit
 {
+    private FloatModifier costMod = new FloatModifier(-50f / 7 / 60);
 
     public override void MInit()
     {
@@ -19,6 +22,14 @@ public class SpinCoffee : FoodUnit
             GameController.Instance.AddEffect(e);
             AddEffectToDict("SpinCoffeeHidden", e, new Vector2(0, 0 * 0.5f * MapManager.gridWidth));
         }
+        // Ã¿7Ãë50·Ñ
+        GameController.Instance.AddCostResourceModifier("Fire", costMod);
+    }
+
+    public override void MDestory()
+    {
+        GameController.Instance.RemoveCostResourceModifier("Fire", costMod);
+        base.MDestory();
     }
 
     /// <summary>
@@ -115,13 +126,13 @@ public class SpinCoffee : FoodUnit
     /// </summary>
     public override void ExecuteDamage()
     {
-        float dmg = mCurrentAttack * 0.25f;
-        float recordDmg = mCurrentAttack * 0.75f;
+        float dmg = mCurrentAttack;
         RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 3, 3, "ItemCollideEnemy");
         r.isAffectMouse = true;
         r.SetOnEnemyEnterAction((u) => {
-            u.AddRecordDamage(recordDmg);
-            new DamageAction(CombatAction.ActionType.CauseDamage, this, u, dmg).ApplyAction();
+            DamageAction d = new DamageAction(CombatAction.ActionType.CauseDamage, this, u, dmg);
+            d.AddDamageType(DamageAction.DamageType.AOE);
+            d.ApplyAction();
         });
         r.SetInstantaneous();
         GameController.Instance.AddAreaEffectExecution(r);

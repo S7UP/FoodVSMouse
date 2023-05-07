@@ -6,7 +6,7 @@ Shader "ChangeColor/Hit"
         _ColorSlow("slow down color", Color) = (1, 1, 1, 1)
         [Toggle]_IsSlow("is slow", Range(0 , 1)) = 0
         _Color("add color", Color) = (1,1,1,1)
-        _FlashRate("_FlashRate",Range(0 , 0.5)) = 0
+        _FlashRate("_FlashRate",Range(0 , 0.75)) = 0
         _Alpha("alpha", Range(0 , 1.0)) = 1
         _CutRateY("cutRateY", Range(0, 1.0)) = 0
     }

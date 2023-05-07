@@ -47,10 +47,8 @@ public class ChocolateBread : FoodUnit
         }
         // 在受到伤害结算之前，尝试消耗护盾把本次伤害值无效化
         AddActionPointListener(ActionPointType.PreReceiveDamage, (action) => { TryToResistDamage(action); });
-        AddActionPointListener(ActionPointType.PreReceiveReboundDamage, (action) => { TryToResistDamage(action); });
         // 在受到伤害结算之后，更新受伤贴图状态，并且根据伤害来决定是否会减少护盾的CD
         AddActionPointListener(ActionPointType.PostReceiveDamage, (action) => { UpdateHertMap(); OnHit(action);  });
-        AddActionPointListener(ActionPointType.PostReceiveReboundDamage, (action) => { UpdateHertMap(); OnHit(action); });
         // 在接收治疗结算之后，更新受伤贴图状态
         AddActionPointListener(ActionPointType.PostReceiveCure, delegate { UpdateHertMap(); });
     }

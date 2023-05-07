@@ -3,7 +3,7 @@ using UnityEngine.UI;
 
 public class BossHpBar : BaseProgressBar
 {
-    public BaseUnit TargetUnit
+    public BossUnit TargetUnit
     {
         get
         {
@@ -11,10 +11,10 @@ public class BossHpBar : BaseProgressBar
         }
         set
         {
-            SetTarget(value, 0);
+            SetTarget(value);
         }
     }
-    private BaseUnit mUnit; // 目标对象
+    private BossUnit mUnit; // 目标对象
     protected bool isAutoDestory; // 目标对象消失时是否自动销毁（隐藏）
 
     private Image Img_BossIcon;
@@ -36,7 +36,8 @@ public class BossHpBar : BaseProgressBar
     // 变量
     private int mTotalBarNumber; // 一共有几管血
     private int mCurrentBarNumber; // 当前有几管血
-    private float mHpPerBar; // 每管血代表多少生命值
+    private float[] hpRateArray;
+    private float drop_percent; // 虚血掉落速度
 
     private float mVirtualHpBarPercent1; // 下层虚血百分比
     private float mVirtualHpBarPercent2; // 上层虚血百分比
@@ -65,7 +66,6 @@ public class BossHpBar : BaseProgressBar
         Sprite[] sprites = GameManager.Instance.GetSprites("Pictures/UI/BossHpBar");
         for (int i = 0; i < Spr_BossHpBar.Length; i++)
         {
-            //Spr_BossHpBar[i] = GameManager.Instance.GetSprite("UI/BossHpBar_" + i);
             for (int j = 0; j < sprites.Length; j++)
             {
                 if (sprites[j].name.Equals("BossHpBar_" + i))
@@ -82,10 +82,12 @@ public class BossHpBar : BaseProgressBar
         base.PInit();
         mTotalBarNumber = 0; // 一共有几管血
         mCurrentBarNumber = 0; // 当前有几管血
-        mHpPerBar = 0; // 每管血代表多少生命值
+        hpRateArray = null;
 
         mVirtualHpBarPercent1 = 0; // 下层虚血百分比
         mVirtualHpBarPercent2 = 0; // 上层虚血百分比
+
+        drop_percent = 0;
     }
 
     /// <summary>
@@ -102,7 +104,7 @@ public class BossHpBar : BaseProgressBar
     /// </summary>
     /// <param name="unit">目标单位</param>
     /// <param name="barNumber">预设血条数，如果填小于等于0则自动计算血条数，算法定义在CalculateBarNumber()中</param>
-    public void SetTarget(BaseUnit unit, int barNumber)
+    public void SetTarget(BossUnit unit)
     {
         if (unit == null || !unit.IsValid())
         {
@@ -110,9 +112,20 @@ public class BossHpBar : BaseProgressBar
             return;
         }
         mUnit = unit;
-        mTotalBarNumber = barNumber;
-        // 根据目标的最大生命值来计算血条管数
-        CalculateBarNumber();
+        mTotalBarNumber = 1;
+        float[] arr = unit.GetParamArray("hpRate");
+        for (int i = 0; i < arr.Length; i++)
+        {
+            mTotalBarNumber = i + 1;
+            if (arr[i] <= 0)
+                break;
+        }
+
+        hpRateArray = new float[mTotalBarNumber];
+        for (int i = 0; i < mTotalBarNumber; i++)
+        {
+            hpRateArray[i] = arr[i];
+        }
     }
 
     /// <summary>
@@ -134,10 +147,25 @@ public class BossHpBar : BaseProgressBar
                 mTotalBarNumber = Mathf.CeilToInt(mUnit.mMaxHp / 10000);
             }
         }
+    }
 
-
-        // 计算每管血代表的实际生命值
-        mHpPerBar = mUnit.mMaxHp / mTotalBarNumber;
+    /// <summary>
+    /// 根据血量计算当前BOSS的阶段（并不是实际阶段，仅仅是以血量百分比作为参考）
+    /// </summary>
+    /// <returns></returns>
+    private int CalculateStage()
+    {
+        int stage = hpRateArray.Length;
+        float percent = mUnit.GetHeathPercent();
+        for (int i = 0; i < hpRateArray.Length; i++)
+        {
+            if (percent > hpRateArray[i])
+            {
+                stage = i;
+                break;
+            }
+        }
+        return stage;
     }
 
     /// <summary>
@@ -145,7 +173,9 @@ public class BossHpBar : BaseProgressBar
     /// </summary>
     private int CalculateCurrentBarNum()
     {
-        return Mathf.CeilToInt(mUnit.mCurrentHp / mHpPerBar);
+        // return Mathf.CeilToInt(mUnit.mCurrentHp / mHpPerBar);
+        //return mTotalBarNumber - mUnit.GetStage() + 1;
+        return mTotalBarNumber - CalculateStage();
     }
 
     /// <summary>
@@ -154,8 +184,10 @@ public class BossHpBar : BaseProgressBar
     /// <returns></returns>
     private float CalculateCurrentBarProgress()
     {
-        float currentBarHpLeft = mUnit.mCurrentHp - mHpPerBar * (CalculateCurrentBarNum() - 1);
-        return currentBarHpLeft / mHpPerBar;
+        //float currentBarHpLeft = mUnit.mCurrentHp - mHpPerBar * (CalculateCurrentBarNum() - 1);
+        //return currentBarHpLeft / mHpPerBar;
+        int stage = CalculateStage();
+        return mUnit.GetStageLeftHp(stage) / mUnit.GetStageTotalHp(stage);
     }
 
     /// <summary>
@@ -165,17 +197,17 @@ public class BossHpBar : BaseProgressBar
     {
         int currentBarNum = CalculateCurrentBarNum();
         int index;
-        // 上层实血条的颜色下标为:(血条管数-1)%7
-        index = (currentBarNum - 1) % 7;
-        Img_BossHp2.GetComponent<Image>().sprite = Spr_BossHpBar[index < 0 ? index += 7 : index];
-        // 下层实血条的颜色下标为:(血条管数-2)%7
-        index = (currentBarNum - 2) % 7;
-        Img_BossHp1.GetComponent<Image>().sprite = Spr_BossHpBar[index < 0 ? index += 7 : index];
-        // 上层虚血条的颜色下标为:(血条管数)%7
+        // 上层实血条的颜色下标为:(血条管数)%7
         index = (currentBarNum) % 7;
-        Img_BossVirtualHp2.GetComponent<Image>().sprite = Spr_BossHpBar[index < 0 ? index += 7 : index];
-        // 下层虚血条的颜色下标为:(血条管数-1)%7，与上层实血条颜色应当同步
+        Img_BossHp2.GetComponent<Image>().sprite = Spr_BossHpBar[index < 0 ? index += 7 : index];
+        // 下层实血条的颜色下标为:(血条管数-1)%7
         index = (currentBarNum - 1) % 7;
+        Img_BossHp1.GetComponent<Image>().sprite = Spr_BossHpBar[index < 0 ? index += 7 : index];
+        // 上层虚血条的颜色下标为:(血条管数+1)%7
+        index = (currentBarNum + 1) % 7;
+        Img_BossVirtualHp2.GetComponent<Image>().sprite = Spr_BossHpBar[index < 0 ? index += 7 : index];
+        // 下层虚血条的颜色下标为:(血条管数)%7，与上层实血条颜色应当同步
+        index = (currentBarNum) % 7;
         Img_BossVirtualHp1.GetComponent<Image>().sprite = Spr_BossHpBar[index < 0 ? index += 7 : index];
     }
 
@@ -196,11 +228,29 @@ public class BossHpBar : BaseProgressBar
                 // 更新个位数数据显示
                 Emp_BossLifeLeft.transform.GetChild(2).GetComponent<Image>().sprite = numberSpriteList[Mathf.Max(0, currentBarNum % 10)];
                 // 更新十位数数据显示
-                Emp_BossLifeLeft.transform.GetChild(1).GetComponent<Image>().sprite = numberSpriteList[Mathf.Max(0, Mathf.FloorToInt((currentBarNum % 100) / 10))];
+                int ten = Mathf.Max(0, Mathf.FloorToInt((currentBarNum % 100) / 10));
+                if(ten > 0)
+                {
+                    Emp_BossLifeLeft.transform.GetChild(1).gameObject.SetActive(true);
+                    Emp_BossLifeLeft.transform.GetChild(1).GetComponent<Image>().sprite = numberSpriteList[ten];
+                }
+                else
+                {
+                    Emp_BossLifeLeft.transform.GetChild(1).gameObject.SetActive(false);
+                }
                 // 更新百位数数据显示
-                Emp_BossLifeLeft.transform.GetChild(0).GetComponent<Image>().sprite = numberSpriteList[Mathf.Max(0, Mathf.FloorToInt((currentBarNum % 1000) / 100))];
+                int hun = Mathf.Max(0, Mathf.FloorToInt((currentBarNum % 1000) / 100));
+                if(hun > 0)
+                {
+                    Emp_BossLifeLeft.transform.GetChild(0).gameObject.SetActive(true);
+                    Emp_BossLifeLeft.transform.GetChild(0).GetComponent<Image>().sprite = numberSpriteList[hun];
+                }
+                else
+                {
+                    Emp_BossLifeLeft.transform.GetChild(0).gameObject.SetActive(false);
+                }
 
-                if (currentBarNum <= 1)
+                if (currentBarNum <= 0)
                 {
                     // 当前仅剩一管血时，隐藏下层血条
                     Img_BossHp1.SetActive(false);
@@ -229,9 +279,18 @@ public class BossHpBar : BaseProgressBar
             // 更新当前血条百分比显示
             float percent = CalculateCurrentBarProgress();
             Img_BossHp2.transform.localScale = new Vector3(percent, 1, 1);
-            // 虚血掉落效果 掉落速度为每秒掉10%
-            mVirtualHpBarPercent1 = Mathf.Max(percent, mVirtualHpBarPercent1 - (float)(0.10 / 60));
-            mVirtualHpBarPercent2 = Mathf.Max(0, mVirtualHpBarPercent2 - (float)(0.10 / 60));
+            // 15帧没挨打就有虚血掉落效果 掉落速度为每秒掉30%
+            if (mUnit.hitBox.GetLastHitTime() > 15)
+            {
+                drop_percent = Mathf.Min(0.3f / 60, drop_percent + 0.0025f / 60);
+            }
+            else
+            {
+                drop_percent = 0;
+            }
+            mVirtualHpBarPercent1 = Mathf.Max(percent, mVirtualHpBarPercent1 - drop_percent);
+            mVirtualHpBarPercent2 = Mathf.Max(0, mVirtualHpBarPercent2 - drop_percent);
+
             if (mVirtualHpBarPercent2 <= 0)
             {
                 Img_BossVirtualHp2.SetActive(false);
@@ -269,11 +328,6 @@ public class BossHpBar : BaseProgressBar
                 }
             }
         }
-        //else
-        //{
-        //    // 如果目标噶了就隐藏自己并重新显示道中
-        //    mProgressController.HideBossHpBar();
-        //}
     }
 
     /// <summary>

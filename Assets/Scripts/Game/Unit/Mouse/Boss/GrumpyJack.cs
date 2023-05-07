@@ -82,6 +82,24 @@ public class GrumpyJack : BossUnit
         base.MUpdate();
     }
 
+    public override void BeforeDeath()
+    {
+        foreach (var u in bodyList)
+        {
+            u.ExecuteDeath();
+        }
+        base.BeforeDeath();
+    }
+
+    public override void BeforeBurn()
+    {
+        foreach (var u in bodyList)
+        {
+            u.ExecuteDeath();
+        }
+        base.BeforeDeath();
+    }
+
     public override void AfterDeath()
     {
         foreach (var u in bodyList)
@@ -171,7 +189,7 @@ public class GrumpyJack : BossUnit
     
     private void AddFireBulletMoveTask(BaseBullet b, Vector2 firstPosition, Vector2 targetPosition)
     {
-        TaskManager.AddParabolaTask(b, TransManager.TranToVelocity(6.0f), MapManager.gridHeight, firstPosition, targetPosition, true);
+        TaskManager.AddParabolaTask(b, (targetPosition-firstPosition).magnitude/60, MapManager.gridHeight, firstPosition, targetPosition, true);
     }
 
     /// <summary>
@@ -217,11 +235,17 @@ public class GrumpyJack : BossUnit
             if (com is DamageAction)
             {
                 DamageAction d = com as DamageAction;
-                new DamageAction(CombatAction.ActionType.CauseDamage, d.Creator, this, dmg_trans * d.DamageValue).ApplyAction();
+                DamageAction new_d = DamageActionManager.Copy(d, d.Creator, this);
+                foreach (var item in new_d.GetDamageTypeList())
+                {
+                    Debug.Log("new_d:" + item);
+                }
+                new_d.DamageValue = dmg_trans * new_d.DamageValue;
+                new_d.ApplyAction();
+                // new DamageAction(CombatAction.ActionType.CauseDamage, d.Creator, this, dmg_trans * d.DamageValue).ApplyAction();
             }
         };
         m.AddActionPointListener(ActionPointType.PreReceiveDamage, hitAction);
-        m.AddActionPointListener(ActionPointType.PreReceiveReboundDamage, hitAction);
         m.SetActionState(new MoveState(m));
         m.DisableMove(true);
 
@@ -260,11 +284,13 @@ public class GrumpyJack : BossUnit
                     {
                         foreach (var u in r.foodUnitList)
                         {
-                            new DamageAction(CombatAction.ActionType.BurnDamage, m, u, dmg).ApplyAction();
+                            if (u.GetHeight() <= 0)
+                                new DamageAction(CombatAction.ActionType.BurnDamage, m, u, dmg).ApplyAction();
                         }
                         foreach (var u in r.mouseUnitList)
                         {
-                            new DamageAction(CombatAction.ActionType.BurnDamage, m, u, dmg).ApplyAction();
+                            if(u.GetHeight()<=0)
+                                new DamageAction(CombatAction.ActionType.BurnDamage, m, u, dmg).ApplyAction();
                         }
                         timeLeft += interval;
                     }
@@ -342,6 +368,10 @@ public class GrumpyJack : BossUnit
     private BaseUnit CreateHeart(Vector2 pos)
     {
         BaseUnit u = CreateComponent(Heart_Run, pos, mMaxHp, 100, GetParamValue("p_dmg2"), 0.01f * GetParamValue("p_dmg_trans2"));
+        u.NumericBox.AddDecideModifierToBoolDict(StringManager.Invincibility, new BoolModifier(true)); // 核心是无敌的
+        u.AddActionPointListener(ActionPointType.PreReceiveDamage, (action) => {
+            (u as MouseUnit).FlashWhenHited();
+        });
         CustomizationTask t = new CustomizationTask();
         t.AddOnEnterAction(delegate {
             foreach (var mod in NumericBox.BurnRate.GetModifierList())
@@ -766,7 +796,8 @@ public class GrumpyJack : BossUnit
             if (leftUnit == null)
                 colIndex = 4;
             else
-                colIndex = MapManager.GetXIndex((leftUnit.transform.position.x + rightUnit.transform.position.x) / 2);
+                //colIndex = MapManager.GetXIndex((leftUnit.transform.position.x + rightUnit.transform.position.x) / 2);
+                colIndex = MapManager.GetXIndex(rightUnit.transform.position.x);
             posList.Add(new Vector2(colIndex, rowIndex));
         }
         return posList;
@@ -800,8 +831,11 @@ public class GrumpyJack : BossUnit
             u.RemoveSpriteOffsetY(YMod);
             u.mStateController.ChangeState("PostDrop");
             // 创建十字炎弹与落地伤害
-            if(isHeart)
+            if (isHeart)
+            {
                 CreateFourFireBullet(u.transform.position, 1);
+                CreateFourFireBullet(u.transform.position, 2);
+            }
             DamageAreaEffectExecution d = DamageAreaEffectExecution.GetInstance(u, u.transform.position, 0.75f, 0.5f, CombatAction.ActionType.CauseDamage, GetParamValue("dmg1"));
             d.isAffectFood = true;
             d.isAffectMouse = true;

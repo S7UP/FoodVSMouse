@@ -6,25 +6,25 @@ using System.Collections.Generic;
 /// </summary>
 public sealed class ActionPointManager
 {
-
     private Dictionary<ActionPointType, ActionPoint> ActionPoints { get; set; } = new Dictionary<ActionPointType, ActionPoint>();
-
 
     public void Initialize()
     {
         ActionPoints.Clear();
 
-        ActionPoints.Add(ActionPointType.PostCauseCure, new ActionPoint());
-        ActionPoints.Add(ActionPointType.PostReceiveCure, new ActionPoint());
+        ActionPoints.Add(ActionPointType.PreCauseDamage, new ActionPoint());
+        ActionPoints.Add(ActionPointType.WhenCauseDamage, new ActionPoint());
         ActionPoints.Add(ActionPointType.PostCauseDamage, new ActionPoint());
+
+        ActionPoints.Add(ActionPointType.PreReceiveDamage, new ActionPoint());
+        ActionPoints.Add(ActionPointType.WhenReceiveDamage, new ActionPoint());
         ActionPoints.Add(ActionPointType.PostReceiveDamage, new ActionPoint());
-        ActionPoints.Add(ActionPointType.PostReceiveReboundDamage, new ActionPoint());
 
         ActionPoints.Add(ActionPointType.PreCauseCure, new ActionPoint());
-        ActionPoints.Add(ActionPointType.PreCauseDamage, new ActionPoint());
+        ActionPoints.Add(ActionPointType.PostCauseCure, new ActionPoint());
+
         ActionPoints.Add(ActionPointType.PreReceiveCure, new ActionPoint());
-        ActionPoints.Add(ActionPointType.PreReceiveDamage, new ActionPoint());
-        ActionPoints.Add(ActionPointType.PreReceiveReboundDamage, new ActionPoint());
+        ActionPoints.Add(ActionPointType.PostReceiveCure, new ActionPoint());
     }
 
     public void AddListener(ActionPointType actionPointType, Action<CombatAction> action)
@@ -58,29 +58,22 @@ public sealed class ActionPointManager
 public enum ActionPointType
 {
     PreCauseDamage,//造成伤害前
-    PreReceiveDamage,//承受伤害前
-
+    WhenCauseDamage,
     PostCauseDamage,//造成伤害后
+
+    PreReceiveDamage,//承受伤害前
+    WhenReceiveDamage,
     PostReceiveDamage,//承受伤害后
 
-    PreReceiveBurnDamage,//承受灰烬伤害前
-    PostReceiveBurnDamage,//承受灰烬伤害后
-
-    PreReceiveBombBurnDamage,//承受炸弹伤害前
-    PostReceiveBombBurnDamage,//承受炸弹伤害后
-
-    PreReceiveReboundDamage,//承受反弹伤害前
-    PostReceiveReboundDamage,//承受反弹伤害后
-
     PreCauseCure, //输出治疗前
-    PreReceiveCure, // 接受治疗前
-
     PostCauseCure, //输出治疗后
+
+    PreReceiveCure, // 接受治疗前
     PostReceiveCure, // 接受治疗后
 
     PreCauseShield, //输出护盾前
-    PreReceiveShield, // 接受护盾前
-
     PostCauseShield, //输出护盾后
+
+    PreReceiveShield, // 接受护盾前
     PostReceiveShield, // 接受护盾后
 }

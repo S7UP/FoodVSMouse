@@ -46,17 +46,17 @@ public class TofuPitcher : FoodUnit
         {
             case 1:
                 GreenBulletAttackCount = 2;
-                PoisonTime = 720;
+                PoisonTime = 360;
                 greenLeft = 0;
                 break;
             case 2:
                 GreenBulletAttackCount = 1;
-                PoisonTime = 720;
+                PoisonTime = 360;
                 greenLeft = 0;
                 break;
             default:
                 GreenBulletAttackCount = 2;
-                PoisonTime = 480;
+                PoisonTime = 240;
                 greenLeft = GreenBulletAttackCount;
                 break;
         }
@@ -324,9 +324,6 @@ public class TofuPitcher : FoodUnit
         r.SetAffectHeight(0);
         r.SetInstantaneous();
 
-        //IntModifier countModifier = new IntModifier(1);
-        //FloatModifier addDmgModifier = new FloatModifier(addDamageRate);
-
         r.SetOnEnemyEnterAction((u) => {
             TofuTask t;
             if (u.GetTask(DebuffName) == null)
@@ -369,8 +366,8 @@ public class TofuPitcher : FoodUnit
             }
         }
 
-        // 每秒伤害系列
-        private const int interval = 60;
+        // 每半秒伤害系列
+        private const int interval = 30;
         private int triggerDamageTimeLeft; // 触发伤害剩余时间
         private List<Recorder> rList = new List<Recorder>();
         private BaseUnit unit;
@@ -418,7 +415,9 @@ public class TofuPitcher : FoodUnit
                 }
                 foreach (var r in delList)
                     rList.Remove(r);
-                new DamageAction(CombatAction.ActionType.CauseDamage, null, unit, totalDamage).ApplyAction();
+                DamageAction d = new DamageAction(CombatAction.ActionType.CauseDamage, null, unit, totalDamage);
+                d.AddDamageType(DamageAction.DamageType.AOE);
+                d.ApplyAction();
             }
             else
             {

@@ -73,7 +73,6 @@ public class CanMouse : MouseUnit
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, IgnoreStun);
         // 100%»Ò½ý¿¹ÐÔ
         NumericBox.BurnRate.AddModifier(burnRateMod);
-
         mHertIndex = 0;
         OnHertStageChanged();
     }

@@ -12,6 +12,7 @@ public class BossUnit : MouseUnit
     private static BoolModifier IgnoreSomeEffectModifier = new BoolModifier(true);
     private System.Random rand; // 随机数生成器
     private Dictionary<int, int> seedDict = new Dictionary<int, int>(); // 作用于本随机数生成器的种子字典，key表示初始行，value表示对应种子号
+    private int SeedValue; // 当前种子值
     private Stack<Vector2> nextGridStack = new Stack<Vector2>(); // 下一个格子坐标栈，如果栈为空则让随机数生成器生成一个值并进栈 
     protected Dictionary<string, float[]> BossParamArrayDict = new Dictionary<string, float[]>(); // boss参数字典
 
@@ -26,6 +27,7 @@ public class BossUnit : MouseUnit
 
     public override void MInit()
     {
+        SeedValue = 0;
         mSkillQueueAbilityManager.Initial();
         rand = null;
         seedDict.Clear();
@@ -56,8 +58,6 @@ public class BossUnit : MouseUnit
         // 移除全场无限攻击TAG
         GameController.Instance.RemoveNoTargetAttackModeModifier(BossNoTargetAttackModeModifier);
         mSkillQueueAbilityManager.Initial();
-        // BOSS剩余数-1
-        GameController.Instance.mCurrentStage.DecBossCount();
         base.MDestory();
     }
 
@@ -65,6 +65,21 @@ public class BossUnit : MouseUnit
     {
         base.BeforeDeath();
         mSkillQueueAbilityManager.Initial();
+    }
+
+    public override void OnBurnStateEnter()
+    {
+        OnDieStateEnter();
+    }
+
+    public override void BeforeBurn()
+    {
+        BeforeDeath();
+    }
+
+    public override void DuringBurn(float _Threshold)
+    {
+        DuringDeath();
     }
 
     public override void OnMoveStateEnter()
@@ -100,7 +115,8 @@ public class BossUnit : MouseUnit
     /// <param name="rowIndex">若key不存在则采用默认的随机构造方法</param>
     public void SetRandSeedByRowIndex(int rowIndex)
     {
-        if(seedDict.ContainsKey(rowIndex))
+        SeedValue = rowIndex;
+        if (seedDict.ContainsKey(rowIndex))
             rand = new System.Random(seedDict[rowIndex]);
         else
             rand = new System.Random();
@@ -165,11 +181,7 @@ public class BossUnit : MouseUnit
         {
             mHertRateList[i] = float.MaxValue;
         }
-        // 更新灰烬抗性
-        //if (GetParamValue("burn_defence") <= 0) // 小于等于0代表没有灰烬抗性，BOSS是不可能一炸就死的，所以这种情况就直接按默认值（95%抗性）处理了
-        //    burnRateMod.Value = 0.05f;
-        //else
-            burnRateMod.Value = 1 - GetParamValue("burn_defence");
+        burnRateMod.Value = 1 - GetParamValue("burn_defence");
         NumericBox.BurnRate.RemoveModifier(burnRateMod);
         NumericBox.BurnRate.AddModifier(burnRateMod);
         // 重载技能组（狂暴）
@@ -255,7 +267,7 @@ public class BossUnit : MouseUnit
     /// <summary>
     /// 根据给定的hpRate的值来设置BOSS切换阶段点
     /// </summary>
-    private void InitHertRateList()
+    public void InitHertRateList()
     {
         mHertRateList.Clear();
         float[] hpRate = BossParamArrayDict["hpRate"];
@@ -314,8 +326,20 @@ public class BossUnit : MouseUnit
     }
 
     public float GetParamValue(string key)
-{
+    {
         return GetParamValue(key, mHertIndex);
+    }
+
+    public float[] GetParamArray(string key)
+    {
+        if (BossParamArrayDict.ContainsKey(key) && BossParamArrayDict[key].Length > 0)
+        {
+            return BossParamArrayDict[key];
+        }
+        else
+        {
+            return null;
+        }
     }
 
     /// <summary>
@@ -335,5 +359,75 @@ public class BossUnit : MouseUnit
                 return true;
         }
         return true;
+    }
+
+    public int GetSeedValue()
+    {
+        return SeedValue;
+    }
+
+    /// <summary>
+    /// 获取当前阶段数
+    /// </summary>
+    /// <returns></returns>
+    public int GetStage()
+    {
+        return Mathf.Max(0, Mathf.Min(mHertIndex, GetParamArray("hpRate").Length));
+    }
+
+    /// <summary>
+    /// 获取当前阶段点到下一个阶段点所需要达到的生命值百分比（小数）
+    /// </summary>
+    /// <param name="stage"></param>
+    /// <returns></returns>
+    private float GetHpPercent(int stage)
+    {
+        float[] arr = GetParamArray("hpRate");
+        stage = Mathf.Max(0, Mathf.Min(stage, arr.Length));
+        if (stage == arr.Length)
+            return 0;
+        return Mathf.Max(0, Mathf.Min(arr[stage], 1));
+    }
+
+    public float GetStageTotalHp(int stage)
+    {
+        float[] arr = GetParamArray("hpRate");
+        if (stage == 0)
+        {
+            if (arr.Length == 0)
+                return mMaxHp;
+            else
+                return mMaxHp * (1 - GetHpPercent(stage));
+        }
+        else if (stage == arr.Length)
+            return mMaxHp * GetHpPercent(stage - 1);
+        return mMaxHp * (GetHpPercent(stage - 1) - GetHpPercent(stage));
+    }
+
+    /// <summary>
+    /// 获取当前阶段的总生命值
+    /// </summary>
+    /// <returns></returns>
+    public float GetCurrentStageTotalHp()
+    {
+        return GetStageTotalHp(GetStage());
+    }
+
+    public float GetStageLeftHp(int stage)
+    {
+        float[] arr = GetParamArray("hpRate");
+        if (arr.Length == 0)
+            return mCurrentHp;
+        else
+            return mCurrentHp - mMaxHp * GetHpPercent(stage);
+    }
+
+    /// <summary>
+    /// 获取当前阶段的剩余生命值
+    /// </summary>
+    /// <returns></returns>
+    public float GetCurrentStageLeftHp()
+    {
+        return GetStageLeftHp(GetStage());
     }
 }

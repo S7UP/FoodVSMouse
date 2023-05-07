@@ -2,8 +2,8 @@ using System.Collections.Generic;
 
 public class TaskController
 {
-    public List<ITask> TaskList = new List<ITask>(); // 自身挂载任务表
-    public Dictionary<string, ITask> TaskDict = new Dictionary<string, ITask>(); // 任务字典（仅记录引用不实际执行逻辑，执行逻辑在任务表中）
+    private List<ITask> TaskList = new List<ITask>(); // 自身挂载任务表
+    private Dictionary<string, ITask> TaskDict = new Dictionary<string, ITask>(); // 任务字典（仅记录引用不实际执行逻辑，执行逻辑在任务表中）
 
     public void Initial()
     {

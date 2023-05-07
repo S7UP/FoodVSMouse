@@ -111,10 +111,7 @@ public class BaseRatTrain : BossUnit
         t.AddTaskFunc(delegate {
             foreach (var comp in GetAllRatTrainComponent())
             {
-                foreach (var mod in NumericBox.BurnRate.GetModifierList())
-                {
-                    comp.NumericBox.BurnRate.AddModifier(mod);
-                }
+                comp.SetGetBurnRateFunc(delegate { return mBurnRate; } );
                 comp.SetMaxHpAndCurrentHp(mMaxHp);
             }
             return true;

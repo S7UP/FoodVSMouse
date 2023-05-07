@@ -100,8 +100,6 @@ public class MouseUnit : BaseUnit
         // 在受到伤害结算之后，更新受伤贴图状态
         AddActionPointListener(ActionPointType.PostReceiveDamage, delegate { UpdateHertMap(); });
         AddActionPointListener(ActionPointType.PostReceiveDamage, FlashWhenHited);
-        AddActionPointListener(ActionPointType.PostReceiveReboundDamage, delegate { UpdateHertMap(); });
-        AddActionPointListener(ActionPointType.PostReceiveReboundDamage, FlashWhenHited);
         // 在接收治疗结算之后，更新受伤贴图状态
         AddActionPointListener(ActionPointType.PostReceiveCure, delegate { UpdateHertMap(); });
         // 装上正常的受击材质
@@ -127,7 +125,7 @@ public class MouseUnit : BaseUnit
         // 更新受击闪烁状态
         if (hitBox.GetPercent() > 0)
         {
-            spriteRenderer.material.SetFloat("_FlashRate", 0.5f * hitBox.GetPercent());
+            spriteRenderer.material.SetFloat("_FlashRate", 0.75f * hitBox.GetPercent());
         }
         // 进家判定
         if (CanTriggerLoseWhenEnterLoseLine() && transform.position.x < MapManager.GetColumnX(-1.5f))
@@ -785,6 +783,9 @@ public class MouseUnit : BaseUnit
     /// </summary>
     public void DrivenAway()
     {
+        if (GetTask("DrivenAway") != null)
+            return;
+
         // 计算上中下格的危险权重，然后取危险权重小的换行
         int currentRowIndex = GetRowIndex();
         int currentColumnIndex = GetColumnIndex();
@@ -825,7 +826,9 @@ public class MouseUnit : BaseUnit
         // 然后从剩下的里面随机抽取一名幸运观众作为最终移动行
         int selectedIndex = Random.Range(0, rowIndexList.Count); // 还是注意，生成整形时不包括最大值
         // 纵向位移
-        GameController.Instance.AddTasker(new StraightMovePresetTasker(this, MapManager.gridHeight / 60 * (currentRowIndex - rowIndexList[selectedIndex]), Vector3.up, 60));
+        AddUniqueTask("DrivenAway", new StraightMovePresetTask(transform, MapManager.gridHeight / 60 * (currentRowIndex - rowIndexList[selectedIndex]), Vector3.up, 60));
+        // AddTask(new StraightMovePresetTask(transform, MapManager.gridHeight / 60 * (currentRowIndex - rowIndexList[selectedIndex]), Vector3.up, 60));
+        // GameController.Instance.AddTasker(new StraightMovePresetTasker(this, MapManager.gridHeight / 60 * (currentRowIndex - rowIndexList[selectedIndex]), Vector3.up, 60));
     }
 
     /// <summary>
@@ -902,6 +905,8 @@ public class MouseUnit : BaseUnit
 
         if (attr.burnDefence != 0)
             NumericBox.BurnRate.AddModifier(new FloatModifier(1-attr.burnDefence));
+        if(attr.aoeDefence != 0)
+            NumericBox.AoeRate.AddModifier(new FloatModifier(1 - attr.aoeDefence));
         mHertRateList.Clear();
         foreach (var item in attr.mHertRateList)
         {

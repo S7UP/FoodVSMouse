@@ -3,29 +3,18 @@ using System;
 /// <summary>
 /// 自定义任务
 /// </summary>
-public class CustomizationTask : ITask
+public class CustomizationTask : BaseTask
 {
-    private List<Action> OnEnterActionList = new List<Action>();
     private Queue<Func<bool>> TaskQueue = new Queue<Func<bool>>();
     private Func<bool> currentTask;
-    private List<Action> OnExitActionList = new List<Action>();
-    private bool isEnd;
-    private bool isEnter;
-    public TaskController taskController = new TaskController();
 
-    public void OnEnter()
+
+    protected override void O_OnEnter()
     {
-        if (!isEnter)
-        {
-            isEnter = true;
-            foreach (var action in OnEnterActionList)
-            {
-                action();
-            }
-        }
+
     }
 
-    public void OnUpdate()
+    protected override void O_OnUpdate()
     {
         if (currentTask == null)
         {
@@ -37,55 +26,22 @@ public class CustomizationTask : ITask
 
         if (currentTask())
             currentTask = null;
-
-        taskController.Update();
     }
 
-    public bool IsMeetingExitCondition()
+    protected override bool O_IsMeetingCondition()
     {
         return (currentTask == null && TaskQueue.Count <= 0);
     }
 
-    public void OnExit()
+    protected override void O_OnExit()
     {
-        if (!isEnd)
-        {
-            isEnd = true;
-            foreach (var action in OnExitActionList)
-            {
-                action();
-            }
-        }
+
     }
+
 
     public void AddTaskFunc(Func<bool> func)
     {
         TaskQueue.Enqueue(func);
-    }
-
-    public bool IsEnd()
-    {
-        return isEnd;
-    }
-
-    public void AddOnEnterAction(Action action)
-    {
-        OnEnterActionList.Add(action);
-    }
-
-    public void RemoveOnEnterAction(Action action)
-    {
-        OnEnterActionList.Remove(action);
-    }
-
-    public void AddOnExitAction(Action action)
-    {
-        OnExitActionList.Add(action);
-    }
-
-    public void RemoveOnExitAction(Action action)
-    {
-        OnExitActionList.Remove(action);
     }
 
     /// <summary>

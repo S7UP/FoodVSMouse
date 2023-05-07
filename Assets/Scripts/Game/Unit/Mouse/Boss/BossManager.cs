@@ -69,6 +69,12 @@ public class BossManager
                 {0, "暴躁杰克" }
             }
         },
+        {
+            BossNameTypeMap.BlazingKingKong, new Dictionary<int, string>()
+            {
+                {0, "炽热金刚" }
+            }
+        },
         { BossNameTypeMap.RatTrain, new Dictionary<int, string>()
             {
                 { 0, "列车初级"},

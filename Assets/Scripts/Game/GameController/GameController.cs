@@ -381,7 +381,7 @@ public class GameController : MonoBehaviour
     /// <param name="yIndex">格子纵坐标</param>
     /// <param name="enemyInfo">BOSS种类与形态编号信息表，即决定要产生什么BOSS</param>
     /// <returns></returns>
-    public BossUnit CreateBossUnit(int firstColumn, int firstRow, BaseEnemyGroup.EnemyInfo enemyInfo, float hp, int barNumber)
+    public BossUnit CreateBossUnit(int firstColumn, int firstRow, BaseEnemyGroup.EnemyInfo enemyInfo, float hp)
     {
         BossUnit boss = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Boss/" + enemyInfo.type + "/" + enemyInfo.shape).GetComponent<BossUnit>();
         boss.mType = enemyInfo.type;
@@ -396,13 +396,12 @@ public class GameController : MonoBehaviour
         boss.currentYIndex = firstRow;
         boss.UpdateRenderLayer(mEnemyList.Count);
         mEnemyList.Add(boss);
-        mProgressController.SetBossHpBarTarget(boss, barNumber); // 将BOSS与血条绑定
         return boss;
     }
 
-    public BossUnit CreateBossUnit(int firstRow, BaseEnemyGroup.EnemyInfo enemyInfo, float hp, int barNumber)
+    public BossUnit CreateBossUnit(int firstRow, BaseEnemyGroup.EnemyInfo enemyInfo, float hp)
     {
-        return CreateBossUnit(8, firstRow, enemyInfo, hp, barNumber);
+        return CreateBossUnit(8, firstRow, enemyInfo, hp);
     }
 
     /// <summary>
@@ -689,6 +688,10 @@ public class GameController : MonoBehaviour
     /// <returns></returns>
     public List<BaseUnit> GetSpecificRowAllyList(int i)
     {
+        if (i < 0)
+            i = 0;
+        else if (i >= mAllyList.Length)
+            i = mAllyList.Length - 1;
         return mAllyList[i];
     }
 
@@ -911,6 +914,17 @@ public class GameController : MonoBehaviour
         {
             unit.MUpdate();
         }
+        //List<BaseUnit> delList = new List<BaseUnit>();
+        //foreach (var u in mEnemyList)
+        //{
+        //    if (!u.IsAlive())
+        //        delList.Add(u);
+        //}
+        //foreach (var u in delList)
+        //{
+        //    mEnemyList.Remove(u);
+        //}
+
 
         // 敌人换行更新图层
         foreach (var item in mEnemyChangeRowDict)

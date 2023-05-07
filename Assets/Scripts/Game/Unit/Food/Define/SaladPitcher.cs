@@ -27,15 +27,15 @@ public class SaladPitcher : FoodUnit
         {
             case 1:
                 bounceCount = 1;
-                bounceDamageRateList = new float[] { 0.5f, 1.5f  };
+                bounceDamageRateList = new float[] { 1.33f, 1.33f  };
                 break;
             case 2:
                 bounceCount = 2;
-                bounceDamageRateList = new float[] { 0.5f, 1.5f, 1 };
+                bounceDamageRateList = new float[] { 1.33f, 1.33f, 1.33f };
                 break;
             default:
                 bounceCount = 1;
-                bounceDamageRateList = new float[] { 0.5f, 1f };
+                bounceDamageRateList = new float[] { 1f, 1f };
                 break;
         }
         targetPosition = Vector2.zero;

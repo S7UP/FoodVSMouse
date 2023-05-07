@@ -13,6 +13,8 @@ public class SelectedCardUI : MonoBehaviour
     private ScrollRect Scr_SelectedCardList;
     private Transform CardGroupListTrans;
     private Button Btn_Save;
+    private Dropdown Dro_Rank;
+    
 
     private List<List<AvailableCardInfo>> cardGroupList;
     private List<List<char>> keyGroupList;
@@ -27,6 +29,7 @@ public class SelectedCardUI : MonoBehaviour
         CardGroupListTrans = transform.Find("Img_center").Find("Emp_CardGroupList");
         Btn_Save = transform.Find("Img_center").Find("Btn_Save").GetComponent<Button>();
         Btn_Save.onClick.AddListener(delegate { SaveCurrentStageCardGroupList(); });
+        Dro_Rank = transform.Find("Img_center").Find("Emp_ChangeRank").Find("Dro_Rank").GetComponent<Dropdown>();
     }
 
     /// <summary>
@@ -62,6 +65,25 @@ public class SelectedCardUI : MonoBehaviour
         // 更新卡组按钮表
         UpdateCardGroupButtonList();
         SetCurrentSelectedCardGroup(0); // 默认第一个为当前选用卡组
+
+        // 设置快捷选择星级
+        {
+            Dro_Rank.onValueChanged.RemoveAllListeners();
+            Dro_Rank.ClearOptions();
+            List<Dropdown.OptionData> dataList = new List<Dropdown.OptionData>();
+            for (int i = 0; i <= 16; i++)
+            {
+                dataList.Add(new Dropdown.OptionData(GameManager.Instance.GetSprite("UI/Rank2/" + i)));
+            }
+            Dro_Rank.AddOptions(dataList);
+            Dro_Rank.value = 5;
+            Dro_Rank.onValueChanged.AddListener(delegate
+            {
+                foreach (var model in cardModelList)
+                {
+                    model.SetLevel(Dro_Rank.value);
+                } });
+            }
     }
 
     /// <summary>

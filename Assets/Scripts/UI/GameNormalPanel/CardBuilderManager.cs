@@ -18,6 +18,22 @@ public class CardBuilderManager
     private Dictionary<FoodNameTypeMap, Action<BaseCardBuilder>> OnTrySelectDict;
     private Dictionary<FoodNameTypeMap, Action<BaseCardBuilder, BaseCardBuilder>> OnTrySelectOtherDict;
     private Dictionary<FoodNameTypeMap, Func<BaseGrid, bool>> CanConstructeInGridDict;
+    // 金卡表
+    private static List<FoodNameTypeMap> GoldenCardList = new List<FoodNameTypeMap>() {
+        FoodNameTypeMap.BigStove,
+        FoodNameTypeMap.SpinCoffee,
+        FoodNameTypeMap.RaidenBaguette,
+        FoodNameTypeMap.Takoyaki,
+        FoodNameTypeMap.ChocolateBread,
+        FoodNameTypeMap.TofuPitcher,
+        FoodNameTypeMap.IceEggPitcher,
+        FoodNameTypeMap.SugarGourd
+    };
+
+    public static bool IsGoldenCard(FoodNameTypeMap type)
+    {
+        return GoldenCardList.Contains(type);
+    }
 
     public static CardBuilderManager GetInstance()
     {
@@ -47,10 +63,10 @@ public class CardBuilderManager
             d.Add(FoodNameTypeMap.PokerShield, AfterBuildPokerShield);
             d.Add(FoodNameTypeMap.CottonCandy, AfterBuildCottonCandy);
             d.Add(FoodNameTypeMap.ChocolateBread, AfterBuildChocolateBread);
-            d.Add(FoodNameTypeMap.RaidenBaguette, AfterBuildRaidenBaguette);
+            //d.Add(FoodNameTypeMap.RaidenBaguette, AfterBuildRaidenBaguette);
             d.Add(FoodNameTypeMap.IceBucket, AfterBuildIceBucketFoodUnit);
             d.Add(FoodNameTypeMap.BoiledWaterBoom, AfterBuildBoiledWaterBoom);
-            d.Add(FoodNameTypeMap.SpinCoffee, AfterBuildSpinCoffee);
+            //d.Add(FoodNameTypeMap.SpinCoffee, AfterBuildSpinCoffee);
         }
 
         /// <summary>
@@ -72,10 +88,10 @@ public class CardBuilderManager
             d.Add(FoodNameTypeMap.PokerShield, AfterDestructePokerShield);
             d.Add(FoodNameTypeMap.CottonCandy, AfterDestructeCottonCandy);
             d.Add(FoodNameTypeMap.ChocolateBread, AfterDestructeChocolateBread);
-            d.Add(FoodNameTypeMap.RaidenBaguette, AfterDestructeRaidenBaguette);
+            //d.Add(FoodNameTypeMap.RaidenBaguette, AfterDestructeRaidenBaguette);
             d.Add(FoodNameTypeMap.IceBucket, AfterDestructeIceBucketFoodUnit);
             d.Add(FoodNameTypeMap.BoiledWaterBoom, AfterDestructeBoiledWaterBoom);
-            d.Add(FoodNameTypeMap.SpinCoffee, AfterDestructeSpinCoffee);
+            //d.Add(FoodNameTypeMap.SpinCoffee, AfterDestructeSpinCoffee);
         }
 
         /// <summary>
@@ -221,7 +237,7 @@ public class CardBuilderManager
     private void OnIceCreamTrySelectedOther(BaseCardBuilder icecreamBuilder, BaseCardBuilder nextBuilder)
     {
         // 如果是通过点击其他卡槽离开这个状态，且该卡槽CD没有转好，则直接消耗掉冰淇淋并让该卡CD重置
-        if (nextBuilder != null && !nextBuilder.IsColdDown() && icecreamBuilder != nextBuilder)
+        if (nextBuilder != null && !nextBuilder.IsColdDown() && icecreamBuilder != nextBuilder && !CardBuilderManager.IsGoldenCard((FoodNameTypeMap)nextBuilder.mType))
         {
             icecreamBuilder.Cost();
             int cd = nextBuilder.mCDLeft;

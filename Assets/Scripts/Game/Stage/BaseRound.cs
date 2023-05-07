@@ -284,7 +284,7 @@ public class BaseRound
     {
         for (int i = 0; i < realEnemyList.GetSize(); i++)
         {
-            BossUnit b = GameController.Instance.CreateBossUnit(realEnemyList.Get(i), realEnemyList.enemyInfo, hp, -1);
+            BossUnit b = GameController.Instance.CreateBossUnit(realEnemyList.Get(i), realEnemyList.enemyInfo, hp);
             b.SetMaxHpAndCurrentHp(b.mMaxHp * enemyAttribute.HpRate * NumberManager.GetCurrentEnemyHpRate()); // 对老鼠最大生命值进行修正
             b.NumericBox.MoveSpeed.SetBase(b.NumericBox.MoveSpeed.baseValue * enemyAttribute.MoveSpeedRate); // 对老鼠移动速度修正
             b.NumericBox.Attack.SetBase(b.mBaseAttack * enemyAttribute.AttackRate); // 对老鼠攻击力修正
@@ -297,6 +297,11 @@ public class BaseRound
             }
             // 覆盖完后可以让它再刷新一次状态
             b.OnHertStageChanged();
+            // 死亡后计数-1
+            b.AddOnDestoryAction(delegate {
+                GameController.Instance.mCurrentStage.DecBossCount();
+            });
+            GameController.Instance.mProgressController.SetBossHpBarTarget(b); // 把血条挂上去
         }
     }
 

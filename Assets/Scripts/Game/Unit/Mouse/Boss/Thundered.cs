@@ -205,11 +205,6 @@ public class Thundered : BossUnit
                 {
                     isFly = false;
                     mHeight = 0;
-                    //DamageAreaEffectExecution e = DamageAreaEffectExecution.GetInstance();
-                    //e.Init(this, CombatAction.ActionType.CauseDamage, dmg0_0 * (mCurrentAttack/10), GetRowIndex(), 1.75f, 1.75f, 0.5f, 0.5f, true, true);
-                    //e.transform.position = transform.position;
-                    //e.AddExcludeMouseUnit(this); // 自身要被排除在外，不然伤敌八百自损一千
-                    //GameController.Instance.AddAreaEffectExecution(e);
 
                     RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position + 0.5f*new Vector3(MapManager.gridWidth, MapManager.gridHeight), 1.75f, 1.75f, "EnemyAllyGrid");
                     r.SetInstantaneous();
@@ -225,7 +220,7 @@ public class Thundered : BossUnit
                             float dmg = u.mCurrentHp;
                             DamageAction DmgAction = new DamageAction(CombatAction.ActionType.RealDamage, this, u, dmg);
                             DmgAction.ApplyAction();
-                            new ReboundDamageAction(CombatAction.ActionType.ReboundDamage, this, u, DmgAction.RealCauseValue).ApplyAction();
+                            new DamageAction(CombatAction.ActionType.CauseDamage, null, this, DmgAction.RealCauseValue).ApplyAction();
                         }
                     });
                     r.AddExcludeMouseUnit(this); // 自身要被排除在外，不然伤敌八百自损一千
@@ -611,16 +606,18 @@ public class Thundered : BossUnit
                         RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(new Vector2(MapManager.GetColumnX(4.0f), MapManager.GetRowY(GetRowIndex())), 9, 0.5f, "EnemyAllyGrid");
                         r.SetInstantaneous();
                         r.isAffectFood = false;
+                        r.isAffectCharacter = false;
                         r.isAffectMouse = true;
                         r.isAffectGrid = true;
                         r.SetOnGridEnterAction((g) => {
                             BaseUnit u = g.GetHighestAttackPriorityUnit(this);
-                            if (u != null)
+                            if (u != null && !(u is CharacterUnit))
                                 BurnManager.BurnDamage(this, u);
                         });
                         r.SetOnEnemyEnterAction((u) => {
                             BurnManager.BurnDamage(this, u);
                         });
+                        r.AddExcludeMouseUnit(this);
                         GameController.Instance.AddAreaEffectExecution(r);
 
                         //// 对友方单位

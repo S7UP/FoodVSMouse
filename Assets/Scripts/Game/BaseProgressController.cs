@@ -157,7 +157,7 @@ public class BaseProgressController : MonoBehaviour, IGameControllerMember
         UpdateBossHpBar();
     }
 
-    public void SetBossHpBarTarget(BaseUnit unit, int barNumber) 
+    public void SetBossHpBarTarget(BossUnit unit) 
     {
         BossHpBar b;
         if (!mBossHpBar.HasTarget())
@@ -167,19 +167,11 @@ public class BaseProgressController : MonoBehaviour, IGameControllerMember
         else
             return;
 
-        b.SetTarget(unit, barNumber);
+        b.SetTarget(unit);
         ShowBossHpBar();
-        
-        if (unit is BossUnit)
-        {
-            b.SetIcon(GameManager.Instance.GetSprite("UI/BossIcon/"+unit.mType));
-            b.SetName(GameManager.Instance.attributeManager.GetBossUnitAttribute(unit.mType, unit.mShape).baseAttrbute.name);
-        }
-        else
-        {
-            b.SetIcon(null);
-            b.SetName("unknow");
-        }
+
+        b.SetIcon(GameManager.Instance.GetSprite("UI/BossIcon/" + unit.mType));
+        b.SetName(GameManager.Instance.attributeManager.GetBossUnitAttribute(unit.mType, unit.mShape).baseAttrbute.name);
     }
 
     public void HideBossHpBar()

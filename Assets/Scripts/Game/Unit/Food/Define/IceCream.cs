@@ -72,7 +72,7 @@ public class IceCream : FoodUnit
         bool flag = false;
         foreach (var f in g.GetAttackableFoodUnitList())
         {
-            if(f.GetCardBuilder()!=null && !f.GetCardBuilder().IsColdDown())
+            if(!CardBuilderManager.IsGoldenCard((FoodNameTypeMap)f.mType) && f.GetCardBuilder()!=null && !f.GetCardBuilder().IsColdDown())
             {
                 flag = true;
                 break;
@@ -107,11 +107,11 @@ public class IceCream : FoodUnit
     /// </summary>
     public override void ExecuteDamage()
     {
-        int totalCD=0; // 被冷却卡片剩余CD之和统计
+        int totalCD = 0; // 被冷却卡片剩余CD之和统计
         // 使当前格所有卡片CD重置
         foreach (var unit in GetGrid().GetFoodUnitList())
         {
-            if(unit.mType != mType)
+            if(unit.mType != mType && !CardBuilderManager.IsGoldenCard((FoodNameTypeMap)unit.mType))
             {
                 BaseCardBuilder builder = unit.GetCardBuilder();
                 totalCD += builder.mCDLeft;

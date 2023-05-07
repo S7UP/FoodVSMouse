@@ -148,7 +148,8 @@ public class ANuo : BossUnit
         b.SetStandardVelocity(18);
         b.SetRotate(Vector2.left);
         // 添加一个纵向位移的任务
-        GameController.Instance.AddTasker(new StraightMovePresetTasker(b, MapManager.gridHeight / 15, 0, Vector3.up * i, MapManager.gridHeight));
+        b.AddTask(new StraightMovePresetTask(b.transform, MapManager.gridHeight / 15, 0, Vector3.up * i, MapManager.gridHeight));
+        // GameController.Instance.AddTasker(new StraightMovePresetTasker(b, MapManager.gridHeight / 15, 0, Vector3.up * i, MapManager.gridHeight));
         GameController.Instance.AddBullet(b);
     }
 

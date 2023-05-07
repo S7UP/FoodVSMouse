@@ -34,15 +34,15 @@ public class EggPitcher : FoodUnit
         switch (mShape)
         {
             case 1:
-                mainDamageRate = 3f;
+                mainDamageRate = 6f;
                 aoeDamageRate = 1.2f;
                 break;
             case 2:
-                mainDamageRate = 3f;
+                mainDamageRate = 6f;
                 aoeDamageRate = 1.2f;
                 break;
             default:
-                mainDamageRate = 2.25f;
+                mainDamageRate = 4.5f;
                 aoeDamageRate = 0.9f;
                 break;
         }
@@ -162,8 +162,6 @@ public class EggPitcher : FoodUnit
             {
                 if (u != null)
                 {
-                    // 添加内伤
-                    u.AddRecordDamage(mainDamageRate * ori_dmg);
                     // 产生AOE
                     CreateDamageArea(u.transform.position, ori_dmg);
                 }
@@ -240,9 +238,11 @@ public class EggPitcher : FoodUnit
         r.SetAffectHeight(0);
         r.SetInstantaneous();
         r.SetOnEnemyEnterAction((u) => {
-            u.FlashWhenHited();
+            // u.FlashWhenHited();
             // 添加内伤
-            u.AddRecordDamage(aoeDamageRate * ori_dmg);
+            DamageAction d = new DamageAction(CombatAction.ActionType.CauseDamage, this, u, aoeDamageRate * ori_dmg);
+            d.AddDamageType(DamageAction.DamageType.AOE);
+            d.ApplyAction();
         });
         GameController.Instance.AddAreaEffectExecution(r);
     }

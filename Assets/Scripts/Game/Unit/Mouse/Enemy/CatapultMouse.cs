@@ -1,14 +1,17 @@
 
 using System.Collections.Generic;
 
+using S7P.Numeric;
+
 using UnityEngine;
 /// <summary>
 /// 投石车类老鼠
 /// </summary>
 public class CatapultMouse : MouseUnit
 {
+    private static RuntimeAnimatorController[] RunArray;
     private BaseUnit targetUnit; // 非阻挡态下攻击目标
-    private RuntimeAnimatorController[] RunArray;
+    private bool canAttack;
 
     public override void Awake()
     {
@@ -21,6 +24,29 @@ public class CatapultMouse : MouseUnit
             }
         }
         base.Awake();
+    }
+
+    public override void MInit()
+    {
+        canAttack = false;
+        targetUnit = null;
+        base.MInit();
+        // 一开始获得移动速度加成，移动到特定位置后移除加成并开始攻击
+        FloatModifier mod = new FloatModifier(500);
+        CustomizationTask t = new CustomizationTask();
+        t.AddOnEnterAction(delegate {
+            NumericBox.MoveSpeed.AddPctAddModifier(mod);
+        });
+        t.AddTaskFunc(delegate {
+            if (transform.position.x <= MapManager.GetColumnX(MapController.xColumn - 1.5f))
+                return true;
+            return false;
+        });
+        t.AddOnExitAction(delegate {
+            NumericBox.MoveSpeed.RemovePctAddModifier(mod);
+            canAttack = true;
+        });
+        AddTask(t);
     }
 
     /// <summary>
@@ -37,7 +63,12 @@ public class CatapultMouse : MouseUnit
         mAttackFlag = true;
         UpdateBlockState(); // 更新阻挡状态
         // 如果有可以攻击的目标，则停下来等待下一次攻击，否则前进
-        if (IsHasTarget() || (targetUnit!=null && targetUnit.IsAlive()))
+        //if (IsHasTarget() || (targetUnit!=null && targetUnit.IsAlive()))
+        //    SetActionState(new IdleState(this));
+        //else
+        //    SetActionState(new MoveState(this));
+
+        if(IsBlock())
             SetActionState(new IdleState(this));
         else
             SetActionState(new MoveState(this));
@@ -64,7 +95,7 @@ public class CatapultMouse : MouseUnit
             return true;
         else
         {
-            if(transform.position.x < MapManager.GetColumnX(MapController.xColumn - 1))
+            if(canAttack)
             {
                 targetUnit = FoodManager.GetSpecificRowFarthestLeftCanTargetedAlly(GetRowIndex(), transform.position.x, true);
                 if (targetUnit != null)

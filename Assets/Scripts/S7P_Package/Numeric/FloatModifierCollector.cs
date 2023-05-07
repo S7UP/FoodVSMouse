@@ -12,6 +12,7 @@ namespace S7P.Numeric
         public float MinValue { get; private set; }
         public float MaxValue { get; private set; }
         public float TotalValue { get; private set; }
+        public float MulValue { get; private set; }
         private List<FloatModifier> Modifiers = new List<FloatModifier>();
 
         public FloatModifierCollector()
@@ -19,6 +20,7 @@ namespace S7P.Numeric
             MinValue = float.MaxValue;
             MaxValue = float.MinValue;
             TotalValue = 0;
+            MulValue = 1;
         }
 
         public void Clear()
@@ -27,6 +29,7 @@ namespace S7P.Numeric
             MinValue = float.MaxValue;
             MaxValue = float.MinValue;
             TotalValue = 0;
+            MulValue = 1;
         }
 
         public void AddModifier(FloatModifier modifier)
@@ -35,6 +38,7 @@ namespace S7P.Numeric
             TotalValue += modifier.Value;
             MinValue = Mathf.Min(modifier.Value, MinValue);
             MaxValue = Mathf.Max(modifier.Value, MaxValue);
+            MulValue *= modifier.Value;
             // 添加数值变化检测自动更新机制
             modifier.AddBeforeValueChangeAction(ModifierBeforeValueChangeAction);
             modifier.AddAfterValueChangeAction(ModifierAfterValueChangeAction);
@@ -51,6 +55,16 @@ namespace S7P.Numeric
 
             Modifiers.Remove(modifier);
             TotalValue -= modifier.Value;
+            if(modifier.Value != 0)
+                MulValue /= modifier.Value;
+            else
+            {
+                MulValue = 1;
+                foreach (var m in Modifiers)
+                {
+                    MulValue *= m.Value;
+                }
+            }
             UpdateMinAndMaxValueWhenRemoveModifier(modifier);
         }
 
@@ -94,12 +108,24 @@ namespace S7P.Numeric
         private void ModifierBeforeValueChangeAction(FloatModifier mod)
         {
             TotalValue -= mod.Value;
+            if (mod.Value != 0)
+                MulValue /= mod.Value;
+            else
+            {
+                MulValue = 1;
+                foreach (var m in Modifiers)
+                {
+                    if(m != mod)
+                        MulValue *= m.Value;
+                }
+            }
             UpdateMinAndMaxValueWhenRemoveModifier(mod);
         }
 
         private void ModifierAfterValueChangeAction(FloatModifier mod)
         {
             TotalValue += mod.Value;
+            MulValue *= mod.Value;
             MinValue = Mathf.Min(mod.Value, MinValue);
             MaxValue = Mathf.Max(mod.Value, MaxValue);
         }

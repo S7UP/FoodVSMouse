@@ -30,40 +30,34 @@ public class DamageAreaEffectExecution : RetangleAreaEffectExecution
     public override void OnEnemyEnter(MouseUnit unit)
     {
         base.OnEnemyEnter(unit);
+        DamageAction d = new DamageAction(actionType, creator, unit, damage);
         if (actionType == CombatAction.ActionType.ReboundDamage)
         {
-            new ReboundDamageAction(actionType, creator, unit, damage).ApplyAction();
+            d.AddDamageType(DamageAction.DamageType.Rebound);
         }
-        else
-        {
-            new DamageAction(actionType, creator, unit, damage).ApplyAction();
-        }
+        d.ApplyAction();
     }
 
     public override void OnFoodEnter(FoodUnit unit)
     {
         base.OnFoodEnter(unit);
+        DamageAction d = new DamageAction(actionType, creator, unit, damage);
         if (actionType == CombatAction.ActionType.ReboundDamage)
         {
-            new ReboundDamageAction(actionType, creator, unit, damage).ApplyAction();
+            d.AddDamageType(DamageAction.DamageType.Rebound);
         }
-        else
-        {
-            new DamageAction(actionType, creator, unit, damage).ApplyAction();
-        }
+        d.ApplyAction();
     }
 
     public override void OnCharacterEnter(CharacterUnit unit)
     {
         base.OnCharacterEnter(unit);
+        DamageAction d = new DamageAction(actionType, creator, unit, damage);
         if (actionType == CombatAction.ActionType.ReboundDamage)
         {
-            new ReboundDamageAction(actionType, creator, unit, damage).ApplyAction();
+            d.AddDamageType(DamageAction.DamageType.Rebound);
         }
-        else
-        {
-            new DamageAction(actionType, creator, unit, damage).ApplyAction();
-        }
+        d.ApplyAction();
     }
 
     public static DamageAreaEffectExecution GetInstance(BaseUnit creator, Vector3 pos, float colCount, float rowCount, CombatAction.ActionType actionType, float dmg)

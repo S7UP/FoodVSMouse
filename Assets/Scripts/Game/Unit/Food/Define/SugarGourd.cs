@@ -1,3 +1,5 @@
+using S7P.Numeric;
+
 using System.Collections.Generic;
 
 using UnityEngine;
@@ -6,9 +8,11 @@ using UnityEngine;
 /// </summary>
 public class SugarGourd : FoodUnit
 {
+    private FloatModifier costMod = new FloatModifier(-50f / 7 / 60);
+
     private static readonly int[] countArray = { 1, 1, 2 }; // 根据转职情况来确定发射几颗子弹
     private static readonly float[] damageRateArray = { 1.0f, 1.0f, 0.75f}; // 伤害比率与转职关系
-    private static readonly int[] stunTimeArray = { 6, 15, 15}; // 击晕时间（帧）与转职关系
+    private static readonly int[] stunTimeArray = { 60, 120, 120}; // 击晕时间（帧）与转职关系
     private int currentAttackCount;
     private int maxAttackCount;
     private List<float> attackPercentList;
@@ -33,6 +37,14 @@ public class SugarGourd : FoodUnit
             }
         }
         currentAttackCount = 0;
+        // 每7秒50费
+        GameController.Instance.AddCostResourceModifier("Fire", costMod);
+    }
+
+    public override void MDestory()
+    {
+        GameController.Instance.RemoveCostResourceModifier("Fire", costMod);
+        base.MDestory();
     }
 
     /// <summary>

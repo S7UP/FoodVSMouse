@@ -123,6 +123,33 @@ public class UnitManager
     }
 
     /// <summary>
+    /// 使目标接收伤害
+    /// </summary>
+    /// <param name="combatAction"></param>
+    public static void ReceiveDamageAction(BaseUnit u, DamageAction damageAction)
+    {
+        // 根据伤害类型来接收伤害
+        if (damageAction.mActionType == CombatAction.ActionType.BurnDamage)
+        {
+            if (damageAction.IsDamageType(DamageAction.DamageType.BombBurn))
+                damageAction.RealCauseValue = u.OnBombBurnDamage(damageAction.DamageValue);
+            else
+                damageAction.RealCauseValue = u.OnBurnDamage(damageAction.DamageValue);
+        }
+        else if (damageAction.mActionType == CombatAction.ActionType.RealDamage)
+            damageAction.RealCauseValue = u.OnRealDamage(damageAction.DamageValue);
+        else if (damageAction.mActionType == CombatAction.ActionType.RecordDamage)
+            damageAction.RealCauseValue = u.OnRecordDamage(damageAction.DamageValue);
+        else
+        {
+            if (damageAction.IsDamageType(DamageAction.DamageType.AOE))
+                damageAction.RealCauseValue = u.OnAoeDamage(damageAction.DamageValue);
+            else
+                damageAction.RealCauseValue = u.OnDamage(damageAction.DamageValue);
+        }
+    }
+
+    /// <summary>
     /// 获取满足特殊条件并按X升序排列的单位表（靠左的在表前面）
     /// </summary>
     /// <param name="ConditionFunc">特殊条件</param>

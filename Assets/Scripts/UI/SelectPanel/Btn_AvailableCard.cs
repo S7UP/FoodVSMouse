@@ -10,6 +10,7 @@ public class Btn_AvailableCard : MonoBehaviour, ICanvasRaycastFilter, IPointerEn
     private AvailableCardInfo availableCardInfo;
     private Button button;
     private bool isSelected;
+    private Image Img_CardSlot;
     private Image Img_Display;
     private Text Tex_Cost;
     private Image Img_Level;
@@ -18,6 +19,7 @@ public class Btn_AvailableCard : MonoBehaviour, ICanvasRaycastFilter, IPointerEn
 
     private void Awake()
     {
+        Img_CardSlot = GetComponent<Image>();
         RectTrans = GetComponent<RectTransform>();
         button = GetComponent<Button>();
         Mask = transform.Find("Mask").gameObject;
@@ -42,6 +44,10 @@ public class Btn_AvailableCard : MonoBehaviour, ICanvasRaycastFilter, IPointerEn
     public void UpdateByAvailableCardInfo(AvailableCardInfo info)
     {
         availableCardInfo = info;
+        if(CardBuilderManager.IsGoldenCard((FoodNameTypeMap)info.type))
+            Img_CardSlot.sprite = GameManager.Instance.GetSprite("UI/CardSlot1");
+        else
+            Img_CardSlot.sprite = GameManager.Instance.GetSprite("UI/CardSlot0");
         Img_Display.sprite = GameManager.Instance.GetSprite("Food/"+info.type+"/"+info.maxShape+"/icon");
         Tex_Cost.text = GameManager.Instance.attributeManager.GetCardBuilderAttribute(info.type, info.maxShape).GetCost(info.maxLevel).ToString();
         Img_Level.sprite = GameManager.Instance.GetSprite("UI/Rank2/" + info.maxLevel);

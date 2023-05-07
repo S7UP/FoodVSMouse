@@ -29,7 +29,7 @@ public enum FoodNameTypeMap
     SpicyStringBoom = 23,
     ThreeD_Icedun = 24,
     CoffeeCup = 25,
-    WoodenPlug = 26,
+    IceEggPitcher = 26,
     Octopus = 27,
     CoffeeCan = 28,
     RotatedCoffeeCan = 29,

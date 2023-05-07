@@ -32,7 +32,18 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public UnitType mUnitType;
     public float mBaseHp { get { return NumericBox.Hp.baseValue; } } // 基础生命值
     public float mMaxHp { get { return NumericBox.Hp.Value; } } // 最大生命值
-    public float mCurrentHp; // 当前生命值
+    public float mCurrentHp
+    {
+        get
+        {
+            if (GetCurrentHpFunc != null)
+                return GetCurrentHpFunc(this);
+            return _mCurrentHp;
+        }
+        set { _mCurrentHp = value; }
+    }
+    private float _mCurrentHp; // 当前生命值
+    private Func<BaseUnit, float> GetCurrentHpFunc;
     public float mBaseAttack { get { return NumericBox.Attack.baseValue; } } // 基础攻击力
     public float mCurrentAttack { get { return NumericBox.Attack.Value; } } // 当前攻击力
     public float mBaseAttackSpeed { get { return NumericBox.AttackSpeed.baseValue; } } // 基础攻击速度
@@ -40,9 +51,36 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public float mCurrentDefense { get { return NumericBox.Defense.Value; } } // 防御
     public float mBaseMoveSpeed { get { return NumericBox.MoveSpeed.baseValue; } } // 基础移动速度
     public float mCurrentMoveSpeed { get { return NumericBox.MoveSpeed.Value; } } // 当前移动速度
-    public float mDamgeRate { get { return NumericBox.DamageRate.TotalValue; } } // 伤害比率
-    public float mBurnRate { get { return NumericBox.BurnRate.TotalValue; } } // 灰烬伤害比率
-    public float mAoeRate { get { return NumericBox.AoeRate.TotalValue; } } // 范围伤害比率
+    public float mDamgeRate
+    {
+        get
+        {
+            if (GetDamageRateFunc != null)
+                return GetDamageRateFunc(this);
+            return NumericBox.DamageRate.TotalValue;
+        }
+    } 
+    private Func<BaseUnit, float> GetDamageRateFunc;
+    public float mBurnRate
+    {
+        get
+        {
+            if (GetBurnRateFunc != null)
+                return GetBurnRateFunc(this);
+            return NumericBox.BurnRate.TotalValue;
+        }
+    } // 灰烬伤害比率
+    private Func<BaseUnit, float> GetBurnRateFunc;
+    public float mAoeRate
+    {
+        get
+        {
+            if (GetAoeRateFunc != null)
+                return GetAoeRateFunc(this);
+            return NumericBox.AoeRate.TotalValue;
+        }
+    } // 范围伤害比率
+    private Func<BaseUnit, float> GetAoeRateFunc;
 
     public float mCurrentTotalShieldValue;
 
@@ -85,9 +123,10 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public Vector2 DeltaPosition { get; private set; } // 当前帧相较于上帧的位置变化量
 
     // 事件
-    public List<Action<BaseUnit>> BeforeDeathEventList = new List<Action<BaseUnit>>();
-    public List<Action<BaseUnit>> BeforeBurnEventList = new List<Action<BaseUnit>>();
-    public List<Action<BaseUnit>> AfterDeathEventList = new List<Action<BaseUnit>>();
+    private List<Action<BaseUnit>> BeforeDeathEventList = new List<Action<BaseUnit>>();
+    private List<Action<BaseUnit>> BeforeBurnEventList = new List<Action<BaseUnit>>();
+    private List<Action<BaseUnit>> AfterDeathEventList = new List<Action<BaseUnit>>();
+    private List<Action<BaseUnit>> OnDestoryActionList = new List<Action<BaseUnit>>();
 
     public List<Func<BaseUnit, BaseUnit, bool>> CanBlockFuncList = new List<Func<BaseUnit, BaseUnit, bool>>(); // 两个单位能否互相阻挡的额外判断事件
     public List<Func<BaseUnit, BaseBullet, bool>> CanHitFuncList = new List<Func<BaseUnit, BaseBullet, bool>>(); // 单位与子弹能否相互碰撞的额外判断事件
@@ -97,7 +136,9 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
 
     public StateController mStateController = new StateController();
     public ComponentController mComponentController = new ComponentController();
-    
+
+
+    private bool isUseDefaultRecieveDamageActionMethod = true; // 在接收伤害时，是否使过默认的接收伤害逻辑
 
     protected string jsonPath
     {
@@ -186,6 +227,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         BeforeDeathEventList.Clear();
         BeforeBurnEventList.Clear();
         AfterDeathEventList.Clear();
+        OnDestoryActionList.Clear();
 
         CanBlockFuncList.Clear();
         CanHitFuncList.Clear();
@@ -198,6 +240,12 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
 
         mStateController.Initial();
         mComponentController.Initial();
+
+        isUseDefaultRecieveDamageActionMethod = true;
+        GetCurrentHpFunc = null;
+        GetDamageRateFunc = null;
+        GetBurnRateFunc = null;
+        GetAoeRateFunc = null;
     }
 
     public virtual void MUpdate()
@@ -266,6 +314,10 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
 
     public virtual void MDestory()
     {
+        foreach (var action in OnDestoryActionList)
+        {
+            action(this);
+        }
         // 初始化透明度
         SetAlpha(1);
 
@@ -696,12 +748,38 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         float recordDmg = dmg;
         // 然后计算护盾吸收的伤害
         dmg = Mathf.Max(0, NumericBox.DamageShield(dmg));
-        dmg = Mathf.Min(dmg, mCurrentHp);
+        dmg = Mathf.Min(dmg, _mCurrentHp);
         // 最后扣除本体生命值
-        mCurrentHp -= dmg;
-        if (mCurrentHp <= 0)
+        _mCurrentHp -= dmg;
+        if (_mCurrentHp <= 0)
         {
-            mCurrentHp = 0;
+            _mCurrentHp = 0;
+            ExecuteDeath();
+        }
+        else if (!isIgnoreRecordDamage)
+        {
+            mRecordDamageComponent.TriggerRecordDamage(recordDmg);
+        }
+        return dmg;
+    }
+
+    public virtual float OnAoeDamage(float dmg)
+    {
+        // 如果目标含有无敌标签，则直接跳过伤害判定
+        if (NumericBox.GetBoolNumericValue(StringManager.Invincibility))
+            return 0;
+
+        // 先计算抗性减免后的伤害
+        dmg = Mathf.Max(0, dmg * GetFinalDamageRate()*NumericBox.AoeRate.TotalValue);
+        float recordDmg = dmg;
+        // 然后计算护盾吸收的伤害
+        dmg = Mathf.Max(0, NumericBox.DamageShield(dmg));
+        dmg = Mathf.Min(dmg, _mCurrentHp);
+        // 最后扣除本体生命值
+        _mCurrentHp -= dmg;
+        if (_mCurrentHp <= 0)
+        {
+            _mCurrentHp = 0;
             ExecuteDeath();
         }
         else if (!isIgnoreRecordDamage)
@@ -723,12 +801,12 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
 
         // 先计算抗性减免后的伤害
         dmg = Mathf.Max(0, dmg * GetFinalDamageRate());
-        dmg = Mathf.Min(dmg, mCurrentHp);
+        dmg = Mathf.Min(dmg, _mCurrentHp);
         // 直接扣除本体生命值
-        mCurrentHp -= dmg;
-        if (mCurrentHp <= 0)
+        _mCurrentHp -= dmg;
+        if (_mCurrentHp <= 0)
         {
-            mCurrentHp = 0;
+            _mCurrentHp = 0;
             ExecuteDeath();
         }
         else if (!isIgnoreRecordDamage)
@@ -746,12 +824,12 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         // 如果目标含有无敌标签，则直接跳过伤害判定
         if (NumericBox.GetBoolNumericValue(StringManager.Invincibility))
             return 0;
-        dmg = Mathf.Min(dmg, mCurrentHp);
+        dmg = Mathf.Min(dmg, _mCurrentHp);
         // 扣除本体生命值
-        mCurrentHp -= dmg;
-        if (mCurrentHp <= 0)
+        _mCurrentHp -= dmg;
+        if (_mCurrentHp <= 0)
         {
-            mCurrentHp = 0;
+            _mCurrentHp = 0;
             ExecuteDeath();
         }
         else if (!isIgnoreRecordDamage)
@@ -772,12 +850,12 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
             return 0;
 
         // 灰烬伤害为真实伤害
-        dmg = Mathf.Min(dmg, mCurrentHp);
+        dmg = Mathf.Min(dmg, _mCurrentHp);
         // 扣除本体生命值
-        mCurrentHp -= dmg;
-        if (mCurrentHp <= 0)
+        _mCurrentHp -= dmg;
+        if (_mCurrentHp <= 0)
         {
-            mCurrentHp = 0;
+            _mCurrentHp = 0;
             ExecuteBurn();
         }
         else if (!isIgnoreRecordDamage)
@@ -788,12 +866,29 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     }
 
     /// <summary>
-    /// 受到来自炸弹的灰烬伤害
+    /// 受到灰烬效果来源的灰烬伤害
     /// </summary>
     /// <param name="dmg"></param>
     public virtual float OnBombBurnDamage(float dmg)
     {
-        return OnBurnDamage(dmg);
+        // 如果目标含有无敌标签，则直接跳过伤害判定
+        if (NumericBox.GetBoolNumericValue(StringManager.Invincibility))
+            return 0;
+
+        // 需要计算一次灰烬抗性
+        dmg = Mathf.Min(dmg * mBurnRate, _mCurrentHp);
+        // 扣除本体生命值
+        _mCurrentHp -= dmg;
+        if (_mCurrentHp <= 0)
+        {
+            _mCurrentHp = 0;
+            ExecuteBurn();
+        }
+        else if (!isIgnoreRecordDamage)
+        {
+            mRecordDamageComponent.TriggerRecordDamage(dmg);
+        }
+        return dmg;
     }
 
     /// <summary>
@@ -805,12 +900,12 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         // 如果目标含有无敌标签，则直接跳过伤害判定
         if (NumericBox.GetBoolNumericValue(StringManager.Invincibility))
             return 0;
-        dmg = Mathf.Min(dmg, mCurrentHp);
+        dmg = Mathf.Min(dmg, _mCurrentHp);
         // 最后扣除本体生命值
-        mCurrentHp -= dmg;
-        if (mCurrentHp <= 0)
+        _mCurrentHp -= dmg;
+        if (_mCurrentHp <= 0)
         {
-            mCurrentHp = 0;
+            _mCurrentHp = 0;
             ExecuteDeath();
         }
         return dmg;
@@ -822,9 +917,9 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     /// <param name="cure"></param>
     public virtual void OnCure(float cure)
     {
-        mCurrentHp += cure;
-        if (mCurrentHp > mMaxHp)
-            mCurrentHp = mMaxHp;
+        _mCurrentHp += cure;
+        if (_mCurrentHp > mMaxHp)
+            _mCurrentHp = mMaxHp;
     }
 
     /// <summary>
@@ -833,34 +928,6 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public virtual void OnAddedShield(float value)
     {
         NumericBox.AddDynamicShield(value);
-    }
-
-    /// <summary>
-    /// 接收伤害
-    /// </summary>
-    /// <param name="combatAction"></param>
-    public void ReceiveDamage(CombatAction combatAction)
-    {
-        var damageAction = combatAction as DamageAction;
-        // 根据伤害类型来接收伤害
-        if(damageAction.mActionType == CombatAction.ActionType.BurnDamage)
-            damageAction.RealCauseValue = OnBurnDamage(damageAction.DamageValue);
-        else if (damageAction.mActionType == CombatAction.ActionType.RealDamage)
-            damageAction.RealCauseValue = OnRealDamage(damageAction.DamageValue);
-        else if(damageAction.mActionType == CombatAction.ActionType.RecordDamage)
-            damageAction.RealCauseValue = OnRecordDamage(damageAction.DamageValue);
-        else
-            damageAction.RealCauseValue = OnDamage(damageAction.DamageValue);
-    }
-
-    /// <summary>
-    /// 接收炸弹灰烬伤害
-    /// </summary>
-    /// <param name="combatAction"></param>
-    public void ReceiveBombBurnDamage(CombatAction combatAction)
-    {
-        var damageAction = combatAction as BombDamageAction;
-        damageAction.RealCauseValue = OnBombBurnDamage(damageAction.DamageValue);
     }
 
     /// <summary>
@@ -1160,7 +1227,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public void SetMaxHpAndCurrentHp(float hp)
     {
         NumericBox.Hp.SetBase(hp);
-        mCurrentHp = NumericBox.Hp.Value;
+        _mCurrentHp = NumericBox.Hp.Value;
     }
 
     /// <summary>
@@ -1606,6 +1673,16 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         AfterDeathEventList.Remove(action);
     }
 
+    public void AddOnDestoryAction(Action<BaseUnit> action)
+    {
+        OnDestoryActionList.Add(action);
+    }
+
+    public void RemoveOnDestoryAction(Action<BaseUnit> action)
+    {
+        OnDestoryActionList.Remove(action);
+    }
+
     public void AddCanBlockFunc(Func<BaseUnit, BaseUnit, bool> action)
     {
         CanBlockFuncList.Add(action);
@@ -1656,7 +1733,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     {
         // 血量
         NumericBox.Hp.SetBase(maxHp);
-        mCurrentHp = mMaxHp;
+        _mCurrentHp = mMaxHp;
         // 攻击力
         NumericBox.Attack.SetBase(attack);
         // 攻击速度与攻击间隔
@@ -1727,6 +1804,35 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
             }
         }
         return false;
+    }
+
+    public void SetUseDefaultRecieveDamageActionMethod(bool isUse)
+    {
+        isUseDefaultRecieveDamageActionMethod = isUse;
+    }
+
+    public bool IsUseDefaultRecieveDamageActionMethod()
+    {
+        return isUseDefaultRecieveDamageActionMethod;
+    }
+    
+    public void SetGetCurrentHpFunc(Func<BaseUnit, float> func)
+    {
+        GetCurrentHpFunc = func;
+    }
+
+    public void SetGetDamageRateFunc(Func<BaseUnit, float> func)
+    {
+        GetDamageRateFunc = func;
+    }
+
+    public void SetGetBurnRateFunc(Func<BaseUnit, float> func)
+    {
+        GetBurnRateFunc = func;
+    }
+    public void SetGetAoeRateFunc(Func<BaseUnit, float> func)
+    {
+        GetAoeRateFunc = func;
     }
 
     // 继续

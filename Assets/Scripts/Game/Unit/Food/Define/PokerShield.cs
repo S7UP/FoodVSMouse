@@ -40,7 +40,6 @@ public class PokerShield : FoodUnit
         InsideAnimatorController.ChangeAnimator(InsideAnimator);
         // 在受到伤害结算之后，更新受伤贴图状态
         AddActionPointListener(ActionPointType.PostReceiveDamage, delegate { UpdateHertMap(); });
-        AddActionPointListener(ActionPointType.PostReceiveReboundDamage, delegate { UpdateHertMap(); });
         // 在接收治疗结算之后，更新受伤贴图状态
         AddActionPointListener(ActionPointType.PostReceiveCure, delegate { UpdateHertMap(); });
     }

@@ -9,6 +9,7 @@ using UnityEngine;
 public class RaidenBaguette : FoodUnit
 {
     private const string TaskName = "RaidenBaguetteDebuff";
+    private FloatModifier costMod = new FloatModifier(0);
 
     // 这种类型单位的表都放这里
     private static List<RaidenBaguette> thisUnitList = new List<RaidenBaguette>();
@@ -35,6 +36,11 @@ public class RaidenBaguette : FoodUnit
         if (!thisUnitList.Contains(this))
             thisUnitList.Add(this);
         base.MInit();
+        if (mShape >= 1)
+            costMod.Value = -25f / 7 / 60;
+        else
+            costMod.Value = -30f / 7 / 60;
+        GameController.Instance.AddCostResourceModifier("Fire", costMod);
     }
 
     public override void MUpdate()
@@ -44,6 +50,7 @@ public class RaidenBaguette : FoodUnit
 
     public override void MDestory()
     {
+        GameController.Instance.RemoveCostResourceModifier("Fire", costMod);
         base.MDestory();
         GetThisUnitList().Remove(this);
     }

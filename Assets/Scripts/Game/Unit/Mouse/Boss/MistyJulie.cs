@@ -352,11 +352,11 @@ public class MistyJulie : BossUnit
         r.SetAffectHeight(0);
         r.isAffectFood = true;
         r.SetOnFoodEnterAction((u)=>{
-            new BombDamageAction(CombatAction.ActionType.CauseDamage, this, u, dmg).ApplyAction();
+            BurnManager.BurnDamage(this, u);
         });
         r.isAffectMouse = true;
         r.SetOnEnemyEnterAction((u) => {
-            new BombDamageAction(CombatAction.ActionType.CauseDamage, this, u, dmg).ApplyAction();
+            BurnManager.BurnDamage(this, u);
         });
         GameController.Instance.AddAreaEffectExecution(r);
     }

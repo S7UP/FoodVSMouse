@@ -50,6 +50,9 @@ public class ChapterManager
             { 12, "果酱部落（日）"},
             { 13, "果酱部落（夜）"},
             { 14, "雪顶火山"},
+            { 15, "勇士城堡" },
+            { 16, "勇士港口" },
+            { 17, "勇士火山" }
         }},
         // 浮空岛
         { ChapterNameTypeMap.SkyCastle, new Dictionary<int, string>(){

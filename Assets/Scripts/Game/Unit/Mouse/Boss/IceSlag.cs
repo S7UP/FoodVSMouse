@@ -146,7 +146,8 @@ public class IceSlag : BossUnit
         // 如果目标已被施加火魔法，则造成爆炸效果并移除火魔法
         if (unit.NumericBox.GetBoolNumericValue(FireMagicKey))
         {
-            new BombDamageAction(CombatAction.ActionType.CauseDamage, null, unit, dmg_boom * (mCurrentAttack / 10)).ApplyAction();
+            //new BombDamageAction(CombatAction.ActionType.CauseDamage, null, unit, dmg_boom * (mCurrentAttack / 10)).ApplyAction();
+            BurnManager.BurnDamage(null, unit);
             RemoveFireMagic(unit);
         }
         else if (!unit.NumericBox.GetBoolNumericValue(IceMagicKey))
@@ -201,7 +202,8 @@ public class IceSlag : BossUnit
         // 如果目标已被施加冰魔法，则造成爆炸效果并移除冰魔法
         if (unit.NumericBox.GetBoolNumericValue(IceMagicKey))
         {
-            new BombDamageAction(CombatAction.ActionType.CauseDamage, null, unit, dmg_boom * (mCurrentAttack / 10)).ApplyAction();
+            // new BombDamageAction(CombatAction.ActionType.CauseDamage, null, unit, dmg_boom * (mCurrentAttack / 10)).ApplyAction();
+            BurnManager.BurnDamage(null, unit);
             RemoveIceMagic(unit);
         }
         else if (!unit.NumericBox.GetBoolNumericValue(FireMagicKey))

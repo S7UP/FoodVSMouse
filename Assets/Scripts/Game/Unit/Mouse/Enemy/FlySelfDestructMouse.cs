@@ -20,7 +20,6 @@ public class FlySelfDestructMouse : MouseUnit, IFlyUnit
         NumericBox.BurnRate.AddModifier(burnRateMod);
         // 在受到伤害结算之后，直接判定为击坠状态
         AddActionPointListener(ActionPointType.PostReceiveDamage, delegate { ExecuteDestruct(); });
-        AddActionPointListener(ActionPointType.PostReceiveReboundDamage, delegate { ExecuteDestruct(); });
     }
 
     public override void MUpdate()
@@ -116,7 +115,7 @@ public class FlySelfDestructMouse : MouseUnit, IFlyUnit
             BaseUnit unit = grid.GetHighestAttackPriorityUnit(this);
             if (unit != null && unit.tag!="Character")
             {
-                new BombDamageAction(CombatAction.ActionType.CauseDamage, this, unit, unit.mCurrentHp).ApplyAction();
+                BurnManager.BurnDamage(this, unit);
             }
         }
     }

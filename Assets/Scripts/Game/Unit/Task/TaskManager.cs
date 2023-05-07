@@ -8,6 +8,7 @@ using UnityEngine;
 /// </summary>
 public class TaskManager
 {
+    #region 为子弹添加抛物线运动
     /// <summary>
     /// 为子弹添加一个无目标的抛物线运动
     /// </summary>
@@ -158,8 +159,9 @@ public class TaskManager
     {
         return AddParabolaTask(master, horizontalVelocity, height, firstPosition, target, isNavi, false);
     }
+    #endregion
 
-
+    #region 为单位添加抛物线运动
     /// <summary>
     /// 为单位添加一个无目标的抛物线运动
     /// </summary>
@@ -240,8 +242,9 @@ public class TaskManager
         master.AddTask(t);
         return t;
     }
+    #endregion
 
-
+    #region 追踪任务
     /// <summary>
     /// 添加跟踪能力
     /// </summary>
@@ -306,7 +309,9 @@ public class TaskManager
         b.AddTask(t);
         return t;
     }
+    #endregion
 
+    #region 自转任务
     /// <summary>
     /// 添加自转任务
     /// </summary>
@@ -325,7 +330,9 @@ public class TaskManager
         b.AddTask(t);
         return t;
     }
+    #endregion
 
+    #region 强制移动任务
     public static void GetMoveToTask(Transform trans, Vector2 endPos, int t, out CustomizationTask task)
     {
         int time = 0;
@@ -345,4 +352,5 @@ public class TaskManager
                 return false;
         });
     }
+    #endregion
 }

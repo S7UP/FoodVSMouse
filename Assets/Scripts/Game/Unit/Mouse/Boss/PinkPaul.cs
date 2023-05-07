@@ -421,7 +421,7 @@ public class PinkPaul : BossUnit
 
         MouseModel m = MouseModel.GetInstance(Tentacle_AnimatorController);
         m.transform.position = pos;
-        m.SetBaseAttribute(mMaxHp*NumericBox.BurnRate.TotalValue, 10, 1.0f, GetParamValue("v1", mHertIndex), 75, 0.5f, 0);
+        m.SetBaseAttribute(mMaxHp*mBurnRate, 10, 1.0f, GetParamValue("v1", mHertIndex), 75, 0.5f, 0);
         m.SetMoveRoate(Vector2.left);
         StatusManager.AddIgnoreSettleDownBuff(m, new BoolModifier(true));
         m.canDrivenAway = false;
@@ -440,7 +440,6 @@ public class PinkPaul : BossUnit
             }
         };
         m.AddActionPointListener(ActionPointType.PostReceiveDamage, hitAction);
-        m.AddActionPointListener(ActionPointType.PostReceiveReboundDamage, hitAction);
         GameController.Instance.AddMouseUnit(m);
 
         // 产生一个捆绑判定区域，检测到该区域的第一个美食会将其捆绑

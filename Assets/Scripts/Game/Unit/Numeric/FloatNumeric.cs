@@ -1,13 +1,34 @@
 using S7P.Numeric;
 
+using System;
+using System.Collections.Generic;
+
 using UnityEngine;
 
 public class FloatNumeric
 {
     // 最终数值
-    public float Value { get; private set; }
+    private float _Value;
+    public float Value
+    {
+        get
+        {
+            if (maxValueFuncIndex > -1)
+                return GetValueFuncDict[maxValueFuncIndex]();
+            return _Value;
+        }
+    }
     // 基础数值
-    public float baseValue { get; private set; }
+    private float _baseValue;
+    public float baseValue
+    {
+        get
+        {
+            if (maxBaseValueFuncIndex > -1)
+                return GetBaseValueFuncDict[maxBaseValueFuncIndex]();
+            return _baseValue;
+        }
+    }
     // 装备数值加成
     public float add { get; private set; }
     // 装备百分比加成
@@ -21,22 +42,31 @@ public class FloatNumeric
     public FloatModifierCollector PctAddCollector { get; } = new FloatModifierCollector();
     public FloatModifierCollector FinalAddCollector { get; } = new FloatModifierCollector();
     public FloatModifierCollector FinalPctAddCollector { get; } = new FloatModifierCollector();
+    // 由外部添加的强制修改获取最终数值的方法，优先级大于默认的最终数值计算，key值越大优先级越高
+    private Dictionary<int, Func<float>> GetValueFuncDict = new Dictionary<int, Func<float>>();
+    private int maxValueFuncIndex = -1;
 
+    private Dictionary<int, Func<float>> GetBaseValueFuncDict = new Dictionary<int, Func<float>>();
+    private int maxBaseValueFuncIndex = -1;
 
     public void Initialize()
     {
-        baseValue = add = pctAdd = finalAdd = finalPctAdd = 0;
+        _baseValue = add = pctAdd = finalAdd = finalPctAdd = 0;
         AddCollector.Clear();
         PctAddCollector.Clear();
         FinalAddCollector.Clear();
         FinalPctAddCollector.Clear();
+        GetValueFuncDict.Clear();
+        maxValueFuncIndex = -1;
+        GetBaseValueFuncDict.Clear();
+        maxBaseValueFuncIndex = -1;
         Update();
     }
     public float SetBase(float value)
     {
-        baseValue = value;
+        _baseValue = value;
         Update();
-        return baseValue;
+        return _baseValue;
     }
     public void AddAddModifier(FloatModifier modifier)
     {
@@ -89,9 +119,65 @@ public class FloatNumeric
 
     public void Update()
     {
-        var value1 = baseValue;
+        var value1 = _baseValue;
         var value2 = (value1 + add) * (100 + pctAdd) / 100f;
         var value3 = (value2 + finalAdd) * (100 + finalPctAdd) / 100f;
-        Value = (float)value3;
+        _Value = (float)value3;
+    }
+
+    public void AddGetValueFunc(int key, Func<float> func)
+    {
+        if (GetValueFuncDict.ContainsKey(key))
+            GetValueFuncDict[key] = func;
+        else
+            GetValueFuncDict.Add(key, func);
+
+        if (key > maxValueFuncIndex)
+            maxValueFuncIndex = key;
+    }
+
+    public void RemoveGetValueFunc(int key)
+    {
+        if (GetValueFuncDict.ContainsKey(key))
+        {
+            GetValueFuncDict.Remove(key);
+            if (maxValueFuncIndex == key)
+            {
+                maxValueFuncIndex = -1;
+                foreach (var keyValuePair in GetValueFuncDict)
+                {
+                    if (keyValuePair.Key > maxValueFuncIndex)
+                        maxValueFuncIndex = keyValuePair.Key;
+                }
+            }
+        }
+    }
+
+    public void AddGetBaseValueFunc(int key, Func<float> func)
+    {
+        if (GetBaseValueFuncDict.ContainsKey(key))
+            GetBaseValueFuncDict[key] = func;
+        else
+            GetBaseValueFuncDict.Add(key, func);
+
+        if (key > maxBaseValueFuncIndex)
+            maxBaseValueFuncIndex = key;
+    }
+
+    public void RemoveGetBaseValueFunc(int key)
+    {
+        if (GetBaseValueFuncDict.ContainsKey(key))
+        {
+            GetBaseValueFuncDict.Remove(key);
+            if (maxBaseValueFuncIndex == key)
+            {
+                maxBaseValueFuncIndex = -1;
+                foreach (var keyValuePair in GetBaseValueFuncDict)
+                {
+                    if (keyValuePair.Key > maxBaseValueFuncIndex)
+                        maxBaseValueFuncIndex = keyValuePair.Key;
+                }
+            }
+        }
     }
 }

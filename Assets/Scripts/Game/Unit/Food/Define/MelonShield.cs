@@ -27,7 +27,6 @@ public class MelonShield : FoodUnit
 
         // 在受到伤害结算之后，更新受伤贴图状态
         AddActionPointListener(ActionPointType.PostReceiveDamage, delegate { UpdateHertMap(); });
-        AddActionPointListener(ActionPointType.PostReceiveReboundDamage, delegate { UpdateHertMap(); });
         // 一转后在受到伤害结算之前计算反伤
         if (mShape>0)
             AddActionPointListener(ActionPointType.PreReceiveDamage, ReBoundDamage);
@@ -106,23 +105,18 @@ public class MelonShield : FoodUnit
     private void ReBoundDamage(CombatAction action)
     {
         DamageAction dmgAction = action as DamageAction;
-        // 至少一转才能反伤
-        if (mShape > 0)
+        // 至少一转才能反伤 并且 伤害来源不能是反伤来源（否则遇到两个都有反伤逻辑的目标会无限递归）
+        if (mShape > 0 && !dmgAction.IsDamageType(DamageAction.DamageType.Rebound))
         {
             // 添加对应的判定检测器
             {
-                //DamageAreaEffectExecution dmgEffect = DamageAreaEffectExecution.GetInstance();
-                //// 反弹伤害不应该超过自身当前生命值（划去）
-                //// 现在没了，上面那个注释别吊它！
-                //dmgEffect.Init(this, CombatAction.ActionType.ReboundDamage, dmgAction.DamageValue * mCurrentAttack/10, GetRowIndex(), 3, 3, 0, 0, false, true);
-                //dmgEffect.transform.position = this.GetPosition();
-                //GameController.Instance.AddAreaEffectExecution(dmgEffect);
-
                 RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 3, 3, "ItemCollideEnemy");
                 r.SetInstantaneous();
                 r.isAffectMouse = true;
                 r.SetOnEnemyEnterAction((u) => {
-                    new ReboundDamageAction(CombatAction.ActionType.RealDamage, this, u, dmgAction.DamageValue * mCurrentAttack / 10).ApplyAction();
+                    DamageAction d = new DamageAction(CombatAction.ActionType.RealDamage, this, u, dmgAction.DamageValue * mCurrentAttack / 10);
+                    d.AddDamageType(DamageAction.DamageType.Rebound);
+                    d.ApplyAction();
                 });
                 GameController.Instance.AddAreaEffectExecution(r);
             }
@@ -153,15 +147,11 @@ public class MelonShield : FoodUnit
                 r.SetInstantaneous();
                 r.isAffectMouse = true;
                 r.SetOnEnemyEnterAction((u) => {
-                    new ReboundDamageAction(CombatAction.ActionType.RealDamage, this, u, dmg).ApplyAction();
+                    DamageAction d = new DamageAction(CombatAction.ActionType.RealDamage, this, u, dmg);
+                    d.AddDamageType(DamageAction.DamageType.Rebound);
+                    d.ApplyAction();
                 });
                 GameController.Instance.AddAreaEffectExecution(r);
-
-
-                //DamageAreaEffectExecution dmgEffect = DamageAreaEffectExecution.GetInstance();
-                //dmgEffect.Init(this, CombatAction.ActionType.ReboundDamage, Mathf.Max(0, mCurrentHp) * mCurrentAttack / 10, GetRowIndex(), 3, 3, 0, 0, false, true);
-                //dmgEffect.transform.position = this.GetPosition();
-                //GameController.Instance.AddAreaEffectExecution(dmgEffect);
             }
         }
     }

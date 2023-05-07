@@ -111,7 +111,6 @@ public class MouseModel : MouseUnit
             }
         };
         m.AddActionPointListener(ActionPointType.PostReceiveDamage, action);
-        m.AddActionPointListener(ActionPointType.PostReceiveReboundDamage, action);
         return m;
     }
 

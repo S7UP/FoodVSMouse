@@ -33,6 +33,7 @@ public class HellShiter : BossUnit
 
     public override void MInit()
     {
+        transform.localScale = Vector2.one;
         mSceptre = null;
         ghostFireList.Clear();
         base.MInit();
@@ -222,7 +223,7 @@ public class HellShiter : BossUnit
             m.SetMaxHpAndCurrentHp(m.mMaxHp * NumberManager.GetCurrentEnemyHpRate()); // 对老鼠最大生命值进行修正
         }
         // 回复玩家能量
-        SmallStove.CreateAddFireEffect(pos, GetParamValue("ReturnFire", mHertIndex) + aliveTime/60);
+        SmallStove.CreateAddFireEffect(pos, GetParamValue("ReturnFire", mHertIndex));
         GameController.Instance.AddAreaEffectExecution(r);
     }
 
@@ -432,7 +433,7 @@ public class HellShiter : BossUnit
         m.DieClipName = "Disappear";
         mSceptre = m;
         m.transform.position = pos;
-        m.SetBaseAttribute(mMaxHp * NumericBox.BurnRate.TotalValue, 10, 1.0f, 0f, 100, 0.5f, 0);
+        m.SetBaseAttribute(mMaxHp * mBurnRate, 10, 1.0f, 0f, 100, 0.5f, 0);
         m.NumericBox.BurnRate.AddModifier(new FloatModifier(1 - 0.01f * GetParamValue("burn_defence1")));
         m.canTriggerCat = false;
         m.canTriggerLoseWhenEnterLoseLine = false;
@@ -442,7 +443,8 @@ public class HellShiter : BossUnit
         WaterGridType.AddNoAffectByWater(m, new BoolModifier(true)); // 标记免疫水蚀
         m.currentYIndex = MapManager.GetYIndex(pos.y);
         m.SetActionState(new IdleState(m));
-        m.AddBeforeBurnEvent(delegate { TriggerAllGhostFire(); });
+        //m.AddBeforeBurnEvent(delegate { TriggerAllGhostFire(); });
+        m.AddOnDestoryAction(delegate { TriggerAllGhostFire(); });
         Action<CombatAction> hitAction = (com) => {
             if (com is DamageAction)
             {
@@ -451,7 +453,6 @@ public class HellShiter : BossUnit
             }
         };
         m.AddActionPointListener(ActionPointType.PostReceiveDamage, hitAction);
-        m.AddActionPointListener(ActionPointType.PostReceiveReboundDamage, hitAction);
         GameController.Instance.AddMouseUnit(m);
 
         Action<BaseCardBuilder> action = (builder) => {
@@ -520,7 +521,7 @@ public class HellShiter : BossUnit
                 return false;
         });
         t.AddOnExitAction(delegate {
-            new ReboundDamageAction(CombatAction.ActionType.ReboundDamage, null, this, reboundDamage).ApplyAction();
+            new DamageAction(CombatAction.ActionType.CauseDamage, null, this, reboundDamage).ApplyAction();
             e.MDestory();
         });
         e.AddTask(t);
@@ -756,11 +757,32 @@ public class HellShiter : BossUnit
 
     private void FindR3C3(out int rowIndex, out int colIndex)
     {
-        List<int> list = FoodManager.GetRowListWhichHasMaxConditionAllyCount((u) => {
-            if (u is FoodUnit && FoodManager.IsAttackableFoodType((u as FoodUnit)))
-                return true;
-            return false;
-        });
+        List<int> list = new List<int>() { 0, 1, 2, 3, 4, 5, 6, 7 };
+        float maxDist = 0;
+        for (int i = 0; i < 7; i++)
+        {
+            BaseUnit left = FoodManager.GetSpecificRowFarthestLeftCanTargetedAlly(i, float.MaxValue, false);
+            BaseUnit right = FoodManager.GetSpecificRowFarthestRightCanTargetedAlly(i, float.MinValue, false);
+            if(left != null)
+            {
+                float dist = right.transform.position.x - left.transform.position.x;
+                if(dist > maxDist)
+                {
+                    list.Clear();
+                    list.Add(i);
+                    maxDist = dist;
+                }else if(dist == maxDist)
+                {
+                    list.Add(i);
+                }
+            }
+        }
+
+        //List<int> list = FoodManager.GetRowListWhichHasMaxConditionAllyCount((u) => {
+        //    if (u is FoodUnit && FoodManager.IsAttackableFoodType((u as FoodUnit)))
+        //        return true;
+        //    return false;
+        //});
         if (list.Count > 0)
             rowIndex = list[GetRandomNext(0, list.Count)];
         else
@@ -1158,7 +1180,7 @@ public class HellShiter : BossUnit
                     int rowIndex = 3;
                     int colIndex = 4;
                     FindR3C3(out rowIndex, out colIndex);
-                    transform.position = MapManager.GetGridLocalPosition(colIndex - 1, rowIndex);
+                    transform.position = MapManager.GetGridLocalPosition(colIndex + 1, rowIndex);
                     animatorController.Play("Appear");
                     return true;
                 }
@@ -1168,6 +1190,9 @@ public class HellShiter : BossUnit
             {
                 if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
                 {
+                    // 转向拉屎
+                    //spriteRenderer.flipX = true;
+                    transform.localScale = new Vector2(-1, 1);
                     animatorController.Play("PreShit");
                     return true;
                 }
@@ -1187,7 +1212,7 @@ public class HellShiter : BossUnit
                 timeLeft--;
                 if (timeLeft <= 0)
                 {
-                    shit = CreateShit(transform.position + MapManager.gridWidth*Vector3.right);
+                    shit = CreateShit(transform.position - MapManager.gridWidth*Vector3.right);
                     animatorController.Play("Idle2", true);
                     return true;
                 }
@@ -1213,6 +1238,7 @@ public class HellShiter : BossUnit
             c.AddSpellingFunc(delegate {
                 if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
                 {
+                    transform.localScale = Vector2.one;
                     return true;
                 }
                 return false;

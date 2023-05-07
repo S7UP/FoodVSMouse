@@ -218,7 +218,11 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
 
         // ø®∆¨Õº∆¨œ‘ æ
         mImg_Card.GetComponent<Image>().sprite = GameManager.Instance.GetSprite("Food/"+mType+"/"+mShape+"/icon");
-
+        // ø®∆¨—˘ Ωœ‘ æ
+        if (CardBuilderManager.IsGoldenCard((FoodNameTypeMap)type))
+            GetComponent<Image>().sprite = GameManager.Instance.GetSprite("UI/CardSlot1");
+        else
+            GetComponent<Image>().sprite = GameManager.Instance.GetSprite("UI/CardSlot0");
         UpdateDisplayer();
     }
 

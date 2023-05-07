@@ -26,16 +26,16 @@ public class LavaAreaEffectExecution : RetangleAreaEffectExecution
         spriteRenderer.transform.localScale = Vector2.zero;
         base.MInit();
         AddFoodEnterConditionFunc((u) => {
-            return isOpen && size >= 1f;
+            return isOpen && size >= 1f && u.GetHeight()<=0;
         });
         AddEnemyEnterConditionFunc((m) => {
             // 对BOSS单位无效
             if (m.IsBoss())
                 return false;
-            return isOpen && size >= 1f;
+            return isOpen && size >= 1f && m.GetHeight() <= 0;
         });
         AddCharacterEnterConditionFunc((u) => {
-            return isOpen && size >= 1f;
+            return isOpen && size >= 1f && u.GetHeight() <= 0;
         });
     }
 

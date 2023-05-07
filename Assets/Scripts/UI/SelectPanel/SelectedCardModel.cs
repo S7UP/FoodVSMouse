@@ -88,6 +88,19 @@ public class SelectedCardModel : MonoBehaviour, IPointerEnterHandler, IPointerEx
                     mSelectedCardUI.UpdateKeyByIndex(index, '\0');
                 }
             });
+
+        if (CardBuilderManager.IsGoldenCard((FoodNameTypeMap)info.type))
+            mImage.sprite = GameManager.Instance.GetSprite("UI/CardSlot1");
+        else
+            mImage.sprite = GameManager.Instance.GetSprite("UI/CardSlot0");
+    }
+
+    public void SetLevel(int level)
+    {
+        Dictionary<FoodNameTypeMap, AvailableCardInfo> dict = mSelectedCardUI.GetCurrentAvailableCardDict();
+        int maxLevel = dict[(FoodNameTypeMap)mAvailableCardInfo.type].maxLevel;
+        level = Mathf.Min(level, maxLevel);
+        Dro_Rank.value = level; // 改变了Dro的Value会触发监听强制修正实例的level
     }
 
     /// <summary>

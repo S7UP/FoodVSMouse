@@ -54,13 +54,13 @@ public class NeedleBaron : BossUnit
         S2Count = 0;
         base.MInit();
         // 被炸了会损失一定百分比生命值
-        AddActionPointListener(ActionPointType.PreReceiveDamage, (action) => {
-            float dmg = 0.01f * GetParamValue("burn_lost_hp_percent", mHertIndex) * GetLostHp();
-            if (action is BombDamageAction)
-            {
-                (action as BombDamageAction).DamageValue += dmg;
-            }
-        });
+        //AddActionPointListener(ActionPointType.PreReceiveDamage, (action) => {
+        //    float dmg = 0.01f * GetParamValue("burn_lost_hp_percent", mHertIndex) * GetLostHp();
+        //    if (action is BombDamageAction)
+        //    {
+        //        (action as BombDamageAction).DamageValue += dmg;
+        //    }
+        //});
         // 添加出现的技能
         {
             Func<BaseUnit, BaseBullet, bool> noHitFunc = delegate { return false; };
@@ -235,10 +235,13 @@ public class NeedleBaron : BossUnit
 
     private void BombBurnInstanceKillAction(CombatAction action)
     {
-        if (action is BombDamageAction)
+        if (action is DamageAction)
         {
-            BombDamageAction ba = (action as BombDamageAction);
-            ba.DamageValue = Mathf.Max(ba.DamageValue, action.Target.GetCurrentHp());
+            DamageAction d = (action as DamageAction);
+            if (d.IsDamageType(DamageAction.DamageType.BombBurn))
+            {
+                new DamageAction(CombatAction.ActionType.BurnDamage, null, d.Target, d.Target.mCurrentHp).ApplyAction();
+            }
         }
     }
 

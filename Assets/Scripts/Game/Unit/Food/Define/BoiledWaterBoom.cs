@@ -11,7 +11,6 @@ public class BoiledWaterBoom : FoodUnit
             isTrigger = true;
         };
         AddActionPointListener(ActionPointType.PostReceiveDamage, hitedAction);
-        AddActionPointListener(ActionPointType.PostReceiveReboundDamage, hitedAction);
         // ÃÌº”’®µØµƒ√‚“ﬂ–ﬁ Œ
         FoodManager.AddBombModifier(this);
     }

@@ -1,0 +1,5 @@
+[{"name":"震撼登场","needEnergy":1.0,"startEnergy":0.0,"energyRegeneration":0.0,"skillType":1,"isExclusive":true,"canActiveInDeathState":false,"priority":9},
+{"name":"解体出击α","needEnergy":1.0,"startEnergy":0.0,"energyRegeneration":0.0,"skillType":1,"isExclusive":true,"canActiveInDeathState":false,"priority":8},
+{"name":"闪电尖刺","needEnergy":1.0,"startEnergy":0.0,"energyRegeneration":0.0,"skillType":1,"isExclusive":true,"canActiveInDeathState":false,"priority":7},
+{"name":"解体出击β","needEnergy":1.0,"startEnergy":0.0,"energyRegeneration":0.0,"skillType":1,"isExclusive":true,"canActiveInDeathState":false,"priority":6},
+{"name":"火山爆发","needEnergy":1.0,"startEnergy":0.0,"energyRegeneration":0.0,"skillType":1,"isExclusive":true,"canActiveInDeathState":false,"priority":5}]

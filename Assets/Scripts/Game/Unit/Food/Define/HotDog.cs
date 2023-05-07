@@ -275,7 +275,9 @@ public class HotDog : FoodUnit
         r.SetAffectHeight(1);
         r.SetInstantaneous();
         r.SetOnEnemyEnterAction((u) => {
-            new DamageAction(CombatAction.ActionType.CauseDamage, this, u, Mathf.Min(airAoeDamageRate * ori_dmg, u.mMaxHp * 0.1f)).ApplyAction();
+            DamageAction d = new DamageAction(CombatAction.ActionType.CauseDamage, this, u, Mathf.Min(airAoeDamageRate * ori_dmg, u.mMaxHp * 0.1f));
+            d.AddDamageType(DamageAction.DamageType.AOE);
+            d.ApplyAction();
         });
         GameController.Instance.AddAreaEffectExecution(r);
     }

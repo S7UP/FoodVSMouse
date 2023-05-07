@@ -347,11 +347,13 @@ public class RatTrain1 : BaseRatTrain
             m.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, new BoolModifier(true)); // 免疫晕眩
             m.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozenSlowDown, new BoolModifier(true)); // 免疫冰冻减速
             m.NumericBox.BurnRate.AddModifier(new FloatModifier(0.5f));
-            m.SetBaseAttribute(laser_hp, 1, 1f, 0, 0, 0, 0);
+            m.SetBaseAttribute(laser_hp, 1, 1f, 0, 100, 0, 0);
             m.transform.position = master.transform.position;
             m.currentYIndex = MapManager.GetYIndex(m.transform.position.y);
             m.transform.right = -master.moveRotate;
             m.transform.localScale = new Vector2(1, (isLeft ? -1 : 1) * Mathf.Sign(master.moveRotate.x));
+            m.AddCanHitFunc(delegate { return false; });
+            m.AddCanBeSelectedAsTargetFunc(delegate { return false; });
             m.AddCanBlockFunc(delegate { return false; }); // 不可被阻挡
             m.mBoxCollider2D.offset = new Vector2(0, 1.0f * MapManager.gridHeight);
             m.mBoxCollider2D.size = new Vector2(0.49f * MapManager.gridWidth, 0.49f * MapManager.gridHeight);
@@ -476,7 +478,7 @@ public class RatTrain1 : BaseRatTrain
                             GameController.Instance.AddEffect(e);
                             u.AddEffectToDict(LaserEffectKey, e, 1.5f*Vector2.up * MapManager.gridHeight);
                             // 产生真正的激光判定
-                            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(new Vector2(u.transform.position.x, MapManager.GetRowY(3)), 0.5f, 5, "BothCollide");
+                            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(new Vector2(u.transform.position.x, MapManager.GetRowY(3)), 0.4f, 5, "BothCollide");
                             r.SetInstantaneous();
                             r.isAffectMouse = true;
                             r.isAffectFood = true;
@@ -486,10 +488,6 @@ public class RatTrain1 : BaseRatTrain
                             r.SetOnEnemyEnterAction((u) => {
                                 BurnManager.BurnDamage(this, u);
                             });
-                            //BombAreaEffectExecution r = BombAreaEffectExecution.GetInstance(this, dmg, new Vector2(u.transform.position.x, MapManager.GetRowY(3)), 0.5f, 5);
-                            //r.isAffectFood = true;
-                            //r.isAffectMouse = true;
-                            //r.isAffectCharacter = false;
                             foreach (var laserUnit in retinueList)
                             {
                                 if(laserUnit is MouseUnit)
@@ -622,7 +620,7 @@ public class RatTrain1 : BaseRatTrain
             m.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozen, new BoolModifier(true)); // 免疫冻结
             m.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, new BoolModifier(true)); // 免疫晕眩
             m.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozenSlowDown, new BoolModifier(true)); // 免疫冰冻减速
-            m.SetBaseAttribute(hp, 1, 1f, 0, 0, 0, 0);
+            m.SetBaseAttribute(hp, 1, 1f, 0, 100, 0, 0);
             m.transform.position = master.transform.position;
             m.currentYIndex = MapManager.GetYIndex(m.transform.position.y);
             m.transform.right = -master.moveRotate;
@@ -733,12 +731,6 @@ public class RatTrain1 : BaseRatTrain
                 BurnManager.BurnDamage(master, u);
             });
             GameController.Instance.AddAreaEffectExecution(r);
-
-            //BombAreaEffectExecution r = BombAreaEffectExecution.GetInstance(master, dmg, u.transform.position, 0.75f, 0.75f);
-            //r.isAffectFood = true;
-            //r.isAffectCharacter = false;
-            //r.isAffectMouse = true;
-            //GameController.Instance.AddAreaEffectExecution(r);
         });
         GameController.Instance.AddBullet(b);
         return b;
@@ -755,10 +747,8 @@ public class RatTrain1 : BaseRatTrain
             BossUnit.AddBossIgnoreDebuffEffect(m);
             m.transform.position = pos;
             m.SetBaseAttribute(mMaxHp, 1, 1f, 0, 0, 0, 0);
-            foreach (var mod in NumericBox.BurnRate.GetModifierList())
-            {
-                m.NumericBox.BurnRate.AddModifier(mod);
-            }
+            m.SetGetBurnRateFunc(delegate { return mBurnRate; });
+            m.NumericBox.AddDecideModifierToBoolDict(StringManager.Invincibility, new BoolModifier(true));
             m.currentYIndex = MapManager.GetYIndex(pos.y);
             m.mBoxCollider2D.offset = new Vector2(0, 0);
             m.mBoxCollider2D.size = new Vector2(0.49f * MapManager.gridWidth, 0.49f * MapManager.gridHeight);
@@ -767,16 +757,37 @@ public class RatTrain1 : BaseRatTrain
                 if(action is DamageAction)
                 {
                     var damageAction = action as DamageAction;
-                    float dmg;
-                    if(isFireAttacker)
-                        dmg = damageAction.DamageValue * (damageAction.mActionType.Equals(CombatAction.ActionType.BurnDamage) ? GetParamValue("tail_burn", mHertIndex) : GetParamValue("tail_normal", mHertIndex));
+                    if (isFireAttacker)
+                    {
+                        if (damageAction.IsDamageType(DamageAction.DamageType.BombBurn))
+                        {
+                            DamageAction d = new DamageAction(action.mActionType, action.Creator, this, damageAction.DamageValue * GetParamValue("tail_burn", mHertIndex));
+                            d.AddDamageType(DamageAction.DamageType.BombBurn);
+                            d.ApplyAction();
+                        }
+                        else
+                        {
+                            DamageAction d = new DamageAction(action.mActionType, action.Creator, this, damageAction.DamageValue * GetParamValue("tail_normal", mHertIndex));
+                            d.ApplyAction();
+                        }
+                    }
                     else
-                        dmg = damageAction.DamageValue * (damageAction.mActionType.Equals(CombatAction.ActionType.BurnDamage) ? GetParamValue("body_burn", mHertIndex) : GetParamValue("body_normal", mHertIndex));
-                    new DamageAction(action.mActionType, action.Creator, this, dmg).ApplyAction();
+                    {
+                        if (damageAction.IsDamageType(DamageAction.DamageType.BombBurn))
+                        {
+                            DamageAction d = new DamageAction(action.mActionType, action.Creator, this, damageAction.DamageValue * GetParamValue("body_burn", mHertIndex));
+                            d.AddDamageType(DamageAction.DamageType.BombBurn);
+                            d.ApplyAction();
+                        }
+                        else
+                        {
+                            DamageAction d = new DamageAction(action.mActionType, action.Creator, this, damageAction.DamageValue * GetParamValue("body_normal", mHertIndex));
+                            d.ApplyAction();
+                        }
+                    }
                 }
             };
             m.AddActionPointListener(ActionPointType.PreReceiveDamage, transToMaster);
-            m.AddActionPointListener(ActionPointType.PreReceiveReboundDamage, transToMaster);
             // 收纳为自身随从
             retinueList.Add(m);
             // 不触发猫，进家也不判输

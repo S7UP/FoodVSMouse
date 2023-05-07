@@ -113,7 +113,7 @@ public class FlourBag : FoodUnit
                 if(mShape >= 1)
                     m.AddStatusAbility(new FrozenSlowStatusAbility(-90, m, 240));
 
-                new DamageAction(CombatAction.ActionType.RealDamage, this, m, m.mMaxHp* m.NumericBox.BurnRate.TotalValue).ApplyAction();
+                new DamageAction(CombatAction.ActionType.RealDamage, this, m, m.mMaxHp* m.mBurnRate).ApplyAction();
                 UnitManager.TriggerRecordDamage(m);
             });
             r.AddBeforeDestoryAction(delegate {

@@ -40,6 +40,7 @@ public class FoodManager
         { FoodNameTypeMap.ChocolatePitcher, new List<string>(){ "巧克力投手", "浓情巧克力投手", "脆心巧克力投手" } },
         { FoodNameTypeMap.TofuPitcher, new List<string>(){ "臭豆腐投手", "什锦臭豆腐投手", "铁板臭豆腐投手" } },
         { FoodNameTypeMap.EggPitcher, new List<string>(){ "煮蛋器投手", "威力煮蛋器", "强袭煮蛋器" } },
+        { FoodNameTypeMap.IceEggPitcher, new List<string>(){ "冰煮蛋器投手", "冰威力煮蛋器", "冰河煮蛋器" } },
         { FoodNameTypeMap.ToastBread, new List<string>(){ "土司面包" } },
         { FoodNameTypeMap.ChocolateBread, new List<string>(){ "巧克力面包", "德芙面包" } },
         { FoodNameTypeMap.RaidenBaguette, new List<string>(){ "雷电长棍面包", "节能雷电长棍面包", "负离子面包" } },

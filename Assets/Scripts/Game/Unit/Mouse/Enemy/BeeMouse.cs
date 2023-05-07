@@ -128,7 +128,10 @@ public class BeeMouse : MouseUnit
             b.SetRotate(Vector2.left);
             b.transform.position = transform.position + 1.0f*Vector3.up;
             // 添加一个纵向位移的任务
-            GameController.Instance.AddTasker(new StraightMovePresetTasker(b, new Vector3(b.transform.position.x, transform.position.y + MapManager.gridHeight * i, b.transform.position.z), 60)).AddOtherEndEvent(delegate { b.UpdateRenderLayer(0); });
+            BaseTask t = new StraightMovePresetTask(b.transform, new Vector3(b.transform.position.x, transform.position.y + MapManager.gridHeight * i, b.transform.position.z), 60);
+            t.AddOnExitAction(delegate { b.UpdateRenderLayer(0); });
+            b.AddTask(t);
+            // GameController.Instance.AddTasker(new StraightMovePresetTasker(b, new Vector3(b.transform.position.x, transform.position.y + MapManager.gridHeight * i, b.transform.position.z), 60)).AddOtherEndEvent(delegate { b.UpdateRenderLayer(0); });
             GameController.Instance.AddBullet(b);
         }
     }

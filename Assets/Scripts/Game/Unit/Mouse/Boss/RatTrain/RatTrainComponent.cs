@@ -77,7 +77,8 @@ public abstract class RatTrainComponent : MouseModel
     /// <returns></returns>
     public override bool CanBeSelectedAsTarget(BaseUnit otherUnit)
     {
-        return transform.position.x >= MapManager.GetColumnX(10) && transform.position.x <= MapManager.GetColumnX(-2) && transform.position.y >= MapManager.GetRowY(7) && transform.position.y <= MapManager.GetRowY(-1) && base.CanBeSelectedAsTarget(otherUnit);
+        //return transform.position.x >= MapManager.GetColumnX(10) && transform.position.x <= MapManager.GetColumnX(-2) && transform.position.y >= MapManager.GetRowY(7) && transform.position.y <= MapManager.GetRowY(-1) && base.CanBeSelectedAsTarget(otherUnit);
+        return base.CanBeSelectedAsTarget(otherUnit);
     }
 
     public override void OnMoveState()
@@ -232,6 +233,18 @@ public abstract class RatTrainComponent : MouseModel
         if (master != null)
         {
             dmg = master.OnDamage(dmgRate * dmg);
+            master.UpdateHertMap();
+            return dmg;
+        }
+        return 0;
+    }
+
+    public override float OnAoeDamage(float dmg)
+    {
+        // boss本体取代受伤
+        if (master != null)
+        {
+            dmg = master.OnAoeDamage(dmgRate * dmg);
             master.UpdateHertMap();
             return dmg;
         }

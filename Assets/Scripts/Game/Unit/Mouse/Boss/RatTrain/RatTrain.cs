@@ -474,7 +474,7 @@ public class RatTrain : BaseRatTrain
             m.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozen, new BoolModifier(true)); // √‚“ﬂ∂≥Ω·
             m.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, new BoolModifier(true)); // √‚“ﬂ‘Œ—£
             m.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozenSlowDown, new BoolModifier(true)); // √‚“ﬂ±˘∂≥ºıÀŸ
-            m.SetBaseAttribute(900, 1, 1f, 0, 0, 0, 0);
+            m.SetBaseAttribute(900, 1, 1f, 0, 100, 0, 0);
             m.transform.position = master.transform.position;
             m.currentYIndex = MapManager.GetYIndex(m.transform.position.y);
             m.transform.right = -master.moveRotate * master.moveRotate.y;
@@ -591,7 +591,7 @@ public class RatTrain : BaseRatTrain
             m.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozen, new BoolModifier(true)); // √‚“ﬂ∂≥Ω·
             m.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, new BoolModifier(true)); // √‚“ﬂ‘Œ—£
             m.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozenSlowDown, new BoolModifier(true)); // √‚“ﬂ±˘∂≥ºıÀŸ
-            m.SetBaseAttribute(900, 1, 1f, 0, 0, 0, 0);
+            m.SetBaseAttribute(900, 1, 1f, 0, 100, 0, 0);
             m.transform.position = master.transform.position;
             m.currentYIndex = MapManager.GetYIndex(m.transform.position.y);
             if(isAttackLeft)

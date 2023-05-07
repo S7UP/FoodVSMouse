@@ -6,6 +6,7 @@ using S7P.Numeric;
 /// </summary>
 public class IntergerCollectorComponent : IComponent
 {
+    public const string ComponentKey = "IntergerCollectorComponent";
     private Dictionary<string, IntModifierCollector> CollectorDict = new Dictionary<string, IntModifierCollector>();
 
     protected override void OnInitial()
@@ -45,6 +46,16 @@ public class IntergerCollectorComponent : IComponent
             return CollectorDict[key];
         else
             return null;
+    }
+
+    public List<IntModifierCollector> GetAllCollector()
+    {
+        List<IntModifierCollector> list = new List<IntModifierCollector>();
+        foreach (var keyValuePair in CollectorDict)
+        {
+            list.Add(keyValuePair.Value);
+        }
+        return list;
     }
 
     public void AddCollector(string key, IntModifierCollector collector)

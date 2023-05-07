@@ -133,19 +133,25 @@ public class TeleportGridType : BaseGridType
     /// </summary>
     private void ExecuteTp(BaseUnit m)
     {
-        float moveDistance = MapManager.gridWidth * 3.5f;
-        // 添加一个弹起的任务
-        CustomizationTask t = TaskManager.AddParabolaTask(m, TransManager.TranToVelocity(12), moveDistance/2, m.transform.position, m.transform.position + (Vector3)m.moveRotate * moveDistance, false);
-        // 且禁止移动
-        t.AddOnEnterAction(delegate {
-            m.DisableMove(true);
-        });
-        t.AddOnExitAction(delegate {
-            m.DisableMove(false);
-            m.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(m, 360, false)); // 目标在落地后晕眩数秒
-            new DamageAction(CombatAction.ActionType.RealDamage, null, m, 0.25f * m.GetCurrentHp()).ApplyAction();
-        });
-        m.AddUniqueTask(TpTaskKey, t);
+        // 以下是旧的弹起
+
+        //float moveDistance = MapManager.gridWidth * 3.5f;
+        //// 添加一个弹起的任务
+        //CustomizationTask t = TaskManager.AddParabolaTask(m, TransManager.TranToVelocity(12), moveDistance/2, m.transform.position, m.transform.position + (Vector3)m.moveRotate * moveDistance, false);
+        //// 且禁止移动
+        //t.AddOnEnterAction(delegate {
+        //    m.DisableMove(true);
+        //});
+        //t.AddOnExitAction(delegate {
+        //    m.DisableMove(false);
+        //    m.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(m, 360, false)); // 目标在落地后晕眩数秒
+        //    new DamageAction(CombatAction.ActionType.RealDamage, null, m, 0.25f * m.GetCurrentHp()).ApplyAction();
+        //});
+        //m.AddUniqueTask(TpTaskKey, t);
+
+        // 以下是新的换行
+        if(m is MouseUnit && !(m as MouseUnit).IsBoss())
+            (m as MouseUnit).DrivenAway();
     }
 
     public override void MUpdate()

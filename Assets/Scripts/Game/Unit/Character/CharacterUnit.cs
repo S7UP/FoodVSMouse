@@ -373,7 +373,7 @@ public class CharacterUnit : BaseUnit
         // ¸üÐÂÊÜ»÷ÉÁË¸×´Ì¬
         if (hitBox.GetPercent() > 0)
         {
-            spriteRenderer.material.SetFloat("_FlashRate", 0.5f * hitBox.GetPercent());
+            spriteRenderer.material.SetFloat("_FlashRate", 0.75f * hitBox.GetPercent());
         }
     }
 

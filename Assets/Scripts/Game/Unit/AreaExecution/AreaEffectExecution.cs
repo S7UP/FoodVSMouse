@@ -619,7 +619,7 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
             f_delList.Clear();
             foreach (var item in excludeFoodUnitList)
             {
-                if (!item.IsAlive())
+                if (item == null || !item.IsAlive())
                     f_delList.Add(item);
             }
             foreach (var item in f_delList)
@@ -642,7 +642,7 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
             m_delList.Clear();
             foreach (var item in excludeMouseUnitList)
             {
-                if (!item.IsAlive())
+                if (item == null || !item.IsAlive())
                     m_delList.Add(item);
             }
             foreach (var item in m_delList)
@@ -665,7 +665,7 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
             c_delList.Clear();
             foreach (var item in excludeCharacterList)
             {
-                if (!item.IsAlive())
+                if (item == null || !item.IsAlive())
                     c_delList.Add(item);
             }
             foreach (var item in c_delList)
@@ -688,7 +688,7 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
             g_delList.Clear();
             foreach (var item in excludeGridList)
             {
-                if (!item.isActiveAndEnabled)
+                if (item == null || !item.isActiveAndEnabled)
                     g_delList.Add(item);
             }
             foreach (var item in g_delList)
@@ -711,7 +711,7 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
             b_delList.Clear();
             foreach (var item in excludeBulletList)
             {
-                if (!item.IsAlive())
+                if (item == null || !item.IsAlive())
                     b_delList.Add(item);
             }
             foreach (var item in b_delList)

@@ -6,21 +6,23 @@ namespace Environment
 {
     class LavaTask : ITask
     {
+        // 岩浆抗性属性关键字
+        public const string LavaRate = "LavaRate";
+
         // 高温效果
-        private FloatModifier attackModifier0 = new FloatModifier(150);
-        private FloatModifier attackSpeedModifier0 = new FloatModifier(150);
-        private FloatModifier moveSpeedModifier0 = new FloatModifier(300);
+        private FloatModifier attackModifier0 = new FloatModifier(50);
+        private FloatModifier attackSpeedModifier0 = new FloatModifier(100);
+        private FloatModifier moveSpeedModifier0 = new FloatModifier(150);
 
         // 恒温效果
         private FloatModifier attackSpeedModifier1 = new FloatModifier(50);
-        private FloatModifier moveSpeedModifier1 = new FloatModifier(100);
+        private FloatModifier moveSpeedModifier1 = new FloatModifier(50);
 
         // 免疫
         private BoolModifier IgnoreModifier = new BoolModifier(true);
 
         private const int interval = 15;
         private int timeLeft;
-        private int timer;
 
         private int count; // 进入的岩浆数
         private bool hasVehicle; // 是否被载具承载
@@ -30,7 +32,6 @@ namespace Environment
         {
             this.unit = unit;
             timeLeft = 0;
-            timer = 0;
         }
 
         public void OnEnter()
@@ -72,28 +73,15 @@ namespace Environment
                     {
                         // 有载具时，当目标生命高于15点时每秒受到1点无来源的灰烬伤害
                         if (unit.GetCurrentHp() > 15)
-                            new DamageAction(CombatAction.ActionType.BurnDamage, null, unit, 1.0f).ApplyAction();
+                            new DamageAction(CombatAction.ActionType.BurnDamage, null, unit, GetUnitLavaRate(unit) * 1.0f).ApplyAction();
                     }
                     else
                     {
-                        //// 无载具时，每秒受到相当于X%的最大生命值的无来源的灰烬伤害，其中X = 2 + 0.3*目标已待在岩浆的时间（秒）
-                        //new DamageAction(CombatAction.ActionType.BurnDamage, null, unit, 0.01f * (2 + 0.3f * timer / 60) * unit.mMaxHp).ApplyAction();
                         // 无载具时，每0.25秒受到相当于5%的最大生命值的无来源的灰烬伤害
-                        new DamageAction(CombatAction.ActionType.BurnDamage, null, unit, 0.05f * unit.mMaxHp).ApplyAction();
+                        new DamageAction(CombatAction.ActionType.BurnDamage, null, unit, GetUnitLavaRate(unit) * 0.025f * unit.mMaxHp).ApplyAction();
                     }
                     timeLeft = interval;
                 }
-
-                // 当有载具时，待在岩浆里的时间会被重置
-                if (hasVehicle)
-                    timer = 0;
-                else
-                    timer++;
-            }
-            else
-            {
-                // 当免疫岩浆DEBUFF时待在岩浆里的时间也会被重置
-                timer = 0;
             }
         }
 
@@ -116,11 +104,6 @@ namespace Environment
             unit.NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreStun, IgnoreModifier);
             // 移除岩浆灼烧效果
             EffectManager.RemoveLavaEffectFromUnit(unit);
-            //// 受到一次相当于20%已损失生命值的伤害
-            //if (!unit.NumericBox.GetBoolNumericValue(StringManager.IgnoreLavaDeBuff))
-            //{
-            //    new DamageAction(CombatAction.ActionType.CauseDamage, null, unit, 0.2f * unit.GetLostHp()).ApplyAction();
-            //}
         }
 
         // 自定义方法
@@ -172,6 +155,41 @@ namespace Environment
                 // 移除岩浆灼烧效果
                 EffectManager.RemoveLavaEffectFromUnit(unit);
             }
+        }
+
+        /// <summary>
+        /// 获取目标的岩浆伤害倍率
+        /// </summary>
+        /// <param name="unit"></param>
+        /// <returns></returns>
+        public static float GetUnitLavaRate(BaseUnit unit)
+        {
+            if (unit == null || !unit.IsAlive())
+                return 0;
+            FloatCollectorComponent c = CollectorComponentManager.GetFloatCollectorComponent(unit.mComponentController);
+            if (c.HasCollector(LavaRate))
+                return c.GetCollector(LavaRate).MulValue;
+            return 1;
+        }
+
+        public static void AddUnitLavaRate(BaseUnit unit, FloatModifier mod)
+        {
+            if (unit == null || !unit.IsAlive())
+                return;
+            FloatCollectorComponent c = CollectorComponentManager.GetFloatCollectorComponent(unit.mComponentController);
+            if (!c.HasCollector(LavaRate))
+                c.AddCollector(LavaRate, new FloatModifierCollector());
+            c.GetCollector(LavaRate).AddModifier(mod);
+        }
+
+        public static void RemoveUnitLavaRate(BaseUnit unit, FloatModifier mod)
+        {
+            if (unit == null || !unit.IsAlive())
+                return;
+            FloatCollectorComponent c = CollectorComponentManager.GetFloatCollectorComponent(unit.mComponentController);
+            if (!c.HasCollector(LavaRate))
+                c.AddCollector(LavaRate, new FloatModifierCollector());
+            c.GetCollector(LavaRate).RemoveModifier(mod);
         }
     }
 }
