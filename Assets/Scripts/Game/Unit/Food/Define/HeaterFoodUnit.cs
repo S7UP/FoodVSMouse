@@ -9,6 +9,7 @@ public class HeaterFoodUnit : FoodUnit
 {
     private static RuntimeAnimatorController[] Bullet_RunArray;
     private static RuntimeAnimatorController SpBullet_Run;
+    private float rate;
 
     /// <summary>
     /// 可以通过火盆的子弹类型表
@@ -45,10 +46,10 @@ public class HeaterFoodUnit : FoodUnit
     /// <summary>
     /// 根据等级表和等级来更新对应数据
     /// </summary>
-    //public override void UpdateAttributeByLevel()
-    //{
-        
-    //}
+    public override void UpdateAttributeByLevel()
+    {
+        rate = attr.valueList[mLevel];
+    }
 
     /// <summary>
     /// 检测传入子弹是否能穿过
@@ -122,7 +123,7 @@ public class HeaterFoodUnit : FoodUnit
             // 强制把子弹贴图改为火弹（但是不改变原始style值）
             if (mShape >= 3)
             {
-                b.SetDamage(ori_dmg * GetDamageRate(3.0f)); // 倍化伤害
+                b.SetDamage(ori_dmg * GetDamageRate(rate)); // 倍化伤害
                 b.animator.runtimeAnimatorController = SpBullet_Run;
                 float dist = 2*MapManager.gridWidth;
                 CustomizationTask t = new CustomizationTask();
@@ -134,7 +135,7 @@ public class HeaterFoodUnit : FoodUnit
                 });
                 t.AddOnExitAction(delegate {
                     // 伤害和贴图恢复
-                    b.SetDamage(ori_dmg * GetDamageRate(2.0f));
+                    b.SetDamage(ori_dmg * GetDamageRate(rate));
                     if(b.IsAlive())
                         b.animator.runtimeAnimatorController = Bullet_RunArray[mShape];
                 });
@@ -142,7 +143,7 @@ public class HeaterFoodUnit : FoodUnit
             }
             else
             {
-                b.SetDamage(ori_dmg * GetDamageRate(2.0f)); // 倍化伤害
+                b.SetDamage(ori_dmg * GetDamageRate(rate)); // 倍化伤害
                 b.animator.runtimeAnimatorController = Bullet_RunArray[mShape];
             }
             b.SetVelocity(b.GetVelocity() * 1.5f); // 加速

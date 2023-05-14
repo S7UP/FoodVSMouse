@@ -5,19 +5,19 @@ public class BaseTask : ITask
 {
     private List<Action> OnEnterActionList = new List<Action>();
     private List<Action> OnExitActionList = new List<Action>();
-    private bool isEnd;
-    private bool isEnter;
+    private bool isEnd = false;
+    private bool isEnter = false;
     public TaskController taskController = new TaskController();
 
     public void OnEnter()
     {
         if (!isEnter)
         {
-            isEnter = true;
             foreach (var action in OnEnterActionList)
             {
                 action();
             }
+            isEnter = true;
         }
         O_OnEnter();
     }
@@ -35,12 +35,12 @@ public class BaseTask : ITask
     {
         if (!isEnd)
         {
-            isEnd = true;
             foreach (var action in OnExitActionList)
             {
                 action();
             }
             O_OnExit();
+            isEnd = true;
         }
     }
 

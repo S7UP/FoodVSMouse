@@ -51,12 +51,13 @@ public class BaseLadder : BaseItem
             // 把这个单位添加到表里
             unitList.Add(m);
             // 添加一个弹起的任务
-            CustomizationTask t = TaskManager.AddParabolaTask(m, TransManager.TranToVelocity(12), maxHight, m.transform.position, m.transform.position + (Vector3)m.moveRotate * moveDistance, false);
+            CustomizationTask t = TaskManager.GetParabolaTask(m, TransManager.TranToVelocity(12), maxHight, m.transform.position, m.transform.position + (Vector3)m.moveRotate * moveDistance, false);
             // 且禁止移动
             m.DisableMove(true);
             t.AddOnExitAction(delegate {
                 m.DisableMove(false);
             });
+            m.AddTask(t);
         }
     }
 

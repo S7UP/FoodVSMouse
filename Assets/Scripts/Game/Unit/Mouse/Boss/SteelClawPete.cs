@@ -14,6 +14,7 @@ public class SteelClawPete : BossUnit
     private static RuntimeAnimatorController Trap_AnimatorController;
 
     private const string Trap_Key = "SteelClawPete_Trap";
+    private List<BaseUnit> trapList = new List<BaseUnit>();
 
     public override void Awake()
     {
@@ -28,6 +29,7 @@ public class SteelClawPete : BossUnit
 
     public override void MInit()
     {
+        trapList.Clear();
         base.MInit();
         // 添加出现的技能
         {
@@ -67,6 +69,31 @@ public class SteelClawPete : BossUnit
             // 强制设制当前技能为这个
             mSkillQueueAbilityManager.SetCurrentSkill(c);
         }
+    }
+
+    public override void MUpdate()
+    {
+        List<BaseUnit> delList = new List<BaseUnit>();
+        foreach (var u in trapList)
+        {
+            if (!u.IsAlive())
+                delList.Add(u);
+        }
+        foreach (var u in delList)
+        {
+            trapList.Remove(u);
+        }
+        base.MUpdate();
+    }
+
+    public override void BeforeDeath()
+    {
+        foreach (var u in trapList)
+        {
+            u.ExecuteDeath();
+        }
+        trapList.Clear();
+        base.BeforeDeath();
     }
 
     /// <summary>

@@ -77,14 +77,17 @@ public class ThrowLittleMouseSkillAbility : SkillAbility
             float dist = Mathf.Abs(targetPosition.x - master.transform.position.x);
 
             // 添加一个弹起的任务
-            CustomizationTask t = TaskManager.AddParabolaTask(m, dist/60, dist/2, m.transform.position, targetPosition, false);
+            CustomizationTask t = TaskManager.GetParabolaTask(m, dist/60, dist/2, m.transform.position, targetPosition, false);
             // 且禁止移动
-            m.DisableMove(true);
+            t.AddOnEnterAction(delegate {
+                m.DisableMove(true);
+            });
             t.AddOnExitAction(delegate {
                 m.DisableMove(false);
                 // 但是落地后晕眩2s
                 m.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(m, 120, false));
             });
+            m.AddTask(t);
         }
     }
 

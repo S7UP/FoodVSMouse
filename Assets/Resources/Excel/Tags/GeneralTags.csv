@@ -1,0 +1,13 @@
+﻿词条ID,贴图路径,词条名,词条等级,描述,留空列
+General_hp0,General_hp0,活性生命Ⅰ,1,所有敌方单位生命值提高${percent=(40)}%。,
+General_hp1,General_hp1,活性生命Ⅱ,2,所有敌方单位生命值提高${percent=(80)}%。,
+General_hp2,General_hp2,活性生命Ⅲ,3,所有敌方单位生命值提高${percent=(120)}%。,
+General_hp,General_hp0,活性生命*,-1,所有敌方单位生命值提高${percent=(0)}%。,
+General_moveSpeed0,General_moveSpeed0,躁动不安Ⅰ,1,所有敌方单位获得${percent=(33)}%额外移动速度。,
+General_moveSpeed1,General_moveSpeed1,躁动不安Ⅱ,2,所有敌方单位获得${percent=(66)}%额外移动速度。,
+General_moveSpeed2,General_moveSpeed2,躁动不安Ⅲ,3,所有敌方单位获得${percent=(100)}%额外移动速度。,
+General_moveSpeed,General_moveSpeed0,躁动不安*,-1,所有敌方单位获得${percent=(0)}%额外移动速度。,
+General_burnDefence0,General_burnDefence0,防爆毛皮Ⅰ,1,所有敌方单位获得${percent=(1)}%的额外灰烬抗性。,
+General_burnDefence1,General_burnDefence1,防爆毛皮Ⅱ,2,所有敌方单位获得${percent=(25)}%的额外灰烬抗性。,
+General_burnDefence2,General_burnDefence2,防爆毛皮Ⅲ,3,所有敌方单位获得${percent=(51)}%的额外灰烬抗性。,
+General_burnDefence,General_burnDefence0,防爆毛皮*,-1,所有敌方单位获得${percent=(0)}%的额外灰烬抗性。,

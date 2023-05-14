@@ -16,7 +16,7 @@ public class AvailableCardUI : MonoBehaviour
 
     private void Awake()
     {
-        contentTrans = transform.Find("Img_center").Find("Emp_Container").Find("Scr").Find("Viewport").Find("Content");
+        contentTrans = transform.Find("Emp_Container").Find("Scr").Find("Viewport").Find("Content");
     }
 
     public void Initial()

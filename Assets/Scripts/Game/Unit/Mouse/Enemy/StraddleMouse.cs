@@ -35,19 +35,24 @@ public class StraddleMouse : MouseUnit
         {
             // 添加一个弹起任务
             isJumped = true;
-            // 进入不可选取状态
-            //CloseCollision();
             // 跳跃格子数等于 0.75*当前移动速度标准值
             float v = TransManager.TranToStandardVelocity(GetMoveSpeed());
-            float dist = 0.75f* v * MapManager.gridWidth;
-            CustomizationTask t = TaskManager.AddParabolaTask(this, dist/60, dist/2, transform.position, transform.position + (Vector3)moveRotate * dist, false);
-            DisableMove(true);
+            float dist;
+            if(transform.position.x <= MapManager.GetColumnX(0.75f))
+                dist = MapManager.gridWidth;
+            else
+                dist = Mathf.Min(0.75f * v * MapManager.gridWidth, Mathf.Abs(transform.position.x - MapManager.GetColumnX(0)));
+            CustomizationTask t = TaskManager.GetParabolaTask(this, dist/60, dist/2, transform.position, transform.position + (Vector3)moveRotate * dist, false);
+            t.AddOnEnterAction(delegate {
+                DisableMove(true);
+            });
             t.AddOnExitAction(delegate
             {
                 DisableMove(false);
                 NumericBox.MoveSpeed.SetBase(TransManager.TranToVelocity(1.0f));
             });
             GameManager.Instance.audioSourceManager.PlayEffectMusic("Jump");
+            AddTask(t);
         }
         else
         {

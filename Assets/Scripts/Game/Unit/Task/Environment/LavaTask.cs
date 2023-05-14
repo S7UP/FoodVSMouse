@@ -72,8 +72,8 @@ namespace Environment
                     if (hasVehicle)
                     {
                         // 有载具时，当目标生命高于15点时每秒受到1点无来源的灰烬伤害
-                        if (unit.GetCurrentHp() > 15)
-                            new DamageAction(CombatAction.ActionType.BurnDamage, null, unit, GetUnitLavaRate(unit) * 1.0f).ApplyAction();
+                        //if (unit.GetCurrentHp() > 15)
+                        //    new DamageAction(CombatAction.ActionType.BurnDamage, null, unit, GetUnitLavaRate(unit) * 1.0f).ApplyAction();
                     }
                     else
                     {

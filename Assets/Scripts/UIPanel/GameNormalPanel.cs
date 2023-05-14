@@ -38,6 +38,7 @@ public class GameNormalPanel : BasePanel
     private Text Tex_ExpTips; // 经验值文本
 
     private Image Img_Rank;
+    private Text Tex_Rank;
     private Text Tex_PlayTime;
     private Text Tex_TotalEnergy;
 
@@ -81,6 +82,7 @@ public class GameNormalPanel : BasePanel
         };
         Tex_ExpTips = transform.Find("ExpTips").GetComponent<Text>();
         Img_Rank = transform.Find("Img_Rank").Find("Rank").GetComponent<Image>();
+        Tex_Rank = transform.Find("Img_Rank").Find("Text").GetComponent<Text>();
         Tex_PlayTime = transform.Find("LeftBottomInfo").Find("Time_Label").Find("Text").GetComponent<Text>();
         Tex_TotalEnergy = transform.Find("LeftBottomInfo").Find("TotalEnergy_Label").Find("Text").GetComponent<Text>();
 
@@ -138,11 +140,25 @@ public class GameNormalPanel : BasePanel
             JewelSkillArray[i].MInit(type, GameController.Instance.mJewelSkillArray[i]);
         }
         // 读取游戏当前难度并重置时间
+        Tex_Rank.gameObject.SetActive(false);
+        Img_Rank.gameObject.SetActive(true);
         switch (data.GetDifficult())
         {
             case 1: Img_Rank.sprite = GameManager.Instance.GetSprite("UI/Difficulty/Normal");break;
             case 2: Img_Rank.sprite = GameManager.Instance.GetSprite("UI/Difficulty/Hard"); break;
-            case 3: Img_Rank.sprite = GameManager.Instance.GetSprite("UI/Difficulty/Lunatic"); break;
+            case 3: { 
+                    if(data.GetRankRate() > 1)
+                    {
+                        Img_Rank.gameObject.SetActive(false);
+                        Tex_Rank.gameObject.SetActive(true);
+                        Tex_Rank.text = (data.GetRankRate() * 100).ToString() + "%";
+                    }
+                    else
+                    {
+                        Img_Rank.sprite = GameManager.Instance.GetSprite("UI/Difficulty/Lunatic");
+                    }
+                    break;
+                } 
             default:
                 Img_Rank.sprite = GameManager.Instance.GetSprite("UI/Difficulty/Easy");
                 break;

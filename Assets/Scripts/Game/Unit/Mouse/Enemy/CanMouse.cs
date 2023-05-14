@@ -40,13 +40,14 @@ public class CanMouse : MouseUnit
             SetActionState(new TransitionState(this));
 
             float dist = 3 * MapManager.gridWidth;
-            CustomizationTask t = TaskManager.AddParabolaTask(this, dist / 60, dist / 2, transform.position, transform.position + (Vector3)moveRotate * dist, false);
+            CustomizationTask t = TaskManager.GetParabolaTask(this, dist / 60, dist / 2, transform.position, transform.position + (Vector3)moveRotate * dist, false);
             DisableMove(true);
             t.AddOnExitAction(delegate
             {
                 SetActionState(new CastState(this));
                 DisableMove(false);
             });
+            AddTask(t);
         }
         // 原先的伤害执行
         return base.OnBombBurnDamage(dmg);

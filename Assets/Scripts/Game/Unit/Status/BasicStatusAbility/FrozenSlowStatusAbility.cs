@@ -41,7 +41,7 @@ public class FrozenSlowStatusAbility : StatusAbility
     /// </summary>
     public override void OnEnableEffect()
     {
-        if (!TagsManager.IsUnitFrozen(master))
+        if (!StatusManager.IsUnitFrozen(master))
         {
             GameManager.Instance.audioSourceManager.PlayEffectMusic("Frozen");
         }
@@ -85,7 +85,7 @@ public class FrozenSlowStatusAbility : StatusAbility
     {
         SetEffectEnable(false);
         // 此效果结束后，如果目标身上已经没有冰冻类减益效果，则移除目标的变色效果
-        if (!TagsManager.IsUnitFrozen(master))
+        if (!StatusManager.IsUnitFrozen(master))
         {
             master.SetFrozeSlowEffectEnable(false);
         }

@@ -36,6 +36,7 @@ public class TeleportGridType : BaseGridType
         base.MInit();
         animator.runtimeAnimatorController = Tp_AnimatorController;
         animatorController.Play("Idle", true);
+        // SetBoxCollider2D(Vector2.zero, new Vector2(0.01f * MapManager.gridWidth, 0.51f * MapManager.gridHeight));
     }
 
     /// <summary>
@@ -135,23 +136,25 @@ public class TeleportGridType : BaseGridType
     {
         // 以下是旧的弹起
 
-        //float moveDistance = MapManager.gridWidth * 3.5f;
-        //// 添加一个弹起的任务
-        //CustomizationTask t = TaskManager.AddParabolaTask(m, TransManager.TranToVelocity(12), moveDistance/2, m.transform.position, m.transform.position + (Vector3)m.moveRotate * moveDistance, false);
-        //// 且禁止移动
-        //t.AddOnEnterAction(delegate {
-        //    m.DisableMove(true);
-        //});
-        //t.AddOnExitAction(delegate {
-        //    m.DisableMove(false);
-        //    m.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(m, 360, false)); // 目标在落地后晕眩数秒
-        //    new DamageAction(CombatAction.ActionType.RealDamage, null, m, 0.25f * m.GetCurrentHp()).ApplyAction();
-        //});
-        //m.AddUniqueTask(TpTaskKey, t);
-
+        float moveDistance = MapManager.gridWidth * 3.5f;
+        // 添加一个弹起的任务
+        CustomizationTask t = TaskManager.GetParabolaTask(m, moveDistance/60, moveDistance / 4, m.transform.position, m.transform.position + (Vector3)m.moveRotate * moveDistance, false, true);
+        // 且禁止移动
+        t.AddOnEnterAction(delegate
+        {
+            m.DisableMove(true);
+            m.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(m, 420, false)); // 目标在落地后晕眩数秒
+        });
+        t.AddOnExitAction(delegate
+        {
+            m.DisableMove(false);
+            new DamageAction(CombatAction.ActionType.RealDamage, null, m, 0.25f * m.GetCurrentHp()).ApplyAction();
+        });
+        m.AddUniqueTask(TpTaskKey, t);
+        //m.AddTask(t);
         // 以下是新的换行
-        if(m is MouseUnit && !(m as MouseUnit).IsBoss())
-            (m as MouseUnit).DrivenAway();
+        //if(m is MouseUnit && !(m as MouseUnit).IsBoss())
+        //    (m as MouseUnit).DrivenAway();
     }
 
     public override void MUpdate()

@@ -14,9 +14,11 @@ public class PlayerData
     /// <summary>
     /// 主线玩家携带卡片组信息
     /// </summary>
-    public int version = 0; // 当前存档版本号
+    public int version = 1; // 当前存档版本号
     public Dictionary<int, Dictionary<int, Dictionary<int, List<List<AvailableCardInfo>>>>> ChapterCardGroupDict = new Dictionary<int, Dictionary<int, Dictionary<int, List<List<AvailableCardInfo>>>>>();
     public Dictionary<int, Dictionary<int, Dictionary<int, List<List<char>>>>> ChapterKeyGroupDict = new Dictionary<int, Dictionary<int, Dictionary<int, List<List<char>>>>>();
+    public Dictionary<int, Dictionary<int, Dictionary<int, List<string>>>> SelectedTagListDict = new Dictionary<int, Dictionary<int, Dictionary<int, List<string>>>>(); // 已选词条
+
     public string name = "不知名的冒险家"; // 玩家名
     public float currentExp = 0; // 玩家当前经验值
     public int level = 1; // 玩家当前等级
@@ -353,5 +355,46 @@ public class PlayerData
     public Func<bool> GetCurrentStageSuccessRewardFunc()
     {
         return currentStageSuccessRewardFunc;
+    }
+
+    /// <summary>
+    /// 获取某关的已选Tag表
+    /// </summary>
+    /// <param name="chapterIndex"></param>
+    /// <param name="sceneIndex"></param>
+    /// <param name="stageIndex"></param>
+    /// <returns></returns>
+    public List<string> GetTagList(int chapterIndex, int sceneIndex, int stageIndex)
+    {
+        if (!SelectedTagListDict.ContainsKey(chapterIndex))
+            SelectedTagListDict.Add(chapterIndex, new Dictionary<int, Dictionary<int, List<string>>>());
+        if (!SelectedTagListDict[chapterIndex].ContainsKey(sceneIndex))
+            SelectedTagListDict[chapterIndex].Add(sceneIndex, new Dictionary<int, List<string>>());
+        if (!SelectedTagListDict[chapterIndex][sceneIndex].ContainsKey(stageIndex))
+            SelectedTagListDict[chapterIndex][sceneIndex].Add(stageIndex, new List<string>());
+        return SelectedTagListDict[chapterIndex][sceneIndex][stageIndex];
+    }
+
+    /// <summary>
+    /// 获取当前难度比率
+    /// </summary>
+    /// <returns></returns>
+    public float GetRankRate()
+    {
+        float rankRate = 1f;
+        BaseStage.StageInfo info = GetCurrentStageInfo();
+        foreach (var tagId in GetTagList(info.chapterIndex, info.sceneIndex, info.stageIndex))
+        {
+            TagInfo tagInfo = TagsManager.GetGeneralTagInfo(tagId);
+            switch (tagInfo.rank)
+            {
+                default: rankRate *= 1;
+                    break;
+                case 1: rankRate *= 1.5f;break;
+                case 2: rankRate *= 2f; break;
+                case 3: rankRate *= 3f; break;
+            }
+        }
+        return rankRate;
     }
 }

@@ -8,6 +8,7 @@ public class MagicianMouse : MouseUnit
     private static RuntimeAnimatorController Retinue_RuntimeAnimatorController; // 随从的
     private float distance; // 投掷的水平距离
     private float minCanAttackPosX; // 可以攻击的x最小坐标（即小于某个X后就不会在攻击了）
+    private float maxCanAttackPosX; 
 
 
     public override void Awake()
@@ -21,6 +22,7 @@ public class MagicianMouse : MouseUnit
     {
         distance = 4 * MapManager.gridWidth;
         minCanAttackPosX = MapManager.GetColumnX(1) + distance; // 这个算法表明最远可以打到左二列
+        maxCanAttackPosX = MapManager.GetColumnX(8);
         base.MInit();
     }
 
@@ -38,7 +40,7 @@ public class MagicianMouse : MouseUnit
     public override bool IsMeetGeneralAttackCondition()
     {
         // 没小于某个x坐标就能攻击了
-        return transform.position.x > minCanAttackPosX;
+        return transform.position.x > minCanAttackPosX && transform.position.x < maxCanAttackPosX;
     }
 
     /// <summary>
@@ -56,15 +58,18 @@ public class MagicianMouse : MouseUnit
 
         // 然后把它扔出去
         // 添加一个弹起的任务
-        CustomizationTask t = TaskManager.AddParabolaTask(m, distance/60, distance/2, m.transform.position, m.transform.position + distance * (Vector3)moveRotate, false);
-        m.SetActionState(new TransitionState(m));
-        m.animatorController.Play("Fly", true);
+        CustomizationTask t = TaskManager.GetParabolaTask(m, distance/60, distance/2, m.transform.position, m.transform.position + distance * (Vector3)moveRotate, false);
+        t.AddOnEnterAction(delegate {
+            m.SetActionState(new TransitionState(m));
+            m.animatorController.Play("Fly", true);
+        });
         t.AddOnExitAction(delegate
         {
             m.SetActionState(new MoveState(m));
             // 但是落地后晕眩2s
             m.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(m, 120, false));
         });
+        m.AddTask(t);
     }
 
 

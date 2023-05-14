@@ -23,13 +23,12 @@ public class SelectedCardUI : MonoBehaviour
 
     private void Awake()
     {
-        Tex_CardCount = transform.Find("Img_center").Find("Tex_CardCount").GetComponent<Text>();
-        // SelectedCardListTrans = transform.Find("Img_center").Find("Emp_Container").Find("Scr").Find("Viewport").Find("Content").GetComponent<RectTransform>();
-        Scr_SelectedCardList = transform.Find("Img_center").Find("Emp_Container").Find("Scr").GetComponent<ScrollRect>();
-        CardGroupListTrans = transform.Find("Img_center").Find("Emp_CardGroupList");
-        Btn_Save = transform.Find("Img_center").Find("Btn_Save").GetComponent<Button>();
+        Tex_CardCount = transform.Find("Tex_CardCount").GetComponent<Text>();
+        Scr_SelectedCardList = transform.Find("Emp_Container").Find("Scr").GetComponent<ScrollRect>();
+        CardGroupListTrans = transform.Find("Emp_CardGroupList");
+        Btn_Save = transform.Find("Btn_Save").GetComponent<Button>();
         Btn_Save.onClick.AddListener(delegate { SaveCurrentStageCardGroupList(); });
-        Dro_Rank = transform.Find("Img_center").Find("Emp_ChangeRank").Find("Dro_Rank").GetComponent<Dropdown>();
+        Dro_Rank = transform.Find("Emp_ChangeRank").Find("Dro_Rank").GetComponent<Dropdown>();
     }
 
     /// <summary>
@@ -98,9 +97,9 @@ public class SelectedCardUI : MonoBehaviour
         // 被选中的卡片组按钮高亮，其他置暗色
         foreach (var item in Btn_CardGroup)
         {
-            item.GetComponent<Image>().sprite = GameManager.Instance.GetSprite("UI/SelectPanel/36");
+            item.GetComponent<Image>().sprite = GameManager.Instance.GetSprite("UI/SelectPanel/35");
         }
-        Btn_CardGroup[arrayIndex].GetComponent<Image>().sprite = GameManager.Instance.GetSprite("UI/SelectPanel/33");
+        Btn_CardGroup[arrayIndex].GetComponent<Image>().sprite = GameManager.Instance.GetSprite("UI/SelectPanel/34");
         // 更新文本显示
         UpdateCardCountText();
         UpdateDisplayKey();
@@ -114,14 +113,14 @@ public class SelectedCardUI : MonoBehaviour
         foreach (var item in Btn_CardGroup)
         {
             item.onClick.RemoveAllListeners();
-            GameManager.Instance.PushGameObjectToFactory(FactoryType.UIFactory, "SelectPanel/Btn_CardGroup", item.gameObject);
+            GameManager.Instance.PushGameObjectToFactory(FactoryType.UIFactory, "StageConfigPanel/Btn_CardGroup", item.gameObject);
         }
         Btn_CardGroup.Clear();
         int i = 0;
         foreach (var item in cardGroupList)
         {
             int j = i;
-            Button btn = GameManager.Instance.GetGameObjectResource(FactoryType.UIFactory, "SelectPanel/Btn_CardGroup").GetComponent<Button>();
+            Button btn = GameManager.Instance.GetGameObjectResource(FactoryType.UIFactory, "StageConfigPanel/Btn_CardGroup").GetComponent<Button>();
             btn.onClick.AddListener(delegate { SetCurrentSelectedCardGroup(j); });
             btn.transform.Find("Text").GetComponent<Text>().text = "卡片组"+(i+1);
             btn.transform.SetParent(CardGroupListTrans);

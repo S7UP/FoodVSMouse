@@ -43,7 +43,7 @@ public class FrogMouse : MouseUnit, IInWater
             float v = TransManager.TranToStandardVelocity(GetMoveSpeed());
             float dist = 0.5f * v * MapManager.gridWidth;
 
-            CustomizationTask t = TaskManager.AddParabolaTask(this, dist / 60, dist / 2, transform.position, transform.position + (Vector3)moveRotate * dist, false);
+            CustomizationTask t = TaskManager.GetParabolaTask(this, dist / 60, dist / 2, transform.position, transform.position + (Vector3)moveRotate * dist, false);
             DisableMove(true);
             t.AddOnExitAction(delegate
             {
@@ -53,6 +53,7 @@ public class FrogMouse : MouseUnit, IInWater
                 NumericBox.MoveSpeed.RemovePctAddModifier(FrogInWaterSpeedModifier);
                 DisableMove(false);
             });
+            AddTask(t);
         }
         else
         {

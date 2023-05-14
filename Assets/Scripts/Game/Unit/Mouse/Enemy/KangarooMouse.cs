@@ -84,13 +84,16 @@ public class KangarooMouse : MouseUnit
             //t.AddOtherEndEvent(delegate { isJumping = false; DisableMove(false); });
 
             float dist = jumpDistance * MapManager.gridWidth;
-            CustomizationTask t = TaskManager.AddParabolaTask(this, dist / 60, dist / 2, transform.position, transform.position + (Vector3)moveRotate * dist, false, true);
-            DisableMove(true);
+            CustomizationTask t = TaskManager.GetParabolaTask(this, dist / 60, dist / 2, transform.position, transform.position + (Vector3)moveRotate * dist, false, true);
+            t.AddOnEnterAction(delegate {
+                DisableMove(true);
+            });
             t.AddOnExitAction(delegate
             {
                 isJumping = false; 
                 DisableMove(false);
             });
+            AddTask(t);
         }
     }
 

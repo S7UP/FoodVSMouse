@@ -61,6 +61,7 @@ public class GameManager : MonoBehaviour
         MusicManager.Load();
         MouseManager.LoadAll();
         TipsManager.Load();
+        TagsManager.Load();
     }
 
     /// <summary>

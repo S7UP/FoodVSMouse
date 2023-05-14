@@ -172,12 +172,12 @@ public class TaskManager
     /// <param name="targetPosition"></param>
     /// <param name="isNavi"></param>
     /// <returns></returns>
-    public static CustomizationTask AddParabolaTask(BaseUnit master, float horizontalVelocity, float height, Vector3 firstPosition, Vector3 targetPosition, bool isNavi)
+    public static CustomizationTask GetParabolaTask(BaseUnit master, float horizontalVelocity, float height, Vector3 firstPosition, Vector3 targetPosition, bool isNavi)
     {
-        return AddParabolaTask(master, horizontalVelocity, height, firstPosition, targetPosition, isNavi, false);
+        return GetParabolaTask(master, horizontalVelocity, height, firstPosition, targetPosition, isNavi, false);
     }
 
-    public static CustomizationTask AddParabolaTask(BaseUnit master, float horizontalVelocity, float height, Vector3 firstPosition, Vector3 targetPosition, bool isNavi, bool isOpenCollide)
+    public static CustomizationTask GetParabolaTask(BaseUnit master, float horizontalVelocity, float height, Vector3 firstPosition, Vector3 targetPosition, bool isNavi, bool isOpenCollide)
     {
         int ori_height = master.mHeight;
         int totalTimer = 0; // 初始点到目标点用时
@@ -239,7 +239,6 @@ public class TaskManager
             if (master.NumericBox.IntDict.ContainsKey(StringManager.Flying))
                 master.NumericBox.IntDict[StringManager.Flying].RemoveAddModifier(flyIntModifier);
         });
-        master.AddTask(t);
         return t;
     }
     #endregion

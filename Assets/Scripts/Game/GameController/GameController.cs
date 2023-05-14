@@ -15,7 +15,8 @@ public class GameController : MonoBehaviour
     public static GameController Instance { get => _instance; } //+ 自身单例
     public BaseGrid overGrid; // 当前鼠标悬停的格子
 
-    public MouseFactory mMouseFactory = new MouseFactory();
+    public MouseFactory mMouseFactory;
+    public BossFactory mBossFactory;
 
     // 由编辑器给定的引用
     public GameObject gridListGo; // 用于存放地图格子的对象
@@ -143,15 +144,11 @@ public class GameController : MonoBehaviour
     {
         if (!isLoad)
         {
-            //Debug.Log("GameController Awake!");
             // 随机数生成器
             rand = new System.Random();
 
-            //AbilityManager.Instance.LoadAll();
-
             MMemberList = new List<IGameControllerMember>();
             // 获取当前场景的UIPanel
-            // mGameNormalPanel = (GameNormalPanel)GameManager.Instance.uiManager.mUIFacade.currentScenePanelDict[StringManager.GameNormalPanel];
             mGameNormalPanel = GameNormalPanel.Instance;
             // 从UIPanel中获取各种控制器脚本
             mCostController = mGameNormalPanel.transform.Find("CostControllerUI").GetComponent<BaseCostController>();
@@ -198,10 +195,6 @@ public class GameController : MonoBehaviour
             baseEffectList = new List<BaseEffect>();
             // 任务执行者表相关
             taskerList = new List<Tasker>();
-
-            // 加载数值管理器
-            //numberManager = new NumberManager();
-
             // 角色控制器
             mCharacterController = new CharacterController();
             MMemberList.Add(mCharacterController);
@@ -212,6 +205,13 @@ public class GameController : MonoBehaviour
 
             mGameNormalPanel.InitInGameController();
             Test.OnGameControllerAwake();
+
+            // 老鼠工厂
+            mMouseFactory = MouseFactory.Instance;
+            MMemberList.Add(mMouseFactory);
+            // BOSS工厂
+            mBossFactory = BossFactory.Instance;
+            MMemberList.Add(mBossFactory);
 
             isLoad = true;
         }
@@ -241,12 +241,19 @@ public class GameController : MonoBehaviour
         {
             item.Initial();
         }
-
-
         // 自身携带控制器初始化（要写到初始化的最后，不建议后面再加其他初始化）
         foreach (IGameControllerMember member in MMemberList)
-        {
             member.MInit();
+
+        // 词条效果注入
+        PlayerData data = GameManager.Instance.playerData;
+        BaseStage.StageInfo info = data.GetCurrentStageInfo();
+        List<string> tagIdList = data.GetTagList(info.chapterIndex, info.sceneIndex, info.stageIndex);
+        foreach (var tagId in tagIdList)
+        {
+            Action action = TagsManager.GetTagAction(tagId);
+            if (action != null)
+                action();
         }
     }
 
@@ -383,13 +390,14 @@ public class GameController : MonoBehaviour
     /// <returns></returns>
     public BossUnit CreateBossUnit(int firstColumn, int firstRow, BaseEnemyGroup.EnemyInfo enemyInfo, float hp)
     {
-        BossUnit boss = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Boss/" + enemyInfo.type + "/" + enemyInfo.shape).GetComponent<BossUnit>();
-        boss.mType = enemyInfo.type;
-        boss.mShape = enemyInfo.shape;
+        //BossUnit boss = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Boss/" + enemyInfo.type + "/" + enemyInfo.shape).GetComponent<BossUnit>();
+        BossUnit boss = mBossFactory.GetBoss(enemyInfo.type, enemyInfo.shape, hp);
+        //boss.mType = enemyInfo.type;
+        //boss.mShape = enemyInfo.shape;
         boss.transform.SetParent(enemyListTrans);
-        boss.MInit();
-        boss.SetMaxHpAndCurrentHp(hp);
-        boss.LoadSeedDict(); // 读取BOSS的种子表
+        //boss.MInit();
+        //boss.SetMaxHpAndCurrentHp(hp);
+        //boss.LoadSeedDict(); // 读取BOSS的种子表
         boss.SetRandSeedByRowIndex(firstRow); // 设置BOSS的种子生成器
         boss.transform.position = MapManager.GetGridLocalPosition(firstColumn, firstRow) + new Vector3(Vector2.right.x * MapManager.gridWidth, Vector2.right.y * MapManager.gridHeight) / 2;
         boss.currentXIndex = firstColumn;
@@ -750,10 +758,15 @@ public class GameController : MonoBehaviour
     /// </summary>
     public void ClearAllEnemy()
     {
-        foreach (var item in mEnemyList)
+        for (int i = 0; i < mEnemyList.Count; i++)
         {
-            item.MDestory();
+            if(mEnemyList[i].isActiveAndEnabled)
+                mEnemyList[i].MDestory();
         }
+        //foreach (var item in mEnemyList)
+        //{
+        //    item.MDestory();
+        //}
         mEnemyList.Clear();
         mEnemyChangeRowDict.Clear();
     }

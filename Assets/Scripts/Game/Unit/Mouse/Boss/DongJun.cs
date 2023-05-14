@@ -729,7 +729,7 @@ public class DongJun : BossUnit
     {
         int JumpClipTime = Mathf.FloorToInt(animatorController.GetAnimatorStateRecorder("Jump").aniTime) - 10;
         animatorController.Play("Jump", false, 0);
-        TaskManager.AddParabolaTask(this, Dist / JumpClipTime, 0.5f, transform.position, transform.position + Dist * Vector3.left, false);
+        AddTask(TaskManager.GetParabolaTask(this, Dist / JumpClipTime, 0.5f, transform.position, transform.position + Dist * Vector3.left, false));
     }
 
     /// <summary>
@@ -739,7 +739,7 @@ public class DongJun : BossUnit
     {
         int JumpClipTime = Mathf.FloorToInt(animatorController.GetAnimatorStateRecorder("Jump").aniTime) - 10;
         animatorController.Play("Jump", false, 0);
-        TaskManager.AddParabolaTask(this, Dist / JumpClipTime, 3f, transform.position, transform.position + Dist * Vector3.left, false);
+        AddTask(TaskManager.GetParabolaTask(this, Dist / JumpClipTime, 3f, transform.position, transform.position + Dist * Vector3.left, false));
     }
 
     /// <summary>
