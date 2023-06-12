@@ -33,21 +33,24 @@ public class CanMouse : MouseUnit
     /// <param name="dmg"></param>
     public override float OnBombBurnDamage(float dmg)
     {
-        // 处于重装状态但不能是飞行动画期间
-        if (isReinstallState && !(mCurrentActionState is TransitionState))
-        {
-            // 起飞咯！！！！
-            SetActionState(new TransitionState(this));
+        float maxDist = transform.position.x - MapManager.GetColumnX(0);
 
-            float dist = 3 * MapManager.gridWidth;
+        // 处于重装状态但不能是飞行动画期间
+        if (isReinstallState && taskController.GetTask("CanMouseFly")==null && maxDist > 0)
+        {
+            float dist = Mathf.Min(maxDist, 3 * MapManager.gridWidth);
             CustomizationTask t = TaskManager.GetParabolaTask(this, dist / 60, dist / 2, transform.position, transform.position + (Vector3)moveRotate * dist, false);
-            DisableMove(true);
+            t.AddOnEnterAction(delegate {
+                // 起飞咯！！！！
+                SetActionState(new TransitionState(this));
+                DisableMove(true);
+            });
             t.AddOnExitAction(delegate
             {
                 SetActionState(new CastState(this));
                 DisableMove(false);
             });
-            AddTask(t);
+            AddUniqueTask("CanMouseFly", t);
         }
         // 原先的伤害执行
         return base.OnBombBurnDamage(dmg);
@@ -107,14 +110,14 @@ public class CanMouse : MouseUnit
     {
         animatorController.Play("Fly");
         // 进入不可选取状态
-        CloseCollision();
+        // CloseCollision();
     }
 
     public override void OnTransitionStateExit()
     {
         // 转为轻装状态
         SetLightState();
-        OpenCollision();
+        // OpenCollision();
     }
 
     public override bool CanBlock(BaseUnit unit)

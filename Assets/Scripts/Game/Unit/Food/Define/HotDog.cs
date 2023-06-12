@@ -243,7 +243,7 @@ public class HotDog : FoodUnit
                 {
                     int timeLeft = (isAirTarget ? airSlowTime : groundSlowTime);
                     // 为目标施加减速
-                    u.AddStatusAbility(new FrozenSlowStatusAbility(-50, u, timeLeft));
+                    u.AddStatusAbility(new SlowStatusAbility(-50, u, timeLeft));
                     // 若目标为空中敌人，则产生对空AOE
                     if(isAirTarget)
                         CreateDamageArea(u.transform.position, ori_dmg);

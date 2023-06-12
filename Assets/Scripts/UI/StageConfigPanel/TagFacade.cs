@@ -65,7 +65,7 @@ namespace UIPanel.StageConfigPanel
             }
 
             // 刷新一次rankrate显示
-            mSettlementUI.SetRankRateText((data.GetRankRate()*100).ToString()+"%");
+            mSettlementUI.SetRankRateText(Mathf.FloorToInt(data.GetRankRate()*100).ToString()+"%");
         }
         public void MUpdate()
         {
@@ -148,7 +148,7 @@ namespace UIPanel.StageConfigPanel
                     }
 
                     // 刷新一次rankrate显示
-                    mSettlementUI.SetRankRateText((data.GetRankRate() * 100).ToString() + "%");
+                    mSettlementUI.SetRankRateText(Mathf.FloorToInt(data.GetRankRate() * 100).ToString() + "%");
                 });
                 s.AddOnExitAction(delegate {
                     // 移除选择的词条ID
@@ -171,7 +171,7 @@ namespace UIPanel.StageConfigPanel
                     }
 
                     // 刷新一次rankrate显示
-                    mSettlementUI.SetRankRateText((data.GetRankRate() * 100).ToString() + "%");
+                    mSettlementUI.SetRankRateText(Mathf.FloorToInt(data.GetRankRate() * 100).ToString() + "%");
                 });
                 return s;
             });

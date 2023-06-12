@@ -71,5 +71,20 @@ public class IntergerCollectorComponent : IComponent
         if (CollectorDict.ContainsKey(key))
             CollectorDict.Remove(key);
     }
+
+    public void AddModifier(string key, IntModifier mod)
+    {
+        if (!HasCollector(key))
+            AddCollector(key, new IntModifierCollector());
+        GetCollector(key).AddModifier(mod);
+    }
+
+    public void RemoveModifier(string key, IntModifier mod)
+    {
+        if (HasCollector(key))
+        {
+            GetCollector(key).RemoveModifier(mod);
+        }
+    }
     #endregion
 }

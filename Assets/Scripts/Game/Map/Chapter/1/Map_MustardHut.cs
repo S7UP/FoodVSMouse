@@ -33,7 +33,7 @@ public class Map_MustardHut : ChapterMap
         // ∆Ã…œ’œ∞≠
         BaseBarrier b = GameController.Instance.CreateItem(6, 5, (int)ItemNameTypeMap.Barrier, 0).GetComponent<BaseBarrier>();
         b.SetHide(true);
-        b.HideEffect(true);
+        b.mEffectController.HideEffect(true);
     }
 
     /// <summary>

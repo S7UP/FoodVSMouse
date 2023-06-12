@@ -126,36 +126,42 @@ public class Pharaoh1 : BossUnit
     {
         // 切换阶段血量百分比
         AddParamArray("hpRate", new float[] { 0.8f, 0.65f, 0.5f, 0.2f });
-        // 通用机制
-        AddParamArray("AddDamageRate", new float[] { 1 }); // 诅咒增伤倍率
-        AddParamArray("KilledHp", new float[] { 50 }); // 来自诅咒的斩杀血线
-        AddParamArray("CurseTime", new float[] { 15 }); // 诅咒时长
-        AddParamArray("DropDamage", new float[] { 39 }); // 棺材掉落伤害
-        AddParamArray("StunTime", new float[] { 2 }); // 棺材掉落晕眩时间
+        // 读取参数
+        foreach (var keyValuePair in BossManager.GetParamDict(BossNameTypeMap.Pharaoh1, 0))
+        {
+            AddParamArray(keyValuePair.Key, keyValuePair.Value);
+        }
 
-        AddParamArray("LidHp", new float[] { 900 }); // 盒盖生命值
-        AddParamArray("BoxHp", new float[] { 300 }); // 盒体生命值
-        AddParamArray("LidOpenTime", new float[] { 3 }); // 盒盖揭开等待时间
-        AddParamArray("CoffinAliveTime", new float[] { 18 }); // 棺材自毁时间
+        //// 通用机制
+        //AddParamArray("AddDamageRate", new float[] { 1 }); // 诅咒增伤倍率
+        //AddParamArray("KilledHp", new float[] { 50 }); // 来自诅咒的斩杀血线
+        //AddParamArray("CurseTime", new float[] { 15 }); // 诅咒时长
+        //AddParamArray("DropDamage", new float[] { 39 }); // 棺材掉落伤害
+        //AddParamArray("StunTime", new float[] { 2 }); // 棺材掉落晕眩时间
 
-        AddParamArray("MummyHp", new float[] { 100 }); // 木乃伊鼠最小生命值
-        AddParamArray("MummyHpPecent", new float[] { 60 }); // 木乃伊继承生命值百分比
+        //AddParamArray("LidHp", new float[] { 900 }); // 盒盖生命值
+        //AddParamArray("BoxHp", new float[] { 300 }); // 盒体生命值
+        //AddParamArray("LidOpenTime", new float[] { 3 }); // 盒盖揭开等待时间
+        //AddParamArray("CoffinAliveTime", new float[] { 18 }); // 棺材自毁时间
 
-        AddParamArray("BugHp", new float[] { 100 }); // 圣甲虫的生命值
+        //AddParamArray("MummyHp", new float[] { 100 }); // 木乃伊鼠最小生命值
+        //AddParamArray("MummyHpPecent", new float[] { 60 }); // 木乃伊继承生命值百分比
 
-        // 法老之咒
-        AddParamArray("r0_0", new float[] { 5, 6, 7 }); // 法老之咒作用最大列（从右向左数）
-        AddParamArray("t0_0", new float[] { 3, 1.5f, 0, float.NaN, float.NaN });
-        // 神秘祭祀
-        AddParamArray("count1_0", new float[] { 0, 0, 0, 1, 1 }); // 重复次数
-        AddParamArray("t1_0", new float[] { 2, 1, 0, 2, 1 }); // 神秘祭祀停留时间
-        AddParamArray("t1_1", new float[] { float.NaN, float.NaN, float.NaN, 3, 2 }); // 真身形态下神秘祭祀移动时间
-        // 唤醒仪式
-        AddParamArray("t2_0", new float[] { 6, 4, 2, 2, 0 }); // 唤醒仪式停留时间
-        AddParamArray("t2_1", new float[] { float.NaN, float.NaN, float.NaN, 3, 2 }); // 真身形态下唤醒仪式移动时间
-        // 法老王之咒
-        AddParamArray("t3_0", new float[] { float.NaN, float.NaN, float.NaN, 3, 2 }); // 法老王之咒回到中场的移动时间
-        AddParamArray("t3_1", new float[] { float.NaN, float.NaN, float.NaN, 2, 0 }); // 法老王之咒停滞时间
+        //AddParamArray("BugHp", new float[] { 100 }); // 圣甲虫的生命值
+
+        //// 法老之咒
+        //AddParamArray("r0_0", new float[] { 5, 6, 7 }); // 法老之咒作用最大列（从右向左数）
+        //AddParamArray("t0_0", new float[] { 3, 1.5f, 0, float.NaN, float.NaN });
+        //// 神秘祭祀
+        //AddParamArray("count1_0", new float[] { 0, 0, 0, 1, 1 }); // 重复次数
+        //AddParamArray("t1_0", new float[] { 2, 1, 0, 2, 1 }); // 神秘祭祀停留时间
+        //AddParamArray("t1_1", new float[] { float.NaN, float.NaN, float.NaN, 3, 2 }); // 真身形态下神秘祭祀移动时间
+        //// 唤醒仪式
+        //AddParamArray("t2_0", new float[] { 6, 4, 2, 2, 0 }); // 唤醒仪式停留时间
+        //AddParamArray("t2_1", new float[] { float.NaN, float.NaN, float.NaN, 3, 2 }); // 真身形态下唤醒仪式移动时间
+        //// 法老王之咒
+        //AddParamArray("t3_0", new float[] { float.NaN, float.NaN, float.NaN, 3, 2 }); // 法老王之咒回到中场的移动时间
+        //AddParamArray("t3_1", new float[] { float.NaN, float.NaN, float.NaN, 2, 0 }); // 法老王之咒停滞时间
     }
 
     /// <summary>
@@ -165,16 +171,6 @@ public class Pharaoh1 : BossUnit
     {
         List<SkillAbility.SkillAbilityInfo> infoList = AbilityManager.Instance.GetSkillAbilityInfoList(mUnitType, mType, mShape);
         List<SkillAbility> list = new List<SkillAbility>();
-
-        // 法老切换为真身的过场效果
-        if(mHertIndex == 3)
-        {
-            // 获得100%减伤
-            NumericBox.DamageRate.RemoveModifier(DecDmgModifier);
-            NumericBox.DamageRate.AddModifier(DecDmgModifier);
-            ChangeToRealMode(); // 添加切换为真身的任务
-            mSkillQueueAbilityManager.SetNextSkillIndex(-1); // 技能下标要置-1
-        }
 
         if(mHertIndex < 3)
         {
@@ -187,7 +183,16 @@ public class Pharaoh1 : BossUnit
         }
         else
         {
-            isReal = true;
+            // 法老切换为真身的过场效果
+            if (!isReal)
+            {
+                isReal = true;
+                // 获得100%减伤
+                NumericBox.DamageRate.RemoveModifier(DecDmgModifier);
+                NumericBox.DamageRate.AddModifier(DecDmgModifier);
+                ChangeToRealMode(); // 添加切换为真身的任务
+                mSkillQueueAbilityManager.SetNextSkillIndex(-1); // 技能下标要置-1
+            }
             // 真身技能组
             list.Add(MysticalSacrificesInit(infoList[1])); // 神秘祭祀
             list.Add(PharaohKingCurseInit(infoList[3])); // 法老王之咒
@@ -441,7 +446,7 @@ public class Pharaoh1 : BossUnit
         // 为目标施加诅咒特效
         BaseEffect e = BaseEffect.CreateInstance(curseEffectAnimatorController, "Appear", "Idle", "Disappear", true);
         GameController.Instance.AddEffect(e);
-        unit.AddEffectToDict(CurseKey, e, Vector2.zero);
+        unit.mEffectController.AddEffectToDict(CurseKey, e, Vector2.zero);
         string name;
         int order;
         if (unit.TryGetSpriteRenternerSorting(out name, out order))
@@ -474,7 +479,7 @@ public class Pharaoh1 : BossUnit
         unit.RemoveBeforeDeathEvent(BeforeDeathWhenCursed);
         cursedUnit.Remove(unit);
         // 为目标移除诅咒特效
-        unit.RemoveEffectFromDict(CurseKey);
+        unit.mEffectController.RemoveEffectFromDict(CurseKey);
     }
 
     /// <summary>
@@ -485,7 +490,7 @@ public class Pharaoh1 : BossUnit
         MouseModel m = MouseModel.GetInstance(bugAnimatorController);
         m.typeAndShapeValue = -1;
         m.NumericBox.AddDecideModifierToBoolDict(IgnoreCurseKey, new BoolModifier(true)); // 免疫诅咒
-        m.SetBaseAttribute(GetParamValue("BugHp", 0), 900, 1.0f, 0f, 0, 0.5f, 0);
+        m.SetBaseAttribute(GetParamValue("BugHp", 0), 10, 1.0f, 0f, 0, 0.5f, 0);
         m.transform.position = pos;
         m.currentYIndex = MapManager.GetYIndex(pos.y);
 
@@ -515,7 +520,7 @@ public class Pharaoh1 : BossUnit
             {
                 BaseUnit target = m.GetCurrentTarget();
                 if(target !=null && !(target is CharacterUnit)){
-                    m.TakeDamage(target);
+                    UnitManager.Execute(m, target);
                     m.ExecuteDeath();
                 }
             }
@@ -578,7 +583,6 @@ public class Pharaoh1 : BossUnit
             };
 
             m.AddBeforeDeathEvent(action);
-            m.AddBeforeBurnEvent(action);
 
             // 出现动画
             {

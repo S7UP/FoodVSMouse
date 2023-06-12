@@ -351,5 +351,15 @@ public class WindAreaEffectExecution : RetangleAreaEffectExecution
 
             unit.NumericBox.DamageRate.AddModifier(DecDamageRate);
         }
+
+        public void ShutDown()
+        {
+            
+        }
+
+        public bool IsClearWhenDie()
+        {
+            return true;
+        }
     }
 }

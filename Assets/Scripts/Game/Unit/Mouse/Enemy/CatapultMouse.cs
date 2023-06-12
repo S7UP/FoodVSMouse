@@ -32,13 +32,13 @@ public class CatapultMouse : MouseUnit
         targetUnit = null;
         base.MInit();
         // 一开始获得移动速度加成，移动到特定位置后移除加成并开始攻击
-        FloatModifier mod = new FloatModifier(500);
+        FloatModifier mod = new FloatModifier(200);
         CustomizationTask t = new CustomizationTask();
         t.AddOnEnterAction(delegate {
             NumericBox.MoveSpeed.AddPctAddModifier(mod);
         });
         t.AddTaskFunc(delegate {
-            if (transform.position.x <= MapManager.GetColumnX(MapController.xColumn - 1.5f))
+            if (transform.position.x <= MapManager.GetColumnX(MapController.xColumn - 1f))
                 return true;
             return false;
         });
@@ -52,11 +52,11 @@ public class CatapultMouse : MouseUnit
     /// <summary>
     /// 设置判定参数
     /// </summary>
-    public override void SetCollider2DParam()
-    {
-        mBoxCollider2D.offset = new Vector2(-0.25f* MapManager.gridWidth, 0);
-        mBoxCollider2D.size = new Vector2(0.75f * MapManager.gridWidth, 0.49f * MapManager.gridHeight);
-    }
+    //public override void SetCollider2DParam()
+    //{
+    //    mBoxCollider2D.offset = new Vector2(-0.25f* MapManager.gridWidth, 0);
+    //    mBoxCollider2D.size = new Vector2(0.75f * MapManager.gridWidth, 0.49f * MapManager.gridHeight);
+    //}
 
     public override void AfterGeneralAttack()
     {
@@ -124,6 +124,8 @@ public class CatapultMouse : MouseUnit
             EnemyBullet b = EnemyBullet.GetInstance(RunArray[mShape], this, 0);
             b.AddHitAction((b, u) =>
             {
+                if (u == null)
+                    return;
                 BaseGrid g = u.GetGrid();
                 if (g != null)
                 {

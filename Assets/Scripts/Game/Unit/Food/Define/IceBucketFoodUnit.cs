@@ -1,3 +1,5 @@
+using Environment;
+
 using System;
 public class IceBucketFoodUnit : FoodUnit
 {
@@ -93,10 +95,11 @@ public class IceBucketFoodUnit : FoodUnit
             GameController.Instance.AddEffect(e);
         }
         // 对所有敌方单位施加冰冻效果
-        foreach (var item in GameController.Instance.GetEachEnemy())
+        foreach (var u in GameController.Instance.GetEachEnemy())
         {
-            item.AddNoCountUniqueStatusAbility(StringManager.Frozen, new FrozenStatusAbility(item, 240, false));
-            item.AddStatusAbility(new FrozenSlowStatusAbility(-50, item, 480));
+            //item.AddNoCountUniqueStatusAbility(StringManager.Frozen, new FrozenStatusAbility(item, 240, false));
+            EnvironmentFacade.AddIceDebuff(u, 100);
+            u.AddStatusAbility(new SlowStatusAbility(-50, u, 480));
         }
     }
 

@@ -111,7 +111,7 @@ public class FlourBag : FoodUnit
             r.SetOnEnemyEnterAction((m) => {
                 count++;
                 if(mShape >= 1)
-                    m.AddStatusAbility(new FrozenSlowStatusAbility(-90, m, 240));
+                    m.AddStatusAbility(new SlowStatusAbility(-90, m, 240));
 
                 new DamageAction(CombatAction.ActionType.RealDamage, this, m, m.mMaxHp* m.mBurnRate).ApplyAction();
                 UnitManager.TriggerRecordDamage(m);

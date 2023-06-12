@@ -1,23 +1,24 @@
+using S7P.Numeric;
+
+using System;
 using System.Collections.Generic;
 using UnityEngine;
+
+using static UnityEngine.Rendering.DebugUI;
 /// <summary>
 /// 巧克力面包
 /// </summary>
 public class ChocolateBread : FoodUnit
 {
-    private const string ShieldEffectKey = "ChocolateBreadShield";
-    private static Sprite Shield_Sprite; 
+    private static Sprite Shield_Sprite;
+    private FloatModifier costMod = new FloatModifier(-20f / 7 / 60);
 
     private int mHertIndex; // 受伤阶段 0：正常 1：小伤 2：重伤
     private List<float> mHertRateList = new List<float>()
     {
         0.67f, 0.33f
     };
-    private int MaxShieldCount; // 圣盾层数上限
-    private int CurrentShieldCount; // 当前圣盾层数
-    private const int GetShieldTime = 600; // 获取一层圣盾所需要的时间
-    private int nextShieldTimeLeft; // 获取下一个圣盾所需要的时间
-    private int decTimeWhenHit; // 受伤时减少的获取下一个圣盾的时间
+    private List<RetangleAreaEffectExecution> checkAreaList = new List<RetangleAreaEffectExecution>();
 
     public override void Awake()
     {
@@ -29,43 +30,81 @@ public class ChocolateBread : FoodUnit
     public override void MInit()
     {
         mHertIndex = 0;
-        nextShieldTimeLeft = GetShieldTime;
-        CurrentShieldCount = 0;
         base.MInit();
-        // 根据转职情况来初始化数值
-        switch (mShape)
-        {
-            case 1:
-                MaxShieldCount = 2;
-                decTimeWhenHit = 180;
-                AddShield();
-                break;
-            default:
-                MaxShieldCount = 1;
-                decTimeWhenHit = 120;
-                break;
-        }
-        // 在受到伤害结算之前，尝试消耗护盾把本次伤害值无效化
-        AddActionPointListener(ActionPointType.PreReceiveDamage, (action) => { TryToResistDamage(action); });
-        // 在受到伤害结算之后，更新受伤贴图状态，并且根据伤害来决定是否会减少护盾的CD
-        AddActionPointListener(ActionPointType.PostReceiveDamage, (action) => { UpdateHertMap(); OnHit(action);  });
         // 在接收治疗结算之后，更新受伤贴图状态
         AddActionPointListener(ActionPointType.PostReceiveCure, delegate { UpdateHertMap(); });
+        AddActionPointListener(ActionPointType.PreReceiveDamage, (act) => { 
+            if(act is DamageAction)
+            {
+                DamageAction dmgAction = act as DamageAction;
+                if(dmgAction.DamageValue > 0.6f * mMaxHp)
+                {
+                    dmgAction.DamageValue = 0.6f * mMaxHp;
+                }
+            }
+        });
+        Vector3[] v3Array = new Vector3[] {
+            new Vector2(-MapManager.gridWidth, 0), new Vector2(-2*MapManager.gridWidth, 0),
+            new Vector2(-MapManager.gridWidth, MapManager.gridHeight), new Vector2(-MapManager.gridWidth, -MapManager.gridHeight),
+        };
+        // 产生检测区域，检测区域内是否有可以提供庇护的目标
+        foreach (var v3 in v3Array)
+        {
+            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position + v3, 0.5f, 0.5f, "ItemCollideAlly");
+            r.transform.SetParent(transform);
+            r.transform.localPosition = v3;
+            checkAreaList.Add(r);
+            r.isAffectCharacter = true;
+            r.isAffectFood = true;
+            Action<BaseUnit> StayAction = (u) =>
+            {
+                if (u.mType == (int)FoodNameTypeMap.ChocolateBread || u.GetTask("ChocolateBread_Protect") != null)
+                    return;
+                u.taskController.AddUniqueTask("ChocolateBread_Protect", new ProtectedTask(this, u));
+            };
+            r.SetOnFoodStayAction(StayAction);
+            r.SetOnCharacterStayAction(StayAction);
+            Action<BaseUnit> ExitAction = (u) =>
+            {
+                if (u.GetTask("ChocolateBread_Protect") != null)
+                {
+                    ProtectedTask t = u.GetTask("ChocolateBread_Protect") as ProtectedTask;
+                    if (t.GetMaster() == this)
+                        t.SetCanExit();
+                }
+            };
+            r.SetOnFoodExitAction(ExitAction);
+            r.SetOnCharacterExitAction(ExitAction);
+            GameController.Instance.AddAreaEffectExecution(r);
+
+            Action<BaseUnit> action = delegate { r.MDestory(); };
+            AddBeforeDeathEvent(delegate {
+                action(this);
+                RemoveOnDestoryAction(action);
+            });
+            AddOnDestoryAction(action);
+        }
+
+        if(mShape >= 1)
+        {
+            int timeLeft = 60;
+            CustomizationTask t = new CustomizationTask();
+            t.AddTaskFunc(delegate {
+                timeLeft--;
+                if(timeLeft <= 0)
+                {
+                    new CureAction(CombatAction.ActionType.GiveCure, this, this, 0.02f * mMaxHp).ApplyAction();
+                    timeLeft += 60;
+                }
+                return false;
+            });
+            AddTask(t);
+        }
+        GameController.Instance.AddCostResourceModifier("Fire", costMod);
     }
 
     public override void MUpdate()
     {
-        // 圣盾恢复计算
-        if(CurrentShieldCount < MaxShieldCount)
-        {
-            nextShieldTimeLeft--;
-            if (nextShieldTimeLeft <= 0)
-            {
-                nextShieldTimeLeft += GetShieldTime;
-                AddShield();
-            }
-        }
-
         base.MUpdate();
     }
 
@@ -110,85 +149,6 @@ public class ChocolateBread : FoodUnit
         if (flag)
         {
             animatorController.Play("Idle" + mHertIndex);
-        }
-    }
-
-    /// <summary>
-    /// 增加一层圣盾
-    /// </summary>
-    public void AddShield()
-    {
-        if(CurrentShieldCount < MaxShieldCount)
-        {
-            CurrentShieldCount++;
-        }
-        // 如果是从0加到1
-        if(CurrentShieldCount == 1)
-        {
-            BaseEffect e = BaseEffect.CreateInstance(Shield_Sprite);
-            GameController.Instance.AddEffect(e);
-            AddEffectToDict(ShieldEffectKey, e, Vector2.zero);
-        }
-    }
-
-    /// <summary>
-    /// 减少一层圣盾
-    /// </summary>
-    public void DecShield()
-    {
-        if (CurrentShieldCount > 0)
-        {
-            CurrentShieldCount--;
-        }
-        // 如果减到0
-        if(CurrentShieldCount == 0)
-        {
-            RemoveEffectFromDict(ShieldEffectKey);
-        }
-    }
-
-    /// <summary>
-    /// 挨打会减少圣盾时间
-    /// </summary>
-    /// <param name="action"></param>
-    private void OnHit(CombatAction action)
-    {
-        // 满层圣盾是不会减时间的（但是这种情况真的可能发生吗）
-        if (CurrentShieldCount == MaxShieldCount)
-            return;
-
-        if (action is DamageAction)
-        {
-            DamageAction dmgAction = action as DamageAction;
-            if(dmgAction.DamageValue >= 10)
-            {
-                nextShieldTimeLeft -= decTimeWhenHit;
-            }
-        }
-    }
-
-    /// <summary>
-    /// 尝试抵御一次伤害
-    /// </summary>
-    private void TryToResistDamage(CombatAction action)
-    {
-        if (CurrentShieldCount <= 0)
-            return;
-
-        if(action is DamageAction)
-        {
-            DamageAction dmgAction = action as DamageAction;
-            dmgAction.DamageValue = 0; // 强制这次伤害为0
-            DecShield();
-            // 对5*5所有友方单位进行一次生命回复效果
-            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 5, 5, "ItemCollideAlly");
-            r.SetInstantaneous();
-            r.isAffectFood = true;
-            r.SetOnFoodEnterAction((unit) => {
-                EffectManager.AddHealEffectToUnit(unit);
-                new CureAction(CombatAction.ActionType.GiveCure, this, unit, mCurrentAttack).ApplyAction();
-            });
-            GameController.Instance.AddAreaEffectExecution(r);
         }
     }
 
@@ -266,4 +226,83 @@ public class ChocolateBread : FoodUnit
     {
         // 功能型卡片无
     }
+
+    /// <summary>
+    /// 庇护任务
+    /// </summary>
+    private class ProtectedTask : ITask
+    {
+        private bool canExit;
+        private BaseUnit master; // 保护提供者
+        private BaseUnit target; // 受保护的对象
+        private Action<CombatAction> action;
+
+        private BaseEffect eff; // 特效
+
+        public ProtectedTask(BaseUnit master, BaseUnit target)
+        {
+            this.master = master;
+            this.target = target;
+            action = (act) => {
+                if(act is DamageAction)
+                {
+                    DamageAction DmgAction = act as DamageAction;
+                    float temp_dmg = DmgAction.DamageValue;
+                    DmgAction.DamageValue = 0;
+                    new DamageAction(DmgAction.mActionType, DmgAction.Creator, master, temp_dmg).ApplyAction();
+                }
+            };
+
+            // 特效生成
+            {
+                eff = BaseEffect.CreateInstance(Shield_Sprite);
+                eff.spriteRenderer.sortingLayerName = target.GetSpriteRenderer().sortingLayerName;
+                eff.spriteRenderer.sortingOrder = target.GetSpriteRenderer().sortingOrder + 1;
+                GameController.Instance.AddEffect(eff);
+                target.mEffectController.AddEffectToDict("ChocolateBread_Protect", eff, Vector2.zero);
+                eff.transform.localPosition = Vector2.zero;
+            }
+        }
+
+        public void OnEnter()
+        {
+            target.actionPointController.AddListener(ActionPointType.PreReceiveDamage, action);
+        }
+        public void OnUpdate()
+        {
+            // 更新特效显示
+            eff.spriteRenderer.sortingLayerName = target.GetSpriteRenderer().sortingLayerName;
+            eff.spriteRenderer.sortingOrder = target.GetSpriteRenderer().sortingOrder + 1;
+        }
+        public void OnExit()
+        {
+            target.actionPointController.RemoveListener(ActionPointType.PreReceiveDamage, action);
+            // 特效移除
+            eff.ExecuteDeath();
+        }
+        public bool IsMeetingExitCondition()
+        {
+            return !master.IsAlive() || !target.IsAlive() || canExit;
+        }
+        public bool IsClearWhenDie()
+        {
+            return true;
+        }
+        public void ShutDown()
+        {
+            
+        }
+
+        // 供外界调用
+        public void SetCanExit()
+        {
+            canExit = true;
+        }
+
+        public BaseUnit GetMaster()
+        {
+            return master;
+        }
+    }
+
 }

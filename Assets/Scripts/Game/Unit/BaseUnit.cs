@@ -97,12 +97,12 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public bool isDisableSkill { get { return NumericBox.IsDisableSkill.Value; } } // 是否禁用主动技能
 
     public CombatNumericBox NumericBox { get; private set; } = new CombatNumericBox(); // 存储单位当前属性的盒子
-    public ActionPointManager actionPointManager { get; set; } = new ActionPointManager(); // 行动点管理器
+    public ActionPointController actionPointController { get; set; } // 行动点管理器
     public SkillAbilityManager skillAbilityManager { get; set; } = new SkillAbilityManager(); // 技能管理器
     public StatusAbilityManager statusAbilityManager { get; set; } = new StatusAbilityManager(); // 时效状态（BUFF）管理器
-    public Dictionary<EffectType, BaseEffect> effectDict = new Dictionary<EffectType, BaseEffect>(); // 自身持有唯一性特效
-    public Dictionary<string, BaseEffect> effectDict2 = new Dictionary<string, BaseEffect>(); // 自身持有唯一性特效（但是是用string作为key的）
-    private bool isHideEffect = false; // 是否隐藏特效
+
+    public EffectController mEffectController;
+
     public AnimatorController animatorController = new AnimatorController(); // 动画播放控制器
     public TaskController taskController = new TaskController();
     public HitBox hitBox = new HitBox();
@@ -124,7 +124,6 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
 
     // 事件
     private List<Action<BaseUnit>> BeforeDeathEventList = new List<Action<BaseUnit>>();
-    private List<Action<BaseUnit>> BeforeBurnEventList = new List<Action<BaseUnit>>();
     private List<Action<BaseUnit>> AfterDeathEventList = new List<Action<BaseUnit>>();
     private List<Action<BaseUnit>> OnDestoryActionList = new List<Action<BaseUnit>>();
 
@@ -174,7 +173,9 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
 
     public virtual void Awake()
     {
+        actionPointController = new ActionPointController(this);
         mRecordDamageComponent = new RecordDamageComponent(this);
+        mEffectController = new EffectController(this);
     }
 
     public virtual void MInit()
@@ -185,12 +186,10 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
 
         // 几个管理器初始化
         NumericBox.Initialize();
-        actionPointManager.Initialize();
+        actionPointController.Initialize();
         skillAbilityManager.Initialize();
         statusAbilityManager.Initialize();
-        effectDict.Clear();
-        effectDict2.Clear();
-        isHideEffect = false;
+        mEffectController.MInit();
         animatorController.Initialize();
         hitBox.Initialize();
         SpriteOffsetX.Initialize(); SpriteOffsetY.Initialize();
@@ -225,7 +224,6 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         transform.right = Vector2.right;
 
         BeforeDeathEventList.Clear();
-        BeforeBurnEventList.Clear();
         AfterDeathEventList.Clear();
         OnDestoryActionList.Clear();
 
@@ -288,10 +286,10 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         // 受击进度盒子更新
         hitBox.Update();
         // 挂载任务更新
-        if (!isDeathState)
+        if(!isDeathState)
             taskController.Update();
         // 特效存活检测
-        CheckAndUpdateEffectDict();
+        mEffectController.MUpdate();
         // lastPosition更新放在Task后面，这样也方便内置任务获取上帧坐标
         lastPosition = transform.position;
 
@@ -305,11 +303,13 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public virtual void MPause()
     {
         animatorController.Pause();
+        mEffectController.MPause();
     }
 
     public virtual void MResume()
     {
         animatorController.Resume();
+        mEffectController.MResume();
     }
 
     public virtual void MDestory()
@@ -321,11 +321,14 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         // 初始化透明度
         SetAlpha(1);
 
+        mEffectController.MDestory();
         mStateController.Destory();
         mComponentController.Destory();
+        actionPointController.Initialize();
 
         if (GetSpriteRenderer() != null)
             GetSpriteRenderer().sprite = null;
+        aliveTime = 0;
         ExecuteRecycle();
     }
 
@@ -414,17 +417,18 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         transform.position = V3;
     }
 
-    // 濒死（可能是用来给你抢救的）
+
+    /// <summary>
+    /// 正常死之前
+    /// </summary>
     public virtual void BeforeDeath()
     {
         // 只能触发一次
         if (isDeathState)
             return;
-
-        // 队友呢队友呢救一下啊
-        // 子类override一下,再判断一下条件，大不了不调用该类下面的方法了，就能救的！
-        // TNND,为什么不喝！？都不喝是吧！都怕死是吧！.wav
-
+        // 进入死亡动画状态
+        SetActionState(new DieState(this));
+        isDeathState = true;
         // 死亡事件
         foreach (var item in BeforeDeathEventList)
         {
@@ -434,15 +438,11 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         skillAbilityManager.TryEndAllSpellingSkillAbility();
         // 清除BUFF效果
         statusAbilityManager.TryEndAllStatusAbility();
-        // 清除任务效果
-        // taskController.Initial();
         // 清除特效一次
-        RemoveAllEffect();
+        mEffectController.MDestory();
         // 移除所有不让动画播放的修饰
         animatorController.RemoveAllPauseModifier();
-        // 进入死亡动画状态
-        SetActionState(new DieState(this));
-        isDeathState = true;
+        taskController.Initial();
     }
 
     // 这下是真死了，死的时候还有几帧状态，要持续做
@@ -452,16 +452,81 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     }
 
     /// <summary>
+    /// 灰烬死前
+    /// </summary>
+    public virtual void BeforeBurn()
+    {       
+        // 只能触发一次
+        if (isDeathState)
+            return;
+        // 产生一个烧焦的特效，然后删除自身
+        {
+            BaseEffect e = BaseEffect.CreateInstance(GetSpirte());
+            e.transform.position = transform.position + (Vector3)GetSpriteLocalPosition();
+
+            CustomizationTask t = new CustomizationTask();
+            t.AddOnEnterAction(delegate {
+                e.spriteRenderer.material = GameManager.Instance.GetMaterial("Dissolve2");
+            });
+            t.AddTimeTaskFunc(60, null, (left, total) => {
+                e.spriteRenderer.material.SetFloat("_Threshold", 1 - (float)left / total);
+            }, null);
+            t.AddOnExitAction(delegate {
+                e.ExecuteDeath();
+            });
+            e.AddTask(t);
+
+            GameController.Instance.AddEffect(e);
+        }
+        BeforeDeath();
+        DeathEvent();
+    }
+
+    /// <summary>
+    /// 摔死前
+    /// </summary>
+    public virtual void BeforeDrop()
+    {
+        // 只能触发一次
+        if (isDeathState)
+            return;
+        // 产生一个摔落的特效，然后删除自身
+        {
+            BaseEffect e = BaseEffect.CreateInstance(GetSpirte());
+            e.transform.position = transform.position + (Vector3)GetSpriteLocalPosition();
+
+            CustomizationTask t = new CustomizationTask();
+            t.AddOnEnterAction(delegate {
+            });
+            t.AddTimeTaskFunc(60, null, (left, total) => {
+                float r = (float)left / total;
+                e.spriteRenderer.color = new Color(1, 1, 1, r);
+                e.spriteRenderer.transform.position += 0.25f * MapManager.gridHeight * (1-r) * Vector3.down;
+                e.spriteRenderer.transform.localScale = Vector3.one * r;
+            }, null);
+            t.AddOnExitAction(delegate {
+                e.ExecuteDeath();
+            });
+            e.AddTask(t);
+
+            GameController.Instance.AddEffect(e);
+        }
+        BeforeDeath();
+        DeathEvent();
+    }
+
+    /// <summary>
     /// 直接让目标死亡（只有经过AfterDeath()，不经过BeforeDeath()和DuringDeath()，注意与ExecuteDeath()有所区别)
     /// </summary>
     public void DeathEvent()
     {
+        isDeathState = true;
         // 再清除技能效果一次
         skillAbilityManager.TryEndAllSpellingSkillAbility();
         // 再清除BUFF效果一次
         statusAbilityManager.TryEndAllStatusAbility();
         // 再清除特效一次
-        RemoveAllEffect();
+        mEffectController.MDestory();
         // 清除任务效果
         taskController.Initial();
         // 移除所有不让动画播放的修饰
@@ -481,112 +546,6 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public virtual void AfterDeath()
     {
         // 我死了也要化身为腻鬼！！
-    }
-
-    /// <summary>
-    /// 执行该单位回收事件
-    /// </summary>
-    protected virtual void ExecuteRecycle()
-    {
-        GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, mPreFabPath, this.gameObject);
-    }
-
-
-    /// <summary>
-    /// 灰烬效果之前
-    /// </summary>
-    public virtual void BeforeBurn()
-    {
-        // 只能触发一次
-        if (isDeathState)
-            return;
-
-        // 死亡事件
-        foreach (var item in BeforeBurnEventList)
-        {
-            item(this);
-        }
-        // 清除技能效果
-        skillAbilityManager.TryEndAllSpellingSkillAbility();
-        // 清除BUFF效果
-        statusAbilityManager.TryEndAllStatusAbility();
-        // 清除任务效果
-        // taskController.Initial();
-        // 清除特效一次
-        RemoveAllEffect();
-        // 移除所有不让动画播放的修饰
-        animatorController.RemoveAllPauseModifier();
-        // 进入死亡动画状态
-        SetActionState(new BurnState(this));
-        isDeathState = true;
-    }
-
-    /// <summary>
-    /// 进入灰烬状态后立即触发的事件
-    /// </summary>
-    public virtual void OnBurnStateEnter()
-    {
-
-    }
-    /// <summary>
-    /// 在灰烬状态下持续做的事（化灰）
-    /// </summary>
-    /// <param name="_Threshold"></param>
-    public virtual void DuringBurn(float _Threshold)
-    {
-
-    }
-
-    /// <summary>
-    /// 摔落死亡瞬间
-    /// </summary>
-    public virtual void OnDropStateEnter()
-    {
-
-    }
-
-
-    /// <summary>
-    /// 掉落前
-    /// </summary>
-    public virtual void BeforeDrop()
-    {
-        // 只能触发一次
-        if (isDeathState)
-            return;
-
-        // 死亡事件
-        foreach (var item in BeforeBurnEventList)
-        {
-            item(this);
-        }
-        // 清除技能效果
-        skillAbilityManager.TryEndAllSpellingSkillAbility();
-        // 清除BUFF效果
-        statusAbilityManager.TryEndAllStatusAbility();
-        // 清除任务效果
-        // taskController.Initial();
-        // 清除特效一次
-        RemoveAllEffect();
-        // 进入死亡动画状态
-        SetActionState(new DropState(this));
-        isDeathState = true;
-    }
-
-    /// <summary>
-    /// 摔落死亡过程
-    /// </summary>
-    public virtual void OnDropState(float r)
-    {
-
-    }
-
-    /// <summary>
-    /// 摔落死亡结束
-    /// </summary>
-    public virtual void OnDropStateExit()
-    {
-
     }
 
     /// <summary>
@@ -688,17 +647,17 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
 
     public void AddActionPointListener(ActionPointType actionPointType, Action<CombatAction> action)
     {
-        actionPointManager.AddListener(actionPointType, action);
+        actionPointController.AddListener(actionPointType, action);
     }
 
     public void RemoveActionPointListener(ActionPointType actionPointType, Action<CombatAction> action)
     {
-        actionPointManager.RemoveListener(actionPointType, action);
+        actionPointController.RemoveListener(actionPointType, action);
     }
 
     public void TriggerActionPoint(ActionPointType actionPointType, CombatAction action)
     {
-        actionPointManager.TriggerActionPoint(actionPointType, action);
+        actionPointController.TriggerActionPoint(actionPointType, action);
     }
 
     /// <summary>
@@ -1341,209 +1300,6 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         
     }
 
-
-    /// <summary>
-    /// 自身是否持有某种特效
-    /// </summary>
-    /// <param name="t"></param>
-    /// <returns></returns>
-    public bool IsContainEffect(EffectType t)
-    {
-        if (effectDict.ContainsKey(t))
-        {
-            if (!effectDict[t].IsValid())
-            {
-                effectDict.Remove(t);
-                return false;
-            }
-            else
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public bool IsContainEffect(string t)
-    {
-        if (effectDict2.ContainsKey(t))
-        {
-            if (!effectDict2[t].IsValid())
-            {
-                effectDict2.Remove(t);
-                return false;
-            }
-            else
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /// <summary>
-    /// 自动更新特效表，剔除不存活的子项
-    /// </summary>
-    public void CheckAndUpdateEffectDict()
-    {
-        List<EffectType> delList = new List<EffectType>();
-        foreach (var keyValuePair in effectDict)
-        {
-            if (!keyValuePair.Value.IsValid())
-                delList.Add(keyValuePair.Key);
-        }
-        foreach (var t in delList)
-        {
-            effectDict.Remove(t);
-        }
-
-        List<string> delList2 = new List<string>();
-        foreach (var keyValuePair in effectDict2)
-        {
-            if (!keyValuePair.Value.IsValid())
-                delList2.Add(keyValuePair.Key);
-        }
-        foreach (var t in delList2)
-        {
-            effectDict2.Remove(t);
-        }
-    }
-
-    /// <summary>
-    /// 获取某个特效引用
-    /// </summary>
-    /// <param name="t"></param>
-    /// <returns></returns>
-    public BaseEffect GetEffect(EffectType t)
-    {
-        if (IsContainEffect(t))
-            return effectDict[t];
-        return null;
-    }
-
-    public BaseEffect GetEffect(string t)
-    {
-        if (IsContainEffect(t))
-            return effectDict2[t];
-        return null;
-    }
-
-    /// <summary>
-    /// 为自身添加唯一性特效
-    /// </summary>
-    public void AddEffectToDict(EffectType t, BaseEffect eff, Vector2 localPosition)
-    {
-        effectDict.Add(t, eff);
-        SpriteRenderer s = GetSpriteRenderer();
-        Transform trans = null;
-        if (s != null)
-            trans = s.transform;
-        else
-            trans = transform;
-        eff.transform.SetParent(trans);
-        eff.transform.localPosition = localPosition;
-        if (isHideEffect)
-            eff.Hide(true);
-        else
-            eff.Hide(false);
-    }
-
-    public void AddEffectToDict(string t, BaseEffect eff, Vector2 localPosition)
-    {
-        effectDict2.Add(t, eff);
-        SpriteRenderer s = GetSpriteRenderer();
-        Transform trans = null;
-        if (s != null)
-            trans = s.transform;
-        else
-            trans = transform;
-        eff.transform.SetParent(trans);
-        eff.transform.localPosition = localPosition;
-        if (isHideEffect)
-            eff.Hide(true);
-        else
-            eff.Hide(false);
-    }
-
-    /// <summary>
-    /// 移除某个特效引用
-    /// </summary>
-    public void RemoveEffectFromDict(EffectType t)
-    {
-        if (IsContainEffect(t))
-        {
-            BaseEffect eff = effectDict[t];
-            effectDict.Remove(t);
-            eff.ExecuteDeath();
-        }
-    }
-
-    public void RemoveEffectFromDict(string t)
-    {
-        if (IsContainEffect(t))
-        {
-            BaseEffect eff = effectDict2[t];
-            effectDict2.Remove(t);
-            eff.ExecuteDeath();
-        }
-    }
-
-    /// <summary>
-    /// 移除自身所有特效引用（一般用于目标被回收时）
-    /// </summary>
-    public void RemoveAllEffect()
-    {
-        List<EffectType> l = new List<EffectType>();
-        foreach (var item in effectDict)
-        {
-            l.Add(item.Key);
-        }
-        foreach (var t in l)
-        {
-            RemoveEffectFromDict(t);
-        }
-
-        List<string> l2 = new List<string>();
-        foreach (var item in effectDict2)
-        {
-            l2.Add(item.Key);
-        }
-        foreach (var t in l2)
-        {
-            RemoveEffectFromDict(t);
-        }
-    }
-
-    /// <summary>
-    /// 隐藏全部特效
-    /// </summary>
-    public void HideEffect(bool enable)
-    {
-        isHideEffect = enable;
-        if (enable)
-        {
-            foreach (var keyValuePair in effectDict)
-            {
-                keyValuePair.Value.Hide(true);
-            }
-            foreach (var keyValuePair in effectDict2)
-            {
-                keyValuePair.Value.Hide(true);
-            }
-        }
-        else
-        {
-            foreach (var keyValuePair in effectDict)
-            {
-                keyValuePair.Value.Hide(false);
-            }
-            foreach (var keyValuePair in effectDict2)
-            {
-                keyValuePair.Value.Hide(false);
-            }
-        }
-    }
-
     /// <summary>
     /// 改变贴图X偏移
     /// </summary>
@@ -1651,16 +1407,6 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public void RemoveBeforeDeathEvent(Action<BaseUnit> action)
     {
         BeforeDeathEventList.Remove(action);
-    }
-
-    public void AddBeforeBurnEvent(Action<BaseUnit> action)
-    {
-        BeforeBurnEventList.Add(action);
-    }
-
-    public void RemoveBeforeBurnEvent(Action<BaseUnit> action)
-    {
-        BeforeBurnEventList.Remove(action);
     }
 
     public void AddAfterDeathEvent(Action<BaseUnit> action)
@@ -1835,5 +1581,12 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         GetAoeRateFunc = func;
     }
 
+    /// <summary>
+    /// 执行该单位回收事件
+    /// </summary>
+    protected virtual void ExecuteRecycle()
+    {
+        GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, mPreFabPath, this.gameObject);
+    }
     // 继续
 }

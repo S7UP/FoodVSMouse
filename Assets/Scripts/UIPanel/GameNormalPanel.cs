@@ -39,8 +39,10 @@ public class GameNormalPanel : BasePanel
 
     private Image Img_Rank;
     private Text Tex_Rank;
+    private Text Tex_StageName;
     private Text Tex_PlayTime;
     private Text Tex_TotalEnergy;
+    private Text Tex_PauseCount;
 
     private RectTransform RectTrans_BGM;
     private Text Tex_BGM;
@@ -83,8 +85,10 @@ public class GameNormalPanel : BasePanel
         Tex_ExpTips = transform.Find("ExpTips").GetComponent<Text>();
         Img_Rank = transform.Find("Img_Rank").Find("Rank").GetComponent<Image>();
         Tex_Rank = transform.Find("Img_Rank").Find("Text").GetComponent<Text>();
+        Tex_StageName = transform.Find("LeftBottomInfo").Find("StageName_Label").Find("Text").GetComponent<Text>();
         Tex_PlayTime = transform.Find("LeftBottomInfo").Find("Time_Label").Find("Text").GetComponent<Text>();
         Tex_TotalEnergy = transform.Find("LeftBottomInfo").Find("TotalEnergy_Label").Find("Text").GetComponent<Text>();
+        Tex_PauseCount = transform.Find("LeftBottomInfo").Find("PauseCount_Label").Find("Text").GetComponent<Text>();
 
         RectTrans_BGM = transform.Find("BGM").GetComponent<RectTransform>();
         Tex_BGM = RectTrans_BGM.Find("Text").GetComponent<Text>();
@@ -99,7 +103,7 @@ public class GameNormalPanel : BasePanel
         // 停止所有BGM
         GameManager.Instance.audioSourceManager.StopAllMusic();
         mShovelModel.transform.position = mShovelSlot2Trans.transform.position; // 铲子归位
-        Tex_Pause.text = "暂停游戏";
+        Tex_Pause.text = "暂停(Space)";
         MenuUI.SetActive(false);
         Img_Hp.SetActive(false);
         WinPanel.SetActive(false);
@@ -151,7 +155,7 @@ public class GameNormalPanel : BasePanel
                     {
                         Img_Rank.gameObject.SetActive(false);
                         Tex_Rank.gameObject.SetActive(true);
-                        Tex_Rank.text = (data.GetRankRate() * 100).ToString() + "%";
+                        Tex_Rank.text = (Mathf.FloorToInt(data.GetRankRate() * 100)).ToString() + "%";
                     }
                     else
                     {
@@ -163,8 +167,10 @@ public class GameNormalPanel : BasePanel
                 Img_Rank.sprite = GameManager.Instance.GetSprite("UI/Difficulty/Easy");
                 break;
         }
+        Tex_StageName.text = "unknow";
         Tex_PlayTime.text = "00:00:00.00";
         Tex_TotalEnergy.text = "--";
+        Tex_PauseCount.text = "0";
     }
 
     /// <summary>
@@ -173,7 +179,7 @@ public class GameNormalPanel : BasePanel
     public void OnPauseButtonClick()
     {
         // 在人物放置阶段点暂停是没有任何吊用的
-        if (IsInCharacterConstructMode)
+        if (IsInCharacterConstructMode || MenuUI.activeInHierarchy)
             return;
 
         // 先获取目前是暂停还是非暂停状态
@@ -182,7 +188,7 @@ public class GameNormalPanel : BasePanel
             // 如果是暂停状态，则解除暂停
             GameController.Instance.Resume();
             // 设置文字
-            Tex_Pause.text = "暂 停";
+            Tex_Pause.text = "暂停(Space)";
             // 移除遮罩
             PauseUI.SetActive(false);
         }
@@ -202,6 +208,7 @@ public class GameNormalPanel : BasePanel
     /// </summary>
     public void OnMenuButtonClick()
     {
+        PauseUI.SetActive(false);
         SetMenuEnable(true);
     }
 
@@ -525,8 +532,10 @@ public class GameNormalPanel : BasePanel
             string mm = (min >= 10 ? min.ToString() : "0" + min.ToString());
             string ss = (sec >= 10 ? sec.ToString() : "0" + sec.ToString());
             string msms = (ms >= 10 ? ms.ToString() : "0" + ms.ToString());
+            Tex_StageName.text = GameController.Instance.mCurrentStage.mStageInfo.name;
             Tex_PlayTime.text = hh + ":" + mm + ":" + ss + "." + msms;
             Tex_TotalEnergy.text = GameController.Instance.mCostController.totalFire.ToString("#0");
+            Tex_PauseCount.text = GameController.Instance.pauseCount.ToString();
         }
     }
 

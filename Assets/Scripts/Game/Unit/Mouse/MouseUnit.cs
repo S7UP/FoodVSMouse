@@ -461,7 +461,10 @@ public class MouseUnit : BaseUnit
     public virtual void OnAllyCollision(BaseUnit unit)
     {
         // 检测本格美食最高受击优先级单位
-        BaseUnit target = unit.GetGrid().GetHighestAttackPriorityUnit(this);
+        BaseGrid g = unit.GetGrid();
+        if (g == null)
+            return;
+        BaseUnit target = g.GetHighestAttackPriorityUnit(this);
         if (target!=null && !isBlock && UnitManager.CanBlock(this, target)) // 检测双方能否互相阻挡，且老鼠能否将该目标视为攻击目标(这个在GetHighestAttackPriorityUnit已经做了）
         {
             isBlock = true;
@@ -585,57 +588,6 @@ public class MouseUnit : BaseUnit
         AnimatorStateRecorder r = animatorController.GetCurrentAnimatorStateRecorder();
         if (r==null || r.IsFinishOnce())
         {
-            DeathEvent();
-        }
-    }
-
-    private BoolModifier boolModifier = new BoolModifier(true);
-
-    public override void OnBurnStateEnter()
-    {
-        // 装上烧毁材质
-        spriteRenderer.material = GameManager.Instance.GetMaterial("Dissolve2");
-        // 禁止播放动画
-        PauseCurrentAnimatorState(boolModifier);
-        animatorController.SetNoPlayOtherClip(true);
-    }
-
-    public override void DuringBurn(float _Threshold)
-    {
-        spriteRenderer.material.SetFloat("_Threshold", _Threshold);
-        // 超过1就可以回收了
-        if (_Threshold >= 1.0)
-        {
-            ResumeCurrentAnimatorState(boolModifier);
-            DeathEvent();
-        }
-    }
-
-    /// <summary>
-    /// 摔落死亡瞬间
-    /// </summary>
-    public override void OnDropStateEnter()
-    {
-        // 禁止播放动画
-        PauseCurrentAnimatorState(boolModifier);
-        animatorController.SetNoPlayOtherClip(true);
-    }
-
-    /// <summary>
-    /// 摔落死亡过程
-    /// </summary>
-    public override void OnDropState(float r)
-    {
-        SetAlpha(1-r);
-        spriteRenderer.transform.localPosition = spriteRenderer.transform.localPosition + 0.25f * MapManager.gridHeight * r * Vector3.down;
-        spriteRenderer.transform.localScale = Vector3.one * (1 - r);
-        // 超过1就可以回收了
-        if (r >= 1.0)
-        {
-            ResumeCurrentAnimatorState(boolModifier);
-            SetAlpha(1);
-            spriteRenderer.transform.localPosition = Vector3.zero;
-            spriteRenderer.transform.localScale = Vector3.one;
             DeathEvent();
         }
     }

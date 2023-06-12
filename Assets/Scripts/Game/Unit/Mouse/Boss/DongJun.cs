@@ -10,7 +10,6 @@ public class DongJun : BossUnit
     private static RuntimeAnimatorController Pipeline_Water_AnimatorController;
 
     private const string PipelineKey = "管道";
-    private const string TPKey = "已经管道传送";
 
     public override void Awake()
     {
@@ -70,23 +69,11 @@ public class DongJun : BossUnit
     {
         // 切换阶段血量百分比
         AddParamArray("hpRate", new float[] { 0.5f, 0.2f });
-
-        AddParamArray("CaveAliveTime", new float[] { 15 }); // 洞的存在时间
-        AddParamArray("Pipeline_Hp", new float[] { 900 }); // 管道的生命值
-
-        // 修筑管道
-        AddParamArray("t0_0", new float[] { 6f, 3, 0f }); // 钻土出来后的晕眩时间
-        AddParamArray("t0_1", new float[] { 6f, 3, 0f }); // 2钻土出来后的晕眩时间
-        AddParamArray("num0_0", new float[] { 0, 1, 2 }); // 跳跃次数
-        AddParamArray("dmg0_0", new float[] { 900, 900, 900 }); // 跳跃伤害
-
-        // 踩踏事故
-        AddParamArray("t1_0", new float[] { 6f, 3, 0f }); // 挖洞后自身晕眩时间
-        AddParamArray("num1_0", new float[] { 2, 2, 3 }); // 跳跃次数
-        AddParamArray("num1_1", new float[] { 0, 1, 1 }); // 大跳次数
-        AddParamArray("dmg1_0", new float[] { 900, 900, 900 }); // 跳跃伤害
-        AddParamArray("StunTime1_0", new float[] { float.NaN, 3, 6 }); // 大跳对卡片的晕眩时间
-
+        // 读取参数
+        foreach (var keyValuePair in BossManager.GetParamDict(BossNameTypeMap.DongJun, 0))
+        {
+            AddParamArray(keyValuePair.Key, keyValuePair.Value);
+        }
     }
 
     /// <summary>
@@ -238,11 +225,6 @@ public class DongJun : BossUnit
         }
         // 当管道被摧毁时会留下无底洞并移除因为管道造成的不可放置
         m.AddBeforeDeathEvent(delegate {
-            g.RemoveCanBuildFuncListener(noBuildFunc);
-            CreateCave(g, Mathf.FloorToInt(GetParamValue("CaveAliveTime", mHertIndex) * 60));
-        });
-        m.AddBeforeBurnEvent(delegate
-        {
             g.RemoveCanBuildFuncListener(noBuildFunc);
             CreateCave(g, Mathf.FloorToInt(GetParamValue("CaveAliveTime", mHertIndex) * 60));
         });
@@ -504,7 +486,6 @@ public class DongJun : BossUnit
         int t0_0 = Mathf.FloorToInt(GetParamValue("t0_0", mHertIndex)*60); // 钻土出来后的晕眩时间
         int t0_1 = Mathf.FloorToInt(GetParamValue("t0_1", mHertIndex)*60); // 2钻土出来后的晕眩时间
         int num0_0 = Mathf.FloorToInt(GetParamValue("num0_0", mHertIndex)); // 跳跃次数
-        float dmg0_0 = GetParamValue("dmg0_0", mHertIndex); // 伤害
 
         // 参数
         BaseGrid selectedGrid1 = null; // 被选中打洞的格子
@@ -693,7 +674,7 @@ public class DongJun : BossUnit
                     {
                         SmallJump(2 * MapManager.gridWidth);
                         // 造成一次单格的踩踏伤害
-                        DamageCurrentPosition(dmg0_0 * mCurrentAttack / 10);
+                        DamageCurrentPosition();
                         return true;
                     }
                     return false;
@@ -708,7 +689,7 @@ public class DongJun : BossUnit
                     if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
                     {
                         // 造成一次单格的踩踏伤害
-                        DamageCurrentPosition(dmg0_0 * mCurrentAttack / 10);
+                        DamageCurrentPosition();
                         return true;
                     }
                     return false;
@@ -745,13 +726,25 @@ public class DongJun : BossUnit
     /// <summary>
     /// 对当前位置造成一格踩踏伤害
     /// </summary>
-    private void DamageCurrentPosition(float dmg)
+    private void DamageCurrentPosition()
     {
-        DamageAreaEffectExecution d = DamageAreaEffectExecution.GetInstance(this, transform.position, 1, 1, CombatAction.ActionType.CauseDamage, dmg);
-        d.isAffectFood = true;
-        d.isAffectMouse = true;
-        d.AddExcludeMouseUnit(this); // 自身被排除在外
-        GameController.Instance.AddAreaEffectExecution(d);
+        RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 0.5f, 0.5f, "EnemyAllyGrid");
+        r.SetInstantaneous();
+        r.isAffectMouse = true;
+        r.SetOnEnemyEnterAction((u)=>{
+            if (u.IsBoss())
+                return;
+            UnitManager.Execute(this, u);
+        });
+
+        r.isAffectGrid = true;
+        r.SetOnGridEnterAction((g) => {
+            g.TakeAction(this, (u) => { 
+                DamageAction action = UnitManager.Execute(this, u);
+                new DamageAction(CombatAction.ActionType.CauseDamage, this, this, action.RealCauseValue * GetParamValue("dmg_trans")/100).ApplyAction();
+            }, false);
+        });
+        GameController.Instance.AddAreaEffectExecution(r);
     }
 
     /// <summary>
@@ -789,7 +782,6 @@ public class DongJun : BossUnit
         int t1_0 = Mathf.FloorToInt(GetParamValue("t1_0", mHertIndex) * 60); // 挖洞后自身晕眩时间
         int num1_0 = Mathf.FloorToInt(GetParamValue("num1_0", mHertIndex)); // 跳跃次数
         int num1_1 = Mathf.FloorToInt(GetParamValue("num1_1", mHertIndex)); // 大跳次数
-        float dmg1_0 = GetParamValue("dmg1_0", mHertIndex); // 伤害
         int StunTime1_0 = Mathf.FloorToInt(GetParamValue("StunTime1_0", mHertIndex) * 60); // 大跳对卡片的晕眩时间
 
         CompoundSkillAbility c = new CompoundSkillAbility(this, info);
@@ -838,7 +830,7 @@ public class DongJun : BossUnit
                     {
                         SmallJump(2 * MapManager.gridWidth);
                         // 造成一次单格的踩踏伤害
-                        DamageCurrentPosition(dmg1_0*mCurrentAttack/10);
+                        DamageCurrentPosition();
                         return true;
                     }
                     return false;
@@ -851,7 +843,7 @@ public class DongJun : BossUnit
                 if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
                 {
                     // 造成一次单格的踩踏伤害
-                    DamageCurrentPosition(dmg1_0 * mCurrentAttack / 10);
+                    DamageCurrentPosition();
                     // 如果有大跳的话，就准备进行大跳
                     if(num1_1 > 0)
                     {
@@ -870,7 +862,7 @@ public class DongJun : BossUnit
                     {
                         BigJump(2 * MapManager.gridWidth);
                         // 造成一次单格的踩踏伤害
-                        DamageCurrentPosition(dmg1_0 * mCurrentAttack / 10);
+                        DamageCurrentPosition();
                         // 造成一次3*3的晕眩效果
                         StunCurrentpostion(StunTime1_0);
                         return true;
@@ -886,7 +878,7 @@ public class DongJun : BossUnit
                     if (num1_1 > 0)
                     {
                         // 造成一次单格的踩踏伤害
-                        DamageCurrentPosition(dmg1_0 * mCurrentAttack / 10);
+                        DamageCurrentPosition();
                         // 造成一次3*3的晕眩效果
                         StunCurrentpostion(StunTime1_0);
                     }

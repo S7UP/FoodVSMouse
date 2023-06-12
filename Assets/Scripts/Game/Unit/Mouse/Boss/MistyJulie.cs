@@ -8,6 +8,7 @@ using UnityEngine;
 public class MistyJulie : BossUnit
 {
     private static RuntimeAnimatorController Missile_Run;
+    private List<FogAreaEffectExecution> fogList = new List<FogAreaEffectExecution>();
 
     public override void Awake()
     {
@@ -18,6 +19,7 @@ public class MistyJulie : BossUnit
 
     public override void MInit()
     {
+        fogList.Clear();
         base.MInit();
         mHeight = 1;
         // 添加出现的技能
@@ -52,6 +54,30 @@ public class MistyJulie : BossUnit
         }
     }
 
+    public override void MUpdate()
+    {
+        List<FogAreaEffectExecution> delList = new List<FogAreaEffectExecution>();
+        foreach (var fog in fogList)
+        {
+            if (!fog.IsValid())
+                delList.Add(fog);
+        }
+        foreach (var fog in delList)
+        {
+            fogList.Remove(fog);
+        }
+        base.MUpdate();
+    }
+
+    public override void AfterDeath()
+    {
+        foreach (var fog in fogList)
+        {
+            fog.SetDisappear();
+        }
+        fogList.Clear();
+        base.AfterDeath();
+    }
 
     /// <summary>
     /// 初始化BOSS的参数
@@ -92,6 +118,7 @@ public class MistyJulie : BossUnit
         fog_task.AddOnExitAction(delegate { e.SetDisappear(); });
         e.AddTask(fog_task);
         GameController.Instance.AddAreaEffectExecution(e);
+        fogList.Add(e);
     }
 
     /// <summary>
@@ -346,17 +373,33 @@ public class MistyJulie : BossUnit
         });
         e.AddTask(t);
 
-        float dmg = GetParamValue("dmg1");
-        RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(pos, 0.5f, 0.5f, "BothCollide");
+        //float dmg = GetParamValue("dmg1");
+        //RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(pos, 0.5f, 0.5f, "BothCollide");
+        //r.SetInstantaneous();
+        //r.SetAffectHeight(0);
+        //r.isAffectFood = true;
+        //r.SetOnFoodEnterAction((u)=>{
+        //    BurnManager.BurnDamage(this, u);
+        //});
+        //r.isAffectMouse = true;
+        //r.SetOnEnemyEnterAction((u) => {
+        //    BurnManager.BurnDamage(this, u);
+        //});
+        //GameController.Instance.AddAreaEffectExecution(r);
+
+        RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(pos, 0.5f, 0.5f, "EnemyAllyGrid");
         r.SetInstantaneous();
         r.SetAffectHeight(0);
-        r.isAffectFood = true;
-        r.SetOnFoodEnterAction((u)=>{
-            BurnManager.BurnDamage(this, u);
-        });
         r.isAffectMouse = true;
         r.SetOnEnemyEnterAction((u) => {
             BurnManager.BurnDamage(this, u);
+        });
+
+        r.isAffectGrid = true;
+        r.SetOnGridEnterAction((g) => {
+            g.TakeAction(this, (u) => {
+                BurnManager.BurnDamage(this, u);
+            }, false);
         });
         GameController.Instance.AddAreaEffectExecution(r);
     }
@@ -595,6 +638,47 @@ public class MistyJulie : BossUnit
                             });
                             unit.AddTask(t);
                         }
+
+                        int timeLeft = buffTime;
+                        // 在生效期间为后续的老鼠也添加BUFF
+                        Action<MouseUnit> action = (m) =>
+                        {
+                            if (!MouseManager.IsGeneralMouse(m))
+                                return;
+
+                            CustomizationTask t = new CustomizationTask();
+                            t.AddOnEnterAction(delegate {
+                                m.NumericBox.Attack.AddPctAddModifier(AttackMod);
+                                m.NumericBox.AttackSpeed.AddPctAddModifier(AttackSpeedMod);
+                                m.NumericBox.DamageRate.AddModifier(DefenceMod);
+                            });
+                            t.AddTimeTaskFunc(timeLeft);
+                            t.AddOnExitAction(delegate {
+                                m.NumericBox.Attack.RemovePctAddModifier(AttackMod);
+                                m.NumericBox.AttackSpeed.RemovePctAddModifier(AttackSpeedMod);
+                                m.NumericBox.DamageRate.RemoveModifier(DefenceMod);
+                            });
+                            m.AddTask(t);
+                        };
+
+                        // 后续判定
+                        GameController.Instance.AddTasker(
+                            //Action InitAction, 
+                            delegate {
+                                GameController.Instance.mMouseFactory.AddProcessAction(action);
+                            },
+                            //Action UpdateAction, 
+                            delegate {
+                                timeLeft--;
+                            },
+                            //Func<bool> EndCondition, 
+                            delegate { return timeLeft <= 0; },
+                            //Action EndEvent
+                            delegate {
+                                GameController.Instance.mMouseFactory.RemoveProcessAction(action);
+                            }
+                            );
+                        
                         flag = false;
                     }
                     return false;

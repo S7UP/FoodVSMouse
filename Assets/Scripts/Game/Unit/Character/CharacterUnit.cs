@@ -1,4 +1,3 @@
-using S7P.Numeric;
 using UnityEngine;
 /// <summary>
 /// 角色单位
@@ -263,47 +262,6 @@ public class CharacterUnit : BaseUnit
     public override void OnDieStateEnter()
     {
         // 对于美食来说没有死亡动画的话，直接回收对象就行，在游戏里的体现就是直接消失，回收对象的事在duringDeath第一帧去做
-    }
-
-    public override void OnBurnStateEnter()
-    {
-        // 禁止播放动画
-        // PauseCurrentAnimatorState(new BoolModifier(true));
-    }
-
-    public override void DuringBurn(float _Threshold)
-    {
-        DeathEvent();
-    }
-
-    private BoolModifier boolModifier = new BoolModifier(true);
-
-    /// <summary>
-    /// 摔落死亡瞬间
-    /// </summary>
-    public override void OnDropStateEnter()
-    {
-        // 禁止播放动画
-        PauseCurrentAnimatorState(boolModifier);
-    }
-
-    /// <summary>
-    /// 摔落死亡过程
-    /// </summary>
-    public override void OnDropState(float r)
-    {
-        SetAlpha(1-r);
-        spriteRenderer.transform.localPosition = spriteRenderer.transform.localPosition + 0.25f * MapManager.gridHeight * r * Vector3.down;
-        spriteRenderer.transform.localScale = Vector3.one * (1 - r);
-        // 超过1就可以回收了
-        if (r >= 1.0)
-        {
-            ResumeCurrentAnimatorState(boolModifier);
-            SetAlpha(1);
-            spriteRenderer.transform.localPosition = Vector3.zero;
-            spriteRenderer.transform.localScale = Vector3.one;
-            DeathEvent();
-        }
     }
 
     /// <summary>

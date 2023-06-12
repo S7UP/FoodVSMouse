@@ -86,19 +86,6 @@ public class MelonShield : FoodUnit
         }
     }
 
-    public override void OnBurnStateEnter()
-    {
-        // 后面也要装上烧毁材质
-        Spr_Inside.material = GameManager.Instance.GetMaterial("Dissolve2");
-        base.OnBurnStateEnter();
-    }
-
-    public override void DuringBurn(float _Threshold)
-    {
-        Spr_Inside.material.SetFloat("_Threshold", _Threshold);
-        base.DuringBurn(_Threshold);
-    }
-
     /// <summary>
     /// 反弹伤害
     /// </summary>

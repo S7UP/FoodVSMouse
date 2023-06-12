@@ -14,6 +14,7 @@ public class FlyBarrierMouse : MouseUnit, IFlyUnit
     public override void MInit()
     {
         base.MInit();
+        typeAndShapeValue = 1;
         mHeight = 1;
         isDrop = false;
         dropColumn = 0; // 降落列默认为0，即左一列

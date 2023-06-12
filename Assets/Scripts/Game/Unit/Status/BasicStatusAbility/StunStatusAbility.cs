@@ -46,9 +46,9 @@ public class StunStatusAbility : StatusAbility
         master.NumericBox.IsDisableSkill.RemoveModifier(disableSkillMod);
 
         // 移除晕眩特效
-        if (master.IsContainEffect(StringManager.Stun))
+        if (master.mEffectController.IsContainEffect(StringManager.Stun))
         {
-            master.RemoveEffectFromDict(StringManager.Stun);
+            master.mEffectController.RemoveEffectFromDict(StringManager.Stun);
         }
     }
 
@@ -69,7 +69,7 @@ public class StunStatusAbility : StatusAbility
         master.NumericBox.IsDisableSkill.AddModifier(disableSkillMod);
 
         // 添加晕眩特效
-        if (!master.IsContainEffect(StringManager.Stun))
+        if (!master.mEffectController.IsContainEffect(StringManager.Stun))
         {
             BaseEffect e = BaseEffect.CreateInstance(GameManager.Instance.GetRuntimeAnimatorController("Effect/Stun"), null, "Stun", null, true);
             string name;
@@ -79,7 +79,7 @@ public class StunStatusAbility : StatusAbility
                 e.SetSpriteRendererSorting(name, order + 5);
             }
             GameController.Instance.AddEffect(e);
-            master.AddEffectToDict(StringManager.Stun, e, new Vector2(0, 0));
+            master.mEffectController.AddEffectToDict(StringManager.Stun, e, new Vector2(0, 0));
         }
     }
 

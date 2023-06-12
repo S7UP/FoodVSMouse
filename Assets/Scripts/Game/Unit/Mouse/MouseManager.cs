@@ -254,7 +254,7 @@ public class MouseManager
         m.NumericBox.MoveSpeed.SetBase(0);
         m.SetAlpha(0);
         m.NumericBox.Defense.SetBase(100);
-        m.HideEffect(true);
+        m.mEffectController.HideEffect(true);
         return m;
     }
 

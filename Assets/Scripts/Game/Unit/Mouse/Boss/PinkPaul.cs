@@ -14,6 +14,7 @@ public class PinkPaul : BossUnit
     private const string PinkPaul_Bullet = "PinkPaul_Bullet";
 
     private BaseUnit[] TentacleList = new BaseUnit[7];
+    private List<BaseUnit> bulletList = new List<BaseUnit>();
 
     public override void Awake()
     {
@@ -31,6 +32,7 @@ public class PinkPaul : BossUnit
         {
             TentacleList[i] = null;
         }
+        bulletList.Clear();
         base.MInit();
         // 添加出现的技能
         {
@@ -84,6 +86,17 @@ public class PinkPaul : BossUnit
             if (TentacleList[i] != null && !TentacleList[i].IsAlive())
                 TentacleList[i] = null;
         }
+
+        List<BaseUnit> delList = new List<BaseUnit>();
+        foreach (var b in bulletList)
+        {
+            if (!b.IsAlive())
+                delList.Add(b);
+        }
+        foreach (var b in delList)
+        {
+            bulletList.Remove(b);
+        }
         base.MUpdate();
     }
 
@@ -95,6 +108,11 @@ public class PinkPaul : BossUnit
             if (TentacleList[i] != null && TentacleList[i].IsAlive())
                 TentacleList[i].ExecuteDeath();
         }
+        foreach (var b in bulletList)
+        {
+            b.ExecuteDeath();
+        }
+        bulletList.Clear();
     }
 
     /// <summary>
@@ -301,6 +319,7 @@ public class PinkPaul : BossUnit
         BaseUnit target = null; // 被吸附的目标
 
         MouseModel m = MouseModel.GetInstance(Bullet_AnimatorController);
+        bulletList.Add(m);
         m.transform.position = pos;
         m.SetBaseAttribute(1, 10, 1.0f, 18.0f, 100, 0.5f, 1);
         m.SetMoveRoate(rot);
@@ -428,18 +447,11 @@ public class PinkPaul : BossUnit
         m.isIgnoreRecordDamage = true;
         m.AddCanBeSelectedAsTargetFunc(delegate { return false; });
         m.AddCanBlockFunc(delegate { return false; });
+        m.AddCanHitFunc(delegate { return false; });
         m.MoveClipName = "Idle";
         m.DieClipName = "Disappear";
         WaterGridType.AddNoAffectByWater(m, new BoolModifier(true)); // 标记免疫水蚀
         m.SetActionState(new MoveState(m));
-        Action<CombatAction> hitAction = (com) => {
-            if(com is DamageAction)
-            {
-                DamageAction d = com as DamageAction;
-                new DamageAction(CombatAction.ActionType.CauseDamage, d.Creator, this, GetParamValue("tran_rate1", mHertIndex) * 0.01f * d.DamageValue).ApplyAction();
-            }
-        };
-        m.AddActionPointListener(ActionPointType.PostReceiveDamage, hitAction);
         GameController.Instance.AddMouseUnit(m);
 
         // 产生一个捆绑判定区域，检测到该区域的第一个美食会将其捆绑
@@ -464,13 +476,15 @@ public class PinkPaul : BossUnit
             {
                 if (hasTarget && u.Equals(target))
                 {
-                    m.animatorController.Play("Idle", true);
-                    m.DisableMove(false);
-                    hasTarget = false;
-                    target = null;
-                    isMoveLeft = false; // 是否向左走
-                    m.SetMoveRoate(Vector2.right);
-                    moveTimeLeft = Mathf.FloorToInt(60 * GetParamValue("t1_1", mHertIndex));
+                    //m.animatorController.Play("Idle", true);
+                    //m.DisableMove(false);
+                    //hasTarget = false;
+                    //target = null;
+                    //isMoveLeft = false; // 是否向左走
+                    //m.SetMoveRoate(Vector2.right);
+                    //moveTimeLeft = Mathf.FloorToInt(60 * GetParamValue("t1_1", mHertIndex));
+                    m.DieClipName = "Drag";
+                    m.ExecuteDeath(); // 若目标阵亡则自身下沉
                 }
             });
             GameController.Instance.AddAreaEffectExecution(r);
@@ -512,13 +526,15 @@ public class PinkPaul : BossUnit
                 {
                     if (!target.IsAlive())
                     {
-                        m.animatorController.Play("Idle", true);
-                        m.DisableMove(false);
-                        hasTarget = false;
-                        target = null;
-                        isMoveLeft = false; // 是否向左走
-                        m.SetMoveRoate(Vector2.right);
-                        moveTimeLeft = Mathf.FloorToInt(60 * GetParamValue("t1_1", mHertIndex));
+                        //m.animatorController.Play("Idle", true);
+                        //m.DisableMove(false);
+                        //hasTarget = false;
+                        //target = null;
+                        //isMoveLeft = false; // 是否向左走
+                        //m.SetMoveRoate(Vector2.right);
+                        //moveTimeLeft = Mathf.FloorToInt(60 * GetParamValue("t1_1", mHertIndex));
+                        m.DieClipName = "Drag";
+                        m.ExecuteDeath(); // 若目标阵亡则自身下沉
                         return false;
                     }
                     // 有目标持续施加晕眩效果和每3秒10伤害
@@ -539,7 +555,9 @@ public class PinkPaul : BossUnit
                         s.leftTime = 2;
                     // 检测目标身上有无海星，有的话直接处决目标
                     if (target.IsContainUnit(PinkPaul_Bullet))
+                    {
                         new DamageAction(CombatAction.ActionType.RealDamage, m, target, target.GetCurrentHp()).ApplyAction();
+                    }
                 }
                 else
                 {
@@ -811,31 +829,47 @@ public class PinkPaul : BossUnit
                             int col = GetColumnIndex();
                             for (int j = 0; j < v2Array.Length; j++)
                             {
-                                BaseGrid g = GameController.Instance.mMapController.GetGrid(col + Mathf.FloorToInt(v2Array[j].x), row + Mathf.FloorToInt(v2Array[j].y));
-                                if (g != null)
-                                {
-                                    // Debug.Log("x = " + g.GetColumnIndex() + ", y = " + g.GetRowIndex());
-                                    g.TakeDamage(this, dmg2, false);
-                                }
+                                //BaseGrid g = GameController.Instance.mMapController.GetGrid(col + Mathf.FloorToInt(v2Array[j].x), row + Mathf.FloorToInt(v2Array[j].y));
+                                //if (g != null)
+                                //{
+                                //    g.TakeDamage(this, dmg2, false);
+                                //}
+                                RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position + new Vector3(v2Array[j].x*MapManager.gridWidth, v2Array[j].y*MapManager.gridWidth), 0.5f, 0.5f, "EnemyAllyGrid");
+                                r.SetInstantaneous();
+                                r.isAffectMouse = true;
+                                r.SetOnEnemyEnterAction((u) => {
+                                    if (u.IsBoss())
+                                        return;
+                                    UnitManager.Execute(this, u);
+                                });
+
+                                r.isAffectGrid = true;
+                                r.SetOnGridEnterAction((g) => {
+                                    g.TakeAction(this, (u) => {
+                                        DamageAction action = UnitManager.Execute(this, u);
+                                        new DamageAction(CombatAction.ActionType.CauseDamage, this, this, action.RealCauseValue * GetParamValue("dmg_trans2") / 100).ApplyAction();
+                                    }, false);
+                                });
+                                GameController.Instance.AddAreaEffectExecution(r);
                             }
                         }
 
                         // 对老鼠造成一次伤害
-                        {
-                            Vector2[] v2Array = new Vector2[2] {
-                                new Vector2(1, 3), new Vector2(3, 1)
-                            };
-                            for (int j = 0; j < v2Array.Length; j++)
-                            {
-                                DamageAreaEffectExecution d = DamageAreaEffectExecution.GetInstance(this, transform.position, v2Array[j].x, v2Array[j].y, CombatAction.ActionType.CauseDamage, dmg2);
-                                d.isAffectMouse = true;
-                                d.isAffectFood = false;
-                                d.isAffectCharacter = false;
-                                d.SetInstantaneous();
-                                d.AddExcludeMouseUnit(this); // 不能打到自己
-                                GameController.Instance.AddAreaEffectExecution(d);
-                            }
-                        }
+                        //{
+                        //    Vector2[] v2Array = new Vector2[2] {
+                        //        new Vector2(1, 3), new Vector2(3, 1)
+                        //    };
+                        //    for (int j = 0; j < v2Array.Length; j++)
+                        //    {
+                        //        DamageAreaEffectExecution d = DamageAreaEffectExecution.GetInstance(this, transform.position, v2Array[j].x, v2Array[j].y, CombatAction.ActionType.CauseDamage, dmg2);
+                        //        d.isAffectMouse = true;
+                        //        d.isAffectFood = false;
+                        //        d.isAffectCharacter = false;
+                        //        d.SetInstantaneous();
+                        //        d.AddExcludeMouseUnit(this); // 不能打到自己
+                        //        GameController.Instance.AddAreaEffectExecution(d);
+                        //    }
+                        //}
 
                         // 如果是最后一次攻击还会造成3*3晕眩效果
                         if(index+1 == num2)

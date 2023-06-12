@@ -10,19 +10,22 @@ public class ArsonMouse : MouseUnit
     private ThrowBombSkillAbility throwBombSkillAbility; // 投掷炸弹技能
     private bool isFindTarget;
     private Vector3 targetPosition;
+    private int throwTimeLeft; // 丢炸弹计时器
     public int preTime; // 预警时间
 
     public override void MInit()
     {
+        throwTimeLeft = 360;
         base.MInit();
         isFindTarget = false;
+        typeAndShapeValue = 1;
     }
 
     public override void MUpdate()
     {
         base.MUpdate();
         // 超过右二列时自动扔炸弹
-        if (!throwBombSkillAbility.isThrow && GetColumnIndex() < 7)
+        if (!throwBombSkillAbility.isThrow && throwTimeLeft <= 0)
         {
             SearchTargetPosition();
             if (isFindTarget)
@@ -59,7 +62,7 @@ public class ArsonMouse : MouseUnit
     /// </summary>
     public override void OnAttackStateEnter()
     {
-        if (!throwBombSkillAbility.isThrow)
+        if (!throwBombSkillAbility.isThrow && throwTimeLeft <= 0)
         {
             SearchTargetPosition();
             if (isFindTarget)
@@ -81,6 +84,18 @@ public class ArsonMouse : MouseUnit
     private void ExcuteThrow()
     {
         throwBombSkillAbility.SetSkillConditionEnable();
+    }
+
+    public override void OnMoveState()
+    {
+        throwTimeLeft--;
+        base.OnMoveState();
+    }
+
+    public override void OnAttackState()
+    {
+        throwTimeLeft--;
+        base.OnAttackState();
     }
 
     /// <summary>

@@ -67,19 +67,10 @@ public class BossUnit : MouseUnit
         mSkillQueueAbilityManager.Initial();
     }
 
-    public override void OnBurnStateEnter()
-    {
-        OnDieStateEnter();
-    }
 
     public override void BeforeBurn()
     {
         BeforeDeath();
-    }
-
-    public override void DuringBurn(float _Threshold)
-    {
-        DuringDeath();
     }
 
     public override void OnMoveStateEnter()

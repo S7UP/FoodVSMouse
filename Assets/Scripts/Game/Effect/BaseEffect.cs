@@ -8,31 +8,38 @@ using UnityEngine;
 /// </summary>
 public class BaseEffect : MonoBehaviour, IGameControllerMember
 {
+    private const string resPath = "Effect/";
+    private static Material DefaultMaterial;
+
     public Animator animator; // 编辑器获取
     public string AppearClipName; // 出现时的动画名，编辑器获取 
     public string clipName; // 编辑器获取
     public string DisappearClipName; // 消失时的动画名，编辑器获取
-    private const string resPath = "Effect/";
     public string resName = ""; // 编辑器获取
-
 
     public bool isCycle;
     public AnimatorController animatorController = new AnimatorController();
-    private SpriteRenderer spriteRenderer;
+    public SpriteRenderer spriteRenderer;
     public TaskController taskController = new TaskController();
     private int state = 0;
+    private bool isAlive;
 
     public List<Action<BaseEffect>> BeforeDeathActionList = new List<Action<BaseEffect>>();
+    private List<Action<float>> SetAlphaActionList = new List<Action<float>>();
 
     public virtual void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
+        if (DefaultMaterial == null)
+            DefaultMaterial = spriteRenderer.material;
     }
 
     public void MInit()
     {
+        isAlive = true;
         taskController.Initial();
         BeforeDeathActionList.Clear();
+        SetAlphaActionList.Clear();
 
         state = 0;
         animatorController.ChangeAnimator(animator);
@@ -43,11 +50,12 @@ public class BaseEffect : MonoBehaviour, IGameControllerMember
             if(clipName!=null)
                 animatorController.Play(clipName, isCycle);
             state = 1;
-}
+        }
 
         transform.localScale = Vector2.one;
         SetSpriteRight(Vector2.right);
         spriteRenderer.color = new Color(1, 1, 1, 1);
+        spriteRenderer.material = DefaultMaterial;
         SetSpriteRendererSorting("Grid", 100);
     }
 
@@ -61,6 +69,9 @@ public class BaseEffect : MonoBehaviour, IGameControllerMember
     {
         animatorController.Update();
 
+        if(isAlive)
+            taskController.Update();
+
         if (animatorController.GetCurrentAnimatorStateRecorder()!=null && animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
         {
             if (state == 0)
@@ -68,24 +79,29 @@ public class BaseEffect : MonoBehaviour, IGameControllerMember
                 animatorController.Play(clipName, isCycle);
                 state = 1;
             }
-            else if (state == 1 && !isCycle)
+            else if ((state == 1 && !isCycle))
             {
                 ExecuteDeath();
             }
-            else if (state == 2)
-                Recycle();
+            else if(state == 2 && !isAlive)
+            {
+                MDestory();
+            }
         }
-
-        taskController.Update();
     }
 
     public void ExecuteDeath()
     {
+        if (!IsValid())
+            return;
+
+        isAlive = false;
+
         foreach (var action in BeforeDeathActionList)
         {
             action(this);
         }
-
+        taskController.Initial();
         GameController.Instance.SetEffectDefaultParentTrans(this);
         if (DisappearClipName != null && !DisappearClipName.Equals(""))
         {
@@ -94,21 +110,13 @@ public class BaseEffect : MonoBehaviour, IGameControllerMember
         }
         else
         {
-            Recycle();
+            MDestory();
         }
     }
 
     public virtual bool IsValid()
     {
-        return isActiveAndEnabled;
-    }
-
-    /// <summary>
-    /// 回收对象
-    /// </summary>
-    public virtual void Recycle()
-    {
-        GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, resPath + resName, gameObject);
+        return isAlive && isActiveAndEnabled;
     }
 
     public virtual void MPause()
@@ -128,6 +136,9 @@ public class BaseEffect : MonoBehaviour, IGameControllerMember
 
     public virtual void MDestory()
     {
+        taskController.Initial();
+        BeforeDeathActionList.Clear();
+        SetAlphaActionList.Clear();
         Recycle();
     }
 
@@ -143,14 +154,6 @@ public class BaseEffect : MonoBehaviour, IGameControllerMember
     }
 
     /// <summary>
-    /// 添加唯一性任务
-    /// </summary>
-    public void AddUniqueTask(string key, ITask t)
-    {
-        taskController.AddUniqueTask(key, t);
-    }
-
-    /// <summary>
     /// 添加一个任务
     /// </summary>
     /// <param name="t"></param>
@@ -159,31 +162,23 @@ public class BaseEffect : MonoBehaviour, IGameControllerMember
         taskController.AddTask(t);
     }
 
-    /// <summary>
-    /// 移除唯一性任务
-    /// </summary>
-    public void RemoveUniqueTask(string key)
+
+
+    public void SetAlpha(float alpha)
     {
-        taskController.RemoveUniqueTask(key);
+        foreach (var action in SetAlphaActionList)
+            action(alpha);
+        spriteRenderer.color = new Color(spriteRenderer.color.r, spriteRenderer.color.g, spriteRenderer.color.b, alpha);
     }
 
-    /// <summary>
-    /// 移除一个任务
-    /// </summary>
-    /// <param name="t"></param>
-    public void RemoveTask(ITask t)
+    public void AddSetAlphaAction(Action<float> action)
     {
-        taskController.RemoveTask(t);
+        SetAlphaActionList.Add(action);
     }
 
-    /// <summary>
-    /// 获取某个标记为key的任务
-    /// </summary>
-    /// <param name="key"></param>
-    /// <returns></returns>
-    public ITask GetTask(string key)
+    public void RemoveSetAlphaAction(Action<float> action)
     {
-        return taskController.GetTask(key);
+        SetAlphaActionList.Remove(action);
     }
 
     public void AddBeforeDeathAction(Action<BaseEffect> action)
@@ -209,6 +204,7 @@ public class BaseEffect : MonoBehaviour, IGameControllerMember
         e.clipName = clipName;
         e.DisappearClipName = DisappearClipName;
         e.isCycle = isCycle;
+        e.resName = "EffectModel";
         e.MInit();
         return e;
     }
@@ -222,6 +218,7 @@ public class BaseEffect : MonoBehaviour, IGameControllerMember
         e.DisappearClipName = null;
         e.isCycle = true;
         e.spriteRenderer.sprite = sprite;
+        e.resName = "EffectModel";
         e.MInit();
         return e;
     }
@@ -231,5 +228,13 @@ public class BaseEffect : MonoBehaviour, IGameControllerMember
         BaseEffect e = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, resPath + resName).GetComponent<BaseEffect>();
         e.MInit();
         return e;
+    }
+
+    /// <summary>
+    /// 回收对象
+    /// </summary>
+    private void Recycle()
+    {
+        GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, resPath + resName, gameObject);
     }
 }

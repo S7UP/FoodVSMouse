@@ -69,7 +69,7 @@ public class ThrowIceBombSkillAbility : SkillAbility
             // 投掷出实体
             canThrowEntity = false;
             IceBombBullet iceBullet = GameController.Instance.CreateBullet(master, master.transform.position, Vector2.right, BulletStyle.IceBomb) as IceBombBullet;
-            iceBullet.SetAttribute(24.0f, true, 1.5f, iceBullet.transform.position, targetPosition, master.GetRowIndex());
+            iceBullet.SetAttribute(TransManager.TranToStandardVelocity((iceBullet.transform.position - targetPosition).magnitude / 90f), true, 2f, iceBullet.transform.position, targetPosition, master.GetRowIndex());
         }
     }
 

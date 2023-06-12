@@ -56,31 +56,13 @@ public class StatusManager
     }
 
     /// <summary>
-    /// 移除所有与冰冻有关的效果
-    /// </summary>
-    public static void RemoveAllFrozenDebuff(BaseUnit unit)
-    {
-        if (unit.IsAlive())
-        {
-            foreach (var s in unit.statusAbilityManager.GetAllStatusAbility())
-            {
-                if (s is FrozenSlowStatusAbility)
-                {
-                    s.TryEndActivate();
-                }
-            }
-            unit.statusAbilityManager.EndNoCountUniqueStatusAbility(StringManager.Frozen);
-        }
-    }
-
-    /// <summary>
     /// 移除所有与减速有关的效果
     /// </summary>
     public static void RemoveAllSlowDownDebuff(BaseUnit unit)
     {
         foreach (var s in unit.statusAbilityManager.GetAllStatusAbility())
         {
-            if(s is SlowStatusAbility || s is FrozenSlowStatusAbility)
+            if(s is SlowStatusAbility)
             {
                 s.TryEndActivate();
             }
@@ -178,6 +160,36 @@ public class StatusManager
     }
 
     /// <summary>
+    /// 施加基于总攻击速度的DEBUFF（最终乘算）
+    /// </summary>
+    /// <param name="unit">目标单位</param>
+    /// <param name="percent">提升百分比，如25%请写成25</param>
+    /// <param name="timeLeft">持续时间（帧）</param>
+    public static void AddFinalAttackDeBuff(BaseUnit unit, float percent, int timeLeft)
+    {
+        FloatModifier mod = new FloatModifier(percent);
+        CustomizationTask t = new CustomizationTask();
+        t.AddOnEnterAction(delegate {
+            unit.NumericBox.Attack.AddFinalPctAddModifier(mod);
+        });
+        t.AddTaskFunc(delegate {
+            if (timeLeft > 0)
+            {
+                timeLeft--;
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        });
+        t.AddOnExitAction(delegate {
+            unit.NumericBox.Attack.RemoveFinalPctAddModifier(mod);
+        });
+        unit.AddTask(t);
+    }
+
+    /// <summary>
     /// 添加无敌效果
     /// </summary>
     public static void AddInvincibilityBuff(BaseUnit unit, int timeLeft)
@@ -188,7 +200,7 @@ public class StatusManager
             unit.NumericBox.AddDecideModifierToBoolDict(StringManager.Invincibility, mod);
             BaseEffect e = BaseEffect.CreateInstance(GameManager.Instance.GetSprite("Effect/Shield"));
             GameController.Instance.AddEffect(e);
-            unit.AddEffectToDict("InvincibilityBuff", e, Vector2.zero);
+            unit.mEffectController.AddEffectToDict("InvincibilityBuff", e, Vector2.zero);
         });
         t.AddTaskFunc(delegate {
             if (timeLeft > 0)
@@ -206,7 +218,7 @@ public class StatusManager
             if (!unit.NumericBox.GetBoolNumericValue(StringManager.Invincibility))
             {
                 // unit.RemoveEffect("InvincibilityBuff");
-                unit.RemoveEffectFromDict("InvincibilityBuff");
+                unit.mEffectController.RemoveEffectFromDict("InvincibilityBuff");
             }
         });
         unit.AddTask(t);

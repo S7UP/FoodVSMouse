@@ -313,7 +313,10 @@ public class LieutenantHum : BossUnit
                 return attackCountLeft > 0;
             });
             r.SetOnGridEnterAction((g)=> {
-                if (g.TakeDamage(this, GetParamValue("dmg0")*mCurrentAttack, false))
+                if (g.TakeAction(this, (u) => {
+                    DamageAction action = UnitManager.Execute(this, u);
+                    new DamageAction(CombatAction.ActionType.CauseDamage, this, this, action.RealCauseValue * GetParamValue("dmg_trans") / 100).ApplyAction();
+                }, false))
                 {
                     attackCountLeft--;
                 }
@@ -605,7 +608,8 @@ public class LieutenantHum : BossUnit
                 // 攻击范围内的老鼠
                 foreach (var m in r.mouseUnitList)
                 {
-                    new DamageAction(CombatAction.ActionType.CauseDamage, this, m, GetParamValue("dmg2")).ApplyAction();
+                    if (m.IsAlive() && !m.IsBoss())
+                        UnitManager.Execute(this, m);
                 }
 
                 // 生成两道特效
@@ -677,7 +681,7 @@ public class LieutenantHum : BossUnit
 
                         e = BaseEffect.CreateInstance(TailAir_Run, "Appear", "Idle", "Disappear", true);
                         GameController.Instance.AddEffect(e);
-                        AddEffectToDict("LieutenantHumTailAir", e, Vector2.zero);
+                        mEffectController.AddEffectToDict("LieutenantHumTailAir", e, Vector2.zero);
                     });
                     task.AddTimeTaskFunc(30, delegate {
                         if (e != null)
@@ -685,7 +689,7 @@ public class LieutenantHum : BossUnit
                     }, (leftTime, totalTime) => {
                         float rate = (float)leftTime / totalTime;
                         transform.position += Vector3.left * v * rate;
-                    }, delegate { RemoveEffectFromDict("LieutenantHumTailAir"); });
+                    }, delegate { mEffectController.RemoveEffectFromDict("LieutenantHumTailAir"); });
                     return task;
                 });
                 c.AddCreateTaskFunc(delegate {

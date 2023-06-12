@@ -4,7 +4,7 @@ using System.Collections.Generic;
 /// </summary>
 public class WarriorChallengeManager
 {
-    private const string path = "WarriorChallenge/";
+    private const string path = "Stage/WarriorChallenge/";
     private const string localPath = "WarriorChallenge";
     private static bool isLoad; // 是否加载过了（防止重复加载）
 
@@ -133,6 +133,7 @@ public class WarriorChallengeManager
         {
             case "EX1-1":return level >= 15;
             case "EX1-2":return level >= 15;
+            case "EX2-1": return level >= 30;
             default:
                 break;
         }

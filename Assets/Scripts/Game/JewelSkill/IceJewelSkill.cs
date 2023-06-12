@@ -1,6 +1,11 @@
+using Environment;
+
+using System;
 using System.Collections.Generic;
 
 using UnityEngine;
+
+using static System.Collections.Specialized.BitVector32;
 /// <summary>
 /// 冰冻宝石
 /// </summary>
@@ -20,11 +25,50 @@ public class IceJewelSkill : BaseJewelSkill
 
     protected override void OnExecute()
     {
+        int timeLeft = Mathf.FloorToInt(GetParamValue("t", 0) * 60);
+
         // 发射冰河
         for (int i = 0; i < 7; i++)
         {
             CreateIceShooter(new Vector2(MapManager.GetColumnX(-1), MapManager.GetRowY(i)));
         }
+
+        Action<MouseUnit> action = (m) => {
+            if (m.IsBoss())
+                return;
+            m.AddStatusAbility(new SlowStatusAbility(-GetParamValue("decMovePercent", 0), m, timeLeft));
+            StatusManager.AddFinalAttackSpeedDeBuff(m, -GetParamValue("decAttackSpeedPercent", 0), timeLeft);
+            StatusManager.AddFinalAttackDeBuff(m, -GetParamValue("decAttackSpeedPercent", 0), timeLeft);
+            CustomizationTask t = new CustomizationTask();
+            int time = 60;
+            t.AddTimeTaskFunc(timeLeft, null, delegate {
+                time--;
+                if(time <= 0)
+                {
+                    // 施加冰冻损伤
+                    EnvironmentFacade.AddIceDebuff(m, GetParamValue("iceValue0", 0));
+                    time += 60;
+                }
+            }, null);
+        };
+
+        // 后续判定
+        GameController.Instance.AddTasker(
+            //Action InitAction, 
+            delegate {
+                GameController.Instance.mMouseFactory.AddProcessAction(action);
+            },
+            //Action UpdateAction, 
+            delegate {
+                timeLeft--;
+            },
+            //Func<bool> EndCondition, 
+            delegate { return timeLeft <= 0; },
+            //Action EndEvent
+            delegate {
+                GameController.Instance.mMouseFactory.RemoveProcessAction(action);
+            }
+            );
     }
 
     /// <summary>
@@ -48,10 +92,9 @@ public class IceJewelSkill : BaseJewelSkill
                 b.SetStandardVelocity(48);
                 b.SetRotate(Vector2.right);
                 b.isnKillSelf = true; // 击中不自毁
-                // 对每个被击中的目标施加减速与减攻速效果
+                // 对每个被击中的目标施加冰冻损伤
                 b.AddHitAction((b, u) => {
-                    u.AddStatusAbility(new FrozenSlowStatusAbility(-GetParamValue("decMovePercent", 0), u, Mathf.FloorToInt(GetParamValue("t", 0) * 60)));
-                    StatusManager.AddFinalAttackSpeedDeBuff(u, -GetParamValue("decAttackSpeedPercent", 0), Mathf.FloorToInt(GetParamValue("t", 0) * 60));
+                    EnvironmentFacade.AddIceDebuff(u, GetParamValue("iceValue1", 0));
                 });
                 GameController.Instance.AddBullet(b);
                 // 产生特效

@@ -179,5 +179,15 @@ public class SkyGridType : BaseGridType
         {
             count--;
         }
+
+        public void ShutDown()
+        {
+            
+        }
+
+        public bool IsClearWhenDie()
+        {
+            return true;
+        }
     }
 }

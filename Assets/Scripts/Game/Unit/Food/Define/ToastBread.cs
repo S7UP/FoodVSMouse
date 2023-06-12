@@ -39,18 +39,18 @@ public class ToastBread : FoodUnit
         if (noHealTimeLeft > 0)
         {
             noHealTimeLeft--;
-            if (IsContainEffect(ToastBreadHealEffectKey))
+            if (mEffectController.IsContainEffect(ToastBreadHealEffectKey))
             {
-                RemoveEffectFromDict(ToastBreadHealEffectKey);
+                mEffectController.RemoveEffectFromDict(ToastBreadHealEffectKey);
             }
         }
         else
         {
-            if (!IsContainEffect(ToastBreadHealEffectKey))
+            if (!mEffectController.IsContainEffect(ToastBreadHealEffectKey))
             {
                 BaseEffect e = BaseEffect.CreateInstance(HealEffect_RuntimeAnimatorController, null, "Idle", null, true);
                 GameController.Instance.AddEffect(e);
-                AddEffectToDict(ToastBreadHealEffectKey, e, Vector2.zero);
+                mEffectController.AddEffectToDict(ToastBreadHealEffectKey, e, Vector2.zero);
                 string name;
                 int order;
                 if (TryGetSpriteRenternerSorting(out name, out order))

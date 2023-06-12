@@ -75,17 +75,9 @@ public class RankSelectPanel : BasePanel
         PlayerData.GetInstance().Save();
         UpdateDisplay();
 
-        if (mUIFacade.currentScenePanelDict.ContainsKey(StringManager.MainlinePanel))
+        if (mUIFacade.currentScenePanelDict.ContainsKey(StringManager.BigChapterPanel))
         {
-            mUIFacade.currentScenePanelDict[StringManager.MainlinePanel].InitPanel(); // 刷新一下面板以更新难度
-        }
-        if (mUIFacade.currentScenePanelDict.ContainsKey(StringManager.WarriorChallengePanel))
-        {
-            mUIFacade.currentScenePanelDict[StringManager.WarriorChallengePanel].InitPanel(); // 刷新一下面板以更新难度
-        }
-        if (mUIFacade.currentScenePanelDict.ContainsKey(StringManager.SpurlinePanel))
-        {
-            mUIFacade.currentScenePanelDict[StringManager.SpurlinePanel].InitPanel(); // 刷新一下面板以更新难度
+            mUIFacade.currentScenePanelDict[StringManager.BigChapterPanel].InitPanel(); // 刷新一下面板以更新难度
         }
     }
 

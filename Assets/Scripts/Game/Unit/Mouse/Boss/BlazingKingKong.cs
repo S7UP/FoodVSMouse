@@ -17,6 +17,7 @@ public class BlazingKingKong : BossUnit
     private BossUnit Pete;
     private BossUnit Julie;
     private List<LavaAreaEffectExecution> lavaList = new List<LavaAreaEffectExecution>();
+    private Action<MouseUnit> mouseProcessAction;
 
     public override void Awake()
     {
@@ -31,6 +32,11 @@ public class BlazingKingKong : BossUnit
 
     public override void MInit()
     {
+        mouseProcessAction = (u) => {
+            // 场上存在的老鼠获得岩浆抗性
+            FloatModifier lavaRateMod = new FloatModifier(1 - GetParamValue("lava_defence4") * 0.01f);
+            LavaTask.AddUnitLavaRate(u, lavaRateMod);
+        };
         Pete = null;
         Julie = null;
         lavaList.Clear();
@@ -91,15 +97,6 @@ public class BlazingKingKong : BossUnit
         base.BeforeDeath();
     }
 
-    public override void BeforeBurn()
-    {
-        if (Pete != null && Pete.IsAlive())
-            Pete.ExecuteDeath();
-        if (Julie != null && Julie.IsAlive())
-            Julie.ExecuteDeath();
-        base.BeforeBurn();
-    }
-
     public override void AfterDeath()
     {
         if (Pete != null && Pete.IsAlive())
@@ -111,6 +108,8 @@ public class BlazingKingKong : BossUnit
             foreach (var lava in lavaList)
                 lava.SetDisappear();
         lavaList.Clear();
+
+        GameController.Instance.mMouseFactory.RemoveProcessAction(mouseProcessAction);
     }
 
     /// <summary>
@@ -266,7 +265,7 @@ public class BlazingKingKong : BossUnit
                     task.AddOnExitAction(delegate {
                         OpenCollision();
                         RemoveSpriteOffsetY(mod);
-                        S0CreateDamageEffectExecution(transform.position, 4.5f, 4.5f, dmg0);
+                        S0CreateDamageEffectExecution(transform.position, 4.5f, 4.5f);
                         S0CreateStunEffectExecution(MapManager.GetGridLocalPosition(4, 3), 10, 7, stun_time);
                         S0CreateFireBullet(num0);
                     });
@@ -314,22 +313,24 @@ public class BlazingKingKong : BossUnit
         return c;
     }
 
-    private void S0CreateDamageEffectExecution(Vector2 pos, float col, float row, float dmg)
+    private void S0CreateDamageEffectExecution(Vector2 pos, float col, float row)
     {
         RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(pos, col, row, "EnemyAllyGrid");
         r.SetInstantaneous();
-        r.isAffectFood = false;
-        r.SetAffectHeight(0);
         r.isAffectMouse = true;
-        r.SetOnEnemyEnterAction((m) => {
-            new DamageAction(CombatAction.ActionType.CauseDamage, this, m, dmg).ApplyAction();
+        r.SetOnEnemyEnterAction((u) => {
+            if (u.IsBoss())
+                return;
+            UnitManager.Execute(this, u);
         });
+
         r.isAffectGrid = true;
         r.SetOnGridEnterAction((g) => {
-            g.TakeDamage(this, dmg, false);
+            g.TakeAction(this, (u) => {
+                DamageAction action = UnitManager.Execute(this, u);
+                new DamageAction(CombatAction.ActionType.CauseDamage, this, this, action.RealCauseValue * GetParamValue("dmg_trans0") / 100).ApplyAction();
+            }, false);
         });
-        r.AddExcludeMouseUnit(this);
-        r.isAffectCharacter = false;
         GameController.Instance.AddAreaEffectExecution(r);
     }
 
@@ -460,7 +461,6 @@ public class BlazingKingKong : BossUnit
     private CustomizationTask GetS0AttackTask()
     {
         int num1 = Mathf.FloorToInt(GetParamValue("num0_1", mHertIndex));
-        float dmg1 = GetParamValue("dmg0_1");
         bool flag = true;
         CustomizationTask task = new CustomizationTask();
         task.AddOnEnterAction(delegate {
@@ -469,7 +469,7 @@ public class BlazingKingKong : BossUnit
         task.AddTaskFunc(delegate {
             if (animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime() > 0.38f && flag)
             {
-                S0CreateDamageEffectExecution(transform.position, 2.5f, 0.5f, dmg1);
+                S0CreateDamageEffectExecution(transform.position, 2.5f, 0.5f);
                 S0CreateFireBullet(num1);
                 flag = false;
             }
@@ -591,7 +591,7 @@ public class BlazingKingKong : BossUnit
         b.transform.position = MapManager.GetGridLocalPosition(6, 3);
         b.SetUseDefaultRecieveDamageActionMethod(false); // 不受正常受击逻辑
         // 受击伤害传递
-        b.actionPointManager.AddListener(ActionPointType.WhenReceiveDamage, (c) => {
+        b.actionPointController.AddListener(ActionPointType.WhenReceiveDamage, (c) => {
             DamageAction d = DamageActionManager.Copy((c as DamageAction), c.Creator, this);
             d.DamageValue = d.DamageValue * dmg_trans;
             d.ApplyAction();
@@ -615,7 +615,7 @@ public class BlazingKingKong : BossUnit
         b.transform.position = MapManager.GetGridLocalPosition(6, 1.5f);
         b.SetUseDefaultRecieveDamageActionMethod(false); // 不受正常受击逻辑
         // 受击伤害传递
-        b.actionPointManager.AddListener(ActionPointType.WhenReceiveDamage, (c) => {
+        b.actionPointController.AddListener(ActionPointType.WhenReceiveDamage, (c) => {
             DamageAction d = DamageActionManager.Copy((c as DamageAction), c.Creator, this);
             d.DamageValue = d.DamageValue * dmg_trans;
             d.ApplyAction();
@@ -653,19 +653,6 @@ public class BlazingKingKong : BossUnit
         });
         return c;
     }
-
-    private CustomizationTask GetBossDisappearTask(BossUnit b)
-    {
-        CustomizationTask task;
-        CompoundSkillAbilityManager.GetWaitClipTask(b.animatorController, "Disappear", out task);
-        task.AddOnEnterAction(delegate {
-            b.CloseCollision();
-        });
-        task.AddOnExitAction(delegate {
-            b.MDestory();
-        });
-        return task;
-    }
     #endregion
 
     #region 三技能
@@ -682,12 +669,14 @@ public class BlazingKingKong : BossUnit
         int wait = Mathf.FloorToInt(60 * GetParamValue("wait2"));
 
         int totalTimeLeft = wait;
+        BoolModifier mod = new BoolModifier(true);
 
         CompoundSkillAbility c = new CompoundSkillAbility(this, info);
         // 实现
         c.IsMeetSkillConditionFunc = delegate { return true; };
         c.BeforeSpellFunc = delegate
         {
+            NumericBox.AddDecideModifierToBoolDict(StringManager.Invincibility, mod);
             transform.position = MapManager.GetGridLocalPosition(6, 3);
             OpenCollision();
             SetAlpha(1);
@@ -706,6 +695,9 @@ public class BlazingKingKong : BossUnit
                     CompoundSkillAbilityManager.GetWaitClipTask(animatorController, "PreCast", out task);
                     task.AddOnExitAction(delegate {
                         animatorController.Play("Casting", true);
+                    });
+                    task.AddOnExitAction(delegate {
+                        NumericBox.RemoveDecideModifierToBoolDict(StringManager.Invincibility, mod);
                     });
                     return task;
                 });
@@ -1061,7 +1053,7 @@ public class BlazingKingKong : BossUnit
         b.transform.position = MapManager.GetGridLocalPosition(6, 3);
         b.SetUseDefaultRecieveDamageActionMethod(false); // 不受正常受击逻辑
         // 受击伤害传递
-        b.actionPointManager.AddListener(ActionPointType.WhenReceiveDamage, (c) => {
+        b.actionPointController.AddListener(ActionPointType.WhenReceiveDamage, (c) => {
             DamageAction d = DamageActionManager.Copy((c as DamageAction), c.Creator, this);
             d.DamageValue = d.DamageValue * dmg_trans;
             d.ApplyAction();
@@ -1087,7 +1079,7 @@ public class BlazingKingKong : BossUnit
         b.transform.position = MapManager.GetGridLocalPosition(6, 1.5f);
         b.SetUseDefaultRecieveDamageActionMethod(false); // 不受正常受击逻辑
         // 受击伤害传递
-        b.actionPointManager.AddListener(ActionPointType.WhenReceiveDamage, (c) => {
+        b.actionPointController.AddListener(ActionPointType.WhenReceiveDamage, (c) => {
             DamageAction d = DamageActionManager.Copy((c as DamageAction), c.Creator, this);
             d.DamageValue = d.DamageValue * dmg_trans;
             d.ApplyAction();
@@ -1121,11 +1113,15 @@ public class BlazingKingKong : BossUnit
         int timeLeft = interval;
         int lava_columnIndex = 8;
 
+        float dmg = GetParamValue("dmg4");
+        BoolModifier mod = new BoolModifier(true);
+
         CompoundSkillAbility c = new CompoundSkillAbility(this, info);
         // 实现
         c.IsMeetSkillConditionFunc = delegate { return true; };
         c.BeforeSpellFunc = delegate
         {
+            NumericBox.AddDecideModifierToBoolDict(StringManager.Invincibility, mod);
             transform.position = MapManager.GetGridLocalPosition(6, 3);
             OpenCollision();
             SetAlpha(1);
@@ -1143,7 +1139,17 @@ public class BlazingKingKong : BossUnit
                     CustomizationTask task;
                     CompoundSkillAbilityManager.GetWaitClipTask(animatorController, "PreCast", out task);
                     task.AddOnExitAction(delegate {
+                        NumericBox.RemoveDecideModifierToBoolDict(StringManager.Invincibility, mod);
                         animatorController.Play("Casting", true);
+                        // 场上存在的老鼠获得岩浆抗性
+                        FloatModifier lavaRateMod = new FloatModifier(1 - GetParamValue("lava_defence4") * 0.01f);
+                        foreach (var u in GameController.Instance.GetEachEnemy())
+                        {
+                            if (u.IsAlive())
+                                LavaTask.AddUnitLavaRate(u, lavaRateMod);
+                        }
+                        // 以后出现的老鼠也会获得岩浆抗性
+                        GameController.Instance.mMouseFactory.AddProcessAction(mouseProcessAction);
                     });
                     return task;
                 });
@@ -1159,15 +1165,30 @@ public class BlazingKingKong : BossUnit
                     });
                     task.AddTaskFunc(delegate {
                         timeLeft--;
-                        if (timeLeft <= 0 && lava_columnIndex >= left_columnIndex )
+                        if (timeLeft <= 0)
                         {
-                            // 生成一列岩浆
-                            for (int i = 0; i < 7; i++)
+                            if(lava_columnIndex >= left_columnIndex)
                             {
-                                CreateLavaArea(MapManager.GetGridLocalPosition(lava_columnIndex, i), int.MaxValue);
+                                // 生成一列岩浆
+                                for (int i = 0; i < 7; i++)
+                                {
+                                    CreateLavaArea(MapManager.GetGridLocalPosition(lava_columnIndex, i), int.MaxValue);
+                                }
+                                if(lava_columnIndex == left_columnIndex)
+                                    timeLeft += 30;
+                                else
+                                    timeLeft += interval;
+                                lava_columnIndex--;
                             }
-                            timeLeft += interval;
-                            lava_columnIndex--;
+                            else
+                            {
+                                foreach (var u in GameController.Instance.GetEachAlly())
+                                {
+                                    if (u is CottonCandy)
+                                        new DamageAction(CombatAction.ActionType.BurnDamage, null, u, dmg).ApplyAction();
+                                }
+                                timeLeft += 30;
+                            }
                         }
                         return false;
                     });
@@ -1177,6 +1198,9 @@ public class BlazingKingKong : BossUnit
                 c.AddCreateTaskFunc(delegate {
                     CustomizationTask task;
                     CompoundSkillAbilityManager.GetWaitClipTask(animatorController, "PostCast", out task);
+                    task.AddOnExitAction(delegate {
+                        GameController.Instance.mMouseFactory.RemoveProcessAction(mouseProcessAction);
+                    });
                     return task;
                 });
             }

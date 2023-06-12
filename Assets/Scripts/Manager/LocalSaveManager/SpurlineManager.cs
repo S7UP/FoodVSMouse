@@ -4,7 +4,7 @@ using System.Collections.Generic;
 /// </summary>
 public class SpurlineManager
 {
-    private const string path = "Spurline/";
+    private const string path = "Stage/Spurline/";
     private const string localPath = "Spurline";
     private static bool isLoad; // 是否加载过了（防止重复加载）
 

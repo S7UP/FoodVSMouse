@@ -393,28 +393,6 @@ public class RatTrain : BaseRatTrain
         base.BeforeDeath();
     }
 
-    public override void BeforeBurn()
-    {
-        foreach (var u in retinueList)
-        {
-            u.taskController.Initial();
-            u.ExecuteBurn();
-        }
-        retinueList.Clear();
-        base.BeforeBurn();
-    }
-
-    public override void BeforeDrop()
-    {
-        foreach (var u in retinueList)
-        {
-            u.taskController.Initial();
-            u.ExecuteDrop();
-        }
-        retinueList.Clear();
-        base.BeforeDrop();
-    }
-
     /// <summary>
     /// ÕÙ»½Ê¿±ø
     /// </summary>

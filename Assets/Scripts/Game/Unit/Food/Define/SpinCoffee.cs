@@ -20,7 +20,7 @@ public class SpinCoffee : FoodUnit
             BaseEffect e = BaseEffect.CreateInstance(GameManager.Instance.GetRuntimeAnimatorController("Effect/HiddenEffect"), "Appear", "Idle", "Disappear", true);
             e.SetSpriteRendererSorting("Effect", 2);
             GameController.Instance.AddEffect(e);
-            AddEffectToDict("SpinCoffeeHidden", e, new Vector2(0, 0 * 0.5f * MapManager.gridWidth));
+            mEffectController.AddEffectToDict("SpinCoffeeHidden", e, new Vector2(0, 0 * 0.5f * MapManager.gridWidth));
         }
         // √ø7√Î50∑—
         GameController.Instance.AddCostResourceModifier("Fire", costMod);

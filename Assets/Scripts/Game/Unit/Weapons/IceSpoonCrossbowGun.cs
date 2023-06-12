@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System;
 using UnityEngine;
 using S7P.Numeric;
+using Environment;
 /// <summary>
 /// 冰勺弩枪
 /// </summary>
@@ -35,8 +36,8 @@ public class IceSpoonCrossbowGun : BaseWeapons
         weaponsGeneralAttackSkillAbility = new WeaponsGeneralAttackSkillAbility(this, new SkillAbility.SkillAbilityInfo()
         {
             name = "普通攻击",
-            needEnergy = 120,
-            startEnergy = 120,
+            needEnergy = 180,
+            startEnergy = 180,
             energyRegeneration = 1.0f,
             skillType = SkillAbility.Type.GeneralAttack,
             isExclusive = true,
@@ -195,7 +196,8 @@ public class IceSpoonCrossbowGun : BaseWeapons
         r.isAffectMouse = true;
         r.SetAffectHeight(0); // 只有地面单位被影响
         r.SetOnEnemyEnterAction((u) => {
-            u.AddStatusAbility(new FrozenSlowStatusAbility(-35, u, 120));
+            // u.AddStatusAbility(new FrozenSlowStatusAbility(-35, u, 120));
+            EnvironmentFacade.AddIceDebuff(u, 30);
         });
         GameController.Instance.AddAreaEffectExecution(r);
         return r;

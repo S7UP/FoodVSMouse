@@ -1,6 +1,7 @@
 using S7P.Numeric;
 using UnityEngine;
 using System;
+using UnityEngine.Timeline;
 /// <summary>
 /// 迷雾区域
 /// </summary>
@@ -136,6 +137,8 @@ public class FogAreaEffectExecution : RetangleAreaEffectExecution
 
     public void OnUnitEnter(UnitType type, BaseUnit unit)
     {
+        if (!unit.IsAlive())
+            return;
         // 获取目标身上唯一的任务
         FogTask t = null;
         if (unit.GetTask(TaskName) == null)
@@ -152,6 +155,8 @@ public class FogAreaEffectExecution : RetangleAreaEffectExecution
 
     public void OnUnitExit(BaseUnit unit)
     {
+        if (!unit.IsAlive())
+            return;
         // 获取目标身上唯一的荫蔽任务
         if (unit.GetTask(TaskName) == null)
         {
@@ -186,6 +191,7 @@ public class FogAreaEffectExecution : RetangleAreaEffectExecution
     private class FogTask : ITask
     {
         private static FloatModifier mouseMoveSpeedModifier = new FloatModifier(-20); // 老鼠在雾中减速
+        private static Texture[] texArray;
 
         // 禁止阻挡方法
         private static Func<BaseUnit, BaseUnit, bool> noBlockFunc = delegate 
@@ -203,11 +209,42 @@ public class FogAreaEffectExecution : RetangleAreaEffectExecution
         private int count; // 进入的迷雾数
         private BaseUnit unit;
         private UnitType type;
+        private BaseEffect eff;
+        private float current_alpha;
+        private float gobal_alpha;
+        private int timer;
 
         public FogTask(UnitType type, BaseUnit unit)
         {
+            if (texArray == null)
+            {
+                texArray = new Texture[13];
+                for (int i = 0; i < texArray.Length; i++)
+                {
+                    texArray[i] = GameManager.Instance.GetSprite("Effect/Hidden/"+(i+1)).texture;
+                }
+            }
+
             this.type = type;
             this.unit = unit;
+            gobal_alpha = 0;
+            current_alpha = 0;
+            timer = 0;
+
+            // 隐匿特效生成
+            {
+                eff = BaseEffect.CreateInstance(unit.GetSpriteRenderer().sprite);
+                eff.spriteRenderer.sortingLayerName = unit.GetSpriteRenderer().sortingLayerName;
+                eff.spriteRenderer.sortingOrder = unit.GetSpriteRenderer().sortingOrder;
+                eff.spriteRenderer.material = GameManager.Instance.GetMaterial("Hide");
+                eff.spriteRenderer.material.SetFloat("_Alpha", 0);
+                GameController.Instance.AddEffect(eff);
+                eff.AddSetAlphaAction((alpha) => {
+                    gobal_alpha = alpha;
+                });
+                unit.mEffectController.AddEffectToGroup("Skin", 1, eff);
+                eff.transform.localPosition = Vector2.zero;
+            }
         }
 
         public void OnEnter()
@@ -229,26 +266,22 @@ public class FogAreaEffectExecution : RetangleAreaEffectExecution
             unit.AddCanBlockFunc(noBlockFunc);
             unit.AddCanHitFunc(noHitFunc);
             unit.AddCanBeSelectedAsTargetFunc(noBeSelectedAsTargetFunc);
-            // 添加隐匿特效
-            BaseEffect e = BaseEffect.CreateInstance(GameManager.Instance.GetRuntimeAnimatorController("Effect/HiddenEffect"), "Appear", "Idle", "Disappear", true);
-            string name;
-            int order;
-            if (unit.TryGetSpriteRenternerSorting(out name, out order))
-                e.SetSpriteRendererSorting(name, order + 1);
-            else
-                e.SetSpriteRendererSorting("Unit", 0);
-            GameController.Instance.AddEffect(e);
-            unit.AddEffectToDict(EffectType.Hidden, e, new Vector2(0, 0));
         }
 
         public void OnUpdate()
         {
-            
+            timer++;
+            eff.spriteRenderer.sprite = unit.GetSpirte();
+            eff.spriteRenderer.sortingLayerName = unit.GetSpriteRenderer().sortingLayerName;
+            eff.spriteRenderer.sortingOrder = unit.GetSpriteRenderer().sortingOrder;
+            current_alpha = Mathf.Min(1, current_alpha + 0.033f);
+            eff.spriteRenderer.material.SetFloat("_Alpha", current_alpha*gobal_alpha);
+            eff.spriteRenderer.material.SetTexture("_FogTex", texArray[(timer/5)%13]);
         }
 
         public bool IsMeetingExitCondition()
         {
-            return count == 0;
+            return count == 0 || !unit.IsAlive();
         }
 
         public void OnExit()
@@ -265,7 +298,10 @@ public class FogAreaEffectExecution : RetangleAreaEffectExecution
             unit.RemoveCanBlockFunc(noBlockFunc);
             unit.RemoveCanHitFunc(noHitFunc);
             unit.RemoveCanBeSelectedAsTargetFunc(noBeSelectedAsTargetFunc);
-            unit.RemoveEffectFromDict(EffectType.Hidden);
+            // 隐匿特效移除
+            {
+                eff.ExecuteDeath();
+            }
         }
 
         // 自定义方法
@@ -277,6 +313,16 @@ public class FogAreaEffectExecution : RetangleAreaEffectExecution
         public void DecCount()
         {
             count--;
+        }
+
+        public void ShutDown()
+        {
+            
+        }
+
+        public bool IsClearWhenDie()
+        {
+            return true;
         }
     }
 }

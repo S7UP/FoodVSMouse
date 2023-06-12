@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using BigChapterPanel;
 /// <summary>
 /// 玩家信息操作面板
 /// </summary>
@@ -32,6 +33,7 @@ public class PlayerInfoPanel : BasePanel
     private EventTrigger EventTrigger_Jewel2;
     private EventTrigger EventTrigger_Jewel3;
     private Button Btn_HidePlayerUI;
+    private Button Btn_LegendChallenge;
 
     private Button Btn_WorldMap;
     private Text Tex_WorldMap_Position;
@@ -40,6 +42,7 @@ public class PlayerInfoPanel : BasePanel
     private Transform Trans_ModeSelectList;
     private Button Btn_WarriorChallenge;
     private Button Btn_Spurline;
+    private Button Btn_MagicTower;
 
     private GameObject SelectWeaponsUI;
     private Transform Tran_WeaponsDisplay;
@@ -88,6 +91,8 @@ public class PlayerInfoPanel : BasePanel
         Trans_ModeSelectList = transform.Find("ModeSelectList");
         Btn_WarriorChallenge = Trans_ModeSelectList.Find("Btn_WarriorChallenge").GetComponent<Button>();
         Btn_Spurline = Trans_ModeSelectList.Find("Btn_Spurline").GetComponent<Button>();
+        Btn_MagicTower = Trans_ModeSelectList.Find("Btn_MagicTowerCake").GetComponent<Button>();
+        Btn_LegendChallenge = Trans_ModeSelectList.Find("Btn_LegendChallenge").GetComponent<Button>();
 
         SelectWeaponsUI = transform.Find("SelectWeaponsUI").gameObject;
         Tran_WeaponsDisplay = SelectWeaponsUI.transform.Find("Img_center").Find("Emp_Weapons").Find("Scr").Find("Viewport").Find("Content");
@@ -264,6 +269,42 @@ public class PlayerInfoPanel : BasePanel
             else
             {
                 Btn_Spurline.interactable = false;
+                img.color = new Color(0.5f, 0.5f, 0.5f, 1);
+                tex.text = OtherUnlockManager.GetUnlockLevel(id) + "级解锁";
+            }
+        }
+        // 魔塔
+        {
+            Image img = Btn_MagicTower.GetComponent<Image>();
+            Text tex = Btn_MagicTower.transform.Find("Text").GetComponent<Text>();
+            string id = "MagicTower";
+            if (isDeveloperMode || (OtherUnlockManager.IsUnlock(id) || OtherUnlockManager.TryUnlock(id)))
+            {
+                Btn_MagicTower.interactable = true;
+                img.color = new Color(1, 1, 1, 1);
+                tex.gameObject.SetActive(false);
+            }
+            else
+            {
+                Btn_MagicTower.interactable = false;
+                img.color = new Color(0.5f, 0.5f, 0.5f, 1);
+                tex.text = OtherUnlockManager.GetUnlockLevel(id) + "级解锁";
+            }
+        }
+        // 传说挑战
+        {
+            Image img = Btn_LegendChallenge.GetComponent<Image>();
+            Text tex = Btn_LegendChallenge.transform.Find("Text").GetComponent<Text>();
+            string id = "LegendChallenge";
+            if (isDeveloperMode || (OtherUnlockManager.IsUnlock(id) || OtherUnlockManager.TryUnlock(id)))
+            {
+                Btn_LegendChallenge.interactable = true;
+                img.color = new Color(1, 1, 1, 1);
+                tex.gameObject.SetActive(false);
+            }
+            else
+            {
+                Btn_LegendChallenge.interactable = false;
                 img.color = new Color(0.5f, 0.5f, 0.5f, 1);
                 tex.text = OtherUnlockManager.GetUnlockLevel(id) + "级解锁";
             }
@@ -597,7 +638,9 @@ public class PlayerInfoPanel : BasePanel
     /// </summary>
     public void OnClickMainline()
     {
-        mUIFacade.currentScenePanelDict[StringManager.MainlinePanel].EnterPanel();
+        BigChapterPanel.BigChapterPanel panel = mUIFacade.currentScenePanelDict[StringManager.BigChapterPanel] as BigChapterPanel.BigChapterPanel;
+        panel.EnterPanel();
+        panel.SetBigChapter("Mainline");
     }
 
     /// <summary>
@@ -605,7 +648,9 @@ public class PlayerInfoPanel : BasePanel
     /// </summary>
     public void OnClickWarriorChallenge()
     {
-        mUIFacade.currentScenePanelDict[StringManager.WarriorChallengePanel].EnterPanel();
+        BigChapterPanel.BigChapterPanel panel = mUIFacade.currentScenePanelDict[StringManager.BigChapterPanel] as BigChapterPanel.BigChapterPanel;
+        panel.EnterPanel();
+        panel.SetBigChapter("WarriorChallenge");
     }
 
     /// <summary>
@@ -613,7 +658,29 @@ public class PlayerInfoPanel : BasePanel
     /// </summary>
     public void OnClickSpurline()
     {
-        mUIFacade.currentScenePanelDict[StringManager.SpurlinePanel].EnterPanel();
+        BigChapterPanel.BigChapterPanel panel = mUIFacade.currentScenePanelDict[StringManager.BigChapterPanel] as BigChapterPanel.BigChapterPanel;
+        panel.EnterPanel();
+        panel.SetBigChapter("Spurline");
+    }
+
+    /// <summary>
+    /// 当魔塔按钮被点击时（由编辑器赋值给按钮）
+    /// </summary>
+    public void OnClickMagicTower()
+    {
+        BigChapterPanel.BigChapterPanel panel = mUIFacade.currentScenePanelDict[StringManager.BigChapterPanel] as BigChapterPanel.BigChapterPanel;
+        panel.EnterPanel();
+        panel.SetBigChapter("MagicTower");
+    }
+
+    /// <summary>
+    /// 当传说挑战按钮被点击时（由编辑器赋值给按钮）
+    /// </summary>
+    public void OnClickLegendChallenge()
+    {
+        BigChapterPanel.BigChapterPanel panel = mUIFacade.currentScenePanelDict[StringManager.BigChapterPanel] as BigChapterPanel.BigChapterPanel;
+        panel.EnterPanel();
+        panel.SetBigChapter("LegendChallenge");
     }
 
     /// <summary>

@@ -50,20 +50,11 @@ public class ANuo : BossUnit
     {
         // 切换阶段血量百分比
         AddParamArray("hpRate", new float[] { 0.5f, 0.2f });
-
-        // 霰弹枪
-        AddParamArray("t0_0", new float[] { 5, 2, 0 }); // 准备时间
-        AddParamArray("num0_0", new float[] { 3, 3, 4 }); // 连射次数
-        AddParamArray("dmg0_0", new float[] { 900, 900, 900 }); // 单发大霰弹伤害
-        AddParamArray("dmg0_1", new float[] { 10, 10, 10 }); // 霰弹爆破范围伤害
-        AddParamArray("dmg0_2", new float[] { 25, 32, 39 }); // 单发小霰弹伤害
-        AddParamArray("count0_0", new float[] { 1, 2, 3 }); // 重复施放次数
-
-        // 飙车
-        AddParamArray("t1_0", new float[] { 7.5f, 5, 2.5f }); // 飙车前摇
-        AddParamArray("v1_0", new float[] { 6, 9, 12 }); // 速度
-        AddParamArray("dmgRate1_0", new float[] { 2, 2, 2 }); // 对自身反伤转化比率
-        AddParamArray("dmg1_0", new float[] { 900, 900, 900 }); // 对接触的敌方单位的碾压伤害
+        // 读取参数
+        foreach (var keyValuePair in BossManager.GetParamDict(BossNameTypeMap.ANuo, 0))
+        {
+            AddParamArray(keyValuePair.Key, keyValuePair.Value);
+        }
     }
 
     /// <summary>
@@ -180,9 +171,9 @@ public class ANuo : BossUnit
     /// </summary>
     /// <param name="pos"></param>
     /// <param name="dmgRate"></param>
-    private RetangleAreaEffectExecution CreateDamageEnemyArea(float dmg)
+    private RetangleAreaEffectExecution CreateDamageEnemyArea()
     {
-        RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position + 0.5f * MapManager.gridWidth * Vector3.right, 2, 1, "ItemCollideAlly");
+        RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position + 0.5f * MapManager.gridWidth * Vector3.right, 2, 1, "ItemCollideEnemy");
         r.SetAffectHeight(0);
         r.isAffectFood = false;
         r.isAffectMouse = true;
@@ -190,7 +181,9 @@ public class ANuo : BossUnit
         r.AddExcludeMouseUnit(this);
         // 添加进入造成伤害效果
         r.SetOnEnemyEnterAction((u) => {
-            new DamageAction(CombatAction.ActionType.CauseDamage, this, u, dmg*mCurrentAttack/10).ApplyAction();
+            if (u.IsBoss())
+                return;
+            UnitManager.Execute(this, u);
         });
         GameController.Instance.AddAreaEffectExecution(r);
         // 添加跟随任务
@@ -454,8 +447,7 @@ public class ANuo : BossUnit
     {
         int t1_0 = Mathf.FloorToInt(GetParamValue("t1_0", mHertIndex)*60); // 飙车前摇
         float v1_0 = TransManager.TranToVelocity(GetParamValue("v1_0", mHertIndex)); // 速度
-        float dmgRate1_0 = GetParamValue("dmgRate1_0", mHertIndex); // 对自身反伤转化比率
-        float dmg1_0 = GetParamValue("dmg1_0", mHertIndex); // 对接触的敌方单位的碾压伤害
+        float dmgRate1_0 = GetParamValue("dmgRate1_0", mHertIndex)/100; // 对自身反伤转化比率
         int moveTime = 4 * 60 - 55;
         int dmgAllyInterval = 20; // 每1/3秒进行一次范围伤害判定
 
@@ -533,7 +525,7 @@ public class ANuo : BossUnit
                     animatorController.Play("PreMove");
                     timeLeft = moveTime;
                     // 生成伤害敌人的判定区
-                    dmgEnemyArea = CreateDamageEnemyArea(dmg1_0);
+                    dmgEnemyArea = CreateDamageEnemyArea();
                     return true;
                 }
                 return false;

@@ -5,6 +5,8 @@ public class BaseTask : ITask
 {
     private List<Action> OnEnterActionList = new List<Action>();
     private List<Action> OnExitActionList = new List<Action>();
+    private List<Action> OnShutDownActionList = new List<Action>();
+    private List<Func<bool>> IsClearWhenDieFunc = new List<Func<bool>>(); // 只要有一个为false就不自删
     private bool isEnd = false;
     private bool isEnter = false;
     public TaskController taskController = new TaskController();
@@ -44,6 +46,29 @@ public class BaseTask : ITask
         }
     }
 
+    public bool IsClearWhenDie()
+    {
+        foreach (var func in IsClearWhenDieFunc)
+        {
+            if (!func())
+                return false;
+        }
+        return O_IsClearWhenDie();
+    }
+
+    /// <summary>
+    /// 强制停止当前任务 或者 强制消除该任务带来的后续影响（即便任务已结束）
+    /// </summary>
+    public void ShutDown()
+    {
+        foreach (var action in OnShutDownActionList)
+        {
+            action();
+        }
+        O_ShutDown();
+        OnExit();
+    }
+
     #region 获取一些状态信息的方法
     public bool IsEnd()
     {
@@ -71,6 +96,16 @@ public class BaseTask : ITask
     {
 
     }
+
+    protected virtual void O_ShutDown()
+    {
+
+    }
+
+    protected virtual bool O_IsClearWhenDie()
+    {
+        return true;
+    }
     #endregion
 
     #region 其他添加条件的方法
@@ -92,6 +127,16 @@ public class BaseTask : ITask
     public void RemoveOnExitAction(Action action)
     {
         OnExitActionList.Remove(action);
+    }
+
+    public void AddOnShutDownAction(Action action)
+    {
+        OnShutDownActionList.Add(action);
+    }
+
+    public void RemoveOnShutDownAction(Action action)
+    {
+        OnShutDownActionList.Remove(action);
     }
     #endregion
 }

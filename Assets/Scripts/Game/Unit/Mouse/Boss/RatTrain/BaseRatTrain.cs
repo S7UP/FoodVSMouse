@@ -215,15 +215,6 @@ public class BaseRatTrain : BossUnit
         }
     }
 
-    public override void OnBurnStateEnter()
-    {
-        base.OnBurnStateEnter();
-        foreach (var item in GetAllRatTrainComponent())
-        {
-            item.ExecuteBurn();
-        }
-    }
-
     /// <summary>
     /// 将新的路径点信息存入车厢管理器队列，以便分配给后续车厢路线（触发时机为车头已转移到下一个路径点后，即出队列后，因此要取当前路径）
     /// </summary>

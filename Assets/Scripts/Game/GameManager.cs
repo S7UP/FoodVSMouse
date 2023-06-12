@@ -62,6 +62,7 @@ public class GameManager : MonoBehaviour
         MouseManager.LoadAll();
         TipsManager.Load();
         TagsManager.Load();
+        StageInfoManager.Load();
     }
 
     /// <summary>

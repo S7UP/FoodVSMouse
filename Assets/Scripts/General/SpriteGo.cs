@@ -1,8 +1,15 @@
 using UnityEngine;
-
+/// <summary>
+/// 仅仅是带着一个SpriteRenderer的GameObject
+/// </summary>
 public class SpriteGo : MonoBehaviour, IGameControllerMember
 {
     public SpriteRenderer spriteRenderer;
+
+    private void Awake()
+    {
+        spriteRenderer = GetComponent<SpriteRenderer>();
+    }
 
     public void MInit()
     {
@@ -12,13 +19,7 @@ public class SpriteGo : MonoBehaviour, IGameControllerMember
         spriteRenderer.flipY = false;
         spriteRenderer.sortingLayerID = 0;
         spriteRenderer.sortingOrder = 0;
-    }
-
-    public void SetSpriteAndSorting(Sprite sprite, int layer, int order)
-    {
-        spriteRenderer.sprite = sprite;
-        spriteRenderer.sortingLayerID = layer;
-        spriteRenderer.sortingOrder = order;
+        spriteRenderer.material = null;
     }
 
     public void MUpdate()
@@ -43,7 +44,12 @@ public class SpriteGo : MonoBehaviour, IGameControllerMember
 
     public void MDestory()
     {
-        
+        ExecuteRecycle();
+    }
+
+    public void SetSpriteAndSorting(Sprite sprite)
+    {
+        spriteRenderer.sprite = sprite;
     }
 
     public static SpriteGo GetInstance()
@@ -53,7 +59,7 @@ public class SpriteGo : MonoBehaviour, IGameControllerMember
         return a;
     }
 
-    public void ExecuteRecycle()
+    private void ExecuteRecycle()
     {
         GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, "General/SpriteGo", gameObject);
     }

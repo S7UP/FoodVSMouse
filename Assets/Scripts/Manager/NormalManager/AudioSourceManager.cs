@@ -15,7 +15,6 @@ public class AudioSourceManager
     private Dictionary<string, float> startTimeDict = new Dictionary<string, float>(); // 记录音乐剪辑起始点
     private int currentAudioSourceIndex = 0; // 当前音乐播放器数组下标
 
-    private bool playEffectMusic = true;
     private bool playBGMusic = true;
     private bool isStopAllMusic = true;
     private bool isPauseAllMusic = false;
@@ -84,13 +83,13 @@ public class AudioSourceManager
         if(info != null)
         {
             AudioClip audioClip = GameManager.Instance.GetAudioClip(info.resPath);
-            PlayBGMusic(audioClip);
+            PlayBGMusic(audioClip, info.loopStartTime);
             musicVolumeRate[currentAudioSourceIndex] = info.volume;
         }
     }
 
     // 播放背景音乐
-    public void PlayBGMusic(AudioClip audioClip)
+    public void PlayBGMusic(AudioClip audioClip, float time)
     {
         if (audioClip == null)
             return;
@@ -115,6 +114,7 @@ public class AudioSourceManager
         }
 
         currentAudioSource.clip = audioClip;
+        currentAudioSource.time = time;
         if (playBGMusic)
         {
             currentAudioSource.time = 0; // 从0开始播放
@@ -129,6 +129,8 @@ public class AudioSourceManager
     /// <param name="refenceName"></param>
     public void PlayEffectMusic(string refenceName)
     {
+        if (!GameManager.Instance.configManager.mConfig.isPlaySE)
+            return;
         SoundsInfo info = SoundsManager.GetSoundsInfo(refenceName);
         if(info != null)
         {
@@ -140,7 +142,7 @@ public class AudioSourceManager
     // 播放音效
     public void PlayEffectMusic(AudioClip audioClip, float volume)
     {
-        if (!playEffectMusic)
+        if (!GameManager.Instance.configManager.mConfig.isPlaySE)
             return;
         SeAudioSource.PlayOneShot(audioClip, volume);
     }
@@ -184,7 +186,7 @@ public class AudioSourceManager
     /// </summary>
     public void ReplayCurrentClip()
     {
-        PlayBGMusic(currentAudioClip);
+        PlayBGMusic(currentAudioClip, 0);
     }
 
     /// <summary>
@@ -222,7 +224,7 @@ public class AudioSourceManager
     /// </summary>
     public void CloseOrOpenEffectMusic()
     {
-        playEffectMusic = !playEffectMusic;
+        GameManager.Instance.configManager.mConfig.isPlaySE = !GameManager.Instance.configManager.mConfig.isPlaySE;
     }
 
     /// <summary>

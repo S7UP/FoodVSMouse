@@ -119,60 +119,47 @@ public class BlondeMary : BossUnit
             R0 = 3;
     }
 
-    private BaseUnit CreateCheckArea()
+    private RetangleAreaEffectExecution CreateCheckArea()
     {
-        float dmg0 = GetParamValue("dmg0", mHertIndex);
-
         // 生成一个隐形挨炸的老鼠
-        MouseUnit m = MouseManager.GetBombedToolMouse();
-        m.SetMaxHpAndCurrentHp(mMaxHp);
-        m.transform.position = transform.position;
-        {
-            CustomizationTask t = new CustomizationTask();
-            t.AddTaskFunc(delegate {
-                if (this.IsAlive())
-                    m.transform.position = transform.position;
-                else
-                    return true;
-                return false;
-            });
-            t.AddOnExitAction(delegate {
-                m.ExecuteDeath();
-            });
-            m.AddTask(t);
-        }
-
+        //MouseUnit m = MouseManager.GetBombedToolMouse();
+        //m.SetMaxHpAndCurrentHp(mMaxHp);
+        //m.transform.position = transform.position;
+        //{
+        //    CustomizationTask t = new CustomizationTask();
+        //    t.AddTaskFunc(delegate {
+        //        if (this.IsAlive())
+        //            m.transform.position = transform.position;
+        //        else
+        //            return true;
+        //        return false;
+        //    });
+        //    t.AddOnExitAction(delegate {
+        //        m.ExecuteDeath();
+        //    });
+        //    m.AddTask(t);
+        //}
 
         // 产生一个踩踏检测区域
         {
             RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 0.1f, 0.5f, "EnemyAllyGrid");
             r.isAffectMouse = true;
-            r.AddExcludeMouseUnit(this);
-            r.AddExcludeMouseUnit(m);
             r.SetOnEnemyEnterAction((u) => {
-                if(UnitManager.CanBeSelectedAsTarget(this, u))
-                    new DamageAction(CombatAction.ActionType.CauseDamage, this, u, dmg0).ApplyAction();
+                if (u.IsBoss())
+                    return;
+                UnitManager.Execute(this, u);
             });
+
             r.isAffectGrid = true;
             r.SetOnGridEnterAction((g) => {
-                g.TakeDamage(this, dmg0, false);
+                g.TakeAction(this, (u) => {
+                    DamageAction action = UnitManager.Execute(this, u);
+                    new DamageAction(CombatAction.ActionType.CauseDamage, this, this, action.RealCauseValue * GetParamValue("dmg_trans0") / 100).ApplyAction();
+                }, false);
             });
             GameController.Instance.AddAreaEffectExecution(r);
-
-            CustomizationTask t = new CustomizationTask();
-            t.AddTaskFunc(delegate {
-                if (m.IsAlive())
-                    r.transform.position = m.transform.position;
-                else
-                    return true;
-                return false;
-            });
-            t.AddOnExitAction(delegate {
-                r.MDestory();
-            });
-            r.AddTask(t);
+            return r;
         }
-        return m;
     }
 
     private void FindR2(out int R2)
@@ -227,19 +214,21 @@ public class BlondeMary : BossUnit
 
         // 携带一个判定区域
         {
-            float dmg1 = GetParamValue("dmg1", mHertIndex);
             RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(b.transform.position, 0.1f, 0.1f, "EnemyAllyGrid");
-            r.isAffectGrid = true;
-            Action<BaseGrid> enterAction = (g) => {
-                g.TakeDamage(this, dmg1, false);
-                r.AddExcludeGrid(g); // 真的只能一次！
-            };
-            r.SetOnGridEnterAction(enterAction);
             r.isAffectMouse = true;
-            r.AddExcludeMouseUnit(this);
             r.SetOnEnemyEnterAction((u) => {
-                if (UnitManager.CanBeSelectedAsTarget(this, u))
-                    new DamageAction(CombatAction.ActionType.CauseDamage, this, u, dmg1).ApplyAction();
+                if (u.IsBoss())
+                    return;
+                UnitManager.Execute(this, u);
+            });
+
+            r.isAffectGrid = true;
+            r.SetOnGridEnterAction((g) => {
+                g.TakeAction(this, (u) => {
+                    DamageAction action = UnitManager.Execute(this, u);
+                    new DamageAction(CombatAction.ActionType.CauseDamage, this, this, action.RealCauseValue * GetParamValue("dmg_trans") / 100).ApplyAction();
+                }, false);
+                r.AddExcludeGrid(g); // 真的只能一次！
             });
             GameController.Instance.AddAreaEffectExecution(r);
 
@@ -269,15 +258,27 @@ public class BlondeMary : BossUnit
         int t0 = Mathf.FloorToInt(60*GetParamValue("t0", mHertIndex));
         int timeLeft = 0;
         float v = TransManager.TranToVelocity(6); // 移动速度
-        BaseUnit toolUnit = null; // 用来检测移动时被炸的单位
+
+        bool isBombed = false;
+        Action<CombatAction> act = (action) =>
+        {
+            if (action is DamageAction)
+            {
+                DamageAction dmgAction = action as DamageAction;
+                if (dmgAction.IsDamageType(DamageAction.DamageType.BombBurn))
+                {
+                    isBombed = true;
+                }
+            };
+        };
 
         CompoundSkillAbility c = new CompoundSkillAbility(this, info);
         // 实现
         c.IsMeetSkillConditionFunc = delegate { return true; };
         c.BeforeSpellFunc = delegate
         {
+            isBombed = false;
             animatorController.Play("Disappear");
-            toolUnit = null;
         };
         {
             c.AddSpellingFunc(delegate
@@ -314,7 +315,20 @@ public class BlondeMary : BossUnit
                     float s = Mathf.Abs(transform.position.x - MapManager.GetColumnX(0));
                     timeLeft = Mathf.FloorToInt(s / v);
                     // 开踩
-                    toolUnit = CreateCheckArea();
+                    RetangleAreaEffectExecution r = CreateCheckArea();
+
+                    CustomizationTask t = new CustomizationTask();
+                    actionPointController.AddListener(ActionPointType.PostReceiveDamage, act);
+                    t.AddTaskFunc(delegate {
+                        r.transform.position = transform.position;
+                        return isBombed;
+                    });
+                    t.AddOnExitAction(delegate {
+                        actionPointController.RemoveListener(ActionPointType.PostReceiveDamage, act);
+                        r.MDestory();
+                    });
+                    r.AddTask(t);
+
                     animatorController.Play("Move", true);
                     return true;
                 }
@@ -323,10 +337,8 @@ public class BlondeMary : BossUnit
             c.AddSpellingFunc(delegate {
                 timeLeft--;
                 transform.position += Vector3.left*v;
-                if (timeLeft <= 0 || transform.position.x <= MapManager.GetColumnX(0) || !toolUnit.IsAlive())
+                if (timeLeft <= 0 || transform.position.x <= MapManager.GetColumnX(0) || isBombed)
                 {
-                    if (toolUnit != null && toolUnit.IsAlive())
-                        toolUnit.ExecuteDeath();
                     animatorController.Play("Idle", true);
                     return true;
                 }

@@ -53,6 +53,7 @@ public class GameController : MonoBehaviour
 
     private int mFrameNum; //+ 当前游戏帧
     public bool isPause;
+    public int pauseCount = -1; // 暂停次数
     public bool isEnableNoTargetAttackMode{ get { return IsEnableNoTargetAttackModeNumeric.Value; } } // 是否开启无目标的攻击模式
     private BoolNumeric IsEnableNoTargetAttackModeNumeric = new BoolNumeric();
     public System.Random rand;
@@ -62,11 +63,131 @@ public class GameController : MonoBehaviour
 
     public GameNormalPanel mGameNormalPanel;
 
+    public void Awake()
+    {
+        _instance = this;
+    }
+
+    private void Load()
+    {
+        if (!isLoad)
+        {
+            // 随机数生成器
+            rand = new System.Random();
+
+            MMemberList = new List<IGameControllerMember>();
+            // 获取当前场景的UIPanel
+            mGameNormalPanel = GameNormalPanel.Instance;
+            // 从UIPanel中获取各种控制器脚本
+            mCostController = mGameNormalPanel.transform.Find("CostControllerUI").GetComponent<BaseCostController>();
+            MMemberList.Add(mCostController);
+            mCardController = mGameNormalPanel.transform.Find("CardControllerUI").GetComponent<BaseCardController>();
+            MMemberList.Add(mCardController);
+            mProgressController = mGameNormalPanel.transform.Find("ProgressControllerUI").GetComponent<BaseProgressController>();
+            MMemberList.Add(mProgressController);
+            mMapController = GameObject.Find("MapController").GetComponent<MapController>();
+            MMemberList.Add(mMapController);
+            mItemController = GameObject.Find("ItemController").GetComponent<ItemController>();
+            MMemberList.Add(mItemController);
+            // 获取引用
+            effectListTrans = GameObject.Find("EffectList").transform;
+
+            // 敌方表相关
+            mEnemyList = new List<BaseUnit>();
+            enemyListTrans = GameObject.Find("EnemyList").transform;
+            mEnemyChangeRowDict = new Dictionary<BaseUnit, int>();
+            // 友方表相关
+            mAllyList = new List<BaseUnit>[MapController.yRow];
+            allyListGo = new GameObject[mAllyList.Length];
+            for (int i = 0; i < mAllyList.Length; i++)
+            {
+                mAllyList[i] = new List<BaseUnit>();
+                GameObject go = new GameObject("i");
+                allyListGo[i] = go;
+                go.transform.SetParent(GameObject.Find("AllyList").transform);
+            }
+            // 宝石相关
+            PlayerData data = PlayerData.GetInstance();
+            mJewelSkillArray = new BaseJewelSkill[3] { JewelManager.GetSkillInstance(data.GetJewel(0)),
+            JewelManager.GetSkillInstance(data.GetJewel(1)),
+            JewelManager.GetSkillInstance(data.GetJewel(2))};
+            // 焦点目标重置
+            focusTarget = null;
+            // 子弹表相关
+            mBulletList = new List<BaseBullet>();
+            // 激光相关
+            mLaserList = new List<BaseLaser>();
+            // 范围效果表相关
+            areaEffectExecutionList = new List<AreaEffectExecution>();
+            // 特效表相关
+            baseEffectList = new List<BaseEffect>();
+            // 任务执行者表相关
+            taskerList = new List<Tasker>();
+            // 角色控制器
+            mCharacterController = new CharacterController();
+            MMemberList.Add(mCharacterController);
+            // 键位控制器
+            mKeyBoardSetting = new KeyBoardSetting();
+            MMemberList.Add(mKeyBoardSetting);
+
+            mGameNormalPanel.InitInGameController();
+            Test.OnGameControllerAwake();
+
+            // 老鼠工厂
+            mMouseFactory = MouseFactory.Instance;
+            MMemberList.Add(mMouseFactory);
+            // BOSS工厂
+            mBossFactory = BossFactory.Instance;
+            MMemberList.Add(mBossFactory);
+
+            isLoad = true;
+        }
+    }
+
+    /// <summary>
+    /// 变量初始化
+    /// </summary>
+    public void Init()
+    {
+        RecycleAndDestoryAllInstance();
+        // 当前关卡对象创建
+        if (mCurrentStage != null)
+            Destroy(mCurrentStage);
+        mCurrentStage = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Stage/Stage").GetComponent<BaseStage>();
+        mCurrentStage.Load();
+        mCurrentStage.Init();
+
+        // 自身变量初始化
+        mFrameNum = 0;
+        isPause = false;
+        pauseCount = -1;
+        IsEnableNoTargetAttackModeNumeric.Initialize();
+        // 焦点目标重置
+        focusTarget = null;
+        // 宝石技能重置
+        foreach (var item in mJewelSkillArray)
+            item.Initial();
+        // 自身携带控制器初始化（要写到初始化的最后，不建议后面再加其他初始化）
+        foreach (IGameControllerMember member in MMemberList)
+            member.MInit();
+
+        // 词条效果注入
+        PlayerData data = GameManager.Instance.playerData;
+        BaseStage.StageInfo info = data.GetCurrentStageInfo();
+        List<string> tagIdList = data.GetTagList(info.chapterIndex, info.sceneIndex, info.stageIndex);
+        foreach (var tagId in tagIdList)
+        {
+            Action action = TagsManager.GetTagAction(tagId);
+            if (action != null)
+                action();
+        }
+    }
 
     // 暂停的方法
     public void Pause()
     {
         isPause = true;
+        pauseCount++;
         // 友方单位暂停
         foreach (var item in mAllyList)
         {
@@ -135,128 +256,6 @@ public class GameController : MonoBehaviour
         GameManager.Instance.audioSourceManager.ResumeAllMusic();
     }
 
-    public void Awake()
-    {
-        _instance = this;
-    }
-
-    private void Load()
-    {
-        if (!isLoad)
-        {
-            // 随机数生成器
-            rand = new System.Random();
-
-            MMemberList = new List<IGameControllerMember>();
-            // 获取当前场景的UIPanel
-            mGameNormalPanel = GameNormalPanel.Instance;
-            // 从UIPanel中获取各种控制器脚本
-            mCostController = mGameNormalPanel.transform.Find("CostControllerUI").GetComponent<BaseCostController>();
-            MMemberList.Add(mCostController);
-            mCardController = mGameNormalPanel.transform.Find("CardControllerUI").GetComponent<BaseCardController>();
-            MMemberList.Add(mCardController);
-            mProgressController = mGameNormalPanel.transform.Find("ProgressControllerUI").GetComponent<BaseProgressController>();
-            MMemberList.Add(mProgressController);
-            mMapController = GameObject.Find("MapController").GetComponent<MapController>();
-            MMemberList.Add(mMapController);
-            mItemController = GameObject.Find("ItemController").GetComponent<ItemController>();
-            MMemberList.Add(mItemController);
-            // 获取引用
-            effectListTrans = GameObject.Find("EffectList").transform;
-
-            // 敌方表相关
-            mEnemyList = new List<BaseUnit>();
-            enemyListTrans = GameObject.Find("EnemyList").transform;
-            mEnemyChangeRowDict = new Dictionary<BaseUnit, int>();
-            // 友方表相关
-            mAllyList = new List<BaseUnit>[MapController.yRow];
-            allyListGo = new GameObject[mAllyList.Length];
-            for (int i = 0; i < mAllyList.Length; i++)
-            {
-                mAllyList[i] = new List<BaseUnit>();
-                GameObject go = new GameObject("i");
-                allyListGo[i] = go;
-                go.transform.SetParent(GameObject.Find("AllyList").transform);
-            }
-            // 宝石相关
-            PlayerData data = PlayerData.GetInstance();
-            mJewelSkillArray = new BaseJewelSkill[3] { JewelManager.GetSkillInstance(data.GetJewel(0)),
-            JewelManager.GetSkillInstance(data.GetJewel(1)),
-            JewelManager.GetSkillInstance(data.GetJewel(2))};
-            // 焦点目标重置
-            focusTarget = null;
-            // 子弹表相关
-            mBulletList = new List<BaseBullet>();
-            // 激光相关
-            mLaserList = new List<BaseLaser>();
-            // 范围效果表相关
-            areaEffectExecutionList = new List<AreaEffectExecution>();
-            // 特效表相关
-            baseEffectList = new List<BaseEffect>();
-            // 任务执行者表相关
-            taskerList = new List<Tasker>();
-            // 角色控制器
-            mCharacterController = new CharacterController();
-            MMemberList.Add(mCharacterController);
-
-            // 键位控制器
-            mKeyBoardSetting = new KeyBoardSetting();
-            MMemberList.Add(mKeyBoardSetting);
-
-            mGameNormalPanel.InitInGameController();
-            Test.OnGameControllerAwake();
-
-            // 老鼠工厂
-            mMouseFactory = MouseFactory.Instance;
-            MMemberList.Add(mMouseFactory);
-            // BOSS工厂
-            mBossFactory = BossFactory.Instance;
-            MMemberList.Add(mBossFactory);
-
-            isLoad = true;
-        }
-    }
-
-    /// <summary>
-    /// 变量初始化
-    /// </summary>
-    public void Init()
-    {
-        RecycleAndDestoryAllInstance();
-        // 当前关卡对象创建
-        if (mCurrentStage != null)
-            Destroy(mCurrentStage);
-        mCurrentStage = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Stage/Stage").GetComponent<BaseStage>();
-        mCurrentStage.Load();
-        mCurrentStage.Init();
-
-        // 自身变量初始化
-        mFrameNum = 0;
-        isPause = false;
-        IsEnableNoTargetAttackModeNumeric.Initialize();
-        // 焦点目标重置
-        focusTarget = null;
-        // 宝石技能重置
-        foreach (var item in mJewelSkillArray)
-        {
-            item.Initial();
-        }
-        // 自身携带控制器初始化（要写到初始化的最后，不建议后面再加其他初始化）
-        foreach (IGameControllerMember member in MMemberList)
-            member.MInit();
-
-        // 词条效果注入
-        PlayerData data = GameManager.Instance.playerData;
-        BaseStage.StageInfo info = data.GetCurrentStageInfo();
-        List<string> tagIdList = data.GetTagList(info.chapterIndex, info.sceneIndex, info.stageIndex);
-        foreach (var tagId in tagIdList)
-        {
-            Action action = TagsManager.GetTagAction(tagId);
-            if (action != null)
-                action();
-        }
-    }
-
     /// <summary>
     /// 重开本场游戏
     /// </summary>
@@ -282,15 +281,29 @@ public class GameController : MonoBehaviour
     public void Win()
     {
         PlayerData data = PlayerData.GetInstance();
-        if (data.GetCurrentStageSuccessRewardFunc() != null && data.GetCurrentStageSuccessRewardFunc()())
+        // 常规给经验
         {
-
-        }
-        else
-        {
-            mGameNormalPanel.SetExpTips("胜利啦！获得"+ GetDefaultExpReward().ToString("#0")+"点经验值！");
+            mGameNormalPanel.SetExpTips("胜利啦！获得" + GetDefaultExpReward().ToString("#0") + "点经验值！");
             data.AddExp(GetDefaultExpReward());
         }
+        
+        // 如果是正式收录的关，还需要更新通过信息，处理首通奖励
+        string id = PlayerData.GetInstance().GetCurrentStageID();
+        if(id != null)
+        {
+            StageInfoManager.StageInfo_Local local_info = StageInfoManager.GetLocalStageInfo(id);
+            if (local_info.rank == -1)
+            {
+                // 尝试触发首通奖励
+                Action reward = StageInfoManager.GetFirstPassRewardAction(id);
+                if (reward != null)
+                    reward();
+            }
+            // 更新通过最高的难度记录
+            local_info.rank = Mathf.Max(PlayerData.GetInstance().GetDifficult(), local_info.rank);
+            StageInfoManager.Save();
+        }
+        
         mGameNormalPanel.EnterWinPanel();
         Pause();
     }
@@ -305,12 +318,6 @@ public class GameController : MonoBehaviour
         data.AddExp(GetDefaultExpReward());
         mGameNormalPanel.EnterLosePanel();
         Pause();
-    }
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        // Restart();
     }
 
     /// <summary>
@@ -829,7 +836,7 @@ public class GameController : MonoBehaviour
     {
         foreach (var item in baseEffectList)
         {
-            item.Recycle();
+            item.MDestory();
         }
         baseEffectList.Clear();
     }

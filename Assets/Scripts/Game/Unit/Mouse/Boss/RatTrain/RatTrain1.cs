@@ -314,28 +314,6 @@ public class RatTrain1 : BaseRatTrain
         base.BeforeDeath();
     }
 
-    public override void BeforeBurn()
-    {
-        foreach (var u in retinueList)
-        {
-            u.taskController.Initial();
-            u.ExecuteBurn();
-        }
-        retinueList.Clear();
-        base.BeforeBurn();
-    }
-
-    public override void BeforeDrop()
-    {
-        foreach (var u in retinueList)
-        {
-            u.taskController.Initial();
-            u.ExecuteDrop();
-        }
-        retinueList.Clear();
-        base.BeforeDrop();
-    }
-
     /// <summary>
     /// 创建一个激光发射器
     /// </summary>
@@ -438,7 +416,7 @@ public class RatTrain1 : BaseRatTrain
                             if (rot.Equals(Vector2.up))
                                 e.transform.localScale = new Vector2(1, -1);
                             GameController.Instance.AddEffect(e);
-                            u.AddEffectToDict(LaserEffectKey, e, 1f*Vector2.up*MapManager.gridHeight);
+                            u.mEffectController.AddEffectToDict(LaserEffectKey, e, 1f*Vector2.up*MapManager.gridHeight);
                         }
                     }
                 }
@@ -459,7 +437,7 @@ public class RatTrain1 : BaseRatTrain
                 foreach (var u in laserList)
                 {
                     u.animatorController.Play("PostAttack");
-                    u.RemoveEffectFromDict(LaserEffectKey);
+                    u.mEffectController.RemoveEffectFromDict(LaserEffectKey);
                     u.CloseCollision();
                 }
                 // 发射激光
@@ -476,7 +454,7 @@ public class RatTrain1 : BaseRatTrain
                             if (rot.Equals(Vector2.up))
                                 e.transform.localScale = new Vector2(1, -1);
                             GameController.Instance.AddEffect(e);
-                            u.AddEffectToDict(LaserEffectKey, e, 1.5f*Vector2.up * MapManager.gridHeight);
+                            u.mEffectController.AddEffectToDict(LaserEffectKey, e, 1.5f*Vector2.up * MapManager.gridHeight);
                             // 产生真正的激光判定
                             RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(new Vector2(u.transform.position.x, MapManager.GetRowY(3)), 0.4f, 5, "BothCollide");
                             r.SetInstantaneous();

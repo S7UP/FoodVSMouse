@@ -7,4 +7,6 @@ public interface ITask
     public void OnUpdate();
     public bool IsMeetingExitCondition();
     public void OnExit();
+    public void ShutDown();
+    public bool IsClearWhenDie();
 }

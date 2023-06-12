@@ -15,6 +15,7 @@ public class PandaMouse : MouseUnit
     {
         base.MInit();
         throwPercent = 0.5f;
+        typeAndShapeValue = -1;
     }
 
     public override void MUpdate()

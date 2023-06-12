@@ -279,5 +279,15 @@ public class TeleportGridType : BaseGridType
         {
             count--;
         }
+
+        public void ShutDown()
+        {
+            
+        }
+
+        public bool IsClearWhenDie()
+        {
+            return true;
+        }
     }
 }

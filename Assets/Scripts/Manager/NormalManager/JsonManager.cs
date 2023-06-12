@@ -108,4 +108,20 @@ public class JsonManager
             File.Delete(filepath);
         }
     }
+
+    /// <summary>
+    /// 从玩家的本地目录删除某个文件
+    /// </summary>
+    /// <param name="path"></param>
+    public static void DeleteFromLocal(string path)
+    {
+        string filePath = Application.persistentDataPath + "/" + path + ".json";
+        Debug.Log("文件路径为：" + filePath);
+        if (File.Exists(filePath))
+        {
+            //删除文件
+            Debug.Log("删除文件：" + filePath + " 成功！");
+            File.Delete(filePath);
+        }
+    }
 }

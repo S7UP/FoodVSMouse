@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 
+using Environment;
+
 using S7P.Numeric;
 
 using UnityEngine;
@@ -77,22 +79,10 @@ public class IceSlag : BossUnit
     {
         // 切换阶段血量百分比
         AddParamArray("hpRate", new float[] { 0.5f, 0.2f });
-
-        AddParamArray("dmg_boom", new float[] { 900, 900, 900 });
-        // 施放元素球
-        AddParamArray("t0_0", new float[] { 5, 3, 1.334f }); // 集气时间
-        AddParamArray("t0_1", new float[] { 2f, 1.75f, 1.5f }); // 放完球后的原地停滞时间
-        AddParamArray("t0_2", new float[] { 3, 4.5f, 6 }); // 球碾压和爆炸后对卡片造成晕眩时间
-        AddParamArray("v0_0", new float[] { 3, 3, 3 }); // 元素球初速度
-        AddParamArray("v0_1", new float[] { 6, 9, 12 }); // 元素球末速度
-        // 光击
-        AddParamArray("t1_0", new float[] { 3, 1.5f, 0 }); // 发光球前的蓄力时间
-        AddParamArray("t1_1", new float[] { 2.25f, 2.25f, 1.5f }); // 光弹的攻击间隔
-        AddParamArray("t1_2", new float[] { 1.5f, 0.75f, 0 }); // 光弹结束后停滞时间
-        AddParamArray("num1_0", new float[] { 4, 3, 5 }); // 光弹数
-        AddParamArray("num1_1", new float[] { 0, 1, 1 }); // 元素弹数
-        AddParamArray("dmg1_0", new float[] { 900, 900, 900 }); // 光弹伤害
-        AddParamArray("stun1_0", new float[] { 9, 9, 9 }); // 光弹对人物的晕眩时间
+        foreach (var keyValuePair in BossManager.GetParamDict(BossNameTypeMap.IceSlag, 0))
+        {
+            AddParamArray(keyValuePair.Key, keyValuePair.Value);
+        }
     }
 
     /// <summary>
@@ -133,8 +123,6 @@ public class IceSlag : BossUnit
         if (!IsAlive())
             return;
 
-        float dmg_boom = GetParamValue("dmg_boom", mHertIndex);
-
         // 非自己的BOSS单位不受该BUFF影响
         if (unit is MouseUnit)
         {
@@ -146,7 +134,6 @@ public class IceSlag : BossUnit
         // 如果目标已被施加火魔法，则造成爆炸效果并移除火魔法
         if (unit.NumericBox.GetBoolNumericValue(FireMagicKey))
         {
-            //new BombDamageAction(CombatAction.ActionType.CauseDamage, null, unit, dmg_boom * (mCurrentAttack / 10)).ApplyAction();
             BurnManager.BurnDamage(null, unit);
             RemoveFireMagic(unit);
         }
@@ -164,7 +151,7 @@ public class IceSlag : BossUnit
                 e.SetSpriteRendererSorting(name, order + 4);
             }
             GameController.Instance.AddEffect(e);
-            unit.AddEffectToDict(IceMagicKey, e, 0f*MapManager.gridHeight*Vector2.up);
+            unit.mEffectController.AddEffectToDict(IceMagicKey, e, 0f*MapManager.gridHeight*Vector2.up);
         }
     }
 
@@ -177,7 +164,7 @@ public class IceSlag : BossUnit
         unit.NumericBox.RemoveDecideModifierToBoolDict(IceMagicKey, IceMagic);
         affectedUnitList.Remove(unit);
         // 移除特效
-        unit.RemoveEffectFromDict(IceMagicKey);
+        unit.mEffectController.RemoveEffectFromDict(IceMagicKey);
     }
 
     /// <summary>
@@ -188,8 +175,6 @@ public class IceSlag : BossUnit
         // 如果自己趋势了则不会施加魔法效果
         if (!IsAlive())
             return;
-
-        float dmg_boom = GetParamValue("dmg_boom", mHertIndex);
 
         // 非自己的BOSS单位不受该BUFF影响
         if (unit is MouseUnit)
@@ -202,7 +187,6 @@ public class IceSlag : BossUnit
         // 如果目标已被施加冰魔法，则造成爆炸效果并移除冰魔法
         if (unit.NumericBox.GetBoolNumericValue(IceMagicKey))
         {
-            // new BombDamageAction(CombatAction.ActionType.CauseDamage, null, unit, dmg_boom * (mCurrentAttack / 10)).ApplyAction();
             BurnManager.BurnDamage(null, unit);
             RemoveIceMagic(unit);
         }
@@ -220,7 +204,7 @@ public class IceSlag : BossUnit
                 e.SetSpriteRendererSorting(name, order + 4);
             }
             GameController.Instance.AddEffect(e);
-            unit.AddEffectToDict(FireMagicKey, e, 0f * MapManager.gridHeight * Vector2.up);
+            unit.mEffectController.AddEffectToDict(FireMagicKey, e, 0f * MapManager.gridHeight * Vector2.up);
         }
     }
 
@@ -233,7 +217,7 @@ public class IceSlag : BossUnit
         unit.NumericBox.RemoveDecideModifierToBoolDict(FireMagicKey, FireMagic);
         affectedUnitList.Remove(unit);
         // 移除特效
-        unit.RemoveEffectFromDict(FireMagicKey);
+        unit.mEffectController.RemoveEffectFromDict(FireMagicKey);
     }
 
     public override void OnDieStateEnter()
@@ -467,7 +451,6 @@ public class IceSlag : BossUnit
         int t1_2 = Mathf.FloorToInt(GetParamValue("t1_2", mHertIndex) * 60); // 光弹结束过停滞时间
         int num1_0 = Mathf.FloorToInt(GetParamValue("num1_0", mHertIndex)); // 光弹数
         int num1_1 = Mathf.FloorToInt(GetParamValue("num1_1", mHertIndex)); // 元素弹数
-        float dmg1_0 = GetParamValue("dmg1_0", mHertIndex); // 光弹伤害
 
         //int attack_time = Mathf.FloorToInt(animatorController.GetAnimatorStateRecorder("Attack0").aniTime); // 光弹的动作时间
         //int ExcuteDamage_time = Mathf.FloorToInt(0.5f*animatorController.GetAnimatorStateRecorder("Attack0").aniTime); // 光弹的发射触发时机
@@ -587,11 +570,6 @@ public class IceSlag : BossUnit
                 else if(n == num1_0)
                 {
                     n = 0;
-                    // timeLeft = t1_1;
-                    //if (isFireMode)
-                    //    animatorController.Play("Attack1");
-                    //else
-                    //    animatorController.Play("Attack0");
                     return true;
                 }
                 return false;
@@ -660,6 +638,7 @@ public class IceSlag : BossUnit
     /// </summary>
     private void CreateBall()
     {
+        int ice_value = Mathf.FloorToInt(GetParamValue("ice_value0"));
         int t0_2 = Mathf.FloorToInt(GetParamValue("t0_2", mHertIndex) * 60); // 球爆炸后对卡片造成晕眩时间
         int v0_0 = Mathf.FloorToInt(GetParamValue("v0_0", mHertIndex));
         int v0_1 = Mathf.FloorToInt(GetParamValue("v0_1", mHertIndex));
@@ -682,7 +661,11 @@ public class IceSlag : BossUnit
             {
                 AddIceMagic(unit);
                 if (unit != m)
-                    unit.AddNoCountUniqueStatusAbility(StringManager.Frozen, new FrozenStatusAbility(unit, t0_2, false));
+                {
+                    // unit.AddNoCountUniqueStatusAbility(StringManager.Frozen, new FrozenStatusAbility(unit, t0_2, false));
+                    EnvironmentFacade.AddIceDebuff(unit, ice_value);
+                }
+
             }
         };
 
@@ -694,11 +677,8 @@ public class IceSlag : BossUnit
 
 
         {
-            if (!isFireBall)
-            {
-                m.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, new BoolModifier(true)); // 免疫晕眩
-                m.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozen, new BoolModifier(true)); // 免疫冰冻
-            }
+            m.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, new BoolModifier(true)); // 免疫晕眩
+            m.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozen, new BoolModifier(true)); // 免疫冰冻
             m.NumericBox.Defense.SetBase(100); // 100%减伤
 
             // 添加一个出现、加速的任务
@@ -734,14 +714,12 @@ public class IceSlag : BossUnit
                 // 如果目标被冰冻了且是火球则直接自爆
                 if (isFireBall)
                 {
-                    if (m.GetNoCountUniqueStatus(StringManager.Frozen) != null)
+                    IceTask t = null;
+                    if (m.GetTask("IceTask") != null)
                     {
-                        return true;
-                    }
-                    else if (m.GetNoCountUniqueStatus(StringManager.Stun) != null)
-                    {
-                        // 清除晕眩效果
-                        m.GetNoCountUniqueStatus(StringManager.Stun).ClearLeftTime();
+                        t = m.GetTask("IceTask") as IceTask;
+                        if (t.GetValue() >= 90)
+                            return true;
                     }
                 }
                 return false;
@@ -872,10 +850,8 @@ public class IceSlag : BossUnit
             targetPos = new Vector2(Mathf.Max(minLeftX, targetUnit.transform.position.x), MapManager.GetRowY(GetRowIndex()));
 
         // 以下是产生弹体
-        float dmg1_0 = GetParamValue("dmg1_0", mHertIndex);
         int stun1_0 = Mathf.FloorToInt(GetParamValue("stun1_0", mHertIndex) * 60); // 对人物的晕眩时间
         RuntimeAnimatorController run = Run_LightBullet;
-        float dmg = dmg1_0 * (mCurrentAttack / 10); // 最终打到人身上的伤害
         EnemyBullet b = EnemyBullet.GetInstance(run, this, 0);
         // 修改攻击优先级，这种投掷攻击优先攻击护罩里的东西
         b.GetTargetFunc = (unit) => {
@@ -894,10 +870,21 @@ public class IceSlag : BossUnit
             }
             else
             {
-                new DamageAction(CombatAction.ActionType.CauseDamage, this, u, dmg).ApplyAction();
+                if(u != null && u.IsAlive())
+                    UnitManager.Execute(this, u);
             }
         });
-        TaskManager.AddParabolaTask(b, TransManager.TranToVelocity(48f), 1.5f, transform.position, targetPos, true);
+
+        if(targetUnit == null || !targetUnit.IsAlive())
+        {
+            float dist = (transform.position - targetPos).magnitude;
+            TaskManager.AddParabolaTask(b, dist / 60, dist / 2, transform.position, targetPos, true);
+        }
+        else
+        {
+            float dist = (transform.position - targetUnit.transform.position).magnitude;
+            TaskManager.AddParabolaTask(b, dist / 60, dist / 2, transform.position, targetUnit, true);
+        }
         GameController.Instance.AddBullet(b);
     }
 
@@ -906,6 +893,7 @@ public class IceSlag : BossUnit
     /// </summary>
     private void CreateElementalBullet(float minLeftX)
     {
+        int ice_value = Mathf.FloorToInt(GetParamValue("ice_value0"));
         int t0_2 = Mathf.FloorToInt(GetParamValue("t0_2", mHertIndex) * 60); // 球爆炸后对卡片造成晕眩时间
         bool isFireBullet = isFireMode;
 
@@ -920,7 +908,8 @@ public class IceSlag : BossUnit
             else
             {
                 AddIceMagic(unit);
-                unit.AddNoCountUniqueStatusAbility(StringManager.Frozen, new FrozenStatusAbility(unit, t0_2, false));
+                // unit.AddNoCountUniqueStatusAbility(StringManager.Frozen, new FrozenStatusAbility(unit, t0_2, false));
+                EnvironmentFacade.AddIceDebuff(unit, ice_value);
             }
         };
 
@@ -933,14 +922,22 @@ public class IceSlag : BossUnit
             targetPos = new Vector2(Mathf.Max(minLeftX, targetUnit.transform.position.x), MapManager.GetRowY(GetRowIndex()));
 
         // 以下是产生弹体
-        float dmg1_0 = GetParamValue("dmg1_0", mHertIndex);
         RuntimeAnimatorController run;
         if (isFireMode)
             run = Run_FireBullet;
         else
             run = Run_IceBullet;
         EnemyBullet b = EnemyBullet.GetInstance(run, this, 0);
-        TaskManager.AddParabolaTask(b, TransManager.TranToVelocity(48f), 1.5f, transform.position, targetPos, true);
+        if (targetUnit == null || !targetUnit.IsAlive())
+        {
+            float dist = (transform.position - targetPos).magnitude;
+            TaskManager.AddParabolaTask(b, dist / 60, dist / 2, transform.position, targetPos, true);
+        }
+        else
+        {
+            float dist = (transform.position - targetUnit.transform.position).magnitude;
+            TaskManager.AddParabolaTask(b, dist / 60, dist / 2, transform.position, targetUnit, true);
+        }
         GameController.Instance.AddBullet(b);
         // 添加击中时效果
         b.AddHitAction((bullet, unit) => {

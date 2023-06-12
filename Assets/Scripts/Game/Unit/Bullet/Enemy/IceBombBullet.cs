@@ -1,3 +1,5 @@
+using Environment;
+using System;
 using UnityEngine;
 
 /// <summary>
@@ -12,20 +14,30 @@ public class IceBombBullet : ParabolaBullet
     public override void TakeDamage(BaseUnit baseUnit)
     {
         // 原地产生一个爆炸效果
-        IceAreaEffectExecution iceEffect = IceAreaEffectExecution.GetInstance();
-        iceEffect.Init(this.mMasterBaseUnit, 600, GetRowIndex(), 3, 3, -0.5f, 0, true, false); // 第二个参数为持续时间（帧）
-        iceEffect.isAffectCharacter = true; // 对人有效
+        Vector2 pos = Vector2.zero;
         if (baseUnit != null && baseUnit.IsValid())
         {
             // 如果单位存在，则在单位位置爆炸
-            iceEffect.transform.position = baseUnit.transform.position;
+            pos = baseUnit.transform.position;
         }
         else
         {
             // 否则位于格子正中心爆炸
-            iceEffect.transform.position = MapManager.GetGridLocalPosition(GetColumnIndex(), GetRowIndex());
+            pos = MapManager.GetGridLocalPosition(GetColumnIndex(), GetRowIndex());
         }
-        GameController.Instance.AddAreaEffectExecution(iceEffect);
+        RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(pos, 3, 3, "BothCollide");
+        r.SetInstantaneous();
+        r.isAffectFood = true;
+        r.isAffectMouse = true;
+        r.isAffectCharacter = true;
+        Action<BaseUnit> action = (u) => {
+            EnvironmentFacade.AddIceDebuff(u, 100);
+        };
+        r.SetOnEnemyEnterAction(action);
+        r.SetOnFoodEnterAction(action);
+        r.SetOnCharacterEnterAction(action);
+        GameController.Instance.AddAreaEffectExecution(r);
+
         ExecuteHitAction(baseUnit);
         KillThis();
     }

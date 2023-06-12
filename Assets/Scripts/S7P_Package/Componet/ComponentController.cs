@@ -40,6 +40,8 @@ namespace S7P.Component
                 c.Destory();
             }
             componentList.Clear();
+            componentDict.Clear();
+            delList.Clear();
         }
 
         #region 添加或移除组件方法

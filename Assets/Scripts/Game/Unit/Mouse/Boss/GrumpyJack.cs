@@ -90,16 +90,6 @@ public class GrumpyJack : BossUnit
         }
         base.BeforeDeath();
     }
-
-    public override void BeforeBurn()
-    {
-        foreach (var u in bodyList)
-        {
-            u.ExecuteDeath();
-        }
-        base.BeforeDeath();
-    }
-
     public override void AfterDeath()
     {
         foreach (var u in bodyList)
@@ -282,15 +272,22 @@ public class GrumpyJack : BossUnit
                         isBlock = false;
                     if (timeLeft <= 0)
                     {
+                        List<BaseUnit> dmgList = new List<BaseUnit>();
                         foreach (var u in r.foodUnitList)
                         {
-                            if (u.GetHeight() <= 0)
-                                new DamageAction(CombatAction.ActionType.BurnDamage, m, u, dmg).ApplyAction();
+                            if (u.GetHeight() == 0)
+                                //new DamageAction(CombatAction.ActionType.BurnDamage, m, u, dmg).ApplyAction();
+                                dmgList.Add(u);
                         }
                         foreach (var u in r.mouseUnitList)
                         {
-                            if(u.GetHeight()<=0)
-                                new DamageAction(CombatAction.ActionType.BurnDamage, m, u, dmg).ApplyAction();
+                            if(u.GetHeight() == 0)
+                                //new DamageAction(CombatAction.ActionType.BurnDamage, m, u, dmg).ApplyAction();
+                                dmgList.Add(u);
+                        }
+                        foreach (var u in dmgList)
+                        {
+                            new DamageAction(CombatAction.ActionType.BurnDamage, m, u, dmg).ApplyAction();
                         }
                         timeLeft += interval;
                     }

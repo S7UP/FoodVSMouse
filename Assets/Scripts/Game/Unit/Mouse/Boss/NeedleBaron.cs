@@ -53,14 +53,6 @@ public class NeedleBaron : BossUnit
         batUnitList.Clear();
         S2Count = 0;
         base.MInit();
-        // 被炸了会损失一定百分比生命值
-        //AddActionPointListener(ActionPointType.PreReceiveDamage, (action) => {
-        //    float dmg = 0.01f * GetParamValue("burn_lost_hp_percent", mHertIndex) * GetLostHp();
-        //    if (action is BombDamageAction)
-        //    {
-        //        (action as BombDamageAction).DamageValue += dmg;
-        //    }
-        //});
         // 添加出现的技能
         {
             Func<BaseUnit, BaseBullet, bool> noHitFunc = delegate { return false; };
@@ -195,7 +187,7 @@ public class NeedleBaron : BossUnit
         // 添加特效
         BaseEffect e = BaseEffect.CreateInstance(Curse_Run, "Appear", "Idle", "Disappear", true);
         GameController.Instance.AddEffect(e);
-        unit.AddEffectToDict(Cursekey, e, Vector2.zero);
+        unit.mEffectController.AddEffectToDict(Cursekey, e, Vector2.zero);
         // 添加BUFF
         unit.NumericBox.Attack.AddPctAddModifier(AttackMod);
         unit.NumericBox.AttackSpeed.AddPctAddModifier(AttackSpeedMod);
@@ -230,7 +222,7 @@ public class NeedleBaron : BossUnit
 
     private bool IsCurse(BaseUnit unit)
     {
-        return unit.IsContainEffect(Cursekey) || curseUnitList.Contains(unit);
+        return unit.mEffectController.IsContainEffect(Cursekey) || curseUnitList.Contains(unit);
     }
 
     private void BombBurnInstanceKillAction(CombatAction action)
@@ -258,6 +250,16 @@ public class NeedleBaron : BossUnit
         m.animatorController.Play("Move", true);
         m.typeAndShapeValue = 5;
         GameController.Instance.AddMouseUnit(m);
+
+        CustomizationTask t = new CustomizationTask();
+        t.AddTimeTaskFunc(Mathf.FloorToInt(GetParamValue("recycle_time")*60));
+        t.AddOnExitAction(delegate {
+            m.SetActionState(CreateRecycleState(m));
+        });
+        m.AddTask(t);
+
+        batUnitList.Add(m);
+
         return m;
     }
 
@@ -800,7 +802,7 @@ public class NeedleBaron : BossUnit
                             return false;
                         });
                         t.AddOnExitAction(delegate {
-                            e.MDestory();
+                            e.ExecuteDeath();
                         });
                         e.AddTask(t);
                         GameController.Instance.AddEffect(e);

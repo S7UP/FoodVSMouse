@@ -63,9 +63,5 @@ public class LavaGridType : BaseGridType
             LavaTask t = unit.GetTask(TaskName) as LavaTask;
             t.DecCount();
         }
-        else
-        {
-            Debug.LogWarning("为什么有东西可以没带岩浆任务出岩浆？");
-        }
     }
 }

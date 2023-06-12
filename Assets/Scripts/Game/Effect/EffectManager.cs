@@ -10,7 +10,7 @@ public class EffectManager
     /// <param name="u"></param>
     public static void AddHealEffectToUnit(BaseUnit u)
     {
-        if (!u.IsContainEffect(EffectType.HealEffect))
+        if (!u.mEffectController.IsContainEffect("HealEffect"))
         {
             BaseEffect eff = BaseEffect.CreateInstance(GameManager.Instance.GetRuntimeAnimatorController("Mouse/5/HealEffect"), null, "Heal", null, false);
             string name;
@@ -20,7 +20,7 @@ public class EffectManager
                 eff.SetSpriteRendererSorting(name, order + 4);
             }
             GameController.Instance.AddEffect(eff);
-            u.AddEffectToDict(EffectType.HealEffect, eff, Vector2.zero);
+            u.mEffectController.AddEffectToDict("HealEffect", eff, Vector2.zero);
         }
     }
 
@@ -30,12 +30,12 @@ public class EffectManager
     /// <param name="u"></param>
     public static void AddWaterWaveEffectToUnit(BaseUnit u, Vector2 pos)
     {
-        if (!u.IsContainEffect(EffectType.WaterWave))
+        if (!u.mEffectController.IsContainEffect("WaterWave"))
         {
             BaseEffect eff = BaseEffect.CreateInstance(GameManager.Instance.GetRuntimeAnimatorController("Effect/WaterWaveEffect"), "Appear", "Idle", "Disappear", true);
             eff.SetSpriteRendererSorting("Grid", 100);
             GameController.Instance.AddEffect(eff);
-            u.AddEffectToDict(EffectType.WaterWave, eff, pos);
+            u.mEffectController.AddEffectToDict("WaterWave", eff, pos);
         }
     }
 
@@ -45,9 +45,10 @@ public class EffectManager
     /// <param name="u"></param>
     public static void RemoveWaterWaveEffectFromUnit(BaseUnit u)
     {
-        if (u.IsContainEffect(EffectType.WaterWave))
+        if (u.mEffectController.IsContainEffect("WaterWave"))
         {
-            u.RemoveEffectFromDict(EffectType.WaterWave);
+            // u.mEffectController.RemoveEffectFromDict("WaterWave");
+            u.mEffectController.GetEffect("WaterWave").ExecuteDeath();
         }
     }
 
@@ -57,11 +58,11 @@ public class EffectManager
     /// <param name="u"></param>
     public static void AddMushroomEffectToUnit(BaseUnit u)
     {
-        if (!u.IsContainEffect(EffectType.MushroomEffect))
+        if (!u.mEffectController.IsContainEffect("MushroomEffect"))
         {
             BaseEffect eff = BaseEffect.GetInstance("MushroomEffect");
             GameController.Instance.AddEffect(eff);
-            u.AddEffectToDict(EffectType.MushroomEffect, eff, Vector2.zero);
+            u.mEffectController.AddEffectToDict("MushroomEffect", eff, Vector2.zero);
         }
     }
 
@@ -71,9 +72,9 @@ public class EffectManager
     /// <param name="u"></param>
     public static void RemoveMushroomEffectFromUnit(BaseUnit u)
     {
-        if (u.IsContainEffect(EffectType.MushroomEffect))
+        if (u.mEffectController.IsContainEffect("MushroomEffect"))
         {
-            u.RemoveEffectFromDict(EffectType.MushroomEffect);
+            u.mEffectController.RemoveEffectFromDict("MushroomEffect");
         }
     }
 
@@ -83,7 +84,7 @@ public class EffectManager
     /// <param name="u"></param>
     public static void AddLavaEffectToUnit(BaseUnit u)
     {
-        if (!u.IsContainEffect(EffectType.WaterWave))
+        if (!u.mEffectController.IsContainEffect("Lava"))
         {
             BaseEffect eff = BaseEffect.CreateInstance(GameManager.Instance.GetRuntimeAnimatorController("Effect/LavaEffect"), null, "Idle", null, true);
             string name;
@@ -93,7 +94,7 @@ public class EffectManager
                 eff.SetSpriteRendererSorting(name, order + 3);
             }
             GameController.Instance.AddEffect(eff);
-            u.AddEffectToDict(EffectType.Lava, eff, 0.075f * MapManager.gridHeight * Vector2.down);
+            u.mEffectController.AddEffectToDict("Lava", eff, 0.075f * MapManager.gridHeight * Vector2.down);
         }
     }
 
@@ -103,9 +104,9 @@ public class EffectManager
     /// <param name="u"></param>
     public static void RemoveLavaEffectFromUnit(BaseUnit u)
     {
-        if (u.IsContainEffect(EffectType.Lava))
+        if (u.mEffectController.IsContainEffect("Lava"))
         {
-            u.RemoveEffectFromDict(EffectType.Lava);
+            u.mEffectController.RemoveEffectFromDict("Lava");
         }
     }
 

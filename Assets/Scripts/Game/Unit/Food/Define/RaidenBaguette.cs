@@ -392,5 +392,15 @@ public class RaidenBaguette : FoodUnit
             // ‘ˆ…À
             unit.NumericBox.DamageRate.AddModifier(AddDamageModifier);
         }
+
+        public void ShutDown()
+        {
+            
+        }
+
+        public bool IsClearWhenDie()
+        {
+            return true;
+        }
     }
 } 

@@ -79,7 +79,7 @@ public class AnimatorController
     }
     
     /// <summary>
-    /// 移除全疗的暂停修饰器
+    /// 移除全部的暂停修饰器
     /// </summary>
     public void RemoveAllPauseModifier()
     {

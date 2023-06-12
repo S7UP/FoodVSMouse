@@ -180,5 +180,15 @@ public class CoffeePowder : FoodUnit
             master.NumericBox.Attack.RemovePctAddModifier(attackModifier);
             StatusManager.RemoveIgnoreSettleDownBuff(master, boolModifier);
         }
+
+        public void ShutDown()
+        {
+            
+        }
+
+        public bool IsClearWhenDie()
+        {
+            return true;
+        }
     }
 }

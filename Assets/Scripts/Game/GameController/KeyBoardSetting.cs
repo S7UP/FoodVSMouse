@@ -19,6 +19,16 @@ public class KeyBoardSetting : IGameControllerMember
             if(GameController.Instance.mCardController.isSelectShovel)
                 GameController.Instance.mCardController.OnMouseLeftDownWhenSelectedShovel();
         });
+        // ESC菜单
+        AddAction(KeyCode.Escape, delegate {
+            GameNormalPanel gameNormalPanel = (GameNormalPanel)GameManager.Instance.uiManager.mUIFacade.currentScenePanelDict[StringManager.GameNormalPanel];
+            gameNormalPanel.OnMenuButtonClick();
+        });
+        // Space暂停
+        AddAction(KeyCode.Space, delegate {
+            GameNormalPanel gameNormalPanel = (GameNormalPanel)GameManager.Instance.uiManager.mUIFacade.currentScenePanelDict[StringManager.GameNormalPanel];
+            gameNormalPanel.OnPauseButtonClick();
+        });
         // 加载当前关的键位控制
         GameController.Instance.LoadAndFixKeyBoardSetting();
     }
@@ -49,7 +59,14 @@ public class KeyBoardSetting : IGameControllerMember
 
     public void MPauseUpdate()
     {
-
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            KeyActionDict[KeyCode.Space][0]();
+        }
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            KeyActionDict[KeyCode.Escape][0]();
+        }
     }
 
     public void MDestory()

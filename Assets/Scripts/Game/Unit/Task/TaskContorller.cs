@@ -67,6 +67,23 @@ public class TaskController
         return null;
     }
 
+    public void ShutDownAll()
+    {
+        List<ITask> delList = new List<ITask>();
+        foreach (var t in TaskList)
+        {
+            if (t.IsClearWhenDie())
+            {
+                t.ShutDown();
+                delList.Add(t);
+            }
+        }
+        foreach (var t in delList)
+        {
+            TaskList.Remove(t);
+        }
+    }
+
     /// <summary>
     /// Task×é¸üÐÂ
     /// </summary>

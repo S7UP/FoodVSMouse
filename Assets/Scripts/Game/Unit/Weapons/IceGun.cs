@@ -1,4 +1,6 @@
 
+using Environment;
+
 using UnityEngine;
 
 public class IceGun : BaseWeapons
@@ -101,7 +103,8 @@ public class IceGun : BaseWeapons
         b.SetRotate(Vector2.right);
         // 击中后附带冰冻效果
         b.AddHitAction((b, u) => {
-            u.AddNoCountUniqueStatusAbility(StringManager.Frozen, new FrozenStatusAbility(u, 90, false));
+            // u.AddNoCountUniqueStatusAbility(StringManager.Frozen, new FrozenStatusAbility(u, 90, false));
+            EnvironmentFacade.AddIceDebuff(u, 37.5f);
         });
         GameController.Instance.AddBullet(b);
     }

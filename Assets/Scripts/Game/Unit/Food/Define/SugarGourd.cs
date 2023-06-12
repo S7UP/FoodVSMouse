@@ -177,6 +177,6 @@ public class SugarGourd : FoodUnit
     {
         if (bullet == null || targetUnit == null)
             return;
-        targetUnit.AddNoCountUniqueStatusAbility(StringManager.Frozen, new FrozenStatusAbility(targetUnit, stunTimeArray[mShape], false));
+        targetUnit.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(targetUnit, stunTimeArray[mShape], false));
     }
 }

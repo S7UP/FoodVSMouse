@@ -43,7 +43,17 @@ public class GameFactory : BaseFactory
         if (objectPoolBufferDict.ContainsKey(itemName))
         {
             // »Î∂”
-            objectPoolBufferDict[itemName].Enqueue(new BufferingGameObject() { gameObject = item, timeLeft = BufferTime });
+            bool flag = true;
+            foreach (var buf in objectPoolBufferDict[itemName])
+            {
+                if(buf.gameObject == item)
+                {
+                    flag = false;
+                    break;
+                }
+            }
+            if(flag && !objectPoolDict[itemName].Contains(item))
+                objectPoolBufferDict[itemName].Enqueue(new BufferingGameObject() { gameObject = item, timeLeft = BufferTime });
         }
         else
         {

@@ -1,7 +1,5 @@
 using System.Collections.Generic;
 
-using S7P.Numeric;
-
 using UnityEngine;
 
 public class FoodUnit : BaseUnit
@@ -309,62 +307,6 @@ public class FoodUnit : BaseUnit
 
         // 从当前格子中移除引用
         RemoveFromGrid();
-    }
-
-    private BoolModifier boolModifier = new BoolModifier(true);
-    public override void OnBurnStateEnter()
-    {
-        // 从当前格子中移除引用
-        RemoveFromGrid();
-        // 装上烧毁材质
-        spriteRenderer1.material = GameManager.Instance.GetMaterial("Dissolve2");
-        // 屏蔽星级特效
-        spriteRenderer2.enabled = false;
-        // 禁止播放动画
-        PauseCurrentAnimatorState(boolModifier);
-    }
-
-    public override void DuringBurn(float _Threshold)
-    {
-        spriteRenderer1.material.SetFloat("_Threshold", _Threshold);
-        // 超过1就可以回收了
-        if (_Threshold >= 1.0)
-        {
-            ResumeCurrentAnimatorState(boolModifier);
-            DeathEvent();
-        }
-    }
-
-    /// <summary>
-    /// 摔落死亡瞬间
-    /// </summary>
-    public override void OnDropStateEnter()
-    {
-        // 从当前格子中移除引用
-        RemoveFromGrid();
-        // 屏蔽星级特效
-        spriteRenderer2.enabled = false;
-        // 禁止播放动画
-        PauseCurrentAnimatorState(boolModifier);
-    }
-
-    /// <summary>
-    /// 摔落死亡过程
-    /// </summary>
-    public override void OnDropState(float r)
-    {
-        SetAlpha(1 - r);
-        spriteRenderer1.transform.localPosition = spriteRenderer1.transform.localPosition + 0.25f*MapManager.gridHeight*r*Vector3.down;
-        spriteRenderer1.transform.localScale = Vector3.one * (1-r);
-        // 超过1就可以回收了
-        if (r >= 1.0)
-        {
-            ResumeCurrentAnimatorState(boolModifier);
-            SetAlpha(1);
-            spriteRenderer1.transform.localPosition = Vector3.zero;
-            spriteRenderer1.transform.localScale = Vector3.one;
-            DeathEvent();
-        }
     }
 
     /// <summary>

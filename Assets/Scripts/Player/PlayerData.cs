@@ -26,12 +26,14 @@ public class PlayerData
     public int suit = 0; // 玩家套装种类
     public int[] jewelArray = new int[3] { -1, -1, -1 }; // 宝石（3个）
     public int difficult = 0; // 难度(0,1,2,3)
-    
+
     // 以下是非序列化内容
+    private string currentStageId; // 当前关卡ID（如果是从正常的界面进入则会有这个ID记录，否则为null）
     private BaseStage.StageInfo currentStageInfo;
     private List<AvailableCardInfo> currentSelectedCardInfoList = new List<AvailableCardInfo>(); // 当前携带的卡片组（选卡场景与关卡场景对接）
     private List<char> currentCardKeyList = new List<char>(); // 当前键位控制表
-    private Func<bool> currentStageSuccessRewardFunc; // 当前关卡胜利后的奖励，若为true
+
+
 
     /// <summary>
     /// 从本地加载玩家存档数据
@@ -61,6 +63,7 @@ public class PlayerData
     {
         if(data.version < PlayerManager.version)
         {
+            data.TryLevelUp();
             data.version = PlayerManager.version;
             // 转存
             data.Save();
@@ -339,23 +342,6 @@ public class PlayerData
         jewelArray[index] = value;
         Save();
     }
-    
-    /// <summary>
-    /// 设置当前关卡胜利后要执行的方法（一般用于判断是不是首通，因为首通会给额外经验值或者其他奖励）
-    /// </summary>
-    public void SetCurrentStageSuccessRewardFunc(Func<bool> func)
-    {
-        currentStageSuccessRewardFunc = func;
-    }
-
-    /// <summary>
-    /// 获取当前关卡胜利后要执行的方法（仅在关卡胜利后立即调用，会覆盖默认给经验值的方法）
-    /// </summary>
-    /// <returns></returns>
-    public Func<bool> GetCurrentStageSuccessRewardFunc()
-    {
-        return currentStageSuccessRewardFunc;
-    }
 
     /// <summary>
     /// 获取某关的已选Tag表
@@ -390,11 +376,29 @@ public class PlayerData
             {
                 default: rankRate *= 1;
                     break;
-                case 1: rankRate *= 1.5f;break;
-                case 2: rankRate *= 2f; break;
-                case 3: rankRate *= 3f; break;
+                case 1: rankRate *= 1.25f;break;
+                case 2: rankRate *= 1.5f; break;
+                case 3: rankRate *= 2f; break;
             }
         }
         return rankRate;
+    }
+
+    /// <summary>
+    /// 获取当前关卡的ID
+    /// </summary>
+    /// <returns></returns>
+    public string GetCurrentStageID()
+    {
+        return currentStageId;
+    }
+
+    /// <summary>
+    /// 设置当前关卡ID
+    /// </summary>
+    /// <param name="id"></param>
+    public void SetCurrentStageID(string id)
+    {
+        currentStageId = id;
     }
 }

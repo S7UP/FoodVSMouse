@@ -10,18 +10,21 @@ public class PenguinMouse : MouseUnit
     private ThrowIceBombSkillAbility throwIceBombSkillAbility; // 投掷冰炸弹技能
     private bool isFindTarget;
     private Vector3 targetPosition;
+    private int throwTimeLeft; // 丢炸弹计时器
     public override void MInit()
     {
+        throwTimeLeft = 360;
         isFindTarget = false;
         base.MInit();
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreWaterGridState, new BoolModifier(true));
+        typeAndShapeValue = 1;
     }
 
     public override void MUpdate()
     {
         base.MUpdate();
         // 超过右二列时自动扔炸弹
-        if (!throwIceBombSkillAbility.isThrow && GetColumnIndex() < 7)
+        if (!throwIceBombSkillAbility.isThrow && throwTimeLeft <= 0)
         {
             SearchTargetPosition();
             if (isFindTarget)
@@ -58,7 +61,7 @@ public class PenguinMouse : MouseUnit
     /// </summary>
     public override void OnAttackStateEnter()
     {
-        if (!throwIceBombSkillAbility.isThrow)
+        if (!throwIceBombSkillAbility.isThrow && throwTimeLeft <= 0)
         {
             SearchTargetPosition();
             if (isFindTarget)
@@ -90,6 +93,18 @@ public class PenguinMouse : MouseUnit
     private void ExcuteThrow()
     {
         throwIceBombSkillAbility.SetSkillConditionEnable();
+    }
+
+    public override void OnMoveState()
+    {
+        throwTimeLeft--;
+        base.OnMoveState();
+    }
+
+    public override void OnAttackState()
+    {
+        throwTimeLeft--;
+        base.OnAttackState();
     }
 
     /// <summary>

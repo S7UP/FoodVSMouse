@@ -45,24 +45,10 @@ public class Thundered : BossUnit
     {
         // 切换阶段血量百分比
         AddParamArray("hpRate", new float[] { 0.5f, 0.2f });
-        // 高空压制
-        AddParamArray("t0_0", new float[] { 1, 0.5f,0 }); // 升空时的观察时间
-        AddParamArray("t0_1", new float[] { 4, 3, 3 }); // 移动时间
-        AddParamArray("t0_2", new float[] { 1, 0.5f, 0 }); // 下降前停留时间
-        AddParamArray("dmg0_0", new float[] { 900, 900, 900 }); // 下压伤害
-        AddParamArray("t0_3", new float[] { 3, 1.5f, 0.5f }); // 下压完后原地停滞时间
-        // 导弹攻击
-        AddParamArray("t1_0", new float[] { 1, 0.5f, 0 }); // 升空时的观察时间
-        AddParamArray("t1_1", new float[] { 4, 3, 3 }); // 移动时间
-        AddParamArray("dmg1_0", new float[] { 900, 900, 900 }); // 导弹伤害
-        AddParamArray("t1_2", new float[] { 3, 1.5f, 0.5f }); // 导弹发射完后的停滞时间
-        AddParamArray("stun1_0", new float[] { 9, 9, 9 }); // 导弹对人物的晕眩时间
-        // 毁灭激光
-        AddParamArray("t2_0", new float[] { 1, 0.5f, 0 }); // 升空时的观察时间
-        AddParamArray("t2_1", new float[] { 4, 3, 3 }); // 移动时间
-        AddParamArray("t2_2", new float[] { 9, 6, 3 }); // 激光蓄力时间
-        AddParamArray("dmg2_0", new float[] { 600, 600, 600 }); // 激光伤害
-        AddParamArray("t2_3", new float[] { 2, 2, 2 }); // 激光后原地停滞时间
+        foreach (var keyValuePair in BossManager.GetParamDict(BossNameTypeMap.Thundered, 0))
+        {
+            AddParamArray(keyValuePair.Key, keyValuePair.Value);
+        }
     }
 
     /// <summary>
@@ -109,7 +95,6 @@ public class Thundered : BossUnit
         int t0_0 = Mathf.FloorToInt(GetParamValue("t0_0", mHertIndex)*60); // 升空时的观察时间
         int t0_1 = Mathf.FloorToInt(GetParamValue("t0_1", mHertIndex)*60); // 移动时间
         int t0_2 = Mathf.FloorToInt(GetParamValue("t0_2", mHertIndex)*60); // 下降前停留时间
-        float dmg0_0 = GetParamValue("dmg0_0", mHertIndex); // 下压伤害
         int t0_3 = Mathf.FloorToInt(GetParamValue("t0_3", mHertIndex)*60); // 下压完后原地停滞时间
         int timeLeft = 0;
         Vector2 startPos = Vector2.zero; // 起始点
@@ -209,21 +194,19 @@ public class Thundered : BossUnit
                     RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position + 0.5f*new Vector3(MapManager.gridWidth, MapManager.gridHeight), 1.75f, 1.75f, "EnemyAllyGrid");
                     r.SetInstantaneous();
                     r.isAffectMouse = true;
-                    r.SetOnEnemyEnterAction((m) => {
-                        new DamageAction(CombatAction.ActionType.CauseDamage, this, m, dmg0_0 * (mCurrentAttack / 10)).ApplyAction();
+                    r.SetOnEnemyEnterAction((u) => {
+                        if (u.IsBoss())
+                            return;
+                        UnitManager.Execute(this, u);
                     });
+
                     r.isAffectGrid = true;
                     r.SetOnGridEnterAction((g) => {
-                        BaseUnit u = g.GetHighestAttackPriorityUnit(this);
-                        if(u !=null && !(u is CharacterUnit))
-                        {
-                            float dmg = u.mCurrentHp;
-                            DamageAction DmgAction = new DamageAction(CombatAction.ActionType.RealDamage, this, u, dmg);
-                            DmgAction.ApplyAction();
-                            new DamageAction(CombatAction.ActionType.CauseDamage, null, this, DmgAction.RealCauseValue).ApplyAction();
-                        }
+                        g.TakeAction(this, (u) => {
+                            DamageAction action = UnitManager.Execute(this, u);
+                            new DamageAction(CombatAction.ActionType.CauseDamage, this, this, action.RealCauseValue * GetParamValue("dmg_trans0") / 100).ApplyAction();
+                        }, false);
                     });
-                    r.AddExcludeMouseUnit(this); // 自身要被排除在外，不然伤敌八百自损一千
                     GameController.Instance.AddAreaEffectExecution(r);
                 }
                 else if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
@@ -462,9 +445,7 @@ public class Thundered : BossUnit
     /// </summary>
     private void CreateMissile(Vector2 targetpos)
     {
-        float dmg1_0 = GetParamValue("dmg1_0", mHertIndex); // 导弹伤害
         int stun1_0 = Mathf.FloorToInt(GetParamValue("stun1_0", mHertIndex) * 60); // 对人物的晕眩时间
-        float dmg = dmg1_0 * (mCurrentAttack / 10);
         EnemyBullet b = EnemyBullet.GetInstance(GameManager.Instance.GetRuntimeAnimatorController("Boss/4/Missile"), this, 0);
         // 修改攻击优先级，这种投掷攻击优先攻击护罩里的东西
         b.GetTargetFunc = (unit) => {
@@ -483,7 +464,8 @@ public class Thundered : BossUnit
             }
             else
             {
-                new DamageAction(CombatAction.ActionType.CauseDamage, this, u, dmg).ApplyAction();
+                if (u != null && u.IsAlive())
+                    BurnManager.BurnDamage(this, u);
             }
         });
         TaskManager.AddParabolaTask(b, TransManager.TranToVelocity(48f), 1.5f, transform.position, targetpos, true);
@@ -500,7 +482,6 @@ public class Thundered : BossUnit
         int t2_0 = Mathf.FloorToInt(GetParamValue("t2_0", mHertIndex)*60); // 升空时的观察时间
         int t2_1 = Mathf.FloorToInt(GetParamValue("t2_1", mHertIndex)*60); // 移动时间
         int t2_2 = Mathf.FloorToInt(GetParamValue("t2_2", mHertIndex)*60); // 激光蓄力时间
-        float dmg2_0 = GetParamValue("dmg2_0", mHertIndex); // 激光伤害
         int t2_3 = Mathf.FloorToInt(GetParamValue("t2_3", mHertIndex)*60); // 激光后原地停滞时间
 
         bool isFly = false; // 是否处于飞行状态
@@ -619,21 +600,7 @@ public class Thundered : BossUnit
                         });
                         r.AddExcludeMouseUnit(this);
                         GameController.Instance.AddAreaEffectExecution(r);
-
-                        //// 对友方单位
-                        //BombAreaEffectExecution bombEffect = BombAreaEffectExecution.GetInstance(this, dmg2_0 * mCurrentAttack / 10, transform.position, 9, 0.5f, GridDamageAllyRange.Attackable, GridDamageAllyType.AscendingOrder);
-                        //bombEffect.transform.position = new Vector2(MapManager.GetColumnX(4.0f), MapManager.GetRowY(GetRowIndex()));
-                        //GameController.Instance.AddAreaEffectExecution(bombEffect);
                     }
-
-                    //{
-                    //    // 对敌方单位
-                    //    BombAreaEffectExecution bombEffect = BombAreaEffectExecution.GetInstance(this, dmg2_0 * mCurrentAttack / 10, transform.position, 9, 1);
-                    //    bombEffect.isAffectMouse = true;
-                    //    bombEffect.transform.position = new Vector2(MapManager.GetColumnX(4.0f), MapManager.GetRowY(GetRowIndex()));
-                    //    bombEffect.AddExcludeMouseUnit(this);
-                    //    GameController.Instance.AddAreaEffectExecution(bombEffect);
-                    //}
 
                     animatorController.Play("Idle0", true);
                     timeLeft = t2_3;

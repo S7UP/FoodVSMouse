@@ -81,7 +81,7 @@ public class BossHpBar : BaseProgressBar
     {
         base.PInit();
         mTotalBarNumber = 0; // 一共有几管血
-        mCurrentBarNumber = 0; // 当前有几管血
+        mCurrentBarNumber = -1; // 当前有几管血
         hpRateArray = null;
 
         mVirtualHpBarPercent1 = 0; // 下层虚血百分比
@@ -111,6 +111,8 @@ public class BossHpBar : BaseProgressBar
             Debug.LogWarning("设置了无效的目标！");
             return;
         }
+        PInit();
+
         mUnit = unit;
         mTotalBarNumber = 1;
         float[] arr = unit.GetParamArray("hpRate");
@@ -125,27 +127,6 @@ public class BossHpBar : BaseProgressBar
         for (int i = 0; i < mTotalBarNumber; i++)
         {
             hpRateArray[i] = arr[i];
-        }
-    }
-
-    /// <summary>
-    /// 根据目标的最大生命值来计算血条管数
-    /// </summary>
-    private void CalculateBarNumber()
-    {
-        // 如果没有预设血条数，则自动计算
-        if(mTotalBarNumber <= 0)
-        {
-            if (mUnit.mMaxHp <= 10000.0)
-            {
-                // 目标最大生命值小于等于1万时只启用一管血
-                mTotalBarNumber = 1;
-            }
-            else
-            {
-                // 否则启用 目标 (最大生命值/10000)的值向上取整管血
-                mTotalBarNumber = Mathf.CeilToInt(mUnit.mMaxHp / 10000);
-            }
         }
     }
 
@@ -169,12 +150,10 @@ public class BossHpBar : BaseProgressBar
     }
 
     /// <summary>
-    /// 计算当前剩余血条数，向上取整，即最后一管血返回的值为1
+    /// 计算当前剩余血条数
     /// </summary>
     private int CalculateCurrentBarNum()
     {
-        // return Mathf.CeilToInt(mUnit.mCurrentHp / mHpPerBar);
-        //return mTotalBarNumber - mUnit.GetStage() + 1;
         return mTotalBarNumber - CalculateStage();
     }
 
@@ -216,6 +195,8 @@ public class BossHpBar : BaseProgressBar
     /// </summary>
     public override void PUpdate()
     {
+        if (!isActiveAndEnabled)
+            return;
         base.PUpdate();
         if (HasTarget())
         {
@@ -302,31 +283,27 @@ public class BossHpBar : BaseProgressBar
             Img_BossVirtualHp1.transform.localScale = new Vector3(mVirtualHpBarPercent1, 1, 1);
             Img_BossVirtualHp2.transform.localScale = new Vector3(mVirtualHpBarPercent2, 1, 1);
 
-
-            if (!HasTarget())
+            // 更新剩余血量百分比显示
+            Tex_LifePercent.text = mUnit.mCurrentHp.ToString("#0") + " / " + mUnit.mMaxHp.ToString("#0") + "       " + (Mathf.Max(TargetUnit.GetHeathPercent(), 0) * 100).ToString("#0.00") + "%";
+            if (mUnit.mCurrentHp <= 0)
             {
                 // 没血量时都隐藏就行了
                 Img_BossHp1.SetActive(false);
                 Img_BossHp2.SetActive(false);
                 Img_BossVirtualHp1.SetActive(false);
                 Img_BossVirtualHp2.SetActive(false);
-                // 更新剩余血量百分比显示
-                Tex_LifePercent.text = "";
-                mUnit = null;
             }
-            else
-            {
-                // 更新剩余血量百分比显示
-                Tex_LifePercent.text = mUnit.mCurrentHp.ToString("#0") + " / " + mUnit.mMaxHp.ToString("#0") + "       " + (Mathf.Max(TargetUnit.GetHeathPercent(), 0) * 100).ToString("#0.00") + "%";
-                if(mUnit.mCurrentHp <= 0)
-                {
-                    // 没血量时都隐藏就行了
-                    Img_BossHp1.SetActive(false);
-                    Img_BossHp2.SetActive(false);
-                    Img_BossVirtualHp1.SetActive(false);
-                    Img_BossVirtualHp2.SetActive(false);
-                }
-            }
+        }
+        else
+        {
+            // 没血量时都隐藏就行了
+            Img_BossHp1.SetActive(false);
+            Img_BossHp2.SetActive(false);
+            Img_BossVirtualHp1.SetActive(false);
+            Img_BossVirtualHp2.SetActive(false);
+            // 更新剩余血量百分比显示
+            Tex_LifePercent.text = "";
+            mUnit = null;
         }
     }
 

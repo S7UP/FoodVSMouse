@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 
+using Environment;
+
 using S7P.Numeric;
 
 using UnityEngine;
@@ -196,21 +198,21 @@ public class HellShiter : BossUnit
             GhostFireDeathAction(m.transform.position, m.aliveTime);
         };
         m.AddBeforeDeathEvent(deathAction);
-        m.AddBeforeBurnEvent(deathAction);
         GameController.Instance.AddMouseUnit(m);
         return m;
     }
 
     private void GhostFireDeathAction(Vector2 pos, int aliveTime)
     {
-        int time = Mathf.FloorToInt(60*GetParamValue("FrozenTime", mHertIndex));
+        int frozenValue = Mathf.FloorToInt(GetParamValue("FrozenValue", mHertIndex));
         RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(pos, 3, 3, "BothCollide");
         r.SetInstantaneous();
         r.isAffectFood = true;
         r.isAffectMouse = true;
         r.isAffectCharacter = true;
         Action<BaseUnit> frozenAction = (u) => {
-            u.AddNoCountUniqueStatusAbility(StringManager.Frozen, new FrozenStatusAbility(u, time, false));
+            //u.AddNoCountUniqueStatusAbility(StringManager.Frozen, new FrozenStatusAbility(u, time, false));
+            EnvironmentFacade.AddIceDebuff(u, frozenValue);
         };
         r.SetOnFoodEnterAction(frozenAction);
         r.SetOnEnemyEnterAction(frozenAction);
@@ -405,7 +407,6 @@ public class HellShiter : BossUnit
             }
         };
         ghostFire.AddBeforeDeathEvent(action);
-        ghostFire.AddBeforeBurnEvent(action);
         CustomizationTask t = new CustomizationTask();
         t.AddTaskFunc(delegate {
             if (u.IsAlive())
@@ -522,7 +523,7 @@ public class HellShiter : BossUnit
         });
         t.AddOnExitAction(delegate {
             new DamageAction(CombatAction.ActionType.CauseDamage, null, this, reboundDamage).ApplyAction();
-            e.MDestory();
+            e.ExecuteDeath();
         });
         e.AddTask(t);
         GameController.Instance.AddEffect(e);
@@ -675,10 +676,6 @@ public class HellShiter : BossUnit
                     left--;
                     if(left <= 0)
                     {
-                        //foreach (var f in r.foodUnitList)
-                        //{
-                        //    new DamageAction(CombatAction.ActionType.CauseDamage, null, f, Mathf.Max(min_dmg, percent_dmg*f.mMaxHp)).ApplyAction();
-                        //}
                         foreach (var g in r.gridList)
                         {
                             g.TakeAction(null, (u) => { new DamageAction(CombatAction.ActionType.CauseDamage, null, u, Mathf.Max(min_dmg, percent_dmg * u.mMaxHp)).ApplyAction(); }, false);

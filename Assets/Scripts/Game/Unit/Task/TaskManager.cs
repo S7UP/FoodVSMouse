@@ -33,7 +33,7 @@ public class TaskManager
         CustomizationTask t = new CustomizationTask();
         t.AddOnEnterAction(delegate {
             master.transform.position = firstPosition;
-            totalTimer = Mathf.CeilToInt((targetPosition - firstPosition).magnitude / horizontalVelocity);
+            totalTimer = Mathf.Max(4, Mathf.CeilToInt((targetPosition - firstPosition).magnitude / horizontalVelocity));
             // 计算得出重力加速度（向下）
             g = 8 * height / (totalTimer * totalTimer);
             // 为垂直方向的初速度赋值
@@ -199,7 +199,7 @@ public class TaskManager
             master.NumericBox.IntDict[StringManager.Flying].AddAddModifier(flyIntModifier);
 
             master.transform.position = firstPosition;
-            totalTimer = Mathf.CeilToInt((targetPosition - firstPosition).magnitude / horizontalVelocity);
+            totalTimer = Mathf.Max(4, Mathf.CeilToInt((targetPosition - firstPosition).magnitude / horizontalVelocity));
             // 计算得出重力加速度（向下）
             g = 8 * height / (totalTimer * totalTimer);
             // 为垂直方向的初速度赋值

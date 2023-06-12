@@ -71,5 +71,20 @@ public class FloatCollectorComponent : IComponent
         if (CollectorDict.ContainsKey(key))
             CollectorDict.Remove(key);
     }
+
+    public void AddModifier(string key, FloatModifier mod)
+    {
+        if (!HasCollector(key))
+            AddCollector(key, new FloatModifierCollector());
+        GetCollector(key).AddModifier(mod);
+    }
+
+    public void RemoveModifier(string key, FloatModifier mod)
+    {
+        if (HasCollector(key))
+        {
+            GetCollector(key).RemoveModifier(mod);
+        }
+    }
     #endregion
 }

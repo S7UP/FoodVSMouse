@@ -27,9 +27,9 @@ public class Mole : MouseUnit
         // 初始在地下时免疫冰冻效果
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozen, IgnoreFrozen);
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozenSlowDown, IgnoreFrozenSlowDown);
-        // 初始在地下时增加基础移速300%，锯刀狂鼠为500%
+        // 初始在地下时增加基础移速300%
         if (mShape==2 || mShape == 5)
-            speedModifier = new FloatModifier(500f);
+            speedModifier = new FloatModifier(300f);
         else
             speedModifier = new FloatModifier(300f);
         NumericBox.MoveSpeed.AddPctAddModifier(speedModifier);

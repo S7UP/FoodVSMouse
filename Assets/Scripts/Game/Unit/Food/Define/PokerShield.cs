@@ -91,19 +91,6 @@ public class PokerShield : FoodUnit
         }
     }
 
-    public override void OnBurnStateEnter()
-    {
-        // 后面也要装上烧毁材质
-        Spr_Inside.material = GameManager.Instance.GetMaterial("Dissolve2");
-        base.OnBurnStateEnter();
-    }
-
-    public override void DuringBurn(float _Threshold)
-    {
-        Spr_Inside.material.SetFloat("_Threshold", _Threshold);
-        base.DuringBurn(_Threshold);
-    }
-
     /// <summary>
     /// 更新特殊组件层级，在父类中该方法会被调用
     /// </summary>

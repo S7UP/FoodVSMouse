@@ -97,12 +97,12 @@ public class WonderLandFairy : MouseUnit
 
     private void EnterFogMode()
     {
-        if (!IsContainEffect(EffectType.Conceal))
+        if (!mEffectController.IsContainEffect("Conceal"))
         {
             BaseEffect e = BaseEffect.CreateInstance(GameManager.Instance.GetRuntimeAnimatorController("Mouse/35/Fog"), "Appear", "Idle", "Disappear", true);
             e.SetSpriteRendererSorting("Effect", 1);
             GameController.Instance.AddEffect(e);
-            AddEffectToDict(EffectType.Conceal, e, new Vector2(0, 0.5f*MapManager.gridWidth));
+            mEffectController.AddEffectToDict("Conceal", e, new Vector2(0, 0.5f*MapManager.gridWidth));
         }
         NumericBox.MoveSpeed.RemovePctAddModifier(speedModifier);
         NumericBox.MoveSpeed.AddPctAddModifier(speedModifier);
@@ -110,9 +110,9 @@ public class WonderLandFairy : MouseUnit
 
     private void ExitFogMode()
     {
-        if (IsContainEffect(EffectType.Conceal))
+        if (mEffectController.IsContainEffect("Conceal"))
         {
-            RemoveEffectFromDict(EffectType.Conceal);
+            mEffectController.RemoveEffectFromDict("Conceal");
         }
         NumericBox.MoveSpeed.RemovePctAddModifier(speedModifier);
     }

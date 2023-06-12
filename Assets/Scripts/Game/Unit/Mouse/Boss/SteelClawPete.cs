@@ -105,9 +105,7 @@ public class SteelClawPete : BossUnit
         AddParamArray("hpRate", new float[] { 0.5f, 0.2f });
         // 读取参数
         foreach (var keyValuePair in BossManager.GetParamDict(BossNameTypeMap.SteelClawPete, 0))
-        {
             AddParamArray(keyValuePair.Key, keyValuePair.Value);
-        }
     }
 
     /// <summary>
@@ -135,6 +133,7 @@ public class SteelClawPete : BossUnit
         bool isTrigger = false;
 
         MouseModel m = MouseModel.GetInstance(Trap_AnimatorController);
+        trapList.Add(m);
         m.transform.position = g.transform.position;
         m.SetBaseAttribute(1, 10, 1.0f, 0, 100, 0.5f, 0);
         StatusManager.AddIgnoreSettleDownBuff(m, new BoolModifier(true));
@@ -142,6 +141,7 @@ public class SteelClawPete : BossUnit
         m.isIgnoreRecordDamage = true;
         m.AddCanBeSelectedAsTargetFunc(delegate { return false; });
         m.AddCanBlockFunc(delegate { return false; });
+        m.AddCanHitFunc(delegate { return false; });
         m.MoveClipName = "Prepare";
         m.DieClipName = "Attack";
         m.IdleClipName = "Prepare";
@@ -277,14 +277,10 @@ public class SteelClawPete : BossUnit
             }
             else
             {
-                new DamageAction(CombatAction.ActionType.BurnDamage, this, u, GetParamValue("dmg2", mHertIndex)).ApplyAction();
+                // new DamageAction(CombatAction.ActionType.BurnDamage, this, u, GetParamValue("dmg2", mHertIndex)).ApplyAction();
+                if(u!=null && u.IsAlive())
+                    BurnManager.BurnDamage(this, u);
             }
-            // 对一格老鼠造成爆破灰烬效果
-            //BombAreaEffectExecution bomb = BombAreaEffectExecution.GetInstance(this, GetParamValue("dmg2", mHertIndex), b.transform.position, 1, 1);
-            //bomb.isAffectMouse = true;
-            //bomb.isAffectFood = false;
-            //bomb.isAffectCharacter = false;
-            //GameController.Instance.AddAreaEffectExecution(bomb);
             RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(b.transform.position, 1, 1, "ItemCollideEnemy");
             r.isAffectMouse = true;
             r.SetInstantaneous();
@@ -625,17 +621,20 @@ public class SteelClawPete : BossUnit
                     {
                         RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 2.5f, 2.5f, "EnemyAllyGrid");
                         r.SetInstantaneous();
-                        r.isAffectFood = false;
-                        r.SetAffectHeight(0);
                         r.isAffectMouse = true;
-                        r.SetOnEnemyEnterAction((m)=> {
-                            new DamageAction(CombatAction.ActionType.CauseDamage, this, m, dmg).ApplyAction();
+                        r.SetOnEnemyEnterAction((u) => {
+                            if (u.IsBoss())
+                                return;
+                            UnitManager.Execute(this, u);
                         });
+
                         r.isAffectGrid = true;
                         r.SetOnGridEnterAction((g) => {
-                            g.TakeDamage(this, dmg, false);
+                            g.TakeAction(this, (u) => {
+                                DamageAction action = UnitManager.Execute(this, u);
+                                new DamageAction(CombatAction.ActionType.CauseDamage, this, this, action.RealCauseValue * GetParamValue("dmg_trans0") / 100).ApplyAction();
+                            }, false);
                         });
-                        r.isAffectCharacter = false;
                         GameController.Instance.AddAreaEffectExecution(r);
                     }
                     animatorController.Play("PreCast");

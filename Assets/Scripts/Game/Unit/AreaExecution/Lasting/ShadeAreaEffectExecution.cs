@@ -193,5 +193,15 @@ public class ShadeAreaEffectExecution : RetangleAreaEffectExecution
         {
             count--;
         }
+
+        public void ShutDown()
+        {
+            
+        }
+
+        public bool IsClearWhenDie()
+        {
+            return true;
+        }
     }
 }

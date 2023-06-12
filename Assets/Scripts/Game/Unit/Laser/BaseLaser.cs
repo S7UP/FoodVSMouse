@@ -147,10 +147,10 @@ public class BaseLaser : MonoBehaviour, IGameControllerMember
             TakeDamage(u);
 
             // 处理击中特效
-            if (targetNextHitEffectTimeDict.ContainsKey(u) && targetNextHitEffectTimeDict[u] <= 0 && !u.IsContainEffect(laserHitKey))
+            if (targetNextHitEffectTimeDict.ContainsKey(u) && targetNextHitEffectTimeDict[u] <= 0 && !u.mEffectController.IsContainEffect(laserHitKey))
             {
                 BaseEffect e = BaseEffect.CreateInstance(HitRuntimeAnimatorController, null, "Idle", null, false);
-                u.AddEffectToDict(laserHitKey, e, rs.point - (Vector2)u.transform.position);
+                u.mEffectController.AddEffectToDict(laserHitKey, e, rs.point - (Vector2)u.transform.position);
                 targetNextHitEffectTimeDict[u] += hitEffectInterval;
             }
         }

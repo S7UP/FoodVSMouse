@@ -8,12 +8,10 @@ public class StringManager
     public const string SelectPanel = "SelectPanel";
     public const string MainPanel = "MainPanel";
     public const string EncyclopediaPanel = "EncyclopediaPanel";
+    public const string BigChapterPanel = "BigChapterPanel";
     public const string PlayerInfoPanel = "PlayerInfoPanel";
-    public const string MainlinePanel = "MainlinePanel";
     public const string StageConfigPanel = "StageConfigPanel";
     public const string RankSelectPanel = "RankSelectPanel";
-    public const string WarriorChallengePanel = "WarriorChallengePanel";
-    public const string SpurlinePanel = "SpurlinePanel";
     public const string StaffPanel = "StaffPanel";
 
     // ≥£”√±Í«©

@@ -1,5 +1,7 @@
 using System;
 
+using Environment;
+
 using S7P.Numeric;
 
 using UnityEngine;
@@ -245,7 +247,8 @@ public class IceEggPitcher : FoodUnit
         r.SetAffectHeight(0);
         r.SetInstantaneous();
         r.SetOnEnemyEnterAction((u) => {
-            u.AddStatusAbility(new FrozenSlowStatusAbility(-50, u, 180));
+            //u.AddStatusAbility(new FrozenSlowStatusAbility(-50, u, 180));
+            EnvironmentFacade.AddIceDebuff(u, 30);
             DamageAction d = new DamageAction(CombatAction.ActionType.CauseDamage, this, u, aoeDamageRate * ori_dmg);
             d.AddDamageType(DamageAction.DamageType.AOE);
             d.ApplyAction();

@@ -27,7 +27,7 @@ public class GameNormalSceneState : BaseSceneState
         // 清空游戏对象工厂的所有对象
         GameManager.Instance.ClearGameObjectFactory(FactoryType.GameFactory);
         // 清空通关后的奖励设置
-        PlayerData.GetInstance().SetCurrentStageSuccessRewardFunc(null);
+        PlayerData.GetInstance().SetCurrentStageID(null);
         base.ExitScene();
     }
 }

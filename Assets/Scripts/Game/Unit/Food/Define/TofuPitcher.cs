@@ -395,7 +395,7 @@ public class TofuPitcher : FoodUnit
                 e.SetSpriteRendererSorting(name, order + 4);
             }
             GameController.Instance.AddEffect(e);
-            unit.AddEffectToDict(DebuffName, e, 0.3f*Vector2.up);
+            unit.mEffectController.AddEffectToDict(DebuffName, e, 0.3f*Vector2.up);
         }
 
         public void OnUpdate()
@@ -442,13 +442,23 @@ public class TofuPitcher : FoodUnit
         public void OnExit()
         {
             // 移除中毒特效
-            unit.RemoveEffectFromDict(DebuffName);
+            unit.mEffectController.RemoveEffectFromDict(DebuffName);
         }
 
         // 叠加一层效果
         public void AddBuff(float dmg, int timeLeft)
         {
             rList.Add(new Recorder(dmg, timeLeft));
+        }
+
+        public void ShutDown()
+        {
+            
+        }
+
+        public bool IsClearWhenDie()
+        {
+            return true;
         }
     }
 }

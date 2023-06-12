@@ -85,7 +85,7 @@ public class NormalWaterMouse : MouseUnit, IInWater
 
     public override void AfterDeath()
     {
-        EffectManager.RemoveWaterWaveEffectFromUnit(this);
+        // EffectManager.RemoveWaterWaveEffectFromUnit(this);
         base.AfterDeath();
     }
 
