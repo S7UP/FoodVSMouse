@@ -468,7 +468,7 @@ public class Thundered : BossUnit
                     BurnManager.BurnDamage(this, u);
             }
         });
-        TaskManager.AddParabolaTask(b, TransManager.TranToVelocity(48f), 1.5f, transform.position, targetpos, true);
+        b.taskController.AddTask(TaskManager.GetParabolaTask(b, TransManager.TranToVelocity(48f), 1.5f, transform.position, targetpos, true));
         GameController.Instance.AddBullet(b);
     }
 
@@ -654,7 +654,11 @@ public class Thundered : BossUnit
         if (list.Count > 0)
         {
             rowIndex = Mathf.Max(1, Mathf.Min(6, list[GetRandomNext(0, list.Count)]));
-            colIndex = Mathf.Max(0, Mathf.Min(5, FoodManager.GetSpecificRowFarthestRightCanTargetedAlly(rowIndex, float.MinValue, MapManager.GetColumnX(6.5f), false).GetColumnIndex() - 1));
+            BaseUnit unit = FoodManager.GetSpecificRowFarthestRightCanTargetedAlly(rowIndex, float.MinValue, MapManager.GetColumnX(6.5f), false);
+            if (unit !=null)
+                colIndex = Mathf.Max(0, Mathf.Min(5, unit.GetColumnIndex() - 1));
+            else
+                colIndex = 5;
         }
         else
         {

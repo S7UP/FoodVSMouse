@@ -16,7 +16,7 @@ public class SoundsManager
         {
             SoundsInfo info = new SoundsInfo(csv.GetValue(i, 0), csv.GetValue(i, 1), csv.GetValue(i, 2), csv.GetValue(i, 3), float.Parse(csv.GetValue(i, 4)));
             soundsInfoList.Add(info);
-            yield return AudioSourceManager.AsyncLoadEffectMusic(info.refenceName);
+            yield return AudioSourceController.AsyncLoadEffectMusic(info.refenceName);
         }
     }
 

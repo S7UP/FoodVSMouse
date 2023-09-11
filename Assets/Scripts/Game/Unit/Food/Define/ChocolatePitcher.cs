@@ -151,7 +151,7 @@ public class ChocolatePitcher : FoodUnit
     /// </summary>
     public override void ExecuteDamage()
     {
-        GameManager.Instance.audioSourceManager.PlayEffectMusic("Throw" + GameManager.Instance.rand.Next(0, 2));
+        GameManager.Instance.audioSourceController.PlayEffectMusic("Throw" + GameManager.Instance.rand.Next(0, 2));
         int rowIndex = GetRowIndex();
         if(bigLeft > 0)
         {

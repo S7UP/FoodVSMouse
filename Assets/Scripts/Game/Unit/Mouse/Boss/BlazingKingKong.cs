@@ -104,7 +104,7 @@ public class BlazingKingKong : BossUnit
         if (Julie != null && Julie.IsAlive())
             Julie.ExecuteDeath();
 
-        if(GetParamValue("lava_disappear4")==1)
+        if(GetParamValue("lava_disappear4") == 1.0f)
             foreach (var lava in lavaList)
                 lava.SetDisappear();
         lavaList.Clear();
@@ -195,11 +195,12 @@ public class BlazingKingKong : BossUnit
         });
         lava.AddTask(t);
         GameController.Instance.AddAreaEffectExecution(lava);
+        lavaList.Add(lava);
     }
 
     private void AddFireBulletMoveTask(BaseBullet b, Vector2 firstPosition, Vector2 targetPosition)
     {
-        TaskManager.AddParabolaTask(b, (targetPosition - firstPosition).magnitude/60, MapManager.gridHeight, firstPosition, targetPosition, true);
+        b.taskController.AddTask(TaskManager.GetParabolaTask(b, (targetPosition - firstPosition).magnitude / 60, MapManager.gridHeight, firstPosition, targetPosition, true));
     }
     #endregion
 
@@ -210,6 +211,9 @@ public class BlazingKingKong : BossUnit
     /// <param name="info"></param>
     private CompoundSkillAbility SKill0Init(SkillAbility.SkillAbilityInfo info)
     {
+        float[] right_colArray = GetParamArray("right_col0");
+        float rowIndex = GetParamValue("row0") - 1;
+
         float dmg0 = GetParamValue("dmg0_0");
         float dmg1 = GetParamValue("dmg0_1");
         int stun_time = Mathf.FloorToInt(60 * GetParamValue("stun_time0", mHertIndex));
@@ -218,7 +222,10 @@ public class BlazingKingKong : BossUnit
         int interval = Mathf.FloorToInt(60 * GetParamValue("interval0", mHertIndex));
         int wait = Mathf.FloorToInt(60 * GetParamValue("wait0", mHertIndex));
 
+        float size = GetParamValue("size0");
+
         FloatModifier mod = new FloatModifier(0);
+        BoolModifier mod2 = new BoolModifier(true);
         int timeLeft = interval;
         int totalTimeLeft = wait;
 
@@ -229,6 +236,7 @@ public class BlazingKingKong : BossUnit
         {
             OpenCollision();
             SetAlpha(1);
+            NumericBox.AddDecideModifierToBoolDict(StringManager.Invincibility, mod2);
         };
         {
             // 移动
@@ -255,7 +263,10 @@ public class BlazingKingKong : BossUnit
                         AddSpriteOffsetY(mod);
                     }, delegate { animatorController.Play("Idle", true); });
                     task.AddTimeTaskFunc(120);
-                    task.AddTimeTaskFunc(45, delegate { transform.position = MapManager.GetGridLocalPosition(6, 3); }, 
+                    task.AddTimeTaskFunc(45, delegate {
+                        float colIndex = 9 - right_colArray[GetRandomNext(0, right_colArray.Length)];
+                        transform.position = MapManager.GetGridLocalPosition(colIndex, rowIndex);
+                    }, 
                         (leftTime, totalTime) => {
                         float rate = (float)leftTime / totalTime;
                         mod.Value = MapManager.gridHeight * 20 * rate;
@@ -263,9 +274,10 @@ public class BlazingKingKong : BossUnit
                         AddSpriteOffsetY(mod);
                     }, null);
                     task.AddOnExitAction(delegate {
+                        NumericBox.RemoveDecideModifierToBoolDict(StringManager.Invincibility, mod2);
                         OpenCollision();
                         RemoveSpriteOffsetY(mod);
-                        S0CreateDamageEffectExecution(transform.position, 4.5f, 4.5f);
+                        S0CreateDamageEffectExecution(transform.position, size-0.5f, size-0.5f);
                         S0CreateStunEffectExecution(MapManager.GetGridLocalPosition(4, 3), 10, 7, stun_time);
                         S0CreateFireBullet(num0);
                     });
@@ -588,7 +600,7 @@ public class BlazingKingKong : BossUnit
     private void CreateS1Boss0(float dmg_trans)
     {
         BossUnit b = GameController.Instance.CreateBossUnit(6, 3, new BaseEnemyGroup.EnemyInfo { type = (int)BossNameTypeMap.SteelClawPete,shape = 0 }, mMaxHp);
-        b.transform.position = MapManager.GetGridLocalPosition(6, 3);
+        b.transform.position = transform.position;
         b.SetUseDefaultRecieveDamageActionMethod(false); // 不受正常受击逻辑
         // 受击伤害传递
         b.actionPointController.AddListener(ActionPointType.WhenReceiveDamage, (c) => {
@@ -612,7 +624,7 @@ public class BlazingKingKong : BossUnit
     private void CreateS1Boss1(float dmg_trans)
     {
         BossUnit b = GameController.Instance.CreateBossUnit(6, 1, new BaseEnemyGroup.EnemyInfo { type = (int)BossNameTypeMap.MistyJulie, shape = 0 }, mMaxHp);
-        b.transform.position = MapManager.GetGridLocalPosition(6, 1.5f);
+        b.transform.position = transform.position + new Vector3(0, MapManager.gridHeight*1.5f);
         b.SetUseDefaultRecieveDamageActionMethod(false); // 不受正常受击逻辑
         // 受击伤害传递
         b.actionPointController.AddListener(ActionPointType.WhenReceiveDamage, (c) => {
@@ -662,6 +674,9 @@ public class BlazingKingKong : BossUnit
     /// <param name="info"></param>
     private CompoundSkillAbility SKill2Init(SkillAbility.SkillAbilityInfo info)
     {
+        float[] right_colArray = GetParamArray("right_col2");
+        float rowIndex = GetParamValue("row2") - 1;
+
         float burn_rate = 1 - GetParamValue("burn_defence2") * 0.01f;
         float dmg_rate = 1 - GetParamValue("normal_defence2") * 0.01f;
         int reborn_time = Mathf.FloorToInt(60 * GetParamValue("reborn_time2"));
@@ -677,7 +692,8 @@ public class BlazingKingKong : BossUnit
         c.BeforeSpellFunc = delegate
         {
             NumericBox.AddDecideModifierToBoolDict(StringManager.Invincibility, mod);
-            transform.position = MapManager.GetGridLocalPosition(6, 3);
+            float colIndex = 9 - right_colArray[GetRandomNext(0, right_colArray.Length)];
+            transform.position = MapManager.GetGridLocalPosition(colIndex, rowIndex);
             OpenCollision();
             SetAlpha(1);
         };
@@ -710,7 +726,11 @@ public class BlazingKingKong : BossUnit
                 c.AddCreateTaskFunc(delegate {
                     CustomizationTask task;
                     CompoundSkillAbilityManager.GetWaitClipTask(animatorController, "PostCast", out task);
+                    task.AddOnEnterAction(delegate {
+                        NumericBox.AddDecideModifierToBoolDict(StringManager.Invincibility, mod);
+                    });
                     task.AddOnExitAction(delegate {
+                        NumericBox.RemoveDecideModifierToBoolDict(StringManager.Invincibility, mod);
                         animatorController.Play("Idle", true);
                         float[] arr = GetParamArray("hpRate");
                         if (arr.Length > 2)
@@ -1050,7 +1070,7 @@ public class BlazingKingKong : BossUnit
     private void CreateS3Boss0(float dmg_trans)
     {
         BossUnit b = GameController.Instance.CreateBossUnit(6, 3, new BaseEnemyGroup.EnemyInfo { type = (int)BossNameTypeMap.SteelClawPete, shape = 0 }, mMaxHp);
-        b.transform.position = MapManager.GetGridLocalPosition(6, 3);
+        b.transform.position = transform.position;
         b.SetUseDefaultRecieveDamageActionMethod(false); // 不受正常受击逻辑
         // 受击伤害传递
         b.actionPointController.AddListener(ActionPointType.WhenReceiveDamage, (c) => {
@@ -1076,7 +1096,7 @@ public class BlazingKingKong : BossUnit
     private void CreateS3Boss1(float dmg_trans)
     {
         BossUnit b = GameController.Instance.CreateBossUnit(6, 1, new BaseEnemyGroup.EnemyInfo { type = (int)BossNameTypeMap.MistyJulie, shape = 0 }, mMaxHp);
-        b.transform.position = MapManager.GetGridLocalPosition(6, 1.5f);
+        b.transform.position = transform.position + new Vector3(0, MapManager.gridHeight * 1.5f);
         b.SetUseDefaultRecieveDamageActionMethod(false); // 不受正常受击逻辑
         // 受击伤害传递
         b.actionPointController.AddListener(ActionPointType.WhenReceiveDamage, (c) => {
@@ -1107,6 +1127,9 @@ public class BlazingKingKong : BossUnit
     /// <param name="info"></param>
     private CompoundSkillAbility SKill4Init(SkillAbility.SkillAbilityInfo info)
     {
+        float[] right_colArray = GetParamArray("right_col4");
+        float rowIndex = GetParamValue("row4") - 1;
+
         int interval = Mathf.FloorToInt(60 * GetParamValue("interval4"));
         int left_columnIndex = Mathf.FloorToInt(GetParamValue("left_column4")) - 1; // 最左下标限制
 
@@ -1122,7 +1145,8 @@ public class BlazingKingKong : BossUnit
         c.BeforeSpellFunc = delegate
         {
             NumericBox.AddDecideModifierToBoolDict(StringManager.Invincibility, mod);
-            transform.position = MapManager.GetGridLocalPosition(6, 3);
+            float colIndex = 9 - right_colArray[GetRandomNext(0, right_colArray.Length)];
+            transform.position = MapManager.GetGridLocalPosition(colIndex, rowIndex);
             OpenCollision();
             SetAlpha(1);
         };

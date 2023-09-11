@@ -8,4 +8,8 @@ public interface IBaseFactory
     void PushItem(string itemName, GameObject item);
 
     void Clear();
+
+    GameObject LoadResource(string itemName);
+
+    void UnLoadResource(string itemName);
 }

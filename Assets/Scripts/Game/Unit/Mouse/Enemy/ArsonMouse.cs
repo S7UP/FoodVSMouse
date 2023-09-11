@@ -10,7 +10,7 @@ public class ArsonMouse : MouseUnit
     private ThrowBombSkillAbility throwBombSkillAbility; // 投掷炸弹技能
     private bool isFindTarget;
     private Vector3 targetPosition;
-    private int throwTimeLeft; // 丢炸弹计时器
+    private float throwTimeLeft; // 丢炸弹计时器
     public int preTime; // 预警时间
 
     public override void MInit()
@@ -88,13 +88,13 @@ public class ArsonMouse : MouseUnit
 
     public override void OnMoveState()
     {
-        throwTimeLeft--;
+        throwTimeLeft -= mCurrentSkillSpeed;
         base.OnMoveState();
     }
 
     public override void OnAttackState()
     {
-        throwTimeLeft--;
+        throwTimeLeft -= mCurrentSkillSpeed;
         base.OnAttackState();
     }
 

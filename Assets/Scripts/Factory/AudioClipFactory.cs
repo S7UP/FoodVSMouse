@@ -54,4 +54,13 @@ public class AudioClipFactory : IBaseResourceFactory<AudioClip>
             }
         }
     }
+
+    public void UnLoad(string resourcePath)
+    {
+        if (factoryDict.ContainsKey(resourcePath))
+        {
+            Resources.UnloadAsset(factoryDict[resourcePath]);
+            factoryDict.Remove(resourcePath);
+        }
+    }
 }

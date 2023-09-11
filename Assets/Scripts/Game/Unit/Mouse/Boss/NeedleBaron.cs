@@ -53,6 +53,15 @@ public class NeedleBaron : BossUnit
         batUnitList.Clear();
         S2Count = 0;
         base.MInit();
+        // 被炸额外损血
+        AddActionPointListener(ActionPointType.PostReceiveDamage, (action) => {
+            if (action is DamageAction)
+            {
+                DamageAction d = action as DamageAction;
+                if(d.IsDamageType(DamageAction.DamageType.BombBurn))
+                    new DamageAction(CombatAction.ActionType.BurnDamage, null, this, GetLostHp() * GetParamValue("burn_lost_hp_percent") * 0.01f).ApplyAction();
+            }
+        });
         // 添加出现的技能
         {
             Func<BaseUnit, BaseBullet, bool> noHitFunc = delegate { return false; };
@@ -287,7 +296,7 @@ public class NeedleBaron : BossUnit
 
     private bool CanAdsorpte(BaseUnit m)
     {
-        if (IsCurse(m) || !(m is MouseUnit) || (m as MouseUnit).IsBoss() || m == null || !m.IsAlive() || m.IsContainUnit(OccupyKey) || !MouseManager.IsGeneralMouse(m) || !UnitManager.CanBeSelectedAsTarget(null, m) || m.mHeight < 0)
+        if (IsCurse(m) || !(m is MouseUnit) || (m as MouseUnit).IsBoss() || m == null || !m.IsAlive() || m.IsContainUnit(OccupyKey) || !MouseManager.IsGeneralMouse(m) || !UnitManager.CanBeSelectedAsTarget(null, m) || m.mHeight < 0 || NumericBox.IntDict.ContainsKey(StringManager.Flying))
             return false;
         return true;
     }
@@ -322,8 +331,12 @@ public class NeedleBaron : BossUnit
             bat.animatorController.Play("Idle", true);
         });
         s.AddOnUpdateAction(delegate {
-            if (!g.IsAlive())
+            if (!g.IsAlive() || bat.transform.position.x < MapManager.GetColumnX(3.75f))
+            {
                 bat.SetActionState(CreateRecycleState(bat));
+                return;
+            }
+                
             timeLeft--;
             bat.transform.position = g.transform.position;
             if(timeLeft <= 0)
@@ -334,7 +347,6 @@ public class NeedleBaron : BossUnit
                 {
                     DamageAction da = new DamageAction(CombatAction.ActionType.RealDamage, bat, target, GetParamValue("attack_percent") * 0.01f * target.mMaxHp);
                     da.ApplyAction();
-                    // new CureAction(CombatAction.ActionType.GiveCure, bat, this, da.RealCauseValue).ApplyAction();
                 }
             }
             // 检测该格有没有其他非BOSS敌方单位，如果有则吸附在它身上
@@ -393,7 +405,7 @@ public class NeedleBaron : BossUnit
                 else
                 {
                     bool isSuccessOccupy = false;
-                    if(r.gridList.Count > 0)
+                    if(bat.transform.position.x >= MapManager.GetColumnX(3.75f) && r.gridList.Count > 0)
                     {
                         // 有的话就取一个最靠左上的格子
                         List<BaseGrid> l1 = new List<BaseGrid>();
@@ -424,9 +436,9 @@ public class NeedleBaron : BossUnit
                                 }    
                             }
                         }
-                        r.MDestory();
                     }
-                    if(!isSuccessOccupy)
+                    r.MDestory();
+                    if (!isSuccessOccupy)
                     {
                         // 没有找到合适的格子的话就被回收
                         bat.SetActionState(CreateRecycleState(bat));
@@ -435,8 +447,10 @@ public class NeedleBaron : BossUnit
             }
             else
             {
-                // 如果吸附目标未死亡则跟随
-                bat.transform.position = target.transform.position;
+                float dist = (bat.transform.position - target.transform.position).magnitude;
+                // 如果吸附目标未死亡则尝试跟随
+                float v = Mathf.Min(dist, Mathf.Max(dist * 0.05f, MapManager.gridWidth/60));
+                bat.transform.position += v*(target.transform.position - bat.transform.position).normalized;
             }
         });
         s.AddOnExitAction(delegate {
@@ -677,6 +691,7 @@ public class NeedleBaron : BossUnit
     private BaseUnit FindS1Target()
     {
         BaseUnit target = null;
+        List<BaseUnit> targetList = new List<BaseUnit>();
         // 先找老鼠
         foreach (var u in GameController.Instance.GetEachEnemy())
         {
@@ -688,12 +703,17 @@ public class NeedleBaron : BossUnit
                     if(target == null || m.mMaxHp > target.mMaxHp)
                     {
                         target = m;
+                        targetList.Clear();
+                        targetList.Add(m);
+                    }else if (m.mMaxHp == target.mMaxHp)
+                    {
+                        targetList.Add(m);
                     }
                 }
             }
         }
         if (target != null)
-            return target;
+            return targetList[GetRandomNext(0, targetList.Count)];
         // 再找美食
         foreach (var u in GameController.Instance.GetEachAlly())
         {
@@ -705,11 +725,24 @@ public class NeedleBaron : BossUnit
                     if (target == null || f.mMaxHp > target.mMaxHp)
                     {
                         target = f;
+                        targetList.Clear();
+                        targetList.Add(f);
+                    }
+                    else if (f.mMaxHp == target.mMaxHp)
+                    {
+                        targetList.Add(f);
                     }
                 }
             }
         }
-        return target;
+        if (target != null)
+            return targetList[GetRandomNext(0, targetList.Count)];
+        else
+        {
+            GetRandomNext(0, 1);
+            return null;
+        }
+            
     }
 
     private void CreateS1Area(Vector2 pos)
@@ -922,10 +955,10 @@ public class NeedleBaron : BossUnit
         r.isAffectFood = true;
         r.isAffectMouse = true;
         r.AddFoodEnterConditionFunc((f) => {
-            return FoodManager.IsAttackableFoodType(f) && !SkyGridType.IsIgnoreDrop(f);
+            return FoodManager.IsAttackableFoodType(f) && !Environment.SkyManager.IsIgnoreDrop(f);
         });
         r.AddEnemyEnterConditionFunc((m) => {
-            return m.GetHeight() <= 0 && !SkyGridType.IsIgnoreDrop(m) && !m.IsBoss();
+            return m.GetHeight() <= 0 && !Environment.SkyManager.IsIgnoreDrop(m) && !m.IsBoss();
         });
         r.SetOnFoodEnterAction((u) => { u.ExecuteDrop(); });
         r.SetOnEnemyEnterAction((u) => { u.ExecuteDrop(); });

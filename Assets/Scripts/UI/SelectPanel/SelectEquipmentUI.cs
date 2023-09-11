@@ -1,7 +1,8 @@
 
 using System.Collections.Generic;
-
+using UnityEngine.UI;
 using UnityEngine;
+using UnityEngine.EventSystems;
 /// <summary>
 /// 选关界面-配置选择界面
 /// </summary>
@@ -9,6 +10,7 @@ public class SelectEquipmentUI : MonoBehaviour
 {
     private SelectedCardUI mSelectedCardUI;
     private AvailableCardUI mAvailableCardUI;
+    private Toggle Tog_NoLimit;
 
     private void Awake()
     {
@@ -16,6 +18,46 @@ public class SelectEquipmentUI : MonoBehaviour
         mSelectedCardUI.SetSelectEquipmentUI(this);
         mAvailableCardUI = transform.Find("AvailableCardUI").GetComponent<AvailableCardUI>();
         mAvailableCardUI.SetSelectEquipmentUI(this);
+
+        Tog_NoLimit = transform.Find("Tog_NoLimit").GetComponent<Toggle>();
+        {
+            RectTransform rect = Tog_NoLimit.GetComponent<RectTransform>();
+            // 鼠标进入的触发器
+            {
+                EventTrigger trigger = Tog_NoLimit.GetComponent<EventTrigger>();
+                EventTrigger.TriggerEvent e = new EventTrigger.TriggerEvent();
+                e.AddListener(delegate {
+                    TextArea.Instance.SetText("需要通过遗忘级难度才可解锁，此模式下胜利不会记录任何成绩。");
+                    TextArea.Instance.SetLocalPosition(rect.transform, new Vector2(rect.rect.width, 0), new Vector2(1, 0));
+                });
+                trigger.triggers.Add(new EventTrigger.Entry() { eventID = EventTriggerType.PointerEnter, callback = e });
+            }
+            // 鼠标退出的触发器
+            {
+                EventTrigger trigger = Tog_NoLimit.GetComponent<EventTrigger>();
+                EventTrigger.TriggerEvent e = new EventTrigger.TriggerEvent();
+                e.AddListener(delegate {
+                    TextArea.ExecuteRecycle();
+                });
+                trigger.triggers.Add(new EventTrigger.Entry() { eventID = EventTriggerType.PointerExit, callback = e });
+            }
+        }
+        Tog_NoLimit.isOn = false;
+        Tog_NoLimit.interactable = false;
+        Tog_NoLimit.onValueChanged.AddListener(delegate {
+            PlayerData data = PlayerData.GetInstance();
+            BaseStage.StageInfo info = data.GetCurrentStageInfo();
+            PlayerData.StageInfo_Dynamic info_dynamic = data.GetCurrentDynamicStageInfo();
+            string id = info_dynamic.id;
+            // 如果是从公测面版进入的关卡，则可以更新一下选择情况
+            if (id != null)
+            {
+                StageInfoManager.StageInfo_Local local_info = StageInfoManager.GetLocalStageInfo(id);
+                local_info.isNoLimit = Tog_NoLimit.isOn;
+                StageInfoManager.Save();
+            }
+            RefreshCardUI(); // 刷新一次选卡UI
+        });
     }
 
     /// <summary>
@@ -32,8 +74,42 @@ public class SelectEquipmentUI : MonoBehaviour
     /// </summary>
     public void LoadAndFixUI()
     {
+        PlayerData data = PlayerData.GetInstance();
+        PlayerData.StageInfo_Dynamic info_dynamic = data.GetCurrentDynamicStageInfo();
+        string id = info_dynamic.id;
+        if (id != null)
+        {
+            // 如果是从公测面版进入的关卡，检测一下通过情况，只有遗忘级通过才能选择解限
+            StageInfoManager.StageInfo_Local local_info = StageInfoManager.GetLocalStageInfo(id);
+            if (local_info.rank >= 3)
+            {
+                Tog_NoLimit.interactable = true;
+                Tog_NoLimit.isOn = local_info.isNoLimit;
+            }
+            else
+            {
+                Tog_NoLimit.interactable = false;
+                Tog_NoLimit.isOn = false;
+            }
+        }
+        else
+        {
+            Tog_NoLimit.interactable = true;
+            Tog_NoLimit.isOn = false;
+        }
+
+        RefreshCardUI();
+    }
+
+    /// <summary>
+    /// 刷新已选卡与可选卡的UI
+    /// </summary>
+    private void RefreshCardUI()
+    {
+        PlayerData data = PlayerData.GetInstance();
+        BaseStage.StageInfo info = data.GetCurrentStageInfo();
         mAvailableCardUI.Initial();
-        mAvailableCardUI.LoadAvailableCardInfoFromStage(PlayerData.GetInstance().GetCurrentStageInfo());
+        mAvailableCardUI.LoadAvailableCardInfoFromStage(info, Tog_NoLimit.isOn);
         mSelectedCardUI.Initial();
     }
 
@@ -97,7 +173,9 @@ public class SelectEquipmentUI : MonoBehaviour
     public void EnterCombatScene()
     {
         // 把当前选择的卡组转存至playerData,以供下一个场景读取
-        GameManager.Instance.playerData.SetCurrentSelectedCardInfoList(mSelectedCardUI.GetCurrentSelectedCardGroup());
-        GameManager.Instance.playerData.SetCurrentCardKeyList(mSelectedCardUI.GetCurrentSelectedKeyGroup());
+        PlayerData.StageInfo_Dynamic info_dynamic = PlayerData.GetInstance().GetCurrentDynamicStageInfo();
+        info_dynamic.isNoLimit = Tog_NoLimit.isOn;
+        info_dynamic.selectedCardInfoList = mSelectedCardUI.GetCurrentSelectedCardGroup();
+        info_dynamic.cardKeyList = mSelectedCardUI.GetCurrentSelectedKeyGroup();
     }
 }

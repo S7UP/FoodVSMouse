@@ -38,6 +38,7 @@ public class EditorPanel_MouseEditorUI_DefineParamUI : MonoBehaviour
         {
             AddItemToUI(keyValuePair.Key, keyValuePair.Value);
         }
+        UpdateContentRect();
 
         Btn_Add.onClick.RemoveAllListeners();
         Btn_Add.onClick.AddListener(delegate {
@@ -129,7 +130,7 @@ public class EditorPanel_MouseEditorUI_DefineParamUI : MonoBehaviour
     /// </summary>
     private void UpdateContentRect()
     {
-        RectTrans_Content.sizeDelta = new Vector2(RectTrans_Content.sizeDelta.x, itemList.Count * Item_height + Btn_height);
+        RectTrans_Content.sizeDelta = new Vector2(RectTrans_Content.sizeDelta.x, itemList.Count * Item_height + Btn_height + 60);
     }
 
     /// <summary>

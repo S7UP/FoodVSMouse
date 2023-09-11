@@ -134,13 +134,8 @@ public class FoodPanel_EncyclopediaPanel : MonoBehaviour
         int level = Dro_Rank.value;
         // 切换图标并自动同步尺寸
         float w_h_rate = RectTrans_Background.sizeDelta.x / RectTrans_Background.sizeDelta.y;
-        Img_Display.sprite = GameManager.Instance.GetSprite("Food/"+type+"/"+shape+"/icon");
+        Img_Display.sprite = GameManager.Instance.GetSprite("Food/"+type+"/"+shape+"/display");
         Img_Display.SetNativeSize();
-        //float new_w_h_rate = RectTrans_Display.sizeDelta.x / RectTrans_Display.sizeDelta.y;
-        //if(new_w_h_rate > w_h_rate)
-        //    RectTrans_Display.sizeDelta = new Vector2(RectTrans_Background.sizeDelta.x, RectTrans_Background.sizeDelta.x / new_w_h_rate);
-        //else
-        //    RectTrans_Display.sizeDelta = new Vector2(RectTrans_Background.sizeDelta.y * new_w_h_rate, RectTrans_Background.sizeDelta.y);
         // 显示基础属性
         FoodUnit.Attribute attr = GetAttribute(type, shape);
         Tex_HpValue.text = Mathf.FloorToInt(FoodManager.GetHp((FoodNameTypeMap)type, level, shape)).ToString();
@@ -158,27 +153,27 @@ public class FoodPanel_EncyclopediaPanel : MonoBehaviour
         else
             Tex_Descript.text = FoodManager.GetDetailedFeature((FoodNameTypeMap)type, level, shape);
         {
-            int countPerRow = Mathf.FloorToInt(RectTrans_Descript.sizeDelta.x / Tex_Descript.fontSize);
+            int countPerRow = Mathf.FloorToInt(RectTrans_Descript.rect.width / Tex_Descript.fontSize);
             int rowCount = Mathf.CeilToInt((float)Tex_Descript.text.Length / countPerRow + 2); // 计算需要多少行
             foreach (var c in Tex_Descript.text.ToCharArray())
             {
                 if (c.Equals('\n'))
                     rowCount++;
             }
-            RectTrans_Descript.sizeDelta = new Vector2(RectTrans_Descript.sizeDelta.x, Tex_Descript.fontSize*rowCount);
-            Scr_Descript.content.sizeDelta = new Vector2(Scr_Descript.content.sizeDelta.x, RectTrans_Descript.sizeDelta.y);
+            //RectTrans_Descript.sizeDelta = new Vector2(RectTrans_Descript.sizeDelta.x, Tex_Descript.fontSize*rowCount);
+            Scr_Descript.content.sizeDelta = new Vector2(Scr_Descript.content.sizeDelta.x, Tex_Descript.fontSize * rowCount);
         }
         Tex_Tip.text = FoodManager.GetUseTips((FoodNameTypeMap)type, level, shape);
         {
-            int countPerRow = Mathf.FloorToInt(RectTrans_Tip.sizeDelta.x / Tex_Tip.fontSize);
+            int countPerRow = Mathf.FloorToInt(RectTrans_Tip.rect.width / Tex_Tip.fontSize);
             int rowCount = Mathf.CeilToInt((float)Tex_Tip.text.Length / countPerRow + 1); // 计算需要多少行
             foreach (var c in Tex_Tip.text.ToCharArray())
             {
                 if (c.Equals('\n'))
                     rowCount++;
             }
-            RectTrans_Tip.sizeDelta = new Vector2(RectTrans_Tip.sizeDelta.x, Tex_Tip.fontSize * rowCount);
-            Scr_Tip.content.sizeDelta = new Vector2(Scr_Tip.content.sizeDelta.x, RectTrans_Tip.sizeDelta.y);
+            //RectTrans_Tip.sizeDelta = new Vector2(RectTrans_Tip.sizeDelta.x, Tex_Tip.fontSize * rowCount);
+            Scr_Tip.content.sizeDelta = new Vector2(Scr_Tip.content.sizeDelta.x, Tex_Tip.fontSize * rowCount);
         }
     }
 

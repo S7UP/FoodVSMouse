@@ -28,10 +28,7 @@ public class Mole : MouseUnit
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozen, IgnoreFrozen);
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozenSlowDown, IgnoreFrozenSlowDown);
         // 初始在地下时增加基础移速300%
-        if (mShape==2 || mShape == 5)
-            speedModifier = new FloatModifier(300f);
-        else
-            speedModifier = new FloatModifier(300f);
+        speedModifier = new FloatModifier(300f);
         NumericBox.MoveSpeed.AddPctAddModifier(speedModifier);
         // 初始高度为-1
         mHeight = -1;
@@ -39,7 +36,7 @@ public class Mole : MouseUnit
         AddCanBeSelectedAsTargetFunc(noBeSelectedAsTargetFunc);
         AddCanHitFunc(noHitFunc);
         AddCanBlockFunc(noBlockFunc);
-        GameManager.Instance.audioSourceManager.PlayEffectMusic("Dig");
+        GameManager.Instance.audioSourceController.PlayEffectMusic("Dig");
     }
 
     /// <summary>
@@ -161,5 +158,10 @@ public class Mole : MouseUnit
             RemoveCanBlockFunc(noBlockFunc);
             SetActionState(new MoveState(this));
         }
+    }
+
+    public override bool CanTriggerCat()
+    {
+        return moveRotate.x < 0;
     }
 }

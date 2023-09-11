@@ -100,7 +100,7 @@ public class FlourBag : FoodUnit
     {
         BaseCardBuilder builder = GetCardBuilder();
 
-        GameManager.Instance.audioSourceManager.PlayEffectMusic("Thump");
+        GameManager.Instance.audioSourceController.PlayEffectMusic("Thump");
         // 添加对应的判定检测器
         {
             RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 1, 1, "ItemCollideEnemy");

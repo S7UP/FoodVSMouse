@@ -11,7 +11,7 @@ using UnityEngine;
 public class IceEggPitcher : FoodUnit
 {
     private static RuntimeAnimatorController[] BulletRuntimeAnimatorControllerArray;
-    private FloatModifier costMod = new FloatModifier(-75f/7/60);
+    private FloatModifier costMod = new FloatModifier(-15f/7/60);
 
     private float mainDamageRate; // 主要目标伤害倍率
     private float aoeDamageRate; // 范围伤害倍率
@@ -145,7 +145,7 @@ public class IceEggPitcher : FoodUnit
     /// </summary>
     public override void ExecuteDamage()
     {
-        GameManager.Instance.audioSourceManager.PlayEffectMusic("Throw" + GameManager.Instance.rand.Next(0, 2));
+        GameManager.Instance.audioSourceController.PlayEffectMusic("Throw" + GameManager.Instance.rand.Next(0, 2));
         // 选择目标
         BaseUnit target = PitcherManager.FindTargetByPitcher(this, transform.position.x, GetRowIndex());
 
@@ -247,8 +247,7 @@ public class IceEggPitcher : FoodUnit
         r.SetAffectHeight(0);
         r.SetInstantaneous();
         r.SetOnEnemyEnterAction((u) => {
-            //u.AddStatusAbility(new FrozenSlowStatusAbility(-50, u, 180));
-            EnvironmentFacade.AddIceDebuff(u, 30);
+            EnvironmentFacade.AddIceDebuff(u, 35);
             DamageAction d = new DamageAction(CombatAction.ActionType.CauseDamage, this, u, aoeDamageRate * ori_dmg);
             d.AddDamageType(DamageAction.DamageType.AOE);
             d.ApplyAction();

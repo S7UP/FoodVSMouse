@@ -122,7 +122,7 @@ public class PandaMouse : MouseUnit
                 TakeDamage(GetCurrentTarget());
             }
         }
-        GameManager.Instance.audioSourceManager.PlayEffectMusic("Thump");
+        GameManager.Instance.audioSourceController.PlayEffectMusic("Thump");
     }
 
     /// <summary>

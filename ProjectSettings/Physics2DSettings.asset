@@ -15,7 +15,7 @@ Physics2DSettings:
   m_MaxRotationSpeed: 360
   m_BaumgarteScale: 0.2
   m_BaumgarteTimeOfImpactScale: 0.75
-  m_TimeToSleep: 0.5
+  m_TimeToSleep: 10000
   m_LinearSleepTolerance: 0.01
   m_AngularSleepTolerance: 2
   m_DefaultContactOffset: 0.01

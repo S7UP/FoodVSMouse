@@ -7,23 +7,14 @@ using UnityEngine;
 /// </summary>
 public class ItemController : MonoBehaviour, IGameControllerMember
 {
-    private GameObject[] itemListGo; // 用于存放地图物品单位的父对象
+    private GameObject itemListGo; // 用于存放地图物品单位的父对象
     private BaseCat[] catList; // 猫猫
-    public List<BaseUnit>[] mItemList; // 存活的道具单位表
+    public List<BaseUnit> itemList = new List<BaseUnit>(); // 存活的道具单位表
 
     public void Awake()
     {
-        mItemList = new List<BaseUnit>[MapController.yRow];
-        itemListGo = new GameObject[mItemList.Length];
-        for (int i = 0; i < mItemList.Length; i++)
-        {
-            mItemList[i] = new List<BaseUnit>();
-            GameObject go = new GameObject("i");
-            itemListGo[i] = go;
-            go.transform.SetParent(transform);
-        }
-
-        catList = new BaseCat[mItemList.Length];
+        itemListGo = new GameObject("itemList");
+        catList = new BaseCat[7];
     }
 
     /// <summary>
@@ -31,6 +22,11 @@ public class ItemController : MonoBehaviour, IGameControllerMember
     /// </summary>
     public void MInit()
     {
+        foreach (var item in itemList)
+            item.MDestory();
+        itemList.Clear();
+        RemoveAllCats();
+        catList.Initialize();
         // 产生猫猫
         for (int i = 0; i < catList.Length; i++)
         {
@@ -43,47 +39,70 @@ public class ItemController : MonoBehaviour, IGameControllerMember
     public void MUpdate()
     {
         // 道具帧逻辑
-        foreach (var item in mItemList)
+        List<BaseUnit> delList = new List<BaseUnit>();
+        foreach (var unit in itemList)
         {
-            bool flag = false;
-            for (int i = 0; i < item.Count; i++)
+            if (unit.IsValid())
             {
-                BaseUnit unit = item[i];
-                if (unit.IsValid())
-                {
-                    unit.MUpdate();
-                }
-                else
-                {
-                    i--;
-                    item.Remove(unit);
-                    flag = true;
-                }
+                unit.MUpdate();
             }
-            if (flag)
-                for (int i = 0; i < item.Count; i++)
-                {
-                    BaseUnit unit = item[i];
-                    unit.UpdateRenderLayer(i);
-                }
+            else
+                delList.Add(unit);
+        }
+        foreach (var unit in delList)
+        {
+            itemList.Remove(unit);
         }
     }
 
-    /// <summary>
-    /// 获取特定行的道具
-    /// </summary>
-    /// <returns></returns>
-    public List<BaseUnit> GetSpecificRowItemList(int rowIndex)
+    public void MPause()
     {
-        return mItemList[rowIndex];
+        // 道具帧逻辑
+        foreach (var item in itemList)
+        {
+            item.MPause();
+        }
     }
 
-    /// <summary>
-    /// 设置道具到合适的行数父对象目录
-    /// </summary>
-    public void SetItemRowParent(BaseUnit item, int rowIndex)
+    public void MResume()
     {
-        item.transform.SetParent(itemListGo[rowIndex].transform);
+        // 道具帧逻辑
+        foreach (var item in itemList)
+        {
+            item.MResume();
+        }
+    }
+
+    public void MPauseUpdate()
+    {
+        
+    }
+
+    public void MDestory()
+    {
+        foreach (var item in itemList)
+            item.MDestory();
+        itemList.Clear();
+        catList.Initialize();
+    }
+    #region 供外界调用的方法
+    /// <summary>
+    /// 移除所有的猫猫
+    /// </summary>
+    public void RemoveAllCats()
+    {
+        for (int i = 0; i < 7; i++)
+        {
+            BaseCat cat = GetSpecificRowCat(i);
+            if (cat != null)
+                cat.MDestory();
+        }
+    }
+
+    public void AddItem(BaseUnit unit)
+    {
+        unit.transform.SetParent(itemListGo.transform);
+        itemList.Add(unit);
     }
 
     /// <summary>
@@ -98,54 +117,5 @@ public class ItemController : MonoBehaviour, IGameControllerMember
             return null;
         return catList[rowIndex];
     }
-
-    /// <summary>
-    /// 回收所有道具单位
-    /// </summary>
-    public void RecycleAll()
-    {
-        for (int i = 0; i < mItemList.Length; i++)
-        {
-            foreach (var item in mItemList[i])
-            {
-                item.MDestory();
-            }
-            mItemList[i].Clear();
-        }
-        catList.Initialize();
-    }
-
-    public void MDestory()
-    {
-        
-    }
-
-    public void MPause()
-    {
-        // 道具帧逻辑
-        foreach (var item in mItemList)
-        {
-            for (int i = 0; i < item.Count; i++)
-            {
-                item[i].MPause();
-            }
-        }
-    }
-
-    public void MResume()
-    {
-        // 道具帧逻辑
-        foreach (var item in mItemList)
-        {
-            for (int i = 0; i < item.Count; i++)
-            {
-                item[i].MResume();
-            }
-        }
-    }
-
-    public void MPauseUpdate()
-    {
-        
-    }
+    #endregion
 }

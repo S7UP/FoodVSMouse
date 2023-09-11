@@ -624,13 +624,19 @@ public class MistyJulie : BossUnit
                             if (!unit.IsAlive())
                                 continue;
 
+                            int left = buffTime;
                             CustomizationTask t = new CustomizationTask();
                             t.AddOnEnterAction(delegate {
                                 unit.NumericBox.Attack.AddPctAddModifier(AttackMod);
                                 unit.NumericBox.AttackSpeed.AddPctAddModifier(AttackSpeedMod);
                                 unit.NumericBox.DamageRate.AddModifier(DefenceMod);
                             });
-                            t.AddTimeTaskFunc(buffTime);
+                            t.AddTaskFunc(delegate {
+                                left--;
+                                if (left <= 0 || !IsAlive())
+                                    return true;
+                                return false;
+                            });
                             t.AddOnExitAction(delegate {
                                 unit.NumericBox.Attack.RemovePctAddModifier(AttackMod);
                                 unit.NumericBox.AttackSpeed.RemovePctAddModifier(AttackSpeedMod);
@@ -646,13 +652,19 @@ public class MistyJulie : BossUnit
                             if (!MouseManager.IsGeneralMouse(m))
                                 return;
 
+                            int left = timeLeft;
                             CustomizationTask t = new CustomizationTask();
                             t.AddOnEnterAction(delegate {
                                 m.NumericBox.Attack.AddPctAddModifier(AttackMod);
                                 m.NumericBox.AttackSpeed.AddPctAddModifier(AttackSpeedMod);
                                 m.NumericBox.DamageRate.AddModifier(DefenceMod);
                             });
-                            t.AddTimeTaskFunc(timeLeft);
+                            t.AddTaskFunc(delegate {
+                                left--;
+                                if (left <= 0 || !IsAlive())
+                                    return true;
+                                return false;
+                            });
                             t.AddOnExitAction(delegate {
                                 m.NumericBox.Attack.RemovePctAddModifier(AttackMod);
                                 m.NumericBox.AttackSpeed.RemovePctAddModifier(AttackSpeedMod);
@@ -672,7 +684,7 @@ public class MistyJulie : BossUnit
                                 timeLeft--;
                             },
                             //Func<bool> EndCondition, 
-                            delegate { return timeLeft <= 0; },
+                            delegate { return timeLeft <= 0 || !IsAlive(); },
                             //Action EndEvent
                             delegate {
                                 GameController.Instance.mMouseFactory.RemoveProcessAction(action);

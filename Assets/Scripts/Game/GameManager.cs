@@ -11,12 +11,13 @@ public class GameManager : MonoBehaviour
     public System.Random rand;
     public PlayerManager playerManager;
     public FactoryManager factoryManager;
-    public AudioSourceManager audioSourceManager;
+    public AudioSourceController audioSourceController;
     public UIManager uiManager;
     public ConfigManager configManager;
     public AbilityManager abilityManager;
     public AttributeManager attributeManager;
     public PlayerData playerData;
+    public ResourceLoading.Controller ResourceLoadingController;
     public StartLoadPanel startLoadPanel; // 由编辑器赋值吧
 
     private static GameManager _instance;
@@ -34,10 +35,11 @@ public class GameManager : MonoBehaviour
         rand = new System.Random();
         playerManager = new PlayerManager();
         factoryManager = new FactoryManager();
-        audioSourceManager = new AudioSourceManager();
+        audioSourceController = new AudioSourceController();
         configManager = new ConfigManager(); // 加载ConfigManager，导入玩家的设置
         abilityManager = AbilityManager.GetSingleton();
         uiManager = new UIManager();
+        ResourceLoadingController = new ResourceLoading.Controller();
         attributeManager = new AttributeManager();
         attributeManager.Initial();
         startLoadPanel = GameObject.Find("Canvas").transform.Find("StartLoadPanel").GetComponent<StartLoadPanel>();
@@ -140,6 +142,11 @@ public class GameManager : MonoBehaviour
         return factoryManager.spriteFactory.GetSingleResources(resourcePath);
     }
 
+    public void UnLoadSprite(string resourcePath)
+    {
+        factoryManager.spriteFactory.UnLoad(resourcePath);
+    }
+
     public Sprite[] GetSprites(string resourcePath)
     {
         return Resources.LoadAll<Sprite>(resourcePath);
@@ -160,9 +167,19 @@ public class GameManager : MonoBehaviour
         yield return StartCoroutine(factoryManager.audioClipFactory.AsyncLoadSingleResources(resourcePath));
     }
 
+    public void UnLoadAudioClip(string resourcePath)
+    {
+        factoryManager.audioClipFactory.UnLoad(resourcePath);
+    }
+
     public RuntimeAnimatorController GetRuntimeAnimatorController(string resourcePath)
     {
         return factoryManager.runtimeAnimatorControllerFactory.GetSingleResources(resourcePath);
+    }
+
+    public void UnLoadRuntimeAnimatorController(string resourcePath)
+    {
+        factoryManager.runtimeAnimatorControllerFactory.UnLoad(resourcePath);
     }
 
     // 获取游戏物体
@@ -174,6 +191,24 @@ public class GameManager : MonoBehaviour
     public void PushGameObjectToFactory(FactoryType factoryType, string resourcePath, GameObject itemGo)
     {
         factoryManager.factoryDict[factoryType].PushItem(resourcePath, itemGo);
+    }
+    /// <summary>
+    /// 加载预制体
+    /// </summary>
+    /// <param name="factoryType"></param>
+    /// <param name="resourcePath"></param>
+    public void LoadGameObjectResource(FactoryType factoryType, string resourcePath)
+    {
+        factoryManager.factoryDict[factoryType].LoadResource(resourcePath);
+    }
+    /// <summary>
+    /// 卸载预制体
+    /// </summary>
+    /// <param name="factoryType"></param>
+    /// <param name="resourcePath"></param>
+    public void UnLoadGameObjectResource(FactoryType factoryType, string resourcePath)
+    {
+        factoryManager.factoryDict[factoryType].LoadResource(resourcePath);
     }
 
     /// <summary>
@@ -282,7 +317,7 @@ public class GameManager : MonoBehaviour
         //GetFPs
         deltaTime += (Time.deltaTime - deltaTime) * 0.1f;
         uiManager.mUIFacade.UpdatePanel();
-        audioSourceManager.Update();
+        audioSourceController.Update();
     }
 
     void OnGUI()

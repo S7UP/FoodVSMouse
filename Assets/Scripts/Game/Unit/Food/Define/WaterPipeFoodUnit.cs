@@ -143,7 +143,7 @@ public class WaterPipeFoodUnit : FoodUnit
             b.SetRotate(Vector2.left);
             b.SetHitSoundEffect("Splat" + GameManager.Instance.rand.Next(0, 3));
             GameController.Instance.AddBullet(b);
-            GameManager.Instance.audioSourceManager.PlayEffectMusic("Throw"+GameManager.Instance.rand.Next(0, 2));
+            GameManager.Instance.audioSourceController.PlayEffectMusic("Throw"+GameManager.Instance.rand.Next(0, 2));
         }
     }
 }

@@ -1,3 +1,5 @@
+using System;
+
 using UnityEngine;
 /// <summary>
 /// 提供一些复合技能的常用静态方法
@@ -95,6 +97,19 @@ public class CompoundSkillAbilityManager
         task = new CustomizationTask();
         task.AddTaskFunc(delegate {
             timeLeft--;
+            if (timeLeft <= 0)
+                return true;
+            return false;
+        });
+    }
+
+    public static void GetWaitTimeTask(int totalTime, Action<int> action, out CustomizationTask task)
+    {
+        int timeLeft = totalTime;
+        task = new CustomizationTask();
+        task.AddTaskFunc(delegate {
+            timeLeft--;
+            action(timeLeft);
             if (timeLeft <= 0)
                 return true;
             return false;

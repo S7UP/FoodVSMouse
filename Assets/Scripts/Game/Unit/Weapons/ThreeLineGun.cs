@@ -127,7 +127,7 @@ public class ThreeLineGun : BaseWeapons
     /// </summary>
     public override void ExecuteDamage()
     {
-        GameManager.Instance.audioSourceManager.PlayEffectMusic("Swing");
+        GameManager.Instance.audioSourceController.PlayEffectMusic("Swing");
         int rowIndex = GetRowIndex(); // 获取当前行
 
         for (int i = -1; i <= 1; i++)

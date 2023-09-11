@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using BigChapterPanel;
 /// <summary>
 /// 玩家信息操作面板
 /// </summary>

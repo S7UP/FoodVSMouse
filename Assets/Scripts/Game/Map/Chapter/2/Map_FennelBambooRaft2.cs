@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 using UnityEngine;
@@ -122,5 +123,54 @@ public class Map_FennelBambooRaft2 : ChapterMap
         // 为全图添加黑夜BUFF
         ShadeAreaEffectExecution e = ShadeAreaEffectExecution.GetInstance(11, 7, new UnityEngine.Vector2(MapManager.GetColumnX(4), MapManager.GetRowY(3)));
         GameController.Instance.AddAreaEffectExecution(e);
+
+
+        Transform trans = GameController.Instance.mMapController.transform;
+        // 创建 从左二到右一列的水域
+        {
+            RetangleAreaEffectExecution r = Environment.WaterManager.GetWaterArea(MapManager.GetGridLocalPosition(4.25f, 3), new Vector2(7.25f * MapManager.gridWidth, 7 * MapManager.gridHeight));
+            r.name = "WaterArea";
+            r.transform.SetParent(trans);
+            GameController.Instance.AddAreaEffectExecution(r);
+        }
+
+        // 创建左一列承载域
+        {
+            RetangleAreaEffectExecution r = Environment.WaterManager.GetVehicleArea(MapManager.GetGridLocalPosition(0, 3), new Vector2(1 * MapManager.gridWidth, 7 * MapManager.gridHeight), new S7P.Numeric.FloatModifier(0));
+            r.name = "WaterVehicle(left)";
+            r.transform.SetParent(trans);
+            GameController.Instance.AddAreaEffectExecution(r);
+        }
+
+        // 创建与两大板块绑定的承载域
+        {
+            Action<BaseGrid> createVehicleAreaAction = (g) => {
+                RetangleAreaEffectExecution r = Environment.WaterManager.GetVehicleArea(g.transform.position, new Vector2(1 * MapManager.gridWidth, 0.5f * MapManager.gridHeight), new S7P.Numeric.FloatModifier(0));
+                r.name = "WaterVehicle(grid)";
+                r.transform.SetParent(trans);
+                GameController.Instance.AddAreaEffectExecution(r);
+
+                CustomizationTask t = new CustomizationTask();
+                t.AddTaskFunc(delegate {
+                    r.transform.position = g.transform.position;
+                    return !g.IsAlive();
+                });
+                r.taskController.AddTask(t);
+            };
+
+
+            // 左板
+            for (int i = 0; i < 5; i++)
+            {
+                for (int j = 1; j < 5; j++)
+                    createVehicleAreaAction(GetGrid(j, i));
+            }
+            // 右板
+            for (int i = 2; i < 7; i++)
+            {
+                for (int j = 5; j < 9; j++)
+                    createVehicleAreaAction(GetGrid(j, i));
+            }
+        }
     }
 }

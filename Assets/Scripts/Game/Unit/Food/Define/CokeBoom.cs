@@ -89,11 +89,11 @@ public class CokeBoom : FoodUnit
     /// </summary>
     public override void ExecuteDamage()
     {
-        GameManager.Instance.audioSourceManager.PlayEffectMusic("Boom");
+        GameManager.Instance.audioSourceController.PlayEffectMusic("Boom");
         // 原地产生一个爆炸效果
         {
             BaseEffect e = BaseEffect.GetInstance("BoomEffect");
-            e.animator.runtimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Food/" + mType + "/BoomEffect");
+            e.animator.runtimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Food/16/BoomEffect");
             e.transform.position = transform.position;
             e.MInit();
             GameController.Instance.AddEffect(e);

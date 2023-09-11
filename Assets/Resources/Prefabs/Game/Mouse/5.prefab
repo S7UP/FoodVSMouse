@@ -93,7 +93,7 @@ Animator:
   m_GameObject: {fileID: 5306107655638822206}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: ff30b93cbd1c53e4f8e8e21c1086c9a9, type: 2}
+  m_Controller: {fileID: 0}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -113,7 +113,7 @@ GameObject:
   - component: {fileID: 9178918355967668105}
   - component: {fileID: 4315763338898968603}
   - component: {fileID: 5551036779547251193}
-  - component: {fileID: -4378746735690566959}
+  - component: {fileID: 8389996813490560217}
   m_Layer: 7
   m_Name: 5
   m_TagString: Mouse
@@ -183,7 +183,7 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 0.2, y: 0.75}
   m_EdgeRadius: 0
---- !u!114 &-4378746735690566959
+--- !u!114 &8389996813490560217
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -192,24 +192,33 @@ MonoBehaviour:
   m_GameObject: {fileID: 9178918355967668106}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 778fde3bb2469144b9340d9c565e781a, type: 3}
+  m_Script: {fileID: 11500000, guid: 8decc5fce49c6a841b8706f58bcffae3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mUnitType: 1
-  mCurrentHp: 0
+  mUnitType: 0
   mCurrentTotalShieldValue: 0
   mHeight: 0
   moveRotate: {x: 0, y: 0}
   isFrozenState: 0
+  isIgnoreRecordDamage: 0
   mName: 
   mType: 0
   mShape: 0
   typeAndShapeValue: 0
   currentStateTimer: 0
+  disableMove: 0
+  aliveTime: 0
+  lastPosition: {x: 0, y: 0}
   rigibody2D: {fileID: 0}
   mBoxCollider2D: {fileID: 0}
+  spriteRenderer: {fileID: 0}
   spriteTrans: {fileID: 0}
   mHertIndex: 0
   currentXIndex: 0
   currentYIndex: 0
   isBoss: 0
+  canDrivenAway: 0
+  AttackClipName: 
+  IdleClipName: 
+  MoveClipName: 
+  DieClipName: 

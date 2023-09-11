@@ -20,14 +20,14 @@ public class MainSceneState : BaseSceneState
             isFirstLoad = false;
         }
 
-        yield return GameManager.Instance.StartCoroutine(AudioSourceManager.AsyncLoadBGMusic("MainScene")); // 载入主菜单BGM
+        yield return GameManager.Instance.StartCoroutine(AudioSourceController.AsyncLoadBGMusic("MainScene")); // 载入主菜单BGM
         yield return GameManager.Instance.StartCoroutine(GameManager.Instance.LoadSceneAsync("MainScene"));
     }
 
     public override void EnterScene()
     {
         // 播放主菜单BGM
-        GameManager.Instance.audioSourceManager.PlayBGMusic("MainScene");
+        GameManager.Instance.audioSourceController.PlayBGMusic("MainScene");
         mUIFacade.AddPanelToDict(StringManager.MainPanel);
         mUIFacade.AddPanelToDict(StringManager.ConfigPanel);
         mUIFacade.AddPanelToDict(StringManager.StaffPanel);

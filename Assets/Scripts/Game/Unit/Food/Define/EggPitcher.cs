@@ -8,28 +8,17 @@ using UnityEngine;
 /// </summary>
 public class EggPitcher : FoodUnit
 {
-    private static RuntimeAnimatorController[] BulletRuntimeAnimatorControllerArray;
+    private static RuntimeAnimatorController BulletRuntimeAnimatorController;
 
     private float mainDamageRate; // 主要目标伤害倍率
     private float aoeDamageRate; // 范围伤害倍率
     private Vector2 targetPosition;
 
-    public override void Awake()
-    {
-        base.Awake();
-        if (BulletRuntimeAnimatorControllerArray == null)
-        {
-            BulletRuntimeAnimatorControllerArray = new RuntimeAnimatorController[3];
-            for (int i = 0; i < 3; i++)
-            {
-                BulletRuntimeAnimatorControllerArray[i] = GameManager.Instance.GetRuntimeAnimatorController("Food/37/"+i+"/Bullet");
-            }
-        }
-    }
-
     public override void MInit()
     {
         base.MInit();
+        if (BulletRuntimeAnimatorController == null)
+            BulletRuntimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Food/37/" + mShape + "/Bullet");
         // 根据转职情况来确定首要目标与范围伤害的伤害比率
         switch (mShape)
         {
@@ -135,7 +124,7 @@ public class EggPitcher : FoodUnit
     /// </summary>
     public override void ExecuteDamage()
     {
-        GameManager.Instance.audioSourceManager.PlayEffectMusic("Throw" + GameManager.Instance.rand.Next(0, 2));
+        GameManager.Instance.audioSourceController.PlayEffectMusic("Throw" + GameManager.Instance.rand.Next(0, 2));
         // 选择目标
         BaseUnit target = PitcherManager.FindTargetByPitcher(this, transform.position.x, GetRowIndex());
 
@@ -150,7 +139,7 @@ public class EggPitcher : FoodUnit
     /// <param name="target"></param>
     private BaseBullet CreateBullet(Vector2 startPosition, float ori_dmg, BaseUnit target)
     {
-        AllyBullet b = AllyBullet.GetInstance(BulletStyle.Throwing, BulletRuntimeAnimatorControllerArray[mShape], this, mainDamageRate * ori_dmg);
+        AllyBullet b = AllyBullet.GetInstance(BulletStyle.Throwing, BulletRuntimeAnimatorController, this, mainDamageRate * ori_dmg);
         b.AddSpriteOffsetY(new FloatModifier(0.5f * MapManager.gridHeight));
         b.isnDelOutOfBound = true; // 出屏不自删
         b.SetHitSoundEffect("Eggimpact"+GameManager.Instance.rand.Next(0, 2));

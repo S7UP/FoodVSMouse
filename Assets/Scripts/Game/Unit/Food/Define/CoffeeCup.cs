@@ -7,7 +7,7 @@ public class CoffeeCup : FoodUnit
     public override void Awake()
     {
         if (Bullet_Run == null)
-            Bullet_Run = GameManager.Instance.GetRuntimeAnimatorController("Food/25/BUllet");
+            Bullet_Run = GameManager.Instance.GetRuntimeAnimatorController("Food/25/Bullet");
         base.Awake();
     }
 

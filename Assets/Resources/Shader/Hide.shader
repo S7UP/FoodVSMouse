@@ -8,10 +8,11 @@ Shader "Unlit/Hide"
     }
     SubShader
     {
-        Tags { "RenderType"="Opaque" "QUEUE" = "Transparent" }
+        Tags { "QUEUE" = "Transparent" "IGNOREPROJECTOR" = "true" "RenderType" = "Transparent"}
         Blend SrcAlpha OneMinusSrcAlpha // 传统透明度
         ZWrite Off
         LOD 100
+                Cull Off
 
         Pass
         {

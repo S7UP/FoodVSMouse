@@ -36,7 +36,7 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
         CancelSelectShovel();
 
         // 初始化卡槽信息，需要外部读取赋值，现拟赋值
-        List<AvailableCardInfo> selectedCardList = GameManager.Instance.playerData.GetCurrentSelectedCardInfoList();
+        List<AvailableCardInfo> selectedCardList = GameManager.Instance.playerData.GetCurrentDynamicStageInfo().selectedCardInfoList;
 
         CardBuilderManager m = CardBuilderManager.GetInstance();
         for (int i = 0; i < selectedCardList.Count; i++)
@@ -82,7 +82,7 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
         isSelectCard = true;
         // 通知UI进入建造模式了，这一步执行后鼠标悬停处将显示卡片建造模型
         mGameNormalPanel.EnterCardConstructMode();
-        GameManager.Instance.audioSourceManager.PlayEffectMusic("FoodLift");
+        GameManager.Instance.audioSourceController.PlayEffectMusic("FoodLift");
     }
 
     /// <summary>
@@ -107,7 +107,7 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
         CancelSelectCard();
         isSelectShovel = true;
         mGameNormalPanel.EnterCardRemoveMode();
-        GameManager.Instance.audioSourceManager.PlayEffectMusic("Shovel");
+        GameManager.Instance.audioSourceController.PlayEffectMusic("Shovel");
     }
 
     /// <summary>
@@ -136,7 +136,7 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
         BaseCardBuilder cardBuilder = GetSelectCardBuilder();
         if (cardBuilder.CanConstructe())
         {
-            GameManager.Instance.audioSourceManager.PlayEffectMusic("Plant" + GameManager.Instance.rand.Next(0, 2));
+            GameManager.Instance.audioSourceController.PlayEffectMusic("Plant" + GameManager.Instance.rand.Next(0, 2));
             cardBuilder.TriggerBeforeBuildAction();
             cardBuilder.Constructe(); // 产生实体
             cardBuilder.InitInstance(); // 初始化实体信息
@@ -167,7 +167,7 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
         // 接下来依旧要判断能否下卡，能的话才会真正下卡，否则什么也不会发生
         if(cardBuilder.CanConstructe(g))
         {
-            GameManager.Instance.audioSourceManager.PlayEffectMusic("Plant" + GameManager.Instance.rand.Next(0, 2));
+            GameManager.Instance.audioSourceController.PlayEffectMusic("Plant" + GameManager.Instance.rand.Next(0, 2));
             cardBuilder.TriggerBeforeBuildAction();
             cardBuilder.Constructe(); // 产生实体
             cardBuilder.InitInstance(g); // 初始化实体信息
@@ -258,8 +258,8 @@ public class BaseCardController : MonoBehaviour, IBaseCardController, IGameContr
         if (Destructe()) // 执行一次移除操作
         {
             //Debug.Log("您移除了卡");
-            GameManager.Instance.audioSourceManager.PlayEffectMusic("Shovel");
-            GameManager.Instance.audioSourceManager.PlayEffectMusic("Plant"+GameManager.Instance.rand.Next(0, 2));
+            GameManager.Instance.audioSourceController.PlayEffectMusic("Shovel");
+            GameManager.Instance.audioSourceController.PlayEffectMusic("Plant"+GameManager.Instance.rand.Next(0, 2));
         }
         else
         {

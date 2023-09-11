@@ -165,6 +165,7 @@ public class EffectController : IGameControllerMember
         effectDict.Add(t, eff);
         eff.transform.SetParent(master.GetSpriteRenderer().transform);
         eff.transform.localPosition = localPosition;
+        // eff.transform.localScale = Vector2.one;
         if (isHideEffect)
             eff.Hide(true);
         else

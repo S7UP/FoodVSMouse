@@ -44,15 +44,18 @@ namespace Environment
         {
             unit.actionPointController.TriggerAction(OnEnterLava);
 
+            if (!unit.IsAlive())
+                return;
+
             count = 1;
             // 先设成有载具，然后调用切换成无载具模式，这样初始状态就是无载具状态
             hasVehicle = true;
-            // ChangeToNoVehicleMode();
+            ChangeToNoVehicleMode();
             // 立即移除当前的控制效果
             StatusManager.RemoveAllSettleDownDebuff(unit);
             // 获得冰冻类debuff与定身类debuff免疫效果
             unit.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozen, IgnoreModifier);
-            unit.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozenSlowDown, IgnoreModifier);
+            unit.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreSlowDown, IgnoreModifier);
             unit.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, IgnoreModifier);
         }
 
@@ -60,12 +63,15 @@ namespace Environment
         {
             unit.actionPointController.TriggerAction(OnStayLava);
 
-            if (!hasVehicle && CottonCandy.IsBearing(unit))
+            if (!unit.IsAlive())
+                return;
+
+            if (!hasVehicle && SkyManager.IsBearing(unit))
             {
                 // 如果目标在无载具的状态下被棉花承载，则转变为恒温灼烧
                 ChangeToVehicleMode();
             }
-            else if (hasVehicle && !CottonCandy.IsBearing(unit))
+            else if (hasVehicle && !SkyManager.IsBearing(unit))
             {
                 // 如果目标在有载具的状态下不被任何棉花承载，则转变为高温灼烧
                 ChangeToNoVehicleMode();
@@ -78,15 +84,9 @@ namespace Environment
                     timeLeft--;
                 else
                 {
-                    if (hasVehicle)
+                    if (!hasVehicle)
                     {
-                        // 有载具时，当目标生命高于15点时每秒受到1点无来源的灰烬伤害
-                        //if (unit.GetCurrentHp() > 15)
-                        //    new DamageAction(CombatAction.ActionType.BurnDamage, null, unit, GetUnitLavaRate(unit) * 1.0f).ApplyAction();
-                    }
-                    else
-                    {
-                        // 无载具时，每0.25秒受到相当于5%的最大生命值的无来源的灰烬伤害 对人物最多会把生命值下降至100点
+                        // 无载具时，每0.25秒受到相当于2.5%的最大生命值的无来源的灰烬伤害 对人物最多会把生命值下降至100点
                         if(unit is CharacterUnit)
                         {
                             new DamageAction(CombatAction.ActionType.BurnDamage, null, unit, Mathf.Min(GetUnitLavaRate(unit) * 0.025f * unit.mMaxHp, unit.GetCurrentHp() - 10)).ApplyAction();
@@ -115,7 +115,7 @@ namespace Environment
             unit.NumericBox.MoveSpeed.RemovePctAddModifier(moveSpeedModifier1);
             // 移除冰冻类debuff与定身类debuff免疫效果
             unit.NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreFrozen, IgnoreModifier);
-            unit.NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreFrozenSlowDown, IgnoreModifier);
+            unit.NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreSlowDown, IgnoreModifier);
             unit.NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreStun, IgnoreModifier);
             // 移除岩浆灼烧效果
             EffectManager.RemoveLavaEffectFromUnit(unit);

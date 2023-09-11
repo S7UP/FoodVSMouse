@@ -8,39 +8,35 @@ using UnityEngine;
 /// </summary>
 public class RaidenBaguette : FoodUnit
 {
-    private const string TaskName = "RaidenBaguetteDebuff";
-    private FloatModifier costMod = new FloatModifier(0);
-
     // 这种类型单位的表都放这里
     private static List<RaidenBaguette> thisUnitList = new List<RaidenBaguette>();
-    private static List<float> AttackSpeedList = new List<float>() { 
-        0.117f, 0.125f, 0.133f, 0.143f, 0.154f, 0.167f, 0.182f, 0.2f, 
-        0.22f, 0.25f, 0.286f, 0.308f, 0.33f, 0.364f, 0.4f, 0.44f, 0.5f
-    };
+    private static List<BaseUnit> hitedUnitList = new List<BaseUnit>();
     private static Sprite Lightning_Sprite;
+    private static int currentShape; // 当前为几转
+    private static int nextAttackTimeLeft; // 下次攻击剩余时间
 
     private GeneralAttackSkillAbility generalAttackSkillAbility;
+    private FloatModifier decMaxHpPercentMod = new FloatModifier(0); // 降低最大生命值上限的标签
 
     public override void Awake()
     {
         if(Lightning_Sprite == null)
-        {
             Lightning_Sprite = GameManager.Instance.GetSprite("Food/40/lightning");
-        }
-
         base.Awake();
     }
 
     public override void MInit()
     {
+        // 当第一个雷电被放下时，激活全局计时器
+        if(GetThisUnitList().Count == 0)
+            GameController.Instance.mTaskController.AddUniqueTask("RaidenBaguette_Attack_Task", GetGlobalAttackTimerTask());
+
         if (!thisUnitList.Contains(this))
             thisUnitList.Add(this);
+        decMaxHpPercentMod.Value = 0;
         base.MInit();
-        if (mShape >= 1)
-            costMod.Value = -25f / 7 / 60;
-        else
-            costMod.Value = -30f / 7 / 60;
-        GameController.Instance.AddCostResourceModifier("Fire", costMod);
+        NumericBox.Hp.AddFinalPctAddModifier(decMaxHpPercentMod);
+        currentShape = mShape;
     }
 
     public override void MUpdate()
@@ -50,9 +46,10 @@ public class RaidenBaguette : FoodUnit
 
     public override void MDestory()
     {
-        GameController.Instance.RemoveCostResourceModifier("Fire", costMod);
         base.MDestory();
         GetThisUnitList().Remove(this);
+        if(GetThisUnitList().Count == 0)
+            GameController.Instance.mTaskController.RemoveUniqueTask("RaidenBaguette_Attack_Task");
     }
 
     /// <summary>
@@ -61,57 +58,45 @@ public class RaidenBaguette : FoodUnit
     public override void UpdateAttributeByLevel()
     {
         SetMaxHpAndCurrentHp((float)(attr.baseAttrbute.baseHP + attr.valueList[mLevel]));
-        NumericBox.AttackSpeed.SetBase(AttackSpeedList[mLevel]);
-        if (generalAttackSkillAbility != null)
-            generalAttackSkillAbility.UpdateNeedEnergyByAttackSpeed();
+    }
+
+    public override void OnCastStateEnter()
+    {
+        GameManager.Instance.audioSourceController.PlayEffectMusic("Lighting");
+        animatorController.Play("Attack");
+    }
+
+    public override void OnCastState()
+    {
+        if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
+            SetActionState(new IdleState(this));
     }
 
     /// <summary>
-    /// 加载技能，此处仅加载普通攻击
+    /// 降低一次最大生命值上限
     /// </summary>
-    public override void LoadSkillAbility()
+    private void DecMaxHp()
     {
-        foreach (var item in AbilityManager.Instance.GetSkillAbilityInfoList(mUnitType, mType, mShape))
-        {
-            if (item.skillType == SkillAbility.Type.GeneralAttack)
-            {
-                generalAttackSkillAbility = new GeneralAttackSkillAbility(this, item);
-                skillAbilityManager.AddSkillAbility(generalAttackSkillAbility);
-            }
-        }
+        NumericBox.Hp.RemoveFinalPctAddModifier(decMaxHpPercentMod);
+        if (mShape < 1)
+            decMaxHpPercentMod.Value -= 20;
+        else
+            decMaxHpPercentMod.Value -= 15;
+        NumericBox.Hp.AddFinalPctAddModifier(decMaxHpPercentMod);
+
+        if (decMaxHpPercentMod.Value <= -100)
+            ExecuteDeath();
+        else if (mCurrentHp > mMaxHp)
+            mCurrentHp = mMaxHp;
     }
 
-    /// <summary>
-    /// 判断是否有有效的攻击目标
-    /// </summary>
-    /// <returns></returns>
-    protected override bool IsHasTarget()
-    {
-        // 不需要
-        return true;
-    }
-
-    /// <summary>
-    /// 是否满足普通攻击的条件
-    /// </summary>
-    /// <returns></returns>
-    public override bool IsMeetGeneralAttackCondition()
-    {
-        // 场上最少存在两个雷电
-        return GetThisUnitList().Count >= 2;
-    }
-
+    #region 禁用普通攻击
     /// <summary>
     /// 进入普通攻击动画状态
     /// </summary>
     public override void BeforeGeneralAttack()
     {
-        // 取消所有能量并切换为攻击贴图
-        foreach (var u in GetThisUnitList())
-        {
-            u.SetActionState(new AttackState(u));
-            u.generalAttackSkillAbility.ClearCurrentEnergy();
-        }
+
     }
 
     /// <summary>
@@ -119,21 +104,12 @@ public class RaidenBaguette : FoodUnit
     /// </summary>
     public override void OnGeneralAttack()
     {
-        // 伤害判定帧应当执行判定
-        if (IsDamageJudgment())
-        {
-            mAttackFlag = false;
-            ExecuteDamage();
-        }
+
     }
 
-    /// <summary>
-    /// 退出普通攻击的条件
-    /// </summary>
-    /// <returns></returns>
     public override bool IsMeetEndGeneralAttackCondition()
     {
-        return animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce();
+        return true;
     }
 
     /// <summary>
@@ -141,108 +117,81 @@ public class RaidenBaguette : FoodUnit
     /// </summary>
     public override void AfterGeneralAttack()
     {
-        // 切换为静止贴图
-        foreach (var u in GetThisUnitList())
-        {
-            u.SetActionState(new IdleState(u));
-        }
-        mAttackFlag = true;
+
     }
 
-    /// <summary>
-    /// 是否为伤害判定时刻（近战攻击为打出实际伤害，远程攻击为确定发射弹体）
-    /// </summary>
-    /// <returns></returns>
     public override bool IsDamageJudgment()
     {
-        return (animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime() >= attackPercent && mAttackFlag);
+        return false;
     }
 
     /// <summary>
-    /// 执行具体的攻击，位于伤害判定为真之后
+    /// 加载技能，此处仅加载普通攻击
     /// </summary>
-    public override void ExecuteDamage()
+    public override void LoadSkillAbility()
     {
-        ExecuteAttack();
-        GameManager.Instance.audioSourceManager.PlayEffectMusic("Lighting");
+        //foreach (var item in AbilityManager.Instance.GetSkillAbilityInfoList(mUnitType, mType, mShape))
+        //{
+        //    if (item.skillType == SkillAbility.Type.GeneralAttack)
+        //    {
+        //        generalAttackSkillAbility = new GeneralAttackSkillAbility(this, item);
+        //        skillAbilityManager.AddSkillAbility(generalAttackSkillAbility);
+        //    }
+        //}
     }
 
-    public override void AfterDeath()
+    protected override bool IsHasTarget()
     {
-        base.AfterDeath();
-        GetThisUnitList().Remove(this);
+        return false;
     }
 
-    //////////////////////////////////////////////////// 以下为静态方法
+    public override bool IsMeetGeneralAttackCondition()
+    {
+        return false;
+    }
+    #endregion
+
+    #region 静态私有方法
     /// <summary>
     /// 获取在场上全部的雷电长棍面包对象
     /// </summary>
     /// <returns></returns>
-    public static List<RaidenBaguette> GetThisUnitList()
+    private static List<RaidenBaguette> GetThisUnitList()
     {
         // 先检查一遍
         List<RaidenBaguette> delList = new List<RaidenBaguette>();
         foreach (var u in thisUnitList)
-        {
             if (!u.IsValid())
-            {
                 delList.Add(u);
-            }
-        }
         foreach (var u in delList)
-        {
             thisUnitList.Remove(u);
-        }
         return thisUnitList;
     }
 
     /// <summary>
     /// 执行一次电击
     /// </summary>
-    public static void ExecuteAttack()
+    private static void ExecuteAttack(List<RaidenBaguette> list)
     {
-        List<BaseUnit> hitedUnitList = new List<BaseUnit>(); // 已被电击的单位，目的是防止二次电击
-
-        List<RaidenBaguette> list = GetThisUnitList();
+        hitedUnitList.Clear();
         // 使用对角矩阵遍历所有组合，保证两两关联
         for (int i = 0; i < list.Count; i++)
         {
+            RaidenBaguette u1 = list[i];
+            u1.SetActionState(new CastState(u1));
             for (int j = i + 1; j < list.Count; j++)
             {
-                RaidenBaguette u1 = list[i];
                 RaidenBaguette u2 = list[j];
                 // 计算距离与方向向量
                 float dist = ((Vector2)u2.transform.position - (Vector2)u1.transform.position).magnitude;
                 Vector2 rot = ((Vector2)u2.transform.position - (Vector2)u1.transform.position).normalized;
                 // 产生伤害判定域
                 {
-                    RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(Vector2.Lerp(u1.transform.position, u2.transform.position, 0.5f), dist / MapManager.gridWidth, 0.5f, "ItemCollideEnemy");
+                    RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(Vector2.Lerp(u1.transform.position, u2.transform.position, 0.5f), dist / MapManager.gridWidth, 1, "ItemCollideEnemy");
                     r.transform.right = rot;
                     r.isAffectMouse = true;
                     r.SetInstantaneous();
-                    r.SetOnEnemyEnterAction((u)=> {
-                        if (hitedUnitList.Contains(u))
-                            return;
-                        // CombatActionManager.BombBurnDamageUnit(null, u, 900*(u1.mCurrentAttack+u2.mCurrentAttack)/20);
-                        BurnManager.BurnDamage(null, u);
-                        // 如果是二转，还可以附加唯一的1秒80%减速效果和3秒的20%增伤效果
-                        if (u1.mShape >= 2)
-                        {
-                            LightningTask t;
-                            if (u.GetTask(TaskName) == null)
-                            {
-                                t = new LightningTask(u);
-                                u.AddUniqueTask(TaskName, t);
-                            }
-                            else
-                            {
-                                t = u.GetTask(TaskName) as LightningTask;
-                                t.Refresh(); // 刷新
-                            }
-                        }
-                        // 记录已被电击过一次
-                        hitedUnitList.Add(u);
-                    });
+                    r.SetOnEnemyEnterAction(EnemyEnterAction);
                     GameController.Instance.AddAreaEffectExecution(r);
                 }
                 // 产生电流特效
@@ -292,115 +241,73 @@ public class RaidenBaguette : FoodUnit
                 RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(currentUnit.transform.position, 1, 1, "ItemCollideEnemy");
                 r.isAffectMouse = true;
                 r.SetInstantaneous();
-                r.SetOnEnemyEnterAction((u) => {
-                    if (hitedUnitList.Contains(u))
-                        return;
-                    // 造成一次伤害为900*(当前攻击力/20)的爆破灰烬效果
-                    // CombatActionManager.BombBurnDamageUnit(null, u, 900 * currentUnit.mCurrentAttack / 10);
-                    BurnManager.BurnDamage(null, u);
-                    // 如果是二转，还可以附加唯一的1秒80%减速效果和3秒的20%增伤效果
-                    if (currentUnit.mShape >= 2)
-                    {
-                        LightningTask t;
-                        if (u.GetTask(TaskName) == null)
-                        {
-                            t = new LightningTask(u);
-                            u.AddUniqueTask(TaskName, t);
-                        }
-                        else
-                        {
-                            t = u.GetTask(TaskName) as LightningTask;
-                            t.Refresh(); // 刷新
-                        }
-                    }
-                    // 记录已被电击过一次
-                    hitedUnitList.Add(u);
-                });
+                r.SetOnEnemyEnterAction(EnemyEnterAction);
                 GameController.Instance.AddAreaEffectExecution(r);
             }
         }
+        // 遍历完后再结算扣血
+        for (int i = 0; i < list.Count; i++)
+        {
+            list[i].DecMaxHp();
+        }
     }
-
 
     /// <summary>
-    /// 二转的电击任务
+    /// 当敌方单位进入电击判定区域时
     /// </summary>
-    private class LightningTask : ITask
+    /// <param name="u"></param>
+    private static void EnemyEnterAction(BaseUnit u)
     {
-        private FloatModifier AddDamageModifier = new FloatModifier(1.2f); // 增伤
-        private FloatModifier moveSpeedModifier = new FloatModifier(-80); // 减速
-
-        private const int SlowDownTime = 60;
-        private const int AddDamageTime = 180;
-
-        private int slowDownTimeLeft;
-        private int addDamageTimeLeft;
-
-        private BaseUnit unit;
-
-        public LightningTask(BaseUnit unit)
-        {
-            this.unit = unit;
-            
-        }
-
-        public void OnEnter()
-        {
-            Refresh();
-        }
-
-        public void OnUpdate()
-        {
-            if (slowDownTimeLeft > 0)
-                slowDownTimeLeft--;
-            else
-                unit.NumericBox.MoveSpeed.RemoveFinalPctAddModifier(moveSpeedModifier);
-
-            if (addDamageTimeLeft > 0)
-                addDamageTimeLeft--;
-            else
-                unit.NumericBox.DamageRate.RemoveModifier(AddDamageModifier);
-        }
-
-        public bool IsMeetingExitCondition()
-        {
-            return slowDownTimeLeft <= 0 && addDamageTimeLeft <= 0;
-        }
-
-        public void OnExit()
-        {
-            // 移除减速
-            unit.NumericBox.MoveSpeed.RemoveFinalPctAddModifier(moveSpeedModifier);
-            // 移除增伤
-            unit.NumericBox.DamageRate.RemoveModifier(AddDamageModifier);
-        }
-
-        /// <summary>
-        /// 刷新时间
-        /// </summary>
-        public void Refresh()
-        {
-            // 移除增伤
-            unit.NumericBox.DamageRate.RemoveModifier(AddDamageModifier);
-
-            slowDownTimeLeft = SlowDownTime;
-            addDamageTimeLeft = AddDamageTime;
-
-            // 减速
-            unit.AddStatusAbility(new SlowStatusAbility(-80, unit, SlowDownTime));
-            unit.NumericBox.MoveSpeed.AddFinalPctAddModifier(moveSpeedModifier);
-            // 增伤
-            unit.NumericBox.DamageRate.AddModifier(AddDamageModifier);
-        }
-
-        public void ShutDown()
-        {
-            
-        }
-
-        public bool IsClearWhenDie()
-        {
-            return true;
-        }
+        if (hitedUnitList.Contains(u))
+            return;
+        // 计算折前伤害
+        float dmg = u.mMaxHp * u.mBurnRate * u.mAoeRate; 
+        // 先作用于护盾
+        dmg = u.NumericBox.DamageShield(dmg);
+        // 剩余伤害转为灰烬伤害
+        if (dmg > 0)
+            new DamageAction(CombatAction.ActionType.BurnDamage, null, u, dmg).ApplyAction();
+        //  如果是二转还会施加2秒晕眩效果
+        if(currentShape >= 2)
+            u.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(u, 120, false));
+        // 记录已被电击过一次
+        hitedUnitList.Add(u);
     }
-} 
+    
+    /// <summary>
+    /// 获取全局计数器任务
+    /// </summary>
+    /// <returns></returns>
+    private static CustomizationTask GetGlobalAttackTimerTask()
+    {
+        CustomizationTask task = new CustomizationTask();
+        task.AddOnEnterAction(delegate {
+            nextAttackTimeLeft = 600;
+        });
+        task.AddTaskFunc(delegate {
+            List<RaidenBaguette> l1 = GetThisUnitList();
+            if (l1.Count <= 0)
+                return true;
+            nextAttackTimeLeft--;
+            if(nextAttackTimeLeft <= 0)
+            {
+                // 从中选出所有未被定身的雷电长棍面包
+                List<RaidenBaguette> l2 = new List<RaidenBaguette>();
+                foreach (var u in l1)
+                {
+                    if (u.GetNoCountUniqueStatus(StringManager.Stun) == null)
+                        l2.Add(u);
+                }
+                // 如果未被定身的雷电长棍面包数量超过2，则执行一次电击
+                if (l2.Count >= 2)
+                {
+                    ExecuteAttack(l2);
+                    nextAttackTimeLeft = 600;
+                }
+            }
+            return false;
+        });
+        return task;
+    }
+    #endregion
+}

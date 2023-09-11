@@ -48,6 +48,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
     public float mCurrentAttack { get { return NumericBox.Attack.Value; } } // 当前攻击力
     public float mBaseAttackSpeed { get { return NumericBox.AttackSpeed.baseValue; } } // 基础攻击速度
     public float mCurrentAttackSpeed { get { return NumericBox.AttackSpeed.Value; } } // 当前攻击速度
+    public float mCurrentSkillSpeed { get { return NumericBox.SkillSpeed.TotalValue; } } // 当前攻击速度
     public float mCurrentDefense { get { return NumericBox.Defense.Value; } } // 防御
     public float mBaseMoveSpeed { get { return NumericBox.MoveSpeed.baseValue; } } // 基础移动速度
     public float mCurrentMoveSpeed { get { return NumericBox.MoveSpeed.Value; } } // 当前移动速度
@@ -710,7 +711,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         dmg = Mathf.Min(dmg, _mCurrentHp);
         // 最后扣除本体生命值
         _mCurrentHp -= dmg;
-        if (_mCurrentHp <= 0)
+        if (GetCurrentHp() <= 0)
         {
             _mCurrentHp = 0;
             ExecuteDeath();

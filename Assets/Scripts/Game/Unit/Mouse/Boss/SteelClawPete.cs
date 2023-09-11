@@ -291,7 +291,7 @@ public class SteelClawPete : BossUnit
         });
         int t = 120;
         Vector2 startPos = transform.position + 2*MapManager.gridHeight*Vector3.up;
-        TaskManager.AddParabolaTask(b, (startPos - (Vector2)target.transform.position).magnitude/t, 2.5f, startPos, target, true);
+        b.taskController.AddTask(TaskManager.GetParabolaTask(b, (startPos - (Vector2)target.transform.position).magnitude / t, 2.5f, startPos, target, true));
         GameController.Instance.AddBullet(b);
     }
 

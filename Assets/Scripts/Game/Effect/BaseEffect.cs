@@ -235,6 +235,12 @@ public class BaseEffect : MonoBehaviour, IGameControllerMember
     /// </summary>
     private void Recycle()
     {
+        // 回收前清空显示的贴图与Animator，以防止下次引用时有一瞬间的贴图闪过
+        if(resName == "EffectModel")
+        {
+            spriteRenderer.sprite = null;
+            animator.runtimeAnimatorController = null;
+        }
         GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, resPath + resName, gameObject);
     }
 }

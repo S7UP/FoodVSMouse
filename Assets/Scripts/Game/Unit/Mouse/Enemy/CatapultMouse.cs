@@ -115,7 +115,7 @@ public class CatapultMouse : MouseUnit
     public override void ExecuteDamage()
     {
         float dmg = mCurrentAttack;
-        GameManager.Instance.audioSourceManager.PlayEffectMusic("Basketball");
+        GameManager.Instance.audioSourceController.PlayEffectMusic("Basketball");
 
         // 阻挡优先级大于远程攻击优先级
         if (IsHasTarget())
@@ -133,7 +133,7 @@ public class CatapultMouse : MouseUnit
                     new DamageAction(CombatAction.ActionType.CauseDamage, this, target, dmg).ApplyAction();
                 }
             });
-            TaskManager.AddParabolaTask(b, TransManager.TranToVelocity(24f), 0.25f, transform.position, u, false);
+            b.taskController.AddTask(TaskManager.GetParabolaTask(b, TransManager.TranToVelocity(24f), 0.25f, transform.position, u, false));
             GameController.Instance.AddBullet(b);
 
         }
@@ -153,14 +153,14 @@ public class CatapultMouse : MouseUnit
                     new DamageAction(CombatAction.ActionType.CauseDamage, this, target, dmg).ApplyAction();
                 }
             });
-            TaskManager.AddParabolaTask(b, TransManager.TranToVelocity(v), 2.0f, transform.position, targetUnit, false);
+            b.taskController.AddTask(TaskManager.GetParabolaTask(b, TransManager.TranToVelocity(v), 2.0f, transform.position, targetUnit, false));
             GameController.Instance.AddBullet(b);
         }
     }
 
     public override void OnDieStateEnter()
     {
-        GameManager.Instance.audioSourceManager.PlayEffectMusic("Explosion");
+        GameManager.Instance.audioSourceController.PlayEffectMusic("Explosion");
         base.OnDieStateEnter();
     }
 

@@ -17,16 +17,18 @@ public class AttackSpeedJewelSkill : BaseJewelSkill
         int timeLeft = Mathf.FloorToInt(GetParamValue("t", 0) * 60);
 
         List<BaseUnit> allyList = GameController.Instance.GetEachAlly();
-        // 对当前每个友军施加时效性的基础攻击速度效果
+        // 对当前每个友军施加时效性的基础攻击速度效果与控制免疫效果
         foreach (var u in allyList)
         {
             StatusManager.AddBaseAttackSpeedBuff(u, GetParamValue("attackSpeedPercent", 0), timeLeft);
+            StatusManager.AddIgnoreSettleDownBuff(u, timeLeft);
         }
 
         Action<BaseCardBuilder> action = (c) =>
         {
             FoodUnit u = c.mProduct;
             StatusManager.AddBaseAttackSpeedBuff(u, GetParamValue("attackSpeedPercent", 0), timeLeft);
+            StatusManager.AddIgnoreSettleDownBuff(u, timeLeft);
         };
 
         // 后续判定

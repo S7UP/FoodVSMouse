@@ -205,12 +205,7 @@ public class TagsManager
 
     private static void GeneralLastDefence(string id)
     {
-        for (int i = 0; i < 7; i++)
-        {
-            BaseCat cat = GameController.Instance.mItemController.GetSpecificRowCat(i);
-            if (cat != null)
-                cat.MDestory();
-        }
+        GameController.Instance.mItemController.RemoveAllCats();
     }
     #endregion
 }

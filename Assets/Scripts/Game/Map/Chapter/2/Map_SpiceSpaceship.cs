@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 using UnityEngine;
@@ -65,13 +66,7 @@ public class Map_SpiceSpaceship : ChapterMap
     /// </summary>
     public override void ProcessingGridList()
     {
-        // 添加云层
-        for (int i = 1; i < 8; i++)
-            for (int j = 0; j < 2; j++)
-            {
-                GetGrid(i, j).AddGridType(GridType.Sky, BaseGridType.GetInstance(GridType.Sky, 0));
-                GetGrid(i, 5 + j).AddGridType(GridType.Sky, BaseGridType.GetInstance(GridType.Sky, 0));
-            }
+
     }
 
     /// <summary>
@@ -87,8 +82,38 @@ public class Map_SpiceSpaceship : ChapterMap
     /// </summary>
     public override void OtherProcessing()
     {
+        Transform trans = GameController.Instance.mMapController.transform;
+        // 添加空域
         {
-            // 为全图添加黑夜BUFF
+            RetangleAreaEffectExecution r = Environment.SkyManager.GetSkyArea(MapManager.GetGridLocalPosition(4, 3), new Vector2(5 * MapManager.gridWidth, 7 * MapManager.gridHeight));
+            r.name = "SkyArea";
+            GameController.Instance.AddAreaEffectExecution(r);
+        }
+
+
+        // 创建与板块绑定的承载域
+        {
+            Action<BaseGrid> createVehicleAreaAction = (g) => {
+                RetangleAreaEffectExecution r = Environment.SkyManager.GetVehicleArea(g.transform.position, new Vector2(1 * MapManager.gridWidth, 0.5f * MapManager.gridHeight));
+                r.name = "SkyVehicle(grid)";
+                r.transform.SetParent(trans);
+                GameController.Instance.AddAreaEffectExecution(r);
+
+                CustomizationTask t = new CustomizationTask();
+                t.AddTaskFunc(delegate {
+                    r.transform.position = g.transform.position;
+                    return !g.IsAlive();
+                });
+                r.taskController.AddTask(t);
+            };
+
+            for (int i = 2; i < 5; i++)
+                for (int j = 0; j < 6; j++)
+                    createVehicleAreaAction(GetGrid(j, i));
+        }
+
+        // 为全图添加黑夜BUFF
+        {
             ShadeAreaEffectExecution e = ShadeAreaEffectExecution.GetInstance(11, 7, new UnityEngine.Vector2(MapManager.GetColumnX(4), MapManager.GetRowY(3)));
             GameController.Instance.AddAreaEffectExecution(e);
         }
@@ -108,7 +133,7 @@ public class Map_SpiceSpaceship : ChapterMap
                 for (int j = 0; j <= 1; j++)
                 {
                     WindAreaEffectExecution e = WindAreaEffectExecution.GetInstance(8.6f, 1, new Vector2(MapManager.GetColumnX(4f), MapManager.GetRowY(i + j)));
-                    WindAreaEffectExecution.SetClassicalWindAreaEffectMode(e, 1, 300, 120, 540); // 等待时间、速度变化时间、匀速时间
+                    WindAreaEffectExecution.SetClassicalWindAreaEffectMode(e, 0, 360, 120, 1440); // 等待时间、速度变化时间、匀速时间
                     GameController.Instance.AddAreaEffectExecution(e);
                 }
             }

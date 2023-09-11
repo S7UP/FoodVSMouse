@@ -121,25 +121,6 @@ public class BlondeMary : BossUnit
 
     private RetangleAreaEffectExecution CreateCheckArea()
     {
-        // 生成一个隐形挨炸的老鼠
-        //MouseUnit m = MouseManager.GetBombedToolMouse();
-        //m.SetMaxHpAndCurrentHp(mMaxHp);
-        //m.transform.position = transform.position;
-        //{
-        //    CustomizationTask t = new CustomizationTask();
-        //    t.AddTaskFunc(delegate {
-        //        if (this.IsAlive())
-        //            m.transform.position = transform.position;
-        //        else
-        //            return true;
-        //        return false;
-        //    });
-        //    t.AddOnExitAction(delegate {
-        //        m.ExecuteDeath();
-        //    });
-        //    m.AddTask(t);
-        //}
-
         // 产生一个踩踏检测区域
         {
             RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 0.1f, 0.5f, "EnemyAllyGrid");
@@ -339,6 +320,7 @@ public class BlondeMary : BossUnit
                 transform.position += Vector3.left*v;
                 if (timeLeft <= 0 || transform.position.x <= MapManager.GetColumnX(0) || isBombed)
                 {
+                    isBombed = true;
                     animatorController.Play("Idle", true);
                     return true;
                 }
@@ -480,7 +462,7 @@ public class BlondeMary : BossUnit
                 timeLeft--;
                 if (timeLeft <= 0)
                 {
-                    animatorController.Play("Cast");
+                    animatorController.Play("PreCast");
                     return true;
                 }
                 return false;
@@ -507,7 +489,7 @@ public class BlondeMary : BossUnit
                     {
                         unit.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(unit, stun2/2, false));
                     }
-                    animatorController.Play("Idle", true);
+                    animatorController.Play("Cast", true);
                     return true;
                 }
                 return false;
@@ -517,6 +499,7 @@ public class BlondeMary : BossUnit
                 timeLeft--;
                 if (timeLeft <= 0)
                 {
+                    animatorController.Play("Idle", true);
                     return true;
                 }
                 return false;

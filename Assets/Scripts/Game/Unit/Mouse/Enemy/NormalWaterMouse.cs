@@ -61,7 +61,7 @@ public class NormalWaterMouse : MouseUnit, IInWater
     public override void OnDieStateEnter()
     {
         // 如果自己在水域中且没有被承载就播放特有的淹死动画
-        if (WaterGridType.IsInWater(this) && !WoodenDisk.IsBearing(this))
+        if (WaterGridType.IsInWater(this) && !Environment.WaterManager.IsBearing(this))
             animatorController.Play("Die1");
         else
             animatorController.Play("Die0");

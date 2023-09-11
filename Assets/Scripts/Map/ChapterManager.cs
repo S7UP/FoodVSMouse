@@ -52,7 +52,8 @@ public class ChapterManager
             { 14, "雪顶火山"},
             { 15, "勇士城堡" },
             { 16, "勇士港口" },
-            { 17, "勇士火山" }
+            { 17, "勇士火山" },
+            { 18, "玛奇朵港（遗忘）" },
         }},
         // 浮空岛
         { ChapterNameTypeMap.SkyCastle, new Dictionary<int, string>(){

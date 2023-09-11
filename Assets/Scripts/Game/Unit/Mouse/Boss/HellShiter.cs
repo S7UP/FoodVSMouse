@@ -169,7 +169,7 @@ public class HellShiter : BossUnit
                 return false;
             });
             t.AddOnExitAction(delegate {
-                r.ExecuteRecycle();
+                r.MDestory();
             });
             r.AddTask(t);
         }
@@ -211,7 +211,6 @@ public class HellShiter : BossUnit
         r.isAffectMouse = true;
         r.isAffectCharacter = true;
         Action<BaseUnit> frozenAction = (u) => {
-            //u.AddNoCountUniqueStatusAbility(StringManager.Frozen, new FrozenStatusAbility(u, time, false));
             EnvironmentFacade.AddIceDebuff(u, frozenValue);
         };
         r.SetOnFoodEnterAction(frozenAction);
@@ -222,11 +221,12 @@ public class HellShiter : BossUnit
         {
             MouseUnit m = GameController.Instance.CreateMouseUnit(MapManager.GetXIndex(pos.x), MapManager.GetYIndex(pos.y), new BaseEnemyGroup.EnemyInfo() { type = (int)MouseNameTypeMap.GhostMouse, shape = 0 });
             m.transform.position = new Vector2(pos.x, m.transform.position.y);
-            m.SetMaxHpAndCurrentHp(m.mMaxHp * NumberManager.GetCurrentEnemyHpRate()); // 对老鼠最大生命值进行修正
         }
-        // 回复玩家能量
-        SmallStove.CreateAddFireEffect(pos, GetParamValue("ReturnFire", mHertIndex));
         GameController.Instance.AddAreaEffectExecution(r);
+        // 回复玩家能量
+        float reward = GetParamValue("ReturnFire", mHertIndex);
+        if(reward > 0)
+            SmallStove.CreateAddFireEffect(pos, reward);
     }
 
     private void Skill0GhostFire(Vector2 startPos, int rowIndex, int timeLeft)
@@ -546,7 +546,7 @@ public class HellShiter : BossUnit
             CustomizationTask t = new CustomizationTask();
             t.AddTaskFunc(delegate {
                 timeLeft--;
-                if (timeLeft <= 0)
+                if (timeLeft <= 0 || !IsAlive())
                     return true;
                 return false;
             });

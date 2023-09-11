@@ -10,6 +10,7 @@ public class FlyBarrierMouse : MouseUnit, IFlyUnit
     private int minDropBarrierColumn; // 降落障碍列
     private int maxDropBarrierColumn;
     private FloatModifier speedRateModifier = new FloatModifier(100.0f); // 飞行状态下2倍速
+    private BoolModifier boolMod = new BoolModifier(true);
 
     public override void MInit()
     {
@@ -215,7 +216,10 @@ public class FlyBarrierMouse : MouseUnit, IFlyUnit
     /// 进入转场状态时要做的事，这里特指进入刚被击落时要做的
     /// </summary>
     public override void OnTransitionStateEnter()
-    {
+    {        
+        // 被击落期间移除所有定身类效果且免疫定身类效果
+        StatusManager.RemoveAllSettleDownDebuff(this);
+        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, boolMod);
         animatorController.Play("Drop");
     }
 
@@ -230,11 +234,13 @@ public class FlyBarrierMouse : MouseUnit, IFlyUnit
         if(animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
         {
             SetActionState(new MoveState(this));
+            AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(this, 60, false));
         }
     }
 
     public override void OnTransitionStateExit()
     {
+        NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreStun, boolMod);
         mHeight = 0; // 高度降低为地面高度
     }
 }

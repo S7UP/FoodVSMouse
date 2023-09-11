@@ -43,7 +43,7 @@ public class BaseFactory : IBaseFactory
             if (objectPoolDict[itemName].Count == 0)
             {
                 // 对象池没东西了也需要自己产生实例
-                GameObject go = GetResource(itemName); // 这里取出来的并非实例，只是预制体之类的
+                GameObject go = LoadResource(itemName); // 这里取出来的并非实例，只是预制体之类的
                 itemGo = GameManager.Instance.CreateItem(go); // 让GameManager为预制体实例化一下，产生真正的实例
             }
             else
@@ -55,7 +55,7 @@ public class BaseFactory : IBaseFactory
         else // 不包含此对象池
         {
             objectPoolDict.Add(itemName, new Stack<GameObject>()); // 要先建立一个这种的对象池
-            GameObject go = GetResource(itemName); // 这里取出来的并非实例，只是预制体之类的
+            GameObject go = LoadResource(itemName); // 这里取出来的并非实例，只是预制体之类的
             itemGo = GameManager.Instance.CreateItem(go); // 让GameManager为预制体实例化一下，产生真正的实例
         }
         // 安全性检测
@@ -66,8 +66,12 @@ public class BaseFactory : IBaseFactory
         return itemGo;
     }
 
-    // 取资源
-    private GameObject GetResource(string itemName)
+    /// <summary>
+    /// 载入预制体
+    /// </summary>
+    /// <param name="itemName"></param>
+    /// <returns></returns>
+    public GameObject LoadResource(string itemName)
     {
         GameObject itemGo = null;
         string itemLoadPath = loadPath + itemName;
@@ -86,6 +90,19 @@ public class BaseFactory : IBaseFactory
             Debug.Log("失败路径：" + itemLoadPath);
         }
         return itemGo;
+    }
+
+    /// <summary>
+    /// 卸载预制体
+    /// </summary>
+    /// <param name="itemName"></param>
+    public void UnLoadResource(string itemName)
+    {
+        if (factoryDict.ContainsKey(itemName))
+        {
+            Resources.UnloadAsset(factoryDict[itemName]);
+            factoryDict.Remove(itemName);
+        }
     }
 
     /// <summary>

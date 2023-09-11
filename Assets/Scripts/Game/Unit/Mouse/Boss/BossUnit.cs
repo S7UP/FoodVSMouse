@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 using S7P.Numeric;
@@ -15,6 +16,7 @@ public class BossUnit : MouseUnit
     private int SeedValue; // 当前种子值
     private Stack<Vector2> nextGridStack = new Stack<Vector2>(); // 下一个格子坐标栈，如果栈为空则让随机数生成器生成一个值并进栈 
     protected Dictionary<string, float[]> BossParamArrayDict = new Dictionary<string, float[]>(); // boss参数字典
+    private Dictionary<string, List<Action<float[]>>> ParamChangeActionListDict = new Dictionary<string, List<Action<float[]>>>(); // 当参数字典中的参数发生改变时的事件
 
     private BoolModifier BossNoTargetAttackModeModifier = new BoolModifier(true); // BOSS无限攻击tag
     private FloatModifier burnRateMod = new FloatModifier(0.05f); // BOSS受灰烬效果比率
@@ -27,6 +29,7 @@ public class BossUnit : MouseUnit
 
     public override void MInit()
     {
+        ParamChangeActionListDict.Clear();
         SeedValue = 0;
         mSkillQueueAbilityManager.Initial();
         rand = null;
@@ -244,8 +247,17 @@ public class BossUnit : MouseUnit
         // 切换阶段血量百分比
         AddParamArray("hpRate", new float[] { 0.5f, 0.2f });
         AddParamArray("burn_defence", new float[] { 0.95f });
+
+        // 血量阶段点参数改变事件
+        AddParamChangeAction("hpRate", delegate {
+            InitHertRateList();
+            UpdateHertMap();
+        });
+
         InitBossParam();
     }
+
+
 
     /// <summary>
     /// 初始化BOSS的参数
@@ -282,11 +294,9 @@ public class BossUnit : MouseUnit
         }
 
         // 特殊参数处理
-        if (key.Equals("hpRate"))
-        {
-            InitHertRateList();
-            UpdateHertMap();
-        }
+        if (ParamChangeActionListDict.ContainsKey(key))
+            foreach (var action in ParamChangeActionListDict[key])
+                action(arr);
     }
 
     public void AddParamArray(string key, List<float> list)
@@ -420,5 +430,41 @@ public class BossUnit : MouseUnit
     public float GetCurrentStageLeftHp()
     {
         return GetStageLeftHp(GetStage());
+    }
+
+    /// <summary>
+    /// 跳到下一阶段
+    /// </summary>
+    public void SkipStage()
+    {
+        if (mHertIndex == 0)
+            mHertRateList.Insert(mHertIndex, 1.0f);
+        else
+            mHertRateList.Insert(mHertIndex, mHertRateList[mHertIndex - 1]);
+        mHertIndex++;
+        OnHertStageChanged();
+    }
+
+    /// <summary>
+    /// 添加当参数字典发生改变时的事件
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="action"></param>
+    public void AddParamChangeAction(string key, Action<float[]> action)
+    {
+        if (!ParamChangeActionListDict.ContainsKey(key))
+            ParamChangeActionListDict.Add(key, new List<Action<float[]>>());
+        ParamChangeActionListDict[key].Add(action);
+    }
+
+    /// <summary>
+    /// 移除当参数字典发生改变时的事件
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="action"></param>
+    public void RemoveParamChangeAction(string key, Action<float[]> action)
+    {
+        if (ParamChangeActionListDict.ContainsKey(key))
+            ParamChangeActionListDict[key].Remove(action);
     }
 }

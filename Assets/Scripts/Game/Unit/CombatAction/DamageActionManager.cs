@@ -12,7 +12,6 @@ public class DamageActionManager
         DamageAction d2 = new DamageAction(d.mActionType, creator, target, d.DamageValue);
         foreach (var type in d.GetDamageTypeList())
         {
-            Debug.Log("dmgType="+type);
             d2.AddDamageType(type);
         }
         return d2;

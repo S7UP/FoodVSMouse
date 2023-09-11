@@ -14,4 +14,11 @@ public enum CharacterNameShapeMap
     WhiteMouse_M = 8, // 一种白色的老鼠的cos
     MeiLianHuaYu_F = 9, // 梦恋花语（女）
     MeiLianHuaYu_M = 10, // 梦恋花语（男）
+    HuaJia_F = 11,
+    LiFu_M = 12,
+    Juliet = 13,
+    Romeo = 14,
+    MoYingShengYi_M = 15,
+    MoYingShengYi_F = 16,
+    TiLaMiShu = 17,
 }

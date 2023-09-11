@@ -3,12 +3,14 @@ using S7P.Numeric;
 using System;
 
 using UnityEngine;
-using UnityEngine.Timeline;
 
 namespace Environment
 {
     public class WaterTask : BaseTask
     {
+        // 水抗性属性关键字
+        public const string WaterRate = "WaterRate";
+
         public const string NoDrop = "NoDropWater"; // 有此标记的单位在水里不会有上升和下降的动画表现
         public const string OnEnterWater = "OnEnterWater";
         public const string OnStayWater = "OnStayWater";
@@ -28,7 +30,6 @@ namespace Environment
         private float currentCutRate;
         // private float descendGridCount; // 下降格数
         private float minPos; // 下降最低高度
-        private float maxPos; // 上升最高高度
         private float sprite_pivot_y;
         private float sprite_rect_height;
         // 每秒伤害系列
@@ -40,10 +41,8 @@ namespace Environment
         private BaseUnit unit;
         private bool isDieInWater;
 
-        private SpriteGo eff; // 下水特效
+        private BaseEffect eff; // 冰雕特效
         private float gobal_alpha; // 全局透明度
-
-        private Action<BaseUnit> OnMasterDestoryAction;
         //private UnitType type;
 
         public WaterTask(UnitType type, BaseUnit unit)
@@ -74,19 +73,15 @@ namespace Environment
             {
                 case UnitType.Food:
                     minPos = 0f;
-                    maxPos = 0.2f * MapManager.gridWidth;
                     break;
                 case UnitType.Mouse:
                     minPos = -0.4f * MapManager.gridWidth;
-                    maxPos = 0.2f * MapManager.gridWidth;
                     break;
                 case UnitType.Item:
                     minPos = 0f;
-                    maxPos = 0.2f * MapManager.gridWidth;
                     break;
                 case UnitType.Character:
                     minPos = 0f;
-                    maxPos = 0.2f * MapManager.gridWidth;
                     break;
                 default:
                     break;
@@ -123,7 +118,7 @@ namespace Environment
 
             count = 1;
             // 先设成有载具，然后调用切换成无载具模式，这样初始状态就是无载具状态
-            if (WoodenDisk.IsBearing(unit))
+            if (Environment.WaterManager.IsBearing(unit))
                 ChangeToNoVehicleMode();
             else
                 ChangeToVehicleMode();
@@ -138,12 +133,12 @@ namespace Environment
                 PlayDieInWater();
             }
             // 判断在水域中是泡在水里还是在载具上
-            else if (count == 0 || (!hasVehicle && WoodenDisk.IsBearing(unit)) || UnitManager.IsFlying(unit))
+            else if (count == 0 || (!hasVehicle && WaterManager.IsBearing(unit)) || UnitManager.IsFlying(unit))
             {
                 // 如果目标 接触的水域数为0 或者 在无载具的状态下被木盘子承载 或者滞空状态 则转变为正常情况
                 ChangeToVehicleMode();
             }
-            else if (count > 0 && hasVehicle && !WoodenDisk.IsBearing(unit) && !UnitManager.IsFlying(unit))
+            else if (count > 0 && hasVehicle && !WaterManager.IsBearing(unit) && !UnitManager.IsFlying(unit))
             {
                 // 如果目标 接触的水域数超过0 且 在有载具的状态下不被任何木盘子承载 且不滞空 则转变为水蚀
                 ChangeToNoVehicleMode();
@@ -155,7 +150,7 @@ namespace Environment
                 // 无来源的持续伤害 （每秒造成 4%已损失生命值伤害（最小值为2））
                 if (triggerDamageTimeLeft == 0)
                 {
-                    new DamageAction(CombatAction.ActionType.CauseDamage, null, unit, Mathf.Max(2, unit.GetLostHp() * 0.04f)).ApplyAction();
+                    new DamageAction(CombatAction.ActionType.RealDamage, null, unit, Mathf.Max(2, unit.GetLostHp() * 0.04f)* GetUnitWaterRate(unit)).ApplyAction();
                     triggerDamageTimeLeft = TotalTime;
                 }
                 else if (triggerDamageTimeLeft > 0)
@@ -225,6 +220,7 @@ namespace Environment
             }
         }
 
+        #region 私有方法
         /// <summary>
         /// 切换成无载具模式
         /// </summary>
@@ -232,7 +228,7 @@ namespace Environment
         {
             if (hasVehicle)
             {
-                GameManager.Instance.audioSourceManager.PlayEffectMusic("EnterWater");
+                GameManager.Instance.audioSourceController.PlayEffectMusic("EnterWater");
                 hasVehicle = false;
                 // BUFF效果改变
                 triggerDamageTimeLeft = TotalTime;
@@ -281,7 +277,7 @@ namespace Environment
         {
             if (!hasVehicle)
             {
-                GameManager.Instance.audioSourceManager.PlayEffectMusic("EnterWater");
+                GameManager.Instance.audioSourceController.PlayEffectMusic("EnterWater");
                 hasVehicle = true;
                 // BUFF效果改变
                 if (!unit.NumericBox.GetBoolNumericValue(StringManager.IgnoreWaterGridState))
@@ -299,7 +295,7 @@ namespace Environment
                     // 也要浮起来
                     currentTime = 0;
                     offsetY = EnterWaterSpriteOffsetY.Value;
-                    offsetYEnd = maxPos;
+                    offsetYEnd = (unit.NumericBox.FloatDict.ContainsKey("WaterVehicleHeight") ? unit.NumericBox.FloatDict["WaterVehicleHeight"].AddCollector.MaxValue : 0);
                     cutRate = currentCutRate; // 裁剪高度
                     cutRateEnd = 0;
                 }
@@ -308,7 +304,7 @@ namespace Environment
                     // 浮起来！
                     currentTime = 0;
                     offsetY = EnterWaterSpriteOffsetY.Value;
-                    offsetYEnd = maxPos;
+                    offsetYEnd = (unit.NumericBox.FloatDict.ContainsKey("WaterVehicleHeight") ? unit.NumericBox.FloatDict["WaterVehicleHeight"].AddCollector.MaxValue : 0);
                     cutRate = currentCutRate; // 裁剪高度
                     cutRateEnd = 0;
                     EffectManager.RemoveWaterWaveEffectFromUnit(unit);
@@ -318,27 +314,18 @@ namespace Environment
 
         private void CreateWaterEffect()
         {
-            eff = SpriteGo.GetInstance();
+            eff = BaseEffect.CreateInstance(unit.GetSpriteRenderer().sprite);
             eff.spriteRenderer.sortingLayerName = unit.GetSpriteRenderer().sortingLayerName;
             eff.spriteRenderer.sortingOrder = unit.GetSpriteRenderer().sortingOrder - 1;
             eff.spriteRenderer.material = GameManager.Instance.GetMaterial("Water");
             eff.spriteRenderer.material.SetFloat("_Alpha", 1);
-            eff.transform.SetParent(unit.GetSpriteRenderer().transform);
-            eff.transform.localPosition = Vector2.zero;
-
-            OnMasterDestoryAction = delegate { eff.MDestory(); };
-            unit.AddOnDestoryAction(OnMasterDestoryAction);
+            GameController.Instance.AddEffect(eff);
+            unit.mEffectController.AddEffectToDict("Water_Body", eff, Vector2.zero);
         }
 
         private void RemoveWaterEffect()
         {
-            if (OnMasterDestoryAction != null)
-            {
-                OnMasterDestoryAction(unit);
-                unit.RemoveOnDestoryAction(OnMasterDestoryAction);
-                eff = null;
-                OnMasterDestoryAction = null;
-            }
+            eff.ExecuteDeath();
         }
 
         private void PlayDieInWater()
@@ -356,6 +343,44 @@ namespace Environment
             }
             isDieInWater = true; // 只执行一次
         }
+        #endregion
+
+        #region 静态方法
+        /// <summary>
+        /// 获取目标的岩浆伤害倍率
+        /// </summary>
+        /// <param name="unit"></param>
+        /// <returns></returns>
+        public static float GetUnitWaterRate(BaseUnit unit)
+        {
+            if (unit == null || !unit.IsAlive())
+                return 0;
+            FloatCollectorComponent c = CollectorComponentManager.GetFloatCollectorComponent(unit.mComponentController);
+            if (c.HasCollector(WaterRate))
+                return c.GetCollector(WaterRate).MulValue;
+            return 1;
+        }
+
+        public static void AddUnitWaterRate(BaseUnit unit, FloatModifier mod)
+        {
+            if (unit == null || !unit.IsAlive())
+                return;
+            FloatCollectorComponent c = CollectorComponentManager.GetFloatCollectorComponent(unit.mComponentController);
+            if (!c.HasCollector(WaterRate))
+                c.AddCollector(WaterRate, new FloatModifierCollector());
+            c.GetCollector(WaterRate).AddModifier(mod);
+        }
+
+        public static void RemoveUnitWaterRate(BaseUnit unit, FloatModifier mod)
+        {
+            if (unit == null || !unit.IsAlive())
+                return;
+            FloatCollectorComponent c = CollectorComponentManager.GetFloatCollectorComponent(unit.mComponentController);
+            if (!c.HasCollector(WaterRate))
+                c.AddCollector(WaterRate, new FloatModifierCollector());
+            c.GetCollector(WaterRate).RemoveModifier(mod);
+        }
+        #endregion
     }
 
 }

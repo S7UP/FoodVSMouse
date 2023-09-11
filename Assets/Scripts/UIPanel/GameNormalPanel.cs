@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
 using System.Collections;
+using UnityEngine.EventSystems;
 
 /// <summary>
 /// 负责管理战斗场景UI面板的类
@@ -31,7 +32,6 @@ public class GameNormalPanel : BasePanel
     private Animator Ani_BigWave;
     private GameObject PauseUI;
     private GameObject PutCharacterUI;
-    // private GameObject Prefab_Tex_DamageNumber;
     private InfoUI_GameNormalPanel InfoUI;
     private Transform Tran_JewelSkillUI;
     private JewelSkill_GameNormalPanel[] JewelSkillArray;
@@ -43,12 +43,16 @@ public class GameNormalPanel : BasePanel
     private Text Tex_PlayTime;
     private Text Tex_TotalEnergy;
     private Text Tex_PauseCount;
+    private GameObject NoLimit_Go;
 
     private RectTransform RectTrans_BGM;
     private Text Tex_BGM;
     private Tweener Tweener_BGM;
 
     public bool IsInCharacterConstructMode; // 是否在角色放置模式
+
+    private List<BaseUI> uiList = new List<BaseUI>(); // 附加ui表
+    private Transform Trans_BottomLayer;
 
 
     protected override void Awake()
@@ -83,25 +87,53 @@ public class GameNormalPanel : BasePanel
             Tran_JewelSkillUI.Find("Btn_Skill3").GetComponent<JewelSkill_GameNormalPanel>()
         };
         Tex_ExpTips = transform.Find("ExpTips").GetComponent<Text>();
-        Img_Rank = transform.Find("Img_Rank").Find("Rank").GetComponent<Image>();
-        Tex_Rank = transform.Find("Img_Rank").Find("Text").GetComponent<Text>();
+        Img_Rank = transform.Find("LeftBottomInfo").Find("Rank_Label").Find("Rank").GetComponent<Image>();
+        Tex_Rank = transform.Find("LeftBottomInfo").Find("Rank_Label").Find("Text").GetComponent<Text>();
         Tex_StageName = transform.Find("LeftBottomInfo").Find("StageName_Label").Find("Text").GetComponent<Text>();
         Tex_PlayTime = transform.Find("LeftBottomInfo").Find("Time_Label").Find("Text").GetComponent<Text>();
         Tex_TotalEnergy = transform.Find("LeftBottomInfo").Find("TotalEnergy_Label").Find("Text").GetComponent<Text>();
         Tex_PauseCount = transform.Find("LeftBottomInfo").Find("PauseCount_Label").Find("Text").GetComponent<Text>();
+        
+        NoLimit_Go = transform.Find("LeftBottomInfo").Find("NoLimit_Go").gameObject;
+        {
+            RectTransform rect = NoLimit_Go.GetComponent<RectTransform>();
+            // 鼠标进入的触发器
+            {
+                EventTrigger trigger = NoLimit_Go.GetComponent<EventTrigger>();
+                EventTrigger.TriggerEvent e = new EventTrigger.TriggerEvent();
+                e.AddListener(delegate {
+                    TextArea.Instance.SetText("此模式下胜利不会记录任何成绩。");
+                    TextArea.Instance.SetLocalPosition(rect.transform, new Vector2(rect.rect.width, 0), new Vector2(2, 0.5f));
+                    // TextArea.Instance.SetLocalPosition(rect.transform, new Vector2(rect.rect.width / 2, 0), new Vector2(0, 0));
+                });
+                trigger.triggers.Add(new EventTrigger.Entry() { eventID = EventTriggerType.PointerEnter, callback = e });
+            }
+            // 鼠标退出的触发器
+            {
+                EventTrigger trigger = NoLimit_Go.GetComponent<EventTrigger>();
+                EventTrigger.TriggerEvent e = new EventTrigger.TriggerEvent();
+                e.AddListener(delegate {
+                    TextArea.ExecuteRecycle();
+                });
+                trigger.triggers.Add(new EventTrigger.Entry() { eventID = EventTriggerType.PointerExit, callback = e });
+            }
+        }
+
 
         RectTrans_BGM = transform.Find("BGM").GetComponent<RectTransform>();
         Tex_BGM = RectTrans_BGM.Find("Text").GetComponent<Text>();
         Tweener_BGM = RectTrans_BGM.DOAnchorPosY(42, 2);
         Tweener_BGM.SetAutoKill(false);
         Tweener_BGM.Pause();
+
+        Trans_BottomLayer = transform.Find("BottomLayer");
     }
 
     public override void InitPanel()
     {
         base.EnterPanel();
         // 停止所有BGM
-        GameManager.Instance.audioSourceManager.StopAllMusic();
+        GameManager.Instance.audioSourceController.StopAllMusic();
         mShovelModel.transform.position = mShovelSlot2Trans.transform.position; // 铲子归位
         Tex_Pause.text = "暂停(Space)";
         MenuUI.SetActive(false);
@@ -114,6 +146,10 @@ public class GameNormalPanel : BasePanel
         IsInCharacterConstructMode = false;
         InfoUI.gameObject.SetActive(false);
         Tex_ExpTips.gameObject.SetActive(false);
+
+        foreach (var ui in uiList)
+            ui.MDestory();
+        uiList.Clear();
         // 可以让GameController开始工作了
         GameController.Instance.SetStart();
     }
@@ -138,9 +174,13 @@ public class GameNormalPanel : BasePanel
         ExitCardRemoveMode();
         // 读取玩家选择的宝石，安上对应的技能图标
         PlayerData data = PlayerData.GetInstance();
+        PlayerData.StageInfo_Dynamic info_dynamic = data.GetCurrentDynamicStageInfo();
+        BaseStage.StageInfo info = info_dynamic.info;
         for (int i = 0; i < 3; i++)
         {
             int type = data.GetJewel(i);
+            if (i + 1 > info.jewelCount && info.isEnableJewelCount)
+                type = -1; // -1表示的是锁定
             JewelSkillArray[i].MInit(type, GameController.Instance.mJewelSkillArray[i]);
         }
         // 读取游戏当前难度并重置时间
@@ -171,6 +211,8 @@ public class GameNormalPanel : BasePanel
         Tex_PlayTime.text = "00:00:00.00";
         Tex_TotalEnergy.text = "--";
         Tex_PauseCount.text = "0";
+        // 是否解限
+        NoLimit_Go.SetActive(info_dynamic.isNoLimit);
     }
 
     /// <summary>
@@ -244,8 +286,6 @@ public class GameNormalPanel : BasePanel
     /// </summary>
     public void OnReturnToSelcetClick()
     {
-        // GameController.Instance.RecycleAndDestoryAllInstance();
-        // GameManager.Instance.EnterSelectScene();
         GameManager.Instance.EnterTownScene();
     }
 
@@ -417,7 +457,7 @@ public class GameNormalPanel : BasePanel
     public void SetCharacterHpTextAndPosition(float hp, Vector3 position)
     {
         Img_Hp.transform.position = position;
-        Tex_Hp.text = "HP:" + hp;
+        Tex_Hp.text = "HP:" + Mathf.FloorToInt(hp);
     }
 
     /// <summary>
@@ -537,6 +577,19 @@ public class GameNormalPanel : BasePanel
             Tex_TotalEnergy.text = GameController.Instance.mCostController.totalFire.ToString("#0");
             Tex_PauseCount.text = GameController.Instance.pauseCount.ToString();
         }
+        // 更新附加小ui组件
+        List<BaseUI> delList = new List<BaseUI>();
+        foreach (var ui in uiList)
+        {
+            if (ui.IsValid())
+                ui.MUpdate();
+            else
+                delList.Add(ui);
+        }
+        foreach (var ui in delList)
+        {
+            uiList.Remove(ui);
+        }
     }
 
     private void OnDestroy()
@@ -559,7 +612,7 @@ public class GameNormalPanel : BasePanel
         if(info != null)
         {
             Tex_BGM.text = "BGM：" + info.displayName + "    Author：" + info.author;
-            RectTrans_BGM.sizeDelta = new Vector2(Tex_BGM.text.Length * Tex_BGM.fontSize + 40, RectTrans_BGM.sizeDelta.y);
+            // RectTrans_BGM.sizeDelta = new Vector2(Tex_BGM.text.Length * Tex_BGM.fontSize + 40, RectTrans_BGM.sizeDelta.y);
             Tweener_BGM.PlayForward();
             StartCoroutine(ShowBGM());
         }
@@ -573,5 +626,16 @@ public class GameNormalPanel : BasePanel
         for (int i = 0; i < 120; i++)
             yield return null;
         Tweener_BGM.PlayBackwards();
+    }
+
+    /// <summary>
+    /// 添加小ui
+    /// </summary>
+    public void AddUI(BaseUI ui)
+    {
+        Vector2 size = ui.transform.localScale;
+        uiList.Add(ui);
+        ui.transform.SetParent(Trans_BottomLayer);
+        ui.transform.localScale = size;
     }
 }

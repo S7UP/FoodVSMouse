@@ -1,37 +1,11 @@
 using UnityEngine;
-using S7P.Numeric;
+using Environment;
 /// <summary>
 /// 高空地块
 /// </summary>
 public class SkyGridType : BaseGridType
 {
     private const string TaskName = "SkyTask";
-    public const string NoAffect = "NoAffectSky";
-
-    /// <summary>
-    /// 为某个单位添加完全不受天空影响的效果
-    /// </summary>
-    /// <param name="unit"></param>
-    public static void AddNoAffectBySky(BaseUnit unit, BoolModifier boolModifier)
-    {
-        unit.NumericBox.AddDecideModifierToBoolDict(NoAffect, boolModifier); 
-        unit.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreDropFromSky, boolModifier); 
-    }
-
-    /// <summary>
-    /// 为某个单位移除完全不受天空影响的效果
-    /// </summary>
-    /// <param name="unit"></param>
-    public static void RemoveNoAffectBySky(BaseUnit unit, BoolModifier boolModifier)
-    {
-        unit.NumericBox.RemoveDecideModifierToBoolDict(NoAffect, boolModifier); 
-        unit.NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreDropFromSky, boolModifier); 
-    }
-
-    public static bool IsIgnoreDrop(BaseUnit unit)
-    {
-        return unit.NumericBox.GetBoolNumericValue(StringManager.IgnoreDropFromSky);
-    }
 
     public override void OnCollision(Collider2D collision)
     {
@@ -127,67 +101,6 @@ public class SkyGridType : BaseGridType
         else
         {
             // Debug.LogWarning("为什么有东西可以没带高空任务出高空？");
-        }
-    }
-
-
-    /// <summary>
-    /// 高空任务
-    /// </summary>
-    private class SkyTask : ITask
-    {
-        private int count; // 进入的高空格子数
-        private BaseUnit unit;
-
-        public SkyTask(BaseUnit unit)
-        {
-            this.unit = unit;
-        }
-
-        public void OnEnter()
-        {
-            count = 1;
-        }
-
-        public void OnUpdate()
-        {
-            // 如果目标 没有被空载 且 不免疫摔落 那么直接摔死吧
-            if((!unit.NumericBox.IntDict.ContainsKey(StringManager.BearInSky) || unit.NumericBox.IntDict[StringManager.BearInSky].Value <= 0)
-                && !IsIgnoreDrop(unit) && !CottonCandy.IsBearing(unit) && !UnitManager.IsFlying(unit))
-            {
-                unit.ExecuteDrop();
-            }
-        }
-
-        public bool IsMeetingExitCondition()
-        {
-            return count <= 0;
-        }
-
-        public void OnExit()
-        {
-
-        }
-
-        // 自定义方法
-        public void AddCount()
-        {
-            count++;
-        }
-
-        public void DecCount()
-        {
-            count--;
-        }
-
-        public void ShutDown()
-        {
-            
-        }
-
-        public bool IsClearWhenDie()
-        {
-            return true;
         }
     }
 }

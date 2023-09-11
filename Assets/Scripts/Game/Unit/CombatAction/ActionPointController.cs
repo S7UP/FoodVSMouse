@@ -55,9 +55,7 @@ public sealed class ActionPointController
     {
         if(ActionPoints.ContainsKey(actionPointType))
             foreach (var item in ActionPoints[actionPointType].Listeners)
-            {
-                item.Invoke(action);
-            }
+                item(action);
     }
 
     public void AddAction(string key, Action<BaseUnit> action)

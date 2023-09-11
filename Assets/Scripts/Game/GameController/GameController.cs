@@ -46,6 +46,7 @@ public class GameController : MonoBehaviour
     public List<AreaEffectExecution> areaEffectExecutionList; // 存活的能力执行体（对象）
     public List<BaseEffect> baseEffectList; // 存活的特效表
     public List<Tasker> taskerList; // 存活的任务执行器表
+    public TaskController mTaskController;
     //BaseRule[] mRuleList; //+ 规则表
     public KeyBoardSetting mKeyBoardSetting; // 键位控制接口
     //Recorder mRecorder; //+ 用户操作记录者
@@ -85,10 +86,11 @@ public class GameController : MonoBehaviour
             MMemberList.Add(mCardController);
             mProgressController = mGameNormalPanel.transform.Find("ProgressControllerUI").GetComponent<BaseProgressController>();
             MMemberList.Add(mProgressController);
-            mMapController = GameObject.Find("MapController").GetComponent<MapController>();
-            MMemberList.Add(mMapController);
             mItemController = GameObject.Find("ItemController").GetComponent<ItemController>();
             MMemberList.Add(mItemController);
+            mMapController = GameObject.Find("MapController").GetComponent<MapController>();
+            MMemberList.Add(mMapController);
+
             // 获取引用
             effectListTrans = GameObject.Find("EffectList").transform;
 
@@ -123,6 +125,7 @@ public class GameController : MonoBehaviour
             baseEffectList = new List<BaseEffect>();
             // 任务执行者表相关
             taskerList = new List<Tasker>();
+            mTaskController = new TaskController();
             // 角色控制器
             mCharacterController = new CharacterController();
             MMemberList.Add(mCharacterController);
@@ -149,6 +152,8 @@ public class GameController : MonoBehaviour
     /// </summary>
     public void Init()
     {
+        mTaskController.Initial();
+
         RecycleAndDestoryAllInstance();
         // 当前关卡对象创建
         if (mCurrentStage != null)
@@ -170,6 +175,9 @@ public class GameController : MonoBehaviour
         // 自身携带控制器初始化（要写到初始化的最后，不建议后面再加其他初始化）
         foreach (IGameControllerMember member in MMemberList)
             member.MInit();
+
+        // 关卡初始参数处理
+
 
         // 词条效果注入
         PlayerData data = GameManager.Instance.playerData;
@@ -217,7 +225,7 @@ public class GameController : MonoBehaviour
             item.MPause();
         }
         // BGM暂停
-        GameManager.Instance.audioSourceManager.PauseAllMusic();
+        GameManager.Instance.audioSourceController.PauseAllMusic();
     }
 
     // 解除暂停的方法
@@ -253,7 +261,7 @@ public class GameController : MonoBehaviour
             item.MResume();
         }
         // BGM停止暂停
-        GameManager.Instance.audioSourceManager.ResumeAllMusic();
+        GameManager.Instance.audioSourceController.ResumeAllMusic();
     }
 
     /// <summary>
@@ -281,16 +289,11 @@ public class GameController : MonoBehaviour
     public void Win()
     {
         PlayerData data = PlayerData.GetInstance();
-        // 常规给经验
-        {
-            mGameNormalPanel.SetExpTips("胜利啦！获得" + GetDefaultExpReward().ToString("#0") + "点经验值！");
-            data.AddExp(GetDefaultExpReward());
-        }
-        
         // 如果是正式收录的关，还需要更新通过信息，处理首通奖励
-        string id = PlayerData.GetInstance().GetCurrentStageID();
-        if(id != null)
+        PlayerData.StageInfo_Dynamic info_dynamic = data.GetCurrentDynamicStageInfo();
+        if (info_dynamic != null && info_dynamic.id != null)
         {
+            string id = info_dynamic.id;
             StageInfoManager.StageInfo_Local local_info = StageInfoManager.GetLocalStageInfo(id);
             if (local_info.rank == -1)
             {
@@ -298,13 +301,94 @@ public class GameController : MonoBehaviour
                 Action reward = StageInfoManager.GetFirstPassRewardAction(id);
                 if (reward != null)
                     reward();
+                else
+                {
+                    mGameNormalPanel.SetExpTips("胜利啦！获得" + GetDefaultExpReward().ToString("#0") + "点经验值！");
+                    data.AddExp(GetDefaultExpReward());
+                }
             }
-            // 更新通过最高的难度记录
-            local_info.rank = Mathf.Max(PlayerData.GetInstance().GetDifficult(), local_info.rank);
-            StageInfoManager.Save();
+            else
+            {
+                mGameNormalPanel.SetExpTips("胜利啦！获得" + GetDefaultExpReward().ToString("#0") + "点经验值！");
+                data.AddExp(GetDefaultExpReward());
+            }
+            // 更新记录，但是必须为非解限模式
+            if (!info_dynamic.isNoLimit)
+            {
+                // 更新通过最高的难度记录
+                int rank = data.GetDifficult();
+                local_info.rank = Mathf.Max(rank, local_info.rank);
+                // 如果当前为遗忘级，还可以记录词条等级与低配情况
+                if (rank >= 3)
+                {
+                    local_info.diffRate = Mathf.Max(local_info.diffRate, data.GetRankRate());
+                    // 记录最高两星的卡片数量
+                    int[] cardLevelArray = new int[] { -1, -1 };
+                    int[] cardCountArray = new int[] { 0, 0 };
+                    int max = -1;
+                    foreach (var c in mCardController.mCardBuilderList)
+                    {
+                        if (c.mLevel > max)
+                        {
+                            max = c.mLevel;
+                            cardLevelArray[1] = cardLevelArray[0];
+                            cardLevelArray[0] = max;
+                            cardCountArray[1] = cardCountArray[0];
+                            cardCountArray[0] = 1;
+                        }
+                        else if (c.mLevel == max)
+                        {
+                            cardCountArray[0] += 1;
+                        }
+                        else if (cardLevelArray[1] == -1)
+                        {
+                            cardLevelArray[1] = c.mLevel;
+                            cardCountArray[1] = 1;
+                        }
+                        else if (c.mLevel == cardLevelArray[1])
+                        {
+                            cardCountArray[1] += 1;
+                        }
+                    }
+                    // 替换规则： 最高星较小者 -> 最高星数量 -> 第二高星较小者 -> 第二高星数量
+                    bool flag = false;
+                    if (local_info.cardLevelArray[0] < 0 || cardLevelArray[0] < local_info.cardLevelArray[0])
+                    {
+                        flag = true;
+                    }
+                    else if (cardLevelArray[0] == local_info.cardLevelArray[0])
+                    {
+                        if (cardCountArray[0] < local_info.cardCountArray[0])
+                        {
+                            flag = true;
+                        }
+                        else if (cardCountArray[0] == local_info.cardCountArray[0])
+                        {
+                            if (local_info.cardLevelArray[1] < 0 || cardLevelArray[1] < local_info.cardLevelArray[1])
+                            {
+                                flag = true;
+                            }
+                            else if (cardLevelArray[1] == local_info.cardLevelArray[1] && cardCountArray[1] < local_info.cardCountArray[1])
+                                flag = true;
+                        }
+                    }
+                    if (flag)
+                    {
+                        local_info.cardLevelArray = cardLevelArray;
+                        local_info.cardCountArray = cardCountArray;
+                    }
+                }
+                StageInfoManager.Save();
+            }
+        }
+        else
+        {
+            mGameNormalPanel.SetExpTips("胜利啦！获得" + GetDefaultExpReward().ToString("#0") + "点经验值！");
+            data.AddExp(GetDefaultExpReward());
         }
         
         mGameNormalPanel.EnterWinPanel();
+        pauseCount--;
         Pause();
     }
 
@@ -317,6 +401,7 @@ public class GameController : MonoBehaviour
         mGameNormalPanel.SetExpTips("失败啦，没关系，再加把劲就可以啦！给你" + GetDefaultExpReward().ToString("#0") + "点经验值！");
         data.AddExp(GetDefaultExpReward());
         mGameNormalPanel.EnterLosePanel();
+        pauseCount--;
         Pause();
     }
 
@@ -526,8 +611,7 @@ public class GameController : MonoBehaviour
     public BaseUnit AddItem(BaseUnit item, int xIndex, int yIndex)
     {
         item.transform.SetParent(allyListGo[yIndex].transform);
-        //mItemList[yIndex].Add(item);
-        mItemController.GetSpecificRowItemList(yIndex).Add(item);
+        mItemController.AddItem(item);
         BaseGrid g = mMapController.GetGrid(xIndex, yIndex);
         if (g != null)
         {
@@ -535,7 +619,7 @@ public class GameController : MonoBehaviour
             BaseUnit old = g.SetItemUnitInGrid(item);
             if (old != null)
                 old.ExecuteDeath();
-            item.UpdateRenderLayer(mItemController.GetSpecificRowItemList(yIndex).Count);
+            item.UpdateRenderLayer(0);
         }
         else
         {
@@ -552,10 +636,8 @@ public class GameController : MonoBehaviour
     /// <returns></returns>
     public BaseUnit AddItem(BaseUnit item)
     {
-        int yIndex = item.GetRowIndex();
-        mItemController.SetItemRowParent(item, yIndex);
-        mItemController.GetSpecificRowItemList(yIndex).Add(item);
-        item.UpdateRenderLayer(mItemController.GetSpecificRowItemList(yIndex).Count);
+        mItemController.AddItem(item);
+        item.UpdateRenderLayer(0);
         return item;
     }
 
@@ -581,7 +663,7 @@ public class GameController : MonoBehaviour
         c.transform.SetParent(allyListGo[yIndex].transform);
         mAllyList[yIndex].Add(c);
         mMapController.GetGrid(xIndex, yIndex).SetCharacterUnitInGrid(c);
-        c.UpdateRenderLayer(mItemController.GetSpecificRowItemList(yIndex).Count);
+        c.UpdateRenderLayer(0);
         return c;
     }
 
@@ -770,10 +852,6 @@ public class GameController : MonoBehaviour
             if(mEnemyList[i].isActiveAndEnabled)
                 mEnemyList[i].MDestory();
         }
-        //foreach (var item in mEnemyList)
-        //{
-        //    item.MDestory();
-        //}
         mEnemyList.Clear();
         mEnemyChangeRowDict.Clear();
     }
@@ -824,7 +902,7 @@ public class GameController : MonoBehaviour
     {
         foreach (var item in areaEffectExecutionList)
         {
-            item.ExecuteRecycle();
+            item.MDestory();
         }
         areaEffectExecutionList.Clear();
     }
@@ -866,11 +944,6 @@ public class GameController : MonoBehaviour
         }
         return false;
     }
-
-    //public NumberManager GetNumberManager()
-    //{
-    //    return numberManager;
-    //}
 
     // Update is called once per frame
     void Update()
@@ -934,17 +1007,6 @@ public class GameController : MonoBehaviour
         {
             unit.MUpdate();
         }
-        //List<BaseUnit> delList = new List<BaseUnit>();
-        //foreach (var u in mEnemyList)
-        //{
-        //    if (!u.IsAlive())
-        //        delList.Add(u);
-        //}
-        //foreach (var u in delList)
-        //{
-        //    mEnemyList.Remove(u);
-        //}
-
 
         // 敌人换行更新图层
         foreach (var item in mEnemyChangeRowDict)
@@ -1097,6 +1159,7 @@ public class GameController : MonoBehaviour
                 }
             }
         }
+        mTaskController.Update();
 
         if (mCurrentStage.isWinWhenClearAllBoss && mCurrentStage.bossLeft <= 0)
         {
@@ -1153,8 +1216,9 @@ public class GameController : MonoBehaviour
     /// </summary>
     public void RecycleAndDestoryAllInstance()
     {
+        mTaskController.Initial();
         // 停用BGM
-        GameManager.Instance.audioSourceManager.StopAllMusic();
+        GameManager.Instance.audioSourceController.StopAllMusic();
         // 回收场上所有对象 && 自身表引用初始化
         ClearAllEnemy();
         ClearAllAlly();
@@ -1164,7 +1228,6 @@ public class GameController : MonoBehaviour
         ClearAllEffect();
         ClearAllTasker();
         mCharacterController.RecycleCurrentCharacter(); // 回收角色对象
-        mItemController.RecycleAll(); // 回收所有道具对象
         mMapController.RecycleAllGridAndGroup(); // 回收所有格子与格子组对象
         // 清空游戏对象工厂的所有对象（清空的是上一步回收的东西）
         GameManager.Instance.ClearGameObjectFactory(FactoryType.GameFactory);
@@ -1175,8 +1238,8 @@ public class GameController : MonoBehaviour
     /// </summary>
     public void LoadAndFixKeyBoardSetting()
     {
-        List<char> c_list = GameManager.Instance.playerData.GetCurrentCardKeyList();
-        List<AvailableCardInfo> a_list = GameManager.Instance.playerData.GetCurrentSelectedCardInfoList();
+        List<char> c_list = GameManager.Instance.playerData.GetCurrentDynamicStageInfo().cardKeyList;
+        List<AvailableCardInfo> a_list = GameManager.Instance.playerData.GetCurrentDynamicStageInfo().selectedCardInfoList;
         for (int i = 0; i < a_list.Count; i++)
         {
             int j = i;

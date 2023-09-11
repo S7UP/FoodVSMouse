@@ -113,7 +113,7 @@ public class MovementGridGroup : GridGroup
     /// <summary>
     /// 回收自身进对象池
     /// </summary>
-    public override void ExecuteRecycle()
+    protected override void ExecuteRecycle()
     {
         GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, "Grid/MovementGridGroup", this.gameObject);
     }

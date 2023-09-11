@@ -15,6 +15,12 @@ public class StraddleMouse : MouseUnit
         maxSpeed = TransManager.TranToVelocity(4.0f); // 最大速度为4.0标准移动速度
         a = TransManager.TranToVelocity(3.0f) / 9 / 60; // 加速度为在9秒内增加3.0标准移动速度的加速度
         base.MInit();
+
+        // 机械鼠受到水蚀伤害翻倍
+        if (mShape == 2)
+        {
+            Environment.WaterTask.AddUnitWaterRate(this, new S7P.Numeric.FloatModifier(2.0f));
+        }
     }
 
     public override bool IsDamageJudgment()
@@ -38,8 +44,8 @@ public class StraddleMouse : MouseUnit
             // 跳跃格子数等于 0.75*当前移动速度标准值
             float v = TransManager.TranToStandardVelocity(GetMoveSpeed());
             float dist;
-            if(transform.position.x <= MapManager.GetColumnX(0.75f))
-                dist = MapManager.gridWidth;
+            if(transform.position.x <= MapManager.GetColumnX(0.5f))
+                dist = Mathf.Min(0.5f * v * MapManager.gridWidth, 1.1f * MapManager.gridWidth);
             else
                 dist = Mathf.Min(0.75f * v * MapManager.gridWidth, Mathf.Abs(transform.position.x - MapManager.GetColumnX(0)));
             CustomizationTask t = TaskManager.GetParabolaTask(this, dist/60, dist/2, transform.position, transform.position + (Vector3)moveRotate * dist, false);
@@ -51,7 +57,7 @@ public class StraddleMouse : MouseUnit
                 DisableMove(false);
                 NumericBox.MoveSpeed.SetBase(TransManager.TranToVelocity(1.0f));
             });
-            GameManager.Instance.audioSourceManager.PlayEffectMusic("Jump");
+            GameManager.Instance.audioSourceController.PlayEffectMusic("Jump");
             AddTask(t);
         }
         else

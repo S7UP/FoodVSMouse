@@ -12,8 +12,10 @@ public class CombatNumericBox
     public FloatNumeric Attack = new FloatNumeric();
     // 攻击速度
     public FloatNumeric AttackSpeed = new FloatNumeric();
+    // 技能速率
+    public MultiplyFloatModifierCollector SkillSpeed = new MultiplyFloatModifierCollector();
     // 伤害减免(取值为0-100)
-    public FloatNumeric Defense = new FloatNumeric();
+    public FloatNumeric Defense { get; set; } = new FloatNumeric();
     // 伤害比率
     public MultiplyFloatModifierCollector DamageRate = new MultiplyFloatModifierCollector();
     // 移动速度(格/秒)
@@ -38,6 +40,7 @@ public class CombatNumericBox
         Hp.Initialize();
         Attack.Initialize();
         AttackSpeed.Initialize();
+        SkillSpeed.Clear();
         Defense.Initialize();
         MoveSpeed.Initialize();
         Shield.Initialize();

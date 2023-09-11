@@ -19,6 +19,7 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
         {FoodNameTypeMap.CottonCandy, FoodInGridType.LavaVehicle }, // ÃÞ»¨ÌÇ
         {FoodNameTypeMap.MelonShield, FoodInGridType.Shield }, // ¹ÏÆ¤
         {FoodNameTypeMap.PokerShield, FoodInGridType.Shield }, // ÆË¿Ë»¤ÕÖ
+        {FoodNameTypeMap.FlourBag, FoodInGridType.Bomb }, // Ãæ·Û´ü
         {FoodNameTypeMap.WineBottleBoom, FoodInGridType.Bomb }, // ¾ÆÆ¿
         {FoodNameTypeMap.CokeBoom, FoodInGridType.Bomb }, // ¿ÉÀÖ
         {FoodNameTypeMap.WiskyBoom, FoodInGridType.Bomb }, // ÍþÊ¿¼É
@@ -271,7 +272,7 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
     public void SetIndex(int index)
     {
         arrayIndex = index;
-        Tex_Key.text = GameManager.Instance.playerData.GetCurrentCardKeyList()[index].ToString();
+        Tex_Key.text = GameManager.Instance.playerData.GetCurrentDynamicStageInfo().cardKeyList[index].ToString();
     }
 
     /// <summary>

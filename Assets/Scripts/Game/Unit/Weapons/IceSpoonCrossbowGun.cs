@@ -84,7 +84,7 @@ public class IceSpoonCrossbowGun : BaseWeapons
     /// </summary>
     public override void ExecuteDamage()
     {
-        GameManager.Instance.audioSourceManager.PlayEffectMusic("Throw" + GameManager.Instance.rand.Next(0, 2));
+        GameManager.Instance.audioSourceController.PlayEffectMusic("Throw" + GameManager.Instance.rand.Next(0, 2));
         // 选择目标
         BaseUnit target = PitcherManager.FindTargetByPitcher(master, transform.position.x, GetRowIndex());
         CreateBullet(transform.position, 4*master.mCurrentAttack, target);
@@ -197,7 +197,7 @@ public class IceSpoonCrossbowGun : BaseWeapons
         r.SetAffectHeight(0); // 只有地面单位被影响
         r.SetOnEnemyEnterAction((u) => {
             // u.AddStatusAbility(new FrozenSlowStatusAbility(-35, u, 120));
-            EnvironmentFacade.AddIceDebuff(u, 30);
+            EnvironmentFacade.AddIceDebuff(u, 35);
         });
         GameController.Instance.AddAreaEffectExecution(r);
         return r;

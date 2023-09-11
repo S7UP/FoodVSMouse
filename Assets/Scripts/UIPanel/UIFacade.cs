@@ -10,7 +10,7 @@ public class UIFacade
     // 管理者
     private UIManager mUIManager;
     private GameManager mGameManager;
-    private AudioSourceManager mAudioSourceManager;
+    private AudioSourceController mAudioSourceController;
     public PlayerManager mPlayerManager;
     // UI面板
     public Dictionary<string, IBasePanel> currentScenePanelDict = new Dictionary<string, IBasePanel>();
@@ -26,7 +26,7 @@ public class UIFacade
         mGameManager = GameManager.Instance;
         mPlayerManager = mGameManager.playerManager;
         mUIManager = uIManager;
-        mAudioSourceManager = mGameManager.audioSourceManager;
+        mAudioSourceController = mGameManager.audioSourceController;
         // UI的存放窗口
         uiCanvas = GameObject.Find("Canvas").GetComponent<Canvas>();
         GameManager.DontDestroyOnLoad(uiCanvas);
@@ -152,12 +152,12 @@ public class UIFacade
     // 开关音乐
     public void CloseOrOpenBGMusic()
     {
-        mAudioSourceManager.CloseOrOpenBGMusic();
+        mAudioSourceController.CloseOrOpenBGMusic();
     }
 
     public void CloseOrOpenEffectMusic()
     {
-        mAudioSourceManager.CloseOrOpenEffectMusic();
+        mAudioSourceController.CloseOrOpenEffectMusic();
     }
 
     /// <summary>

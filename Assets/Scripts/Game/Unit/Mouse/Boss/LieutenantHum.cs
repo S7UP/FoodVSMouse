@@ -291,7 +291,7 @@ public class LieutenantHum : BossUnit
         m.AttackClipName = "Idle";
         m.DieClipName = "Disappear";
         m.SetActionState(new MoveState(m));
-        SkyGridType.AddNoAffectBySky(m, new BoolModifier(true));
+        Environment.SkyManager.AddNoAffectBySky(m, new BoolModifier(true));
         GameController.Instance.AddMouseUnit(m);
 
         // 达到指定攻击次数后消失

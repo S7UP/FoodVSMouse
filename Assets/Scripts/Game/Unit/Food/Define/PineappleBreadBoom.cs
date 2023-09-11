@@ -11,16 +11,24 @@ public class PineappleBreadBoom : FoodUnit
     {
         0.67f, 0.33f
     };
-    private float pctAddValue; // 增加伤害百分比
+    private float dmgRecord; // 接收到的有效伤害
 
     public override void MInit()
     {
         mHertIndex = 0;
-        pctAddValue = 0;
+        dmgRecord = 0;
         base.MInit();
 
         // 在受到伤害结算之后，更新受伤贴图状态
-        AddActionPointListener(ActionPointType.PostReceiveDamage, delegate { UpdateHertMap(); AddPctAttackWhenHited(); });
+        AddActionPointListener(ActionPointType.PostReceiveDamage, (action)=> { 
+            UpdateHertMap(); 
+            if(action is DamageAction)
+            {
+                DamageAction d = action as DamageAction;
+                if(d.Creator != null)
+                    dmgRecord += d.RealCauseValue;
+            }
+        });
         // 在接收治疗结算之后，更新受伤贴图状态
         AddActionPointListener(ActionPointType.PostReceiveCure, delegate { UpdateHertMap(); });
     }
@@ -95,29 +103,11 @@ public class PineappleBreadBoom : FoodUnit
     }
 
     /// <summary>
-    /// 挨打会增加最终爆破伤害加成
-    /// </summary>
-    private void AddPctAttackWhenHited()
-    {
-        pctAddValue += 10;
-    }
-
-    /// <summary>
     /// 爆炸咯！
     /// </summary>
     private void ExecuteBoom()
     {
-        GameManager.Instance.audioSourceManager.PlayEffectMusic("Boom");
-        // 如果不是被打死的（比如铲子移除），则不会有爆破伤害加成
-        // 而二转则会把爆破伤害加成降低至原来的50%而非没有
-        if (mCurrentHp > 0)
-        {
-            if (mShape < 2)
-                pctAddValue = 0;
-            else
-                pctAddValue /= 2;
-        }
-
+        GameManager.Instance.audioSourceController.PlayEffectMusic("Boom");
         // 原地产生一个爆炸特效
         {
             BaseEffect e = BaseEffect.GetInstance("BoomEffect");
@@ -132,8 +122,8 @@ public class PineappleBreadBoom : FoodUnit
             r.SetInstantaneous();
             r.isAffectMouse = true;
             r.SetOnEnemyEnterAction((u) => {
-                BurnManager.BurnDamage(this, u);
-                new DamageAction(CombatAction.ActionType.BurnDamage, this, u, mCurrentAttack * (1 + pctAddValue / 100)).ApplyAction();
+                BurnManager.BurnDamage(this, u, dmgRecord/500);
+                // new DamageAction(CombatAction.ActionType.BurnDamage, this, u, mCurrentAttack * (1 + pctAddValue / 100)).ApplyAction();
             });
             GameController.Instance.AddAreaEffectExecution(r);
 

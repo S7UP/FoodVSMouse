@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using System;
+
 using UnityEngine;
 
 [System.Serializable]
@@ -27,12 +27,24 @@ public class PlayerData
     public int[] jewelArray = new int[3] { -1, -1, -1 }; // 宝石（3个）
     public int difficult = 0; // 难度(0,1,2,3)
 
-    // 以下是非序列化内容
-    private string currentStageId; // 当前关卡ID（如果是从正常的界面进入则会有这个ID记录，否则为null）
-    private BaseStage.StageInfo currentStageInfo;
-    private List<AvailableCardInfo> currentSelectedCardInfoList = new List<AvailableCardInfo>(); // 当前携带的卡片组（选卡场景与关卡场景对接）
-    private List<char> currentCardKeyList = new List<char>(); // 当前键位控制表
 
+    /// <summary>
+    /// 当前动态关卡信息（生命周期-生成：从进入选关面板开始，销毁：实际关卡结束或者点击叉叉退出选关面板）
+    /// </summary>
+    public class StageInfo_Dynamic
+    {
+        // id 与 info 为进入关卡配置面板时赋值
+        public string id = null; // 当前关卡ID（如果是从正常的界面进入则会有这个ID记录，否则为null）
+        public BaseStage.StageInfo info = null;
+
+        // 以下为切换至战斗场景前赋值
+        public List<AvailableCardInfo> selectedCardInfoList = new List<AvailableCardInfo>(); // 当前携带的卡片组（选卡场景与关卡场景对接）
+        public List<char> cardKeyList = new List<char>(); // 当前键位控制表
+        public bool isNoLimit = false; // 是否启用解限模式
+    }
+
+    // 以下是非序列化内容
+    private StageInfo_Dynamic currentDynamicStageInfo;
 
 
     /// <summary>
@@ -154,66 +166,14 @@ public class PlayerData
     }
 
     /// <summary>
-    /// 获取当前选择的卡片信息表
-    /// </summary>
-    /// <returns></returns>
-    public List<AvailableCardInfo> GetCurrentSelectedCardInfoList()
-    {
-        return currentSelectedCardInfoList;
-    }
-
-    /// <summary>
-    /// 获取当前键位控制表
-    /// </summary>
-    /// <returns></returns>
-    public List<char> GetCurrentCardKeyList()
-    {
-        return currentCardKeyList;
-    }
-
-    /// <summary>
-    /// 设置当前选择的卡片信息表
-    /// </summary>
-    /// <param name="list"></param>
-    public void SetCurrentSelectedCardInfoList(List<AvailableCardInfo> list)
-    {
-        currentSelectedCardInfoList = list;
-    }
-
-    /// <summary>
-    /// 设置当前键位控制表
-    /// </summary>
-    /// <param name="list"></param>
-    public void SetCurrentCardKeyList(List<char> list)
-    {
-        currentCardKeyList = list;
-    }
-
-    /// <summary>
-    /// 设置当前关卡
-    /// </summary>
-    /// <param name="chapterIndex"></param>
-    /// <param name="sceneIndex"></param>
-    /// <param name="stageIndex"></param>
-    public void SetCurrentStageInfo(int chapterIndex, int sceneIndex, int stageIndex)
-    {
-        currentStageInfo = BaseStage.Load(chapterIndex, sceneIndex, stageIndex);
-    }
-
-    public void SetCurrentStageInfo(BaseStage.StageInfo stageInfo)
-    {
-        currentStageInfo = stageInfo;
-    }
-
-    /// <summary>
     /// 获取当前关卡信息
     /// </summary>
     /// <returns></returns>
     public BaseStage.StageInfo GetCurrentStageInfo()
     {
-        if (currentStageInfo == null)
-            SetCurrentStageInfo(0, 0, 0);
-        return currentStageInfo;
+        if (currentDynamicStageInfo == null)
+            return null;
+        return currentDynamicStageInfo.info;
     }
 
     /// <summary>
@@ -384,21 +344,13 @@ public class PlayerData
         return rankRate;
     }
 
-    /// <summary>
-    /// 获取当前关卡的ID
-    /// </summary>
-    /// <returns></returns>
-    public string GetCurrentStageID()
+    public StageInfo_Dynamic GetCurrentDynamicStageInfo()
     {
-        return currentStageId;
+        return currentDynamicStageInfo;
     }
 
-    /// <summary>
-    /// 设置当前关卡ID
-    /// </summary>
-    /// <param name="id"></param>
-    public void SetCurrentStageID(string id)
+    public void SetCurrentDynamicStageInfo(StageInfo_Dynamic info)
     {
-        currentStageId = id;
+        currentDynamicStageInfo = info;
     }
 }

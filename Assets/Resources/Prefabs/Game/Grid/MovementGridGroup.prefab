@@ -92,7 +92,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6166255786721623748}
   - component: {fileID: 4149845548279817314}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: MovementGridGroup
   m_TagString: Untagged
   m_Icon: {fileID: 0}

@@ -1,12 +1,18 @@
 using System.Collections.Generic;
 
+using UnityEngine;
+
 public class TaskController
 {
+    private List<ITask> addList = new List<ITask>();
+    private List<ITask> rmList = new List<ITask>();
     private List<ITask> TaskList = new List<ITask>(); // 自身挂载任务表
     private Dictionary<string, ITask> TaskDict = new Dictionary<string, ITask>(); // 任务字典（仅记录引用不实际执行逻辑，执行逻辑在任务表中）
 
     public void Initial()
     {
+        addList.Clear();
+        rmList.Clear();
         TaskList.Clear();
         TaskDict.Clear();
     }
@@ -29,8 +35,16 @@ public class TaskController
     /// <param name="t"></param>
     public void AddTask(ITask t)
     {
-        TaskList.Add(t);
-        t.OnEnter();
+        // TaskList.Add(t);
+        if(!addList.Contains(t) && !TaskList.Contains(t))
+        {
+            addList.Add(t);
+            t.OnEnter();
+        }
+        else
+        {
+            Debug.LogError("警告！即将添加了相同的任务，已阻止！");
+        }
     }
 
     /// <summary>
@@ -51,8 +65,17 @@ public class TaskController
     /// <param name="t"></param>
     public void RemoveTask(ITask t)
     {
-        TaskList.Remove(t);
-        t.OnExit();
+        //TaskList.Remove(t);
+        if (addList.Contains(t))
+        {
+            addList.Remove(t);
+            t.OnExit();
+        }
+        else if (!rmList.Contains(t) && TaskList.Contains(t))
+        {
+            rmList.Add(t);
+            t.OnExit();
+        }
     }
 
     /// <summary>
@@ -65,23 +88,6 @@ public class TaskController
         if (TaskDict.ContainsKey(key))
             return TaskDict[key];
         return null;
-    }
-
-    public void ShutDownAll()
-    {
-        List<ITask> delList = new List<ITask>();
-        foreach (var t in TaskList)
-        {
-            if (t.IsClearWhenDie())
-            {
-                t.ShutDown();
-                delList.Add(t);
-            }
-        }
-        foreach (var t in delList)
-        {
-            TaskList.Remove(t);
-        }
     }
 
     /// <summary>
@@ -97,25 +103,28 @@ public class TaskController
                 deleteKeyList.Add(keyValuePair.Key);
         }
         foreach (var key in deleteKeyList)
-        {
             RemoveUniqueTask(key);
-        }
-        List<ITask> deleteTask = new List<ITask>();
-        List<ITask> WillUpdateTask = new List<ITask>();
+
+        foreach (var t in rmList)
+            TaskList.Remove(t);
+        rmList.Clear();
+        foreach (var t in addList)
+            TaskList.Add(t);
+        addList.Clear();
+
+        List<ITask> exitTask = new List<ITask>();
+        List<ITask> updateTask = new List<ITask>();
         foreach (var t in TaskList)
         {
             if (t.IsMeetingExitCondition())
-                deleteTask.Add(t);
+                exitTask.Add(t);
             else
-                WillUpdateTask.Add(t);
+                updateTask.Add(t);
         }
-        foreach (var t in deleteTask)
-        {
+
+        foreach (var t in exitTask)
             RemoveTask(t);
-        }
-        foreach (var t in WillUpdateTask)
-        {
+        foreach (var t in updateTask)
             t.OnUpdate();
-        }
     }
 }

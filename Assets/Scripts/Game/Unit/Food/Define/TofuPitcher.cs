@@ -8,8 +8,8 @@ using UnityEngine;
 /// </summary>
 public class TofuPitcher : FoodUnit
 {
-    private static RuntimeAnimatorController[] GreenBulletRuntimeAnimatorControllerArray;
-    private static RuntimeAnimatorController[] RedBulletRuntimeAnimatorControllerArray;
+    private static RuntimeAnimatorController GreenBulletRuntimeAnimatorController;
+    private static RuntimeAnimatorController RedBulletRuntimeAnimatorController;
     private static RuntimeAnimatorController PoisonEffectRuntimeAnimatorController;
     private static RuntimeAnimatorController PoisonAreaEffectRuntimeAnimatorController;
     private static string DebuffName = "臭豆腐中毒";
@@ -20,19 +20,13 @@ public class TofuPitcher : FoodUnit
     private float GreenDamageRate; // 臭豆腐的伤害倍率
     private float poisonDamageRate; // 每秒中毒伤害倍率
     private int PoisonTime; // 中毒时间
+    private FloatModifier costMod = new FloatModifier(-15f / 7 / 60);
 
     public override void Awake()
     {
         base.Awake();
-        if (GreenBulletRuntimeAnimatorControllerArray == null)
+        if (PoisonEffectRuntimeAnimatorController == null)
         {
-            GreenBulletRuntimeAnimatorControllerArray = new RuntimeAnimatorController[3];
-            RedBulletRuntimeAnimatorControllerArray = new RuntimeAnimatorController[3];
-            for (int i = 0; i < 3; i++)
-            {
-                GreenBulletRuntimeAnimatorControllerArray[i] = GameManager.Instance.GetRuntimeAnimatorController("Food/36/" + i + "/GreenBullet");
-                RedBulletRuntimeAnimatorControllerArray[i] = GameManager.Instance.GetRuntimeAnimatorController("Food/36/" + i + "/RedBullet");
-            }
             PoisonEffectRuntimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Food/36/Poison");
             PoisonAreaEffectRuntimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Food/36/PoisonEffect");
         }
@@ -41,6 +35,12 @@ public class TofuPitcher : FoodUnit
     public override void MInit()
     {
         base.MInit();
+
+        if(GreenBulletRuntimeAnimatorController == null)
+        {
+            GreenBulletRuntimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Food/36/" + mShape + "/GreenBullet");
+            RedBulletRuntimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Food/36/" + mShape + "/RedBullet");
+        }
         // 根据转职情况来确定参数
         switch (mShape)
         {
@@ -64,6 +64,14 @@ public class TofuPitcher : FoodUnit
         GreenDamageRate = 1.0f;
         poisonDamageRate = 0.5f;
         targetPosition = Vector2.zero;
+
+        GameController.Instance.AddCostResourceModifier("Fire", costMod);
+    }
+
+    public override void MDestory()
+    {
+        GameController.Instance.RemoveCostResourceModifier("Fire", costMod);
+        base.MDestory();
     }
 
     /// <summary>
@@ -166,7 +174,7 @@ public class TofuPitcher : FoodUnit
     /// </summary>
     public override void ExecuteDamage()
     {
-        GameManager.Instance.audioSourceManager.PlayEffectMusic("Throw" + GameManager.Instance.rand.Next(0, 2));
+        GameManager.Instance.audioSourceController.PlayEffectMusic("Throw" + GameManager.Instance.rand.Next(0, 2));
         // 选择目标
         BaseUnit target = PitcherManager.FindTargetByPitcher(this, transform.position.x, GetRowIndex());
 
@@ -191,7 +199,7 @@ public class TofuPitcher : FoodUnit
     /// <param name="target"></param>
     private BaseBullet CreateRedBullet(Vector2 startPosition, BaseUnit target, float ori_dmg)
     {
-        AllyBullet b = AllyBullet.GetInstance(BulletStyle.Throwing, RedBulletRuntimeAnimatorControllerArray[mShape], this, ori_dmg);
+        AllyBullet b = AllyBullet.GetInstance(BulletStyle.Throwing, RedBulletRuntimeAnimatorController, this, ori_dmg);
         b.SetHitSoundEffect("Splat" + GameManager.Instance.rand.Next(0, 3));
         b.AddSpriteOffsetY(new FloatModifier(0.5f * MapManager.gridHeight));
         b.isnDelOutOfBound = true; // 出屏不自删
@@ -247,7 +255,7 @@ public class TofuPitcher : FoodUnit
     /// <returns></returns>
     private BaseBullet CreateGreenBullet(Vector2 startPosition, BaseUnit target, float ori_dmg)
     {
-        AllyBullet b = AllyBullet.GetInstance(BulletStyle.Throwing, GreenBulletRuntimeAnimatorControllerArray[mShape], this, GreenDamageRate * ori_dmg);
+        AllyBullet b = AllyBullet.GetInstance(BulletStyle.Throwing, GreenBulletRuntimeAnimatorController, this, GreenDamageRate * ori_dmg);
         b.SetHitSoundEffect("Splat" + GameManager.Instance.rand.Next(0, 3));
         b.AddSpriteOffsetY(new FloatModifier(0.5f * MapManager.gridHeight));
         b.isnDelOutOfBound = true; // 出屏不自删
@@ -354,6 +362,8 @@ public class TofuPitcher : FoodUnit
     /// </summary>
     private class TofuTask : ITask
     {
+        private FloatModifier decMod = new FloatModifier(-50);
+
         private class Recorder
         {
             public float dmg; // 秒伤
@@ -396,6 +406,10 @@ public class TofuPitcher : FoodUnit
             }
             GameController.Instance.AddEffect(e);
             unit.mEffectController.AddEffectToDict(DebuffName, e, 0.3f*Vector2.up);
+            // 减速，减攻击，减攻速
+            unit.NumericBox.MoveSpeed.AddFinalPctAddModifier(decMod);
+            unit.NumericBox.AttackSpeed.AddFinalPctAddModifier(decMod);
+            unit.NumericBox.Attack.AddFinalPctAddModifier(decMod);
         }
 
         public void OnUpdate()
@@ -443,6 +457,10 @@ public class TofuPitcher : FoodUnit
         {
             // 移除中毒特效
             unit.mEffectController.RemoveEffectFromDict(DebuffName);
+            // 减速，减攻击，减攻速
+            unit.NumericBox.MoveSpeed.RemoveFinalPctAddModifier(decMod);
+            unit.NumericBox.AttackSpeed.RemoveFinalPctAddModifier(decMod);
+            unit.NumericBox.Attack.RemoveFinalPctAddModifier(decMod);
         }
 
         // 叠加一层效果

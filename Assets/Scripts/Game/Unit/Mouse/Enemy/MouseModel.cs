@@ -19,6 +19,7 @@ public class MouseModel : MouseUnit
         base.MInit();
 
         spriteRenderer.sprite = null;
+        spriteRenderer.transform.right = Vector2.right;
         animator.runtimeAnimatorController = null;
         SetActionState(new BlockState()); // 默认为空白状态，即什么也不做
     }
@@ -49,6 +50,16 @@ public class MouseModel : MouseUnit
     protected override void ExecuteRecycle()
     {
         GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, "Mouse/MouseModel", this.gameObject);
+    }
+
+    public static MouseModel GetInstance(Sprite sprite)
+    {
+        MouseModel m = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Mouse/MouseModel").GetComponent<MouseModel>();
+        m.animator.runtimeAnimatorController = null;
+        m.MInit();
+        m.animator.runtimeAnimatorController = null;
+        m.spriteRenderer.sprite = sprite;
+        return m;
     }
 
     public static MouseModel GetInstance(RuntimeAnimatorController runtimeAnimatorController)

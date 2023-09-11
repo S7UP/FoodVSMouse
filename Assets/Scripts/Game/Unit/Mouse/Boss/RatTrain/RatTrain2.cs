@@ -437,15 +437,15 @@ public class RatTrain2 : BaseRatTrain
         c.IsMeetSkillConditionFunc = delegate { return true; };
         c.BeforeSpellFunc = delegate
         {
-            ClearRouteList(); // 清空当前路径表
-            ClearTransferQueue(); // 清空当前转移队列
-            isMoveToDestination = false;
-            // 原地消失
-            AddRoute(new BaseRatTrain.RoutePoints()
-            {
-                start = GetHead().transform.position,
-                end = GetHead().transform.position + (Vector3)moveRotate*0.01f,
-            });
+            //ClearRouteList(); // 清空当前路径表
+            //ClearTransferQueue(); // 清空当前转移队列
+            //isMoveToDestination = false;
+            //// 原地消失
+            //AddRoute(new BaseRatTrain.RoutePoints()
+            //{
+            //    start = GetHead().transform.position,
+            //    end = GetHead().transform.position + (Vector3)moveRotate*0.01f,
+            //});
             SetActionState(new MoveState(this));
         };
         {

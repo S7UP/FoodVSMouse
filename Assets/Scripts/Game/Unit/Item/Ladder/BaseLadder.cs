@@ -50,8 +50,9 @@ public class BaseLadder : BaseItem
 
             // 把这个单位添加到表里
             unitList.Add(m);
-            // 添加一个弹起的任务
-            CustomizationTask t = TaskManager.GetParabolaTask(m, TransManager.TranToVelocity(12), maxHight, m.transform.position, m.transform.position + (Vector3)m.moveRotate * moveDistance, false);
+            // 添加一个弹起的任务 (最远会送到家门口，走几步就进家了，且左一列瓜皮极限阻挡不到）
+            float dist = Mathf.Min(moveDistance, Mathf.Abs(MapManager.GetColumnX(-0.6f) - transform.position.x));
+            CustomizationTask t = TaskManager.GetParabolaTask(m, dist / 60, dist / 2, m.transform.position, m.transform.position + (Vector3)m.moveRotate * dist, false, true);
             // 且禁止移动
             m.DisableMove(true);
             t.AddOnExitAction(delegate {

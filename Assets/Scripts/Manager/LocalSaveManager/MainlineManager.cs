@@ -1,6 +1,4 @@
 using System.Collections.Generic;
-
-using static StageInfoManager;
 /// <summary>
 /// 主线关卡管理者
 /// </summary>

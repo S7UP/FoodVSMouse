@@ -1,13 +1,10 @@
-using S7P.Numeric;
 using UnityEngine;
-using System;
-using UnityEngine.Timeline;
+using Environment;
 /// <summary>
 /// 迷雾区域
 /// </summary>
 public class FogAreaEffectExecution : RetangleAreaEffectExecution
 {
-    private const string TaskName = "FogTask"; // 专属的任务名 
     private SpriteRenderer spriteRenderer;
     private bool isOpen;
     private bool isDisappear;
@@ -139,34 +136,14 @@ public class FogAreaEffectExecution : RetangleAreaEffectExecution
     {
         if (!unit.IsAlive())
             return;
-        // 获取目标身上唯一的任务
-        FogTask t = null;
-        if (unit.GetTask(TaskName) == null)
-        {
-            t = new FogTask(type, unit);
-            unit.AddUniqueTask(TaskName, t);
-        }
-        else
-        {
-            t = unit.GetTask(TaskName) as FogTask;
-            t.AddCount();
-        }
+        EnvironmentFacade.AddFogBuff(unit);
     }
 
     public void OnUnitExit(BaseUnit unit)
     {
         if (!unit.IsAlive())
             return;
-        // 获取目标身上唯一的荫蔽任务
-        if (unit.GetTask(TaskName) == null)
-        {
-            Debug.LogWarning("目标在没有荫蔽任务的情况下就退出了荫蔽区域！");
-        }
-        else
-        {
-            FogTask t = unit.GetTask(TaskName) as FogTask;
-            t.DecCount();
-        }
+        EnvironmentFacade.RemoveFogBuff(unit);
     }
 
     public static FogAreaEffectExecution GetInstance(Vector2 position)
@@ -184,145 +161,5 @@ public class FogAreaEffectExecution : RetangleAreaEffectExecution
     public override void ExecuteRecycle()
     {
         GameManager.Instance.PushGameObjectToFactory(FactoryType.GameFactory, "AreaEffect/FogAreaEffect", gameObject);
-    }
-
-
-    // 迷雾任务
-    private class FogTask : ITask
-    {
-        private static FloatModifier mouseMoveSpeedModifier = new FloatModifier(-20); // 老鼠在雾中减速
-        private static Texture[] texArray;
-
-        // 禁止阻挡方法
-        private static Func<BaseUnit, BaseUnit, bool> noBlockFunc = delegate 
-        {
-            return false;
-        };
-        // 禁止被弹幕攻击方法
-        private static Func<BaseUnit, BaseBullet, bool> noHitFunc = delegate
-        {
-            return false;
-        };
-        // 禁止被选取的方法
-        private static Func<BaseUnit, BaseUnit, bool> noBeSelectedAsTargetFunc = delegate { return false; };
-
-        private int count; // 进入的迷雾数
-        private BaseUnit unit;
-        private UnitType type;
-        private BaseEffect eff;
-        private float current_alpha;
-        private float gobal_alpha;
-        private int timer;
-
-        public FogTask(UnitType type, BaseUnit unit)
-        {
-            if (texArray == null)
-            {
-                texArray = new Texture[13];
-                for (int i = 0; i < texArray.Length; i++)
-                {
-                    texArray[i] = GameManager.Instance.GetSprite("Effect/Hidden/"+(i+1)).texture;
-                }
-            }
-
-            this.type = type;
-            this.unit = unit;
-            gobal_alpha = 0;
-            current_alpha = 0;
-            timer = 0;
-
-            // 隐匿特效生成
-            {
-                eff = BaseEffect.CreateInstance(unit.GetSpriteRenderer().sprite);
-                eff.spriteRenderer.sortingLayerName = unit.GetSpriteRenderer().sortingLayerName;
-                eff.spriteRenderer.sortingOrder = unit.GetSpriteRenderer().sortingOrder;
-                eff.spriteRenderer.material = GameManager.Instance.GetMaterial("Hide");
-                eff.spriteRenderer.material.SetFloat("_Alpha", 0);
-                GameController.Instance.AddEffect(eff);
-                eff.AddSetAlphaAction((alpha) => {
-                    gobal_alpha = alpha;
-                });
-                unit.mEffectController.AddEffectToGroup("Skin", 1, eff);
-                eff.transform.localPosition = Vector2.zero;
-            }
-        }
-
-        public void OnEnter()
-        {
-            count = 1;
-            if (type == UnitType.Food || type == UnitType.Character)
-            {
-
-            }
-            else if(type == UnitType.Mouse)
-            {
-                // 减速
-                unit.NumericBox.MoveSpeed.AddFinalPctAddModifier(mouseMoveSpeedModifier);
-                // 立即取消目标的阻挡状态
-                MouseUnit m = unit as MouseUnit;
-                m.SetNoCollideAllyUnit();
-            }
-            // 使得目标既不可被阻挡也不可被弹幕攻击
-            unit.AddCanBlockFunc(noBlockFunc);
-            unit.AddCanHitFunc(noHitFunc);
-            unit.AddCanBeSelectedAsTargetFunc(noBeSelectedAsTargetFunc);
-        }
-
-        public void OnUpdate()
-        {
-            timer++;
-            eff.spriteRenderer.sprite = unit.GetSpirte();
-            eff.spriteRenderer.sortingLayerName = unit.GetSpriteRenderer().sortingLayerName;
-            eff.spriteRenderer.sortingOrder = unit.GetSpriteRenderer().sortingOrder;
-            current_alpha = Mathf.Min(1, current_alpha + 0.033f);
-            eff.spriteRenderer.material.SetFloat("_Alpha", current_alpha*gobal_alpha);
-            eff.spriteRenderer.material.SetTexture("_FogTex", texArray[(timer/5)%13]);
-        }
-
-        public bool IsMeetingExitCondition()
-        {
-            return count == 0 || !unit.IsAlive();
-        }
-
-        public void OnExit()
-        {
-            if (type == UnitType.Food || type == UnitType.Character)
-            {
-
-            }
-            else if (type == UnitType.Mouse)
-            {
-                unit.NumericBox.MoveSpeed.RemoveFinalPctAddModifier(mouseMoveSpeedModifier);
-            }
-            // 取消以上特性
-            unit.RemoveCanBlockFunc(noBlockFunc);
-            unit.RemoveCanHitFunc(noHitFunc);
-            unit.RemoveCanBeSelectedAsTargetFunc(noBeSelectedAsTargetFunc);
-            // 隐匿特效移除
-            {
-                eff.ExecuteDeath();
-            }
-        }
-
-        // 自定义方法
-        public void AddCount()
-        {
-            count++;
-        }
-
-        public void DecCount()
-        {
-            count--;
-        }
-
-        public void ShutDown()
-        {
-            
-        }
-
-        public bool IsClearWhenDie()
-        {
-            return true;
-        }
     }
 }

@@ -38,6 +38,7 @@ public class BossHpBar : BaseProgressBar
     private int mCurrentBarNumber; // 当前有几管血
     private float[] hpRateArray;
     private float drop_percent; // 虚血掉落速度
+    private int aliveTime;
 
     private float mVirtualHpBarPercent1; // 下层虚血百分比
     private float mVirtualHpBarPercent2; // 上层虚血百分比
@@ -80,6 +81,7 @@ public class BossHpBar : BaseProgressBar
     public override void PInit()
     {
         base.PInit();
+        aliveTime = 0;
         mTotalBarNumber = 0; // 一共有几管血
         mCurrentBarNumber = -1; // 当前有几管血
         hpRateArray = null;
@@ -128,6 +130,7 @@ public class BossHpBar : BaseProgressBar
         {
             hpRateArray[i] = arr[i];
         }
+        aliveTime = 0;
     }
 
     /// <summary>
@@ -200,6 +203,7 @@ public class BossHpBar : BaseProgressBar
         base.PUpdate();
         if (HasTarget())
         {
+            aliveTime++;
             // 更新血条管数显示
             int currentBarNum = CalculateCurrentBarNum();
             // 当前计算血条管数 与 记录管数不符时
@@ -248,8 +252,6 @@ public class BossHpBar : BaseProgressBar
                 }
                 // 更新血条颜色
                 UpdateHpBarSprite();
-                // 上层虚血继承下层虚血百分比
-                // mVirtualHpBarPercent2 = mVirtualHpBarPercent1;
                 // 上层虚血清空
                 mVirtualHpBarPercent2 = 0;
                 // 下层虚血回调至100%
@@ -258,8 +260,10 @@ public class BossHpBar : BaseProgressBar
 
 
             // 更新当前血条百分比显示
+            float barRate = Mathf.Sin(Mathf.PI / 2 * Mathf.Min(1, (float)aliveTime / 240f));
             float percent = CalculateCurrentBarProgress();
-            Img_BossHp2.transform.localScale = new Vector3(percent, 1, 1);
+            Img_BossHp1.transform.localScale = new Vector3(Mathf.Min(1, 2*barRate), 1, 1);
+            Img_BossHp2.transform.localScale = new Vector3(percent*barRate, 1, 1);
             // 15帧没挨打就有虚血掉落效果 掉落速度为每秒掉30%
             if (mUnit.hitBox.GetLastHitTime() > 15)
             {
@@ -280,11 +284,11 @@ public class BossHpBar : BaseProgressBar
             {
                 Img_BossVirtualHp2.SetActive(true);
             }
-            Img_BossVirtualHp1.transform.localScale = new Vector3(mVirtualHpBarPercent1, 1, 1);
-            Img_BossVirtualHp2.transform.localScale = new Vector3(mVirtualHpBarPercent2, 1, 1);
+            Img_BossVirtualHp1.transform.localScale = new Vector3(mVirtualHpBarPercent1 * barRate, 1, 1);
+            Img_BossVirtualHp2.transform.localScale = new Vector3(mVirtualHpBarPercent2 * barRate, 1, 1);
 
             // 更新剩余血量百分比显示
-            Tex_LifePercent.text = mUnit.mCurrentHp.ToString("#0") + " / " + mUnit.mMaxHp.ToString("#0") + "       " + (Mathf.Max(TargetUnit.GetHeathPercent(), 0) * 100).ToString("#0.00") + "%";
+            Tex_LifePercent.text = (mUnit.mCurrentHp* barRate).ToString("#0") + " / " + mUnit.mMaxHp.ToString("#0") + "       " + (Mathf.Max(TargetUnit.GetHeathPercent()* barRate, 0) * 100).ToString("#0.00") + "%";
             if (mUnit.mCurrentHp <= 0)
             {
                 // 没血量时都隐藏就行了

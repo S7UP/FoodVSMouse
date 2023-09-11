@@ -51,7 +51,7 @@ public class InfoUI_GameNormalPanel : MonoBehaviour
         // 攻击速度图标
         {
             EventTrigger.TriggerEvent tr = new EventTrigger.TriggerEvent();
-            tr.AddListener(delegate { OnPointerEnterIcon(EventTrigger_AttackSpeed.GetComponent<RectTransform>(), "攻击速度：目标每秒可以攻击的次数，可以影响目标部分技能的数值。"); });
+            tr.AddListener(delegate { OnPointerEnterIcon(EventTrigger_AttackSpeed.GetComponent<RectTransform>(), "攻击速度：目标每秒可以攻击的次数。|| 技能速率：目标技能填充速率，值越大技能间隔越小。"); });
             EventTrigger_AttackSpeed.triggers.Add(new EventTrigger.Entry() { eventID = EventTriggerType.PointerEnter, callback = tr });
         }
 
@@ -103,7 +103,7 @@ public class InfoUI_GameNormalPanel : MonoBehaviour
             Tex_Hp.text = (int)targetUnit.mCurrentHp + "/" + (int)targetUnit.mMaxHp;
             Trans_HpBar1.transform.localScale = new Vector2(Mathf.Min(1, Mathf.Max(0, targetUnit.GetHeathPercent())), 1);
             Tex_Attack.text = ((int)targetUnit.mCurrentAttack).ToString();
-            Tex_AttackSpeed.text = targetUnit.mCurrentAttackSpeed.ToString("#0.00");
+            Tex_AttackSpeed.text = targetUnit.mCurrentAttackSpeed.ToString("#0.00")+" | "+targetUnit.mCurrentSkillSpeed.ToString("#0.00");
             float dmgRate = targetUnit.GetFinalDamageRate();
             if (dmgRate <= 1)
                 dmgRate = (1 - dmgRate) * 100;
@@ -158,9 +158,9 @@ public class InfoUI_GameNormalPanel : MonoBehaviour
             {
                 gameObject.SetActive(true);
                 targetUnit = unit;
-                MouseUnit.Attribute attr = GameManager.Instance.attributeManager.GetMouseUnitAttribute(unit.mType, unit.mShape);
+                MouseManager.MouseAttribute attr = MouseManager.GetAttribute(unit.mType, unit.mShape);
                 Img_Head.sprite = GameManager.Instance.GetSprite("Mouse/" + unit.mType + "/" + unit.mShape + "/icon");
-                Tex_Name.text = attr.baseAttrbute.name;
+                Tex_Name.text = attr.name;
                 UpdateHpDisplay();
             }
         }

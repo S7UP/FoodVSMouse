@@ -105,6 +105,7 @@ public class CoffeePowder : FoodUnit
 
         RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(pos, 2.75f, 2.75f, "EnemyAllyGrid");
         r.isAffectGrid = true;
+        r.isAffectCharacter = true;
         r.SetInstantaneous();
         r.SetOnGridEnterAction((g) => {
             bool flag = false;
@@ -128,6 +129,20 @@ public class CoffeePowder : FoodUnit
                 effPosList.Add(g.transform.position);
                 count++;
             }
+        });
+        r.SetOnCharacterEnterAction((u) => {
+            ITask task = u.GetTask(BuffKey);
+            if (task == null)
+            {
+                task = new BuffTask(u, totalTime);
+                u.AddUniqueTask(BuffKey, task);
+            }
+            else
+            {
+                BuffTask buffTask = task as BuffTask;
+                buffTask.timeLeft = Mathf.Max(buffTask.timeLeft, totalTime);
+            }
+            count++;
         });
         r.AddBeforeDestoryAction(delegate {
             float reply = (9 - count) * 50;

@@ -123,7 +123,7 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
             new DamageAction(CombatAction.ActionType.CauseDamage, mMasterBaseUnit, baseUnit, mDamage).ApplyAction();
         ExecuteHitAction(baseUnit);
         if(hitSoundsRefName != null)
-            GameManager.Instance.audioSourceManager.PlayEffectMusic(hitSoundsRefName);
+            GameManager.Instance.audioSourceController.PlayEffectMusic(hitSoundsRefName);
         if(!isnKillSelf)
             KillThis();
     }
@@ -320,7 +320,8 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
 
     public virtual void OnFlyStateEnter()
     {
-        animatorController.Play("Fly", true);
+        if(animatorController.animator.runtimeAnimatorController != null)
+            animatorController.Play("Fly", true);
     }
 
     public virtual void OnFlyState()
@@ -338,9 +339,14 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
 
     public virtual void OnHitStateEnter()
     {
-        animatorController.Play("Hit", false);
-        SetCollision(false);
-        isDeathState = true;
+        if (animatorController.animator.runtimeAnimatorController != null && !isnUseHitEffect)
+        {
+            animatorController.Play("Hit", false);
+            SetCollision(false);
+            isDeathState = true;
+        }
+        else
+            ExecuteRecycle();
     }
 
     public virtual void OnHitState()

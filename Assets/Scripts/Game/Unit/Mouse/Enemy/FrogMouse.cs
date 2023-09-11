@@ -41,7 +41,11 @@ public class FrogMouse : MouseUnit, IInWater
             isJumped = true;
             // 跳跃格子数等于 0.5*当前移动速度标准值
             float v = TransManager.TranToStandardVelocity(GetMoveSpeed());
-            float dist = 0.5f * v * MapManager.gridWidth;
+            float dist;
+            if (transform.position.x <= MapManager.GetColumnX(0.5f))
+                dist = Mathf.Min(0.5f * v * MapManager.gridWidth, 1.1f * MapManager.gridWidth);
+            else
+                dist = Mathf.Min(0.5f * v * MapManager.gridWidth, Mathf.Abs(transform.position.x - MapManager.GetColumnX(0)));
 
             CustomizationTask t = TaskManager.GetParabolaTask(this, dist / 60, dist / 2, transform.position, transform.position + (Vector3)moveRotate * dist, false);
             DisableMove(true);
@@ -172,7 +176,7 @@ public class FrogMouse : MouseUnit, IInWater
     public override void OnDieStateEnter()
     {
         // 如果自己在水域中且没有被承载就播放特有的淹死动画
-        if (WaterGridType.IsInWater(this) && !WoodenDisk.IsBearing(this))
+        if (WaterGridType.IsInWater(this) && !Environment.WaterManager.IsBearing(this))
             animatorController.Play("Die1", true);
         else
             animatorController.Play("Die0", true);

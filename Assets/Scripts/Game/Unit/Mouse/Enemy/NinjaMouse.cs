@@ -1,3 +1,5 @@
+using S7P.Numeric;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -42,11 +44,13 @@ public class NinjaMouse : MouseUnit
             KeyValuePair<Vector2, BaseUnit> item = retinueUnitDict.ElementAt(i);
             Vector2 pos = item.Key;
             BaseUnit unit = item.Value;
-            if ((unit == null || !unit.IsAlive()) && !(GetRowIndex()==0 && pos.Equals(Vector2.up)) && !(GetRowIndex() == MapController.yRow-1 && pos.Equals(Vector2.down)))
+            if ((unit == null || !unit.IsAlive()) &&
+                !(GetRowIndex()==0 && pos.Equals(Vector2.up)) &&
+                !(GetRowIndex() == MapController.yRow-1 && pos.Equals(Vector2.down)) &&
+                !(transform.position.x <= MapManager.GetColumnX(1) && pos.Equals(Vector2.left))) // 超过左二列的位置时不在左侧召唤小弟
             {
                 Vector2 position = transform.position + new Vector3(pos.x * MapManager.gridWidth, pos.y * MapManager.gridHeight, 0);
                 NinjaRetinueMouse m = (NinjaRetinueMouse)GameController.Instance.CreateMouseUnit(GetRowIndex(), new BaseEnemyGroup.EnemyInfo { type = ((int)MouseNameTypeMap.NinjaRetinueMouse), shape = mShape });
-                m.SetMaxHpAndCurrentHp(m.mMaxHp*NumberManager.GetCurrentEnemyHpRate());
                 m.transform.position = position;
                 m.UpdateRenderLayer(GameController.Instance.GetSpecificRowEnemyList(m.GetRowIndex()).Count-1); // 更新一次图层
                 m.SetActionState(new TransitionState(m));
@@ -97,6 +101,17 @@ public class NinjaMouse : MouseUnit
             summonRetinueSkillAbility = new SummonRetinueSkillAbility(this, infoList[3]);
             skillAbilityManager.AddSkillAbility(summonRetinueSkillAbility);
             SetSummonEvent(DefaultSummonEvent);
+            // 与技能速率挂钩
+            {
+                FloatModifier skillSpeedMod = new FloatModifier((NumericBox.SkillSpeed.TotalValue - 1) * 100);
+                summonRetinueSkillAbility.energyRegeneration.AddPctAddModifier(skillSpeedMod);
+
+                NumericBox.SkillSpeed.AddAfterValueChangeAction((val) => {
+                    summonRetinueSkillAbility.energyRegeneration.RemovePctAddModifier(skillSpeedMod);
+                    skillSpeedMod.Value = (NumericBox.SkillSpeed.TotalValue - 1) * 100;
+                    summonRetinueSkillAbility.energyRegeneration.AddPctAddModifier(skillSpeedMod);
+                });
+            }
         }
     }
 
@@ -198,6 +213,19 @@ public class NinjaMouse : MouseUnit
     public override void MUpdate()
     {
         base.MUpdate();
+
+        // 检测并清空已失效的随从
+        List<Vector2> keyList = new List<Vector2>();
+        foreach (var keyValuePair in retinueUnitDict)
+        {
+            BaseUnit unit = keyValuePair.Value;;
+            if (unit != null && !unit.IsAlive())
+                keyList.Add(keyValuePair.Key);
+        }
+        foreach (var v2 in keyList)
+            retinueUnitDict[v2] = null;
+
+        int rowIndex = GetRowIndex();
         // 检测是否需要召唤新的随从
         if (summonRetinueSkillAbility.IsEnergyEnough())
         {
@@ -205,7 +233,10 @@ public class NinjaMouse : MouseUnit
             {
                 BaseUnit unit = item.Value;
                 Vector2 pos = item.Key;
-                if ((unit == null || !unit.IsAlive()) && !(GetRowIndex() == 0 && pos.Equals(Vector2.up)) && !(GetRowIndex() == MapController.yRow - 1 && pos.Equals(Vector2.down)))
+                if ((unit == null || !unit.IsAlive()) &&
+                    !(rowIndex == 0 && pos.Equals(Vector2.up)) && // 在一路时不在上方召唤小弟
+                    !(rowIndex == MapController.yRow - 1 && pos.Equals(Vector2.down)) && // 在七路时不在下方召唤小弟
+                    !(transform.position.x <= MapManager.GetColumnX(1) && pos.Equals(Vector2.left))) // 超过左二列的位置时不在左侧召唤小弟
                 {
                     summonRetinueSkillAbility.OpenSummon();
                     break;

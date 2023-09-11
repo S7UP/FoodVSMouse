@@ -63,7 +63,7 @@ public class SpicyStringBoom : FoodUnit
             {
                 isTriggerBoom = true;
                 ExecuteDeath();
-                GameManager.Instance.audioSourceManager.PlayEffectMusic("CatcherTrigger");
+                GameManager.Instance.audioSourceController.PlayEffectMusic("CatcherTrigger");
                 r.MDestory();
             }
         };
@@ -90,7 +90,7 @@ public class SpicyStringBoom : FoodUnit
         // 在准备动画几帧内，进入无敌、免疫灰烬秒杀、免疫冻结效果
         NumericBox.AddDecideModifierToBoolDict(StringManager.Invincibility, boolModifier); 
         NumericBox.BurnRate.AddModifier(burnMod);
-        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozen, boolModifier);
+        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, boolModifier);
     }
 
     public override void OnTransitionState()
@@ -104,7 +104,7 @@ public class SpicyStringBoom : FoodUnit
         // 移除这些效果
         NumericBox.RemoveDecideModifierToBoolDict(StringManager.Invincibility, boolModifier);
         NumericBox.BurnRate.RemoveModifier(burnMod);
-        NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreFrozen, boolModifier);
+        NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreStun, boolModifier);
         // 添加检测范围
         CreateCheckArea();
     }
@@ -162,7 +162,7 @@ public class SpicyStringBoom : FoodUnit
             RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 3, 3, "ItemCollideEnemy");
             r.SetInstantaneous();
             r.isAffectMouse = true;
-            r.SetAffectHeight(0);
+            r.SetAffectHeight(1);
             r.SetOnEnemyEnterAction((u) => {
                 BurnManager.BurnDamage(this, u);
                 ExecuteDropEnemyFlyUnit(u);

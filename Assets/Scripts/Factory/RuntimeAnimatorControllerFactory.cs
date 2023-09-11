@@ -26,9 +26,16 @@ public class RuntimeAnimatorControllerFactory : IBaseResourceFactory<RuntimeAnim
         }
         // 安全检测机制
         if (itemGo == null)
-        {
             Debug.Log(resourcePath + "的资源获取失败,失败路径为：" + itemLoadPath);
-        }
         return itemGo;
+    }
+
+    public void UnLoad(string resourcePath)
+    {
+        if (factoryDict.ContainsKey(resourcePath))
+        {
+            Resources.UnloadAsset(factoryDict[resourcePath]);
+            factoryDict.Remove(resourcePath);
+        }
     }
 }

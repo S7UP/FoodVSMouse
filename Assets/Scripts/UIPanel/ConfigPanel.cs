@@ -77,11 +77,11 @@ public class ConfigPanel : MonoBehaviour, IBasePanel
             config.isPlayBGM = Toggle_BGM.isOn;
             if (config.isPlayBGM)
             {
-                GameManager.Instance.audioSourceManager.ReplayCurrentClip();
+                GameManager.Instance.audioSourceController.ReplayCurrentClip();
             }
             else
             {
-                GameManager.Instance.audioSourceManager.StopAllMusic();
+                GameManager.Instance.audioSourceController.StopAllMusic();
             }
         });
         // ÒôÐ§¿ª¹Ø

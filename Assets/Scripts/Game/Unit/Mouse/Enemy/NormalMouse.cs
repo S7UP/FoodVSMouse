@@ -3,11 +3,13 @@
 /// </summary>
 public class NormalMouse : MouseUnit
 {
-    /// <summary>
-    /// 以下几个机械鼠防爆
-    /// </summary>
     public override void MInit()
     {
         base.MInit();
+        // 机械鼠受到水蚀伤害翻倍
+        if(mShape >= 6 && mShape <= 8)
+        {
+            Environment.WaterTask.AddUnitWaterRate(this, new S7P.Numeric.FloatModifier(2.0f));
+        }
     }
 }

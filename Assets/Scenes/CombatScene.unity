@@ -169,6 +169,7 @@ MonoBehaviour:
   baseEffectList: []
   taskerList: []
   isPause: 0
+  pauseCount: -1
   mGameNormalPanel: {fileID: 0}
 --- !u!4 &1184051958
 Transform:

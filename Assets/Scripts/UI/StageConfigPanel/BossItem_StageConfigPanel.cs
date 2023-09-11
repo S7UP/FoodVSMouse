@@ -8,9 +8,7 @@ public class BossItem_StageConfigPanel : MonoBehaviour
 {
     private Button Btn;
     private Image Img_Display;
-    public int type;
-    public int shape;
-    public float maxHp;
+    public BaseEnemyGroup enemyGroupInfo;
 
     public void Awake()
     {
@@ -20,18 +18,15 @@ public class BossItem_StageConfigPanel : MonoBehaviour
 
     public void Initial()
     {
-        type = 0;
-        shape = 0;
+        enemyGroupInfo = null;
         Img_Display.sprite = null;
         Btn.onClick.RemoveAllListeners();
     }
 
-    public void SetParam(int type, int shape, float hp, UnityAction call)
+    public void SetParam(BaseEnemyGroup enemyGroupInfo, UnityAction call)
     {
-        this.type = type;
-        this.shape = shape;
-        maxHp = hp;
-        Img_Display.sprite = GameManager.Instance.GetSprite("Boss/" + type + "/" + shape + "/icon");
+        this.enemyGroupInfo = enemyGroupInfo;
+        Img_Display.sprite = GameManager.Instance.GetSprite("Boss/" + enemyGroupInfo.mEnemyInfo.type + "/" + enemyGroupInfo.mEnemyInfo.shape + "/icon");
         Btn.onClick.AddListener(call);
     }
 
@@ -40,11 +35,11 @@ public class BossItem_StageConfigPanel : MonoBehaviour
         GameManager.Instance.PushGameObjectToFactory(FactoryType.UIFactory, "StageConfigPanel/BossItem", gameObject);
     }
 
-    public static BossItem_StageConfigPanel GetInstance(int type, int shape, float hp, UnityAction call)
+    public static BossItem_StageConfigPanel GetInstance(BaseEnemyGroup enemyGroupInfo, UnityAction call)
     {
         BossItem_StageConfigPanel item = GameManager.Instance.GetGameObjectResource(FactoryType.UIFactory, "StageConfigPanel/BossItem").GetComponent<BossItem_StageConfigPanel>();
         item.Initial();
-        item.SetParam(type, shape, hp, call);
+        item.SetParam(enemyGroupInfo, call);
         return item;
     }
 }

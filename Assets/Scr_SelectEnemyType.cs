@@ -260,11 +260,15 @@ public class Scr_SelectEnemyType : MonoBehaviour
         {
             MouseNameTypeMap type = keyValuePair.Key;
             Dictionary<int, MouseManager.MouseAttribute> shapeAttrDict = keyValuePair.Value;
-            MouseUnit.Attribute attr = GameManager.Instance.attributeManager.GetMouseUnitAttribute((int)type, 0);
+            MouseManager.MouseAttribute attr = MouseManager.GetAttribute(type, 0);
             typeList.Add(new SelectEnemyInfo()
             {
-                attr = attr.baseAttrbute,
-                sprite = GameManager.Instance.GetSprite("Mouse/" + attr.baseAttrbute.type + "/" + attr.baseAttrbute.shape + "/icon")
+                attr = new BaseUnit.Attribute() {
+                    name = attr.name,
+                    type = (int)type,
+                    shape = 0, 
+                },
+                sprite = GameManager.Instance.GetSprite("Mouse/" + (int)type + "/" + 0 + "/icon")
             });
 
             List<SelectEnemyInfo> oneShapeList = new List<SelectEnemyInfo>();
@@ -272,11 +276,16 @@ public class Scr_SelectEnemyType : MonoBehaviour
             foreach (var keyValuePair2 in shapeAttrDict)
             {
                 int shape = keyValuePair2.Key;
-                MouseUnit.Attribute attr2 = GameManager.Instance.attributeManager.GetMouseUnitAttribute((int)type, shape);
+                MouseManager.MouseAttribute attr2 = MouseManager.GetAttribute(type, shape);
                 oneShapeList.Add(new SelectEnemyInfo()
                 {
-                    attr = attr2.baseAttrbute,
-                    sprite = GameManager.Instance.GetSprite("Mouse/" + attr2.baseAttrbute.type + "/" + attr2.baseAttrbute.shape + "/icon")
+                    attr = new BaseUnit.Attribute()
+                    {
+                        name = attr2.name,
+                        type = (int)type,
+                        shape = shape,
+                    },
+                    sprite = GameManager.Instance.GetSprite("Mouse/" + (int)type + "/" + shape + "/icon")
                 });
             }
         }

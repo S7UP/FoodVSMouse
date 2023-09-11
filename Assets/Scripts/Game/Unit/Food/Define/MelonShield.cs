@@ -28,7 +28,7 @@ public class MelonShield : FoodUnit
         // 在受到伤害结算之后，更新受伤贴图状态
         AddActionPointListener(ActionPointType.PostReceiveDamage, delegate { UpdateHertMap(); });
         // 一转后在受到伤害结算之前计算反伤
-        if (mShape>0)
+        if (mShape > 0)
             AddActionPointListener(ActionPointType.PreReceiveDamage, ReBoundDamage);
         // 在接收治疗结算之后，更新受伤贴图状态
         AddActionPointListener(ActionPointType.PostReceiveCure, delegate { UpdateHertMap(); });
@@ -93,15 +93,16 @@ public class MelonShield : FoodUnit
     {
         DamageAction dmgAction = action as DamageAction;
         // 至少一转才能反伤 并且 伤害来源不能是反伤来源（否则遇到两个都有反伤逻辑的目标会无限递归）
-        if (mShape > 0 && !dmgAction.IsDamageType(DamageAction.DamageType.Rebound))
+        if (mShape > 0 && !dmgAction.IsDamageType(DamageAction.DamageType.Rebound) && !NumericBox.GetBoolNumericValue(StringManager.Invincibility))
         {
             // 添加对应的判定检测器
             {
+                float dmg = Mathf.Min(mCurrentHp, dmgAction.DamageValue * GetFinalDamageRate()) * mCurrentAttack / 10;
                 RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 3, 3, "ItemCollideEnemy");
                 r.SetInstantaneous();
                 r.isAffectMouse = true;
                 r.SetOnEnemyEnterAction((u) => {
-                    DamageAction d = new DamageAction(CombatAction.ActionType.RealDamage, this, u, dmgAction.DamageValue * mCurrentAttack / 10);
+                    DamageAction d = new DamageAction(CombatAction.ActionType.RealDamage, this, u, dmg);
                     d.AddDamageType(DamageAction.DamageType.Rebound);
                     d.ApplyAction();
                 });

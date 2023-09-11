@@ -23,6 +23,9 @@ namespace UIPanel.StageConfigPanel
         private Text Tex_MapName;
         private Text Tex_StageName;
         private Text Tex_TimeLimit;
+        private Text Tex_JewelLimit;
+        private ScrollRect Scr_Background;
+        private ScrollRect Scr_Illustrate;
         private Text Tex_Background;
         private Text Tex_Illustrate;
         private Text Tex_AddInfo;
@@ -53,8 +56,11 @@ namespace UIPanel.StageConfigPanel
             Tex_MapName = Emp_StageInfo.transform.Find("Img_TextArea").Find("Tex_MapName").GetComponent<Text>();
             Tex_StageName = Emp_StageInfo.transform.Find("Img_TextArea").Find("Tex_StageName").GetComponent<Text>();
             Tex_TimeLimit = Emp_StageInfo.transform.Find("Img_TextArea").Find("Tex_TimeLimit").GetComponent<Text>();
-            Tex_Background = Emp_StageInfo.transform.Find("Img_TextArea").Find("Tex_Background").GetComponent<Text>();
-            Tex_Illustrate = Emp_StageInfo.transform.Find("Img_TextArea").Find("Tex_Illustrate").GetComponent<Text>();
+            Tex_JewelLimit = Emp_StageInfo.transform.Find("Img_TextArea").Find("Tex_JewelLimit").GetComponent<Text>();
+            Scr_Background = Emp_StageInfo.transform.Find("Img_TextArea").Find("Scr_Background").GetComponent<ScrollRect>();
+            Scr_Illustrate = Emp_StageInfo.transform.Find("Img_TextArea").Find("Scr_Illustrate").GetComponent<ScrollRect>();
+            Tex_Background = Scr_Background.content.Find("Tex_Background").GetComponent<Text>();
+            Tex_Illustrate = Scr_Illustrate.content.Find("Tex_Illustrate").GetComponent<Text>();
             Tex_AddInfo = Scr_AddInfo.transform.Find("Viewport").Find("Content").Find("Text").GetComponent<Text>();
         }
 
@@ -127,10 +133,8 @@ namespace UIPanel.StageConfigPanel
                 {
                     foreach (var g in list)
                     {
-                        int type = g.mEnemyInfo.type;
-                        int shape = g.mEnemyInfo.shape;
                         BossItem_StageConfigPanel bossItem = null;
-                        bossItem = BossItem_StageConfigPanel.GetInstance(type, shape, g.mHp, delegate { SetCurrentBossItem(bossItem); });
+                        bossItem = BossItem_StageConfigPanel.GetInstance(g, delegate { SetCurrentBossItem(bossItem); });
                         bossItem.transform.SetParent(Scr_EnemyList.content);
                         bossItem.transform.localScale = Vector2.one;
                         bossItemList.Add(bossItem);
@@ -190,10 +194,10 @@ namespace UIPanel.StageConfigPanel
             }
             else if (currentBossItem != null)
             {
-                type = currentBossItem.type;
-                shape = currentBossItem.shape;
+                type = currentBossItem.enemyGroupInfo.mEnemyInfo.type;
+                shape = currentBossItem.enemyGroupInfo.mEnemyInfo.shape;
                 mMousePanel.Initial();
-                mMousePanel.UpdateByBossParam(type, shape, currentBossItem.maxHp);
+                mMousePanel.UpdateByBossParam(type, shape, currentBossItem.enemyGroupInfo.mHp);
             }
 
 
@@ -218,8 +222,39 @@ namespace UIPanel.StageConfigPanel
             {
                 Tex_TimeLimit.gameObject.SetActive(false);
             }
-            Tex_Background.text = info.background;
-            Tex_Illustrate.text = info.illustrate;
+            if (info.isEnableJewelCount)
+            {
+                Tex_JewelLimit.gameObject.SetActive(true);
+                Tex_JewelLimit.text = "宝石限制：" + info.jewelCount + "颗";
+            }
+            else
+            {
+                Tex_JewelLimit.gameObject.SetActive(false);
+            }
+            // 关卡背景
+            {
+                Tex_Background.text = info.background;
+                int countPerRow = Mathf.FloorToInt(Scr_Background.content.rect.width / Tex_Background.fontSize);
+                int rowCount = Mathf.CeilToInt((float)Tex_Background.text.Length / countPerRow + 3); // 计算需要多少行
+                foreach (var c in Tex_Background.text.ToCharArray())
+                {
+                    if (c.Equals('\n'))
+                        rowCount++;
+                }
+                Scr_Background.content.sizeDelta = new Vector2(Scr_Background.content.sizeDelta.x, rowCount * Tex_Background.fontSize);
+            }
+            // 关卡机制
+            {
+                Tex_Illustrate.text = info.illustrate;
+                int countPerRow = Mathf.FloorToInt(Scr_Illustrate.content.rect.width / Tex_Illustrate.fontSize);
+                int rowCount = Mathf.CeilToInt((float)Tex_Illustrate.text.Length / countPerRow + 3); // 计算需要多少行
+                foreach (var c in Tex_Illustrate.text.ToCharArray())
+                {
+                    if (c.Equals('\n'))
+                        rowCount++;
+                }
+                Scr_Illustrate.content.sizeDelta = new Vector2(Scr_Illustrate.content.sizeDelta.x, rowCount * Tex_Illustrate.fontSize);
+            }
 
             // 附加说明
             Tex_AddInfo.text = info.additionalNotes;

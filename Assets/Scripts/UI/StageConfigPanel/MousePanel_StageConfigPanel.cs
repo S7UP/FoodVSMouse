@@ -15,6 +15,8 @@ public class MousePanel_StageConfigPanel : MonoBehaviour
     private Text Tex_AttackValue;
     private Text Tex_AttackSpeedValue;
     private Text Tex_MoveSpeedValue;
+    private Text Tex_BurnDefenceValue;
+    private Text Tex_AoeDefenceValue;
 
     private ScrollRect Scr_Descript;
     private RectTransform RectTrans_Descript;
@@ -35,6 +37,8 @@ public class MousePanel_StageConfigPanel : MonoBehaviour
         Tex_AttackValue = Trans_BaseInfo.Find("Tex_Attack").Find("Value").GetComponent<Text>();
         Tex_AttackSpeedValue = Trans_BaseInfo.Find("Tex_AttackSpeed").Find("Value").GetComponent<Text>();
         Tex_MoveSpeedValue = Trans_BaseInfo.Find("Tex_MoveSpeed").Find("Value").GetComponent<Text>();
+        Tex_BurnDefenceValue = Trans_BaseInfo.Find("Tex_BurnDefence").Find("Value").GetComponent<Text>();
+        Tex_AoeDefenceValue = Trans_BaseInfo.Find("Tex_AoeDefence").Find("Value").GetComponent<Text>();
 
         Scr_Descript = transform.Find("Descript").Find("Scr").GetComponent<ScrollRect>();
         RectTrans_Descript = Scr_Descript.content.transform.Find("Text").GetComponent<RectTransform>();
@@ -74,11 +78,15 @@ public class MousePanel_StageConfigPanel : MonoBehaviour
         else
             RectTrans_Display.sizeDelta = new Vector2(RectTrans_Background.sizeDelta.y * new_w_h_rate, RectTrans_Background.sizeDelta.y);
         // 显示基础属性
-        MouseUnit.Attribute attr = GameManager.Instance.attributeManager.GetMouseUnitAttribute(type, shape);
-        Tex_HpValue.text = Mathf.FloorToInt((float)attr.baseAttrbute.baseHP).ToString();
-        Tex_AttackValue.text = (attr.baseAttrbute.baseAttack).ToString("F2");
-        Tex_AttackSpeedValue.text = (attr.baseAttrbute.baseAttackSpeed).ToString("F2");
-        Tex_MoveSpeedValue.text = (attr.baseAttrbute.baseMoveSpeed).ToString("F2");
+        //MouseUnit.Attribute attr = GameManager.Instance.attributeManager.GetMouseUnitAttribute(type, shape);
+        MouseManager.MouseAttribute attr = MouseManager.GetAttribute(type, shape);
+        Tex_HpValue.text = Mathf.FloorToInt((float)attr.hp).ToString();
+        Tex_AttackValue.text = (attr.attack).ToString("F2");
+        Tex_AttackSpeedValue.text = (attr.attackSpeed).ToString("F2");
+        Tex_MoveSpeedValue.text = (attr.moveSpeed).ToString("F2");
+        Tex_BurnDefenceValue.text = attr.burnDefence * 100 + "%";
+        Tex_AoeDefenceValue.text = attr.aoeDefence * 100 + "%";
+
 
         // 名称、描述、提示
         MouseManager.MouseTypeInfo mouseTypeInfo = MouseManager.GetMouseTypeInfo(type);
@@ -87,27 +95,27 @@ public class MousePanel_StageConfigPanel : MonoBehaviour
         Tex_TypeName.text = mouseTypeInfo.name;
         Tex_Descript.text = mouseTypeInfo.descript +"\n\n"+ mouseInfo.descript;
         {
-            int countPerRow = Mathf.FloorToInt(RectTrans_Descript.sizeDelta.x / Tex_Descript.fontSize);
+            int countPerRow = Mathf.FloorToInt(Scr_Descript.content.rect.width / Tex_Descript.fontSize);
             int rowCount = Mathf.CeilToInt((float)Tex_Descript.text.Length / countPerRow + 2); // 计算需要多少行
             foreach (var c in Tex_Descript.text.ToCharArray())
             {
                 if (c.Equals('\n'))
                     rowCount++;
             }
-            RectTrans_Descript.sizeDelta = new Vector2(RectTrans_Descript.sizeDelta.x, Tex_Descript.fontSize*rowCount);
-            Scr_Descript.content.sizeDelta = new Vector2(Scr_Descript.content.sizeDelta.x, RectTrans_Descript.sizeDelta.y);
+            //RectTrans_Descript.sizeDelta = new Vector2(RectTrans_Descript.sizeDelta.x, Tex_Descript.fontSize*rowCount);
+            Scr_Descript.content.sizeDelta = new Vector2(Scr_Descript.content.sizeDelta.x, Tex_Descript.fontSize * rowCount);
         }
         Tex_Tip.text = mouseTypeInfo.tip + "\n\n"+ mouseInfo.tip;
         {
-            int countPerRow = Mathf.FloorToInt(RectTrans_Tip.sizeDelta.x / Tex_Tip.fontSize);
+            int countPerRow = Mathf.FloorToInt(Scr_Descript.content.rect.width / Tex_Tip.fontSize);
             int rowCount = Mathf.CeilToInt((float)Tex_Tip.text.Length / countPerRow + 1); // 计算需要多少行
             foreach (var c in Tex_Tip.text.ToCharArray())
             {
                 if (c.Equals('\n'))
                     rowCount++;
             }
-            RectTrans_Tip.sizeDelta = new Vector2(RectTrans_Tip.sizeDelta.x, Tex_Tip.fontSize * rowCount);
-            Scr_Tip.content.sizeDelta = new Vector2(Scr_Tip.content.sizeDelta.x, RectTrans_Tip.sizeDelta.y);
+            //RectTrans_Tip.sizeDelta = new Vector2(RectTrans_Tip.sizeDelta.x, Tex_Tip.fontSize * rowCount);
+            Scr_Tip.content.sizeDelta = new Vector2(Scr_Tip.content.sizeDelta.x, Tex_Tip.fontSize * rowCount);
         }
     }
 
@@ -133,33 +141,35 @@ public class MousePanel_StageConfigPanel : MonoBehaviour
         Tex_AttackValue.text = "--";
         Tex_AttackSpeedValue.text = "--";
         Tex_MoveSpeedValue.text = "--";
+        Tex_BurnDefenceValue.text = "??%";
+        Tex_AoeDefenceValue.text = "??%";
 
         // 名称、描述、提示
         Tex_Name.text = BossManager.GetBossName(type, shape);
         Tex_TypeName.text = "鼠军头目";
         Tex_Descript.text = BossManager.GetSimpleInfo(type, shape);
         {
-            int countPerRow = Mathf.FloorToInt(RectTrans_Descript.sizeDelta.x / Tex_Descript.fontSize);
+            int countPerRow = Mathf.FloorToInt(Scr_Descript.content.rect.width / Tex_Descript.fontSize);
             int rowCount = Mathf.CeilToInt((float)Tex_Descript.text.Length / countPerRow + 2); // 计算需要多少行
             foreach (var c in Tex_Descript.text.ToCharArray())
             {
                 if (c.Equals('\n'))
                     rowCount++;
             }
-            RectTrans_Descript.sizeDelta = new Vector2(RectTrans_Descript.sizeDelta.x, Tex_Descript.fontSize * rowCount);
-            Scr_Descript.content.sizeDelta = new Vector2(Scr_Descript.content.sizeDelta.x, RectTrans_Descript.sizeDelta.y);
+            // RectTrans_Descript.sizeDelta = new Vector2(RectTrans_Descript.sizeDelta.x, Tex_Descript.fontSize * rowCount);
+            Scr_Descript.content.sizeDelta = new Vector2(Scr_Descript.content.sizeDelta.x, Tex_Descript.fontSize * rowCount);
         }
         Tex_Tip.text = BossManager.GetTips(type, shape);
         {
-            int countPerRow = Mathf.FloorToInt(RectTrans_Tip.sizeDelta.x / Tex_Tip.fontSize);
+            int countPerRow = Mathf.FloorToInt(Scr_Descript.content.rect.width / Tex_Tip.fontSize);
             int rowCount = Mathf.CeilToInt((float)Tex_Tip.text.Length / countPerRow + 1); // 计算需要多少行
             foreach (var c in Tex_Tip.text.ToCharArray())
             {
                 if (c.Equals('\n'))
                     rowCount++;
             }
-            RectTrans_Tip.sizeDelta = new Vector2(RectTrans_Tip.sizeDelta.x, Tex_Tip.fontSize * rowCount);
-            Scr_Tip.content.sizeDelta = new Vector2(Scr_Tip.content.sizeDelta.x, RectTrans_Tip.sizeDelta.y);
+            // RectTrans_Tip.sizeDelta = new Vector2(RectTrans_Tip.sizeDelta.x, Tex_Tip.fontSize * rowCount);
+            Scr_Tip.content.sizeDelta = new Vector2(Scr_Tip.content.sizeDelta.x, Tex_Tip.fontSize * rowCount);
         }
     }
 }

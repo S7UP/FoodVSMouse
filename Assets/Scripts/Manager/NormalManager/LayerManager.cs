@@ -28,7 +28,7 @@ public class LayerManager
     /// <returns></returns>
     public static int CalculateSortingLayer(UnitType unitType, int yIndex, int typeAndShapeValue, int arrayIndex)
     {
-        int layer = -30000;
+        int layer = -25000;
         if(unitType == UnitType.Ally)
         {
             layer += BaseAllyUnitLayer;

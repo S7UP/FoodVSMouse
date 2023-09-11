@@ -1,12 +1,12 @@
-using S7P.Numeric;
+using Environment;
 
-using UnityEngine;
+using S7P.Numeric;
 /// <summary>
 /// 旋转咖啡喷壶
 /// </summary>
 public class SpinCoffee : FoodUnit
 {
-    private FloatModifier costMod = new FloatModifier(-50f / 7 / 60);
+    private FloatModifier costMod = new FloatModifier(-15f / 7 / 60);
 
     public override void MInit()
     {
@@ -17,12 +17,13 @@ public class SpinCoffee : FoodUnit
             AddCanBeSelectedAsTargetFunc(delegate { return false; });
             AddCanBlockFunc(delegate { return false; });
             // 添加隐匿特效
-            BaseEffect e = BaseEffect.CreateInstance(GameManager.Instance.GetRuntimeAnimatorController("Effect/HiddenEffect"), "Appear", "Idle", "Disappear", true);
-            e.SetSpriteRendererSorting("Effect", 2);
-            GameController.Instance.AddEffect(e);
-            mEffectController.AddEffectToDict("SpinCoffeeHidden", e, new Vector2(0, 0 * 0.5f * MapManager.gridWidth));
+            //BaseEffect e = BaseEffect.CreateInstance(GameManager.Instance.GetRuntimeAnimatorController("Effect/HiddenEffect"), "Appear", "Idle", "Disappear", true);
+            //e.SetSpriteRendererSorting("Effect", 2);
+            //GameController.Instance.AddEffect(e);
+            //mEffectController.AddEffectToDict("SpinCoffeeHidden", e, new Vector2(0, 0 * 0.5f * MapManager.gridWidth));
+            EnvironmentFacade.AddFogBuff(this);
         }
-        // 每7秒50费
+        // 每7秒15费
         GameController.Instance.AddCostResourceModifier("Fire", costMod);
     }
 
@@ -78,7 +79,7 @@ public class SpinCoffee : FoodUnit
     {
         // 切换为攻击动画贴图
         SetActionState(new AttackState(this));
-        GameManager.Instance.audioSourceManager.PlayEffectMusic("Fume");
+        GameManager.Instance.audioSourceController.PlayEffectMusic("Fume");
     }
 
     /// <summary>

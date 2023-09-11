@@ -74,7 +74,7 @@ public class JewelDisplay : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
     {
         if (type != -1)
         {
-            TextArea.Instance.SetText(JewelManager.GetName(type) + "\n≥ı º¿‰»¥£∫"+JewelManager.GetStartEnergy(type)+"\n◊‹¿‰»¥£∫"+JewelManager.GetMaxEnergy(type) + "\n" + JewelManager.GetInfo(type));
+            TextArea.Instance.SetText(JewelManager.GetName(type) + "\n≥ı º¿‰»¥£∫"+ (JewelManager.GetMaxEnergy(type) - JewelManager.GetStartEnergy(type))+"\n◊‹¿‰»¥£∫"+JewelManager.GetMaxEnergy(type) + "\n" + JewelManager.GetInfo(type));
             TextArea.Instance.SetLocalPosition(transform, new Vector2(RectTrans.sizeDelta.x / 2, 0), new Vector2(1, -1));
         }
 

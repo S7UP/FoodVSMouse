@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 using UnityEngine;
@@ -129,12 +130,7 @@ public class Map_CuminBidge2 : ChapterMap
     /// </summary>
     public override void ProcessingGridList()
     {
-        // 1、7路
-        for (int i = 0; i < 9; i++)
-        {
-            GetGrid(i, 0).AddGridType(GridType.Water, BaseGridType.GetInstance(GridType.Water, 0));
-            GetGrid(i, 6).AddGridType(GridType.Water, BaseGridType.GetInstance(GridType.Water, 0));
-        }
+
     }
 
     /// <summary>
@@ -153,5 +149,84 @@ public class Map_CuminBidge2 : ChapterMap
         // 为全图添加黑夜BUFF
         ShadeAreaEffectExecution e = ShadeAreaEffectExecution.GetInstance(11, 7, new UnityEngine.Vector2(MapManager.GetColumnX(4), MapManager.GetRowY(3)));
         GameController.Instance.AddAreaEffectExecution(e);
+
+        Transform trans = GameController.Instance.mMapController.transform;
+        // 创建 1 7 路 整行水域
+        for (int i = 0; i < 2; i++)
+        {
+            RetangleAreaEffectExecution r = Environment.WaterManager.GetWaterArea(MapManager.GetGridLocalPosition(4, i * 6), new Vector2(7.75f * MapManager.gridWidth, 1 * MapManager.gridHeight));
+            r.name = "WaterArea(" + (i * 6 + 1) + ")";
+            r.transform.SetParent(trans);
+            GameController.Instance.AddAreaEffectExecution(r);
+        }
+        // 创建 从左四到右一列的水域
+        {
+            RetangleAreaEffectExecution r = Environment.WaterManager.GetWaterArea(MapManager.GetGridLocalPosition(5.25f, 3), new Vector2(5.5f * MapManager.gridWidth, 5 * MapManager.gridHeight));
+            r.name = "WaterArea(center)";
+            r.transform.SetParent(trans);
+            GameController.Instance.AddAreaEffectExecution(r);
+        }
+        // 创建 (2,2) (2,4)水域
+        {
+            Vector2[] v2Array = new Vector2[] { new Vector2(2, 2), new Vector2(2, 4) };
+            foreach (var v2 in v2Array)
+            {
+                RetangleAreaEffectExecution r = Environment.WaterManager.GetWaterArea(MapManager.GetGridLocalPosition(v2.x, v2.y), new Vector2(1 * MapManager.gridWidth, 1 * MapManager.gridHeight));
+                r.name = "WaterArea(" + v2.x + "," + v2.y + ")";
+                r.transform.SetParent(trans);
+                GameController.Instance.AddAreaEffectExecution(r);
+            }
+        }
+
+        // 创建 左一列 到 左二列 承载域
+        {
+            RetangleAreaEffectExecution r = Environment.WaterManager.GetVehicleArea(MapManager.GetGridLocalPosition(0.5f, 3), new Vector2(2 * MapManager.gridWidth, 5 * MapManager.gridHeight), new S7P.Numeric.FloatModifier(0));
+            r.name = "WaterVehicle(left)";
+            r.transform.SetParent(trans);
+            GameController.Instance.AddAreaEffectExecution(r);
+        }
+
+        // 创建(2,1),(2,3),(2,5)承载域
+        {
+            Vector2[] v2Array = new Vector2[] { new Vector2(2, 1), new Vector2(2, 3), new Vector2(2, 5) };
+            foreach (var v2 in v2Array)
+            {
+                RetangleAreaEffectExecution r = Environment.WaterManager.GetVehicleArea(MapManager.GetGridLocalPosition(v2.x, v2.y), new Vector2(1 * MapManager.gridWidth, 1 * MapManager.gridHeight), new S7P.Numeric.FloatModifier(0));
+                r.name = "WaterVehicle(" + v2.x + "," + v2.y + ")";
+                r.transform.SetParent(trans);
+                GameController.Instance.AddAreaEffectExecution(r);
+            }
+        }
+
+        // 创建与五大板块绑定的承载域
+        {
+            Action<BaseGrid> createVehicleAreaAction = (g) => {
+                RetangleAreaEffectExecution r = Environment.WaterManager.GetVehicleArea(g.transform.position, new Vector2(1 * MapManager.gridWidth, 0.5f * MapManager.gridHeight), new S7P.Numeric.FloatModifier(0));
+                r.name = "WaterVehicle(grid)";
+                r.transform.SetParent(trans);
+                GameController.Instance.AddAreaEffectExecution(r);
+
+                CustomizationTask t = new CustomizationTask();
+                t.AddTaskFunc(delegate {
+                    r.transform.position = g.transform.position;
+                    return !g.IsAlive();
+                });
+                r.taskController.AddTask(t);
+            };
+
+            // 2 4 6路
+            for (int i = 5; i < 9; i++)
+            {
+                createVehicleAreaAction(GetGrid(i, 1));
+                createVehicleAreaAction(GetGrid(i, 3));
+                createVehicleAreaAction(GetGrid(i, 5));
+            }
+            // 3 5路
+            for (int i = 2; i < 6; i++)
+            {
+                createVehicleAreaAction(GetGrid(i, 2));
+                createVehicleAreaAction(GetGrid(i, 4));
+            }
+        }
     }
 }

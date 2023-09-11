@@ -1,0 +1,3 @@
+[{"name":"圆盾拍击","needEnergy":1.0,"startEnergy":0.0,"energyRegeneration":0.0,"skillType":1,"isExclusive":true,"canActiveInDeathState":false,"priority":8},
+{"name":"召唤士兵","needEnergy":1.0,"startEnergy":0.0,"energyRegeneration":0.0,"skillType":1,"isExclusive":true,"canActiveInDeathState":false,"priority":7},
+{"name":"回旋圆盾","needEnergy":1.0,"startEnergy":0.0,"energyRegeneration":0.0,"skillType":1,"isExclusive":true,"canActiveInDeathState":false,"priority":9},]

@@ -1,3 +1,4 @@
+
 using UnityEngine;
 using UnityEngine.UI;
 /// <summary>
@@ -15,11 +16,14 @@ public class Img_StageConfig : MonoBehaviour
     private InputField Inp_CardCount;
     private Toggle Tog_Card;
     private Toggle Tog_StartCard;
+    private Toggle Tog_Jewel;
+    private InputField Inp_JewelCount;
     private Button Btn_ConfigCard;
     private Button Btn_ConfigStartCard;
     private Button Btn_Background;
     private Button Btn_Illustrate;
     private Button Btn_AdditionalNotes;
+    private Button Btn_Param;
 
     private void Awake()
     {
@@ -44,6 +48,31 @@ public class Img_StageConfig : MonoBehaviour
         Tog_StartCard = transform.Find("Emp_ConfigList").Find("Tog_StartCard").GetComponent<Toggle>();
         Tog_StartCard.onValueChanged.AddListener(delegate { OnStartCardToggleChange(); });
 
+        Tog_Jewel = transform.Find("Emp_ConfigList").Find("Tog_Jewel").GetComponent<Toggle>();
+        Tog_Jewel.onValueChanged.AddListener(delegate {
+            BaseStage.StageInfo info = mEditorPanel.GetCurrentStageInfo();
+            info.isEnableJewelCount = Tog_Jewel.isOn;
+            Inp_JewelCount.interactable = Tog_Jewel.isOn;
+        });
+        Inp_JewelCount = Tog_Jewel.transform.Find("InputField").GetComponent<InputField>();
+        Inp_JewelCount.onEndEdit.AddListener(delegate 
+        {
+            if (Inp_JewelCount.text == null || Inp_JewelCount.text.Equals(""))
+            {
+                Inp_JewelCount.text = "" + 3;
+                return;
+            }
+            int c = int.Parse(Inp_JewelCount.text);
+            if (c < 0 || c > 3)
+            {
+                Inp_JewelCount.text = "" + 3;
+                return;
+            }
+            BaseStage.StageInfo info = mEditorPanel.GetCurrentStageInfo();
+            info.jewelCount = c;
+        });
+        Inp_JewelCount.interactable = false;
+
         Btn_ConfigCard = transform.Find("Emp_ConfigList").Find("Tog_Card").Find("Button").GetComponent<Button>();
         Btn_ConfigCard.onClick.AddListener(delegate { OnCardConfigButtonClick(); });
         Btn_ConfigCard.interactable = false;
@@ -58,6 +87,9 @@ public class Img_StageConfig : MonoBehaviour
         Btn_Illustrate.onClick.AddListener(delegate { mEditorPanel.ShowEditTextArea(1); });
         Btn_AdditionalNotes = transform.Find("Emp_ConfigList").Find("Emp_AdditionalNotes").Find("Button").GetComponent<Button>();
         Btn_AdditionalNotes.onClick.AddListener(delegate { mEditorPanel.ShowEditTextArea(2); });
+
+        Btn_Param = transform.Find("Emp_ConfigList").Find("Emp_Param").Find("Button").GetComponent<Button>();
+        Btn_Param.onClick.AddListener(delegate { mEditorPanel.ShowDefineParamUI(mEditorPanel.GetCurrentStageInfo().ParamArrayDict); });
     }
 
     public void Initial()
@@ -81,6 +113,10 @@ public class Img_StageConfig : MonoBehaviour
 
         Tog_StartCard.isOn = info.isEnableStartCard;
         Btn_ConfigStartCard.interactable = Tog_StartCard.isOn;
+
+        Tog_Jewel.isOn = info.isEnableJewelCount;
+        Inp_JewelCount.interactable = Tog_Jewel.isOn;
+        Inp_JewelCount.text = info.jewelCount+"";
     }
 
     public void SetEditorPanel(EditorPanel panel)

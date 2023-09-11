@@ -8,19 +8,23 @@ namespace UIPanel.StageConfigPanel
     {
         public ScrollRect Scr_TagArea;
         public RectTransform Rect_Content;
+        public GameObject DisableMask;
+        public Text Tex_DisableCondition;
+
         private List<TagArray> tagArrayList = new List<TagArray>();
         private float width = 0;
         
         private void Awake()
         {
-            // Scr_TagArea = transform.Find("Scr").GetComponent<ScrollRect>();
-            // Rect_Content = Scr_TagArea.content.GetComponent<RectTransform>();
+            //DisableMask = transform.Find("DisableMask").gameObject;
+            //Tex_DisableCondition = DisableMask.transform.Find("Text").GetComponent<Text>();
         }
 
         public void MInit()
         {
             tagArrayList.Clear();
             width = 0;
+            DisableMask.SetActive(false);
         }
         public void MUpdate()
         {
@@ -55,6 +59,17 @@ namespace UIPanel.StageConfigPanel
             tagArray.transform.localScale = Vector2.one;
             width += tagArray.GetComponent<RectTransform>().sizeDelta.x + 5;
             Rect_Content.sizeDelta = new Vector2(width, Rect_Content.sizeDelta.y);
+        }
+
+        public void ShowDisableMask(string reason)
+        {
+            DisableMask.SetActive(true);
+            Tex_DisableCondition.text = reason;
+        }
+
+        public void HideDisableMask()
+        {
+            DisableMask.SetActive(false);
         }
         #endregion
     }

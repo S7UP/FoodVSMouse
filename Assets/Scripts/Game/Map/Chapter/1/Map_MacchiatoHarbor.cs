@@ -104,9 +104,9 @@ public class Map_MacchiatoHarbor : ChapterMap
         }
         else
         {
-            oldValue = Mathf.Min(6, Mathf.Max(0, Mathf.FloorToInt(oldArray[0])));
+            oldValue = Mathf.Min(7, Mathf.Max(0, Mathf.FloorToInt(oldArray[0])));
         }
-        newValue = Mathf.Min(6, Mathf.Max(0, Mathf.FloorToInt(newArray[0])));
+        newValue = Mathf.Min(7, Mathf.Max(0, Mathf.FloorToInt(newArray[0])));
         if (oldValue != newValue)
         {
             CloseAll();
@@ -270,7 +270,6 @@ public class Map_MacchiatoHarbor : ChapterMap
                 OpenAll();
                 break;
             case 6:
-                Debug.Log("abc");
                 // 风洞
                 {
                     List<Vector2> list = new List<Vector2>()
@@ -282,6 +281,16 @@ public class Map_MacchiatoHarbor : ChapterMap
                     foreach (var v in list)
                     {
                         TeleportGridType tg = tpDict[v];
+                        tg.SetOpen(true);
+                    }
+                }
+                break;
+            case 7:
+                // 风洞全开但是没雾
+                {
+                    foreach (var keyValuePair in tpDict)
+                    {
+                        TeleportGridType tg = keyValuePair.Value;
                         tg.SetOpen(true);
                     }
                 }

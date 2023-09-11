@@ -1,5 +1,7 @@
 using System;
 
+using GameNormalPanel_UI;
+
 using S7P.Numeric;
 
 using UnityEngine;
@@ -19,7 +21,7 @@ public class TaskManager
     /// <param name="targetPosition"></param>
     /// <param name="isNavi"></param>
     /// <returns></returns>
-    public static CustomizationTask AddParabolaTask(BaseBullet master, float horizontalVelocity, float height, Vector3 firstPosition, Vector3 targetPosition, bool isNavi, bool notEndWithTakeDamage, Func<BaseBullet, BaseUnit, bool> hitCondition)
+    public static CustomizationTask GetParabolaTask(BaseBullet master, float horizontalVelocity, float height, Vector3 firstPosition, Vector3 targetPosition, bool isNavi, bool notEndWithTakeDamage, Func<BaseBullet, BaseUnit, bool> hitCondition)
     {
         int totalTimer = 0; // 初始点到目标点用时
         int currentTimer = 0; // 当前用时
@@ -73,7 +75,6 @@ public class TaskManager
             master.RemoveSpriteOffsetY(yPosModifier);
             master.RemoveCanHitFunc(hitCondition);
         });
-        master.AddTask(t);
         return t;
     }
 
@@ -87,14 +88,14 @@ public class TaskManager
     /// <param name="targetPosition"></param>
     /// <param name="isNavi"></param>
     /// <returns></returns>
-    public static CustomizationTask AddParabolaTask(BaseBullet master, float horizontalVelocity, float height, Vector3 firstPosition, Vector3 targetPosition, bool isNavi, bool notEndWithTakeDamage)
+    public static CustomizationTask GetParabolaTask(BaseBullet master, float horizontalVelocity, float height, Vector3 firstPosition, Vector3 targetPosition, bool isNavi, bool notEndWithTakeDamage)
     {
-        return AddParabolaTask(master, horizontalVelocity, height, firstPosition, targetPosition, isNavi, notEndWithTakeDamage, delegate { return true; });
+        return GetParabolaTask(master, horizontalVelocity, height, firstPosition, targetPosition, isNavi, notEndWithTakeDamage, delegate { return true; });
     }
 
-    public static CustomizationTask AddParabolaTask(BaseBullet master, float horizontalVelocity, float height, Vector3 firstPosition, Vector3 targetPosition, bool isNavi)
+    public static CustomizationTask GetParabolaTask(BaseBullet master, float horizontalVelocity, float height, Vector3 firstPosition, Vector3 targetPosition, bool isNavi)
     {
-        return AddParabolaTask(master, horizontalVelocity, height, firstPosition, targetPosition, isNavi, false);
+        return GetParabolaTask(master, horizontalVelocity, height, firstPosition, targetPosition, isNavi, false);
     }
 
     /// <summary>
@@ -107,7 +108,7 @@ public class TaskManager
     /// <param name="target"></param>
     /// <param name="isNavi"></param>
     /// <returns></returns>
-    public static CustomizationTask AddParabolaTask(BaseBullet master, float horizontalVelocity, float height, Vector3 firstPosition, BaseUnit target, bool isNavi, bool notEndWithTakeDamage)
+    public static CustomizationTask GetParabolaTask(BaseBullet master, float horizontalVelocity, float height, Vector3 firstPosition, BaseUnit target, bool isNavi, bool notEndWithTakeDamage)
     {
         // 添加一个锁定目标事件，如果目标不死的话子弹一定优先命中目标，目标死了才可能会命中其附近范围内的目标
         bool targetIsDie = false;
@@ -127,7 +128,7 @@ public class TaskManager
         };
 
         // 先为目标添加无目标的抛物线运动
-        CustomizationTask oriTask = AddParabolaTask(master, horizontalVelocity, height, firstPosition, target.transform.position, isNavi, notEndWithTakeDamage, hitCondition);
+        CustomizationTask oriTask = GetParabolaTask(master, horizontalVelocity, height, firstPosition, target.transform.position, isNavi, notEndWithTakeDamage, hitCondition);
         // 然后添加一个位移补正机制
         Vector3 CurrentDelta = Vector3.zero;
 
@@ -151,13 +152,14 @@ public class TaskManager
         {
 
         });
-        master.AddTask(t);
-        return t;
+
+        oriTask.AddOnEnterAction(delegate { master.taskController.AddTask(t); });
+        return oriTask;
     }
 
-    public static CustomizationTask AddParabolaTask(BaseBullet master, float horizontalVelocity, float height, Vector3 firstPosition, BaseUnit target, bool isNavi)
+    public static CustomizationTask GetParabolaTask(BaseBullet master, float horizontalVelocity, float height, Vector3 firstPosition, BaseUnit target, bool isNavi)
     {
-        return AddParabolaTask(master, horizontalVelocity, height, firstPosition, target, isNavi, false);
+        return GetParabolaTask(master, horizontalVelocity, height, firstPosition, target, isNavi, false);
     }
     #endregion
 
@@ -189,7 +191,8 @@ public class TaskManager
 
         Vector3 last_vector = Vector3.zero;
         Func<BaseUnit, BaseBullet, bool> noHitFunc = delegate { return isOpenCollide; };
-        Func<BaseUnit, BaseUnit, bool> noBlockFunc = delegate { return isOpenCollide; };
+        Func<BaseUnit, BaseUnit, bool> noBlockFunc = delegate { return false; };
+        Func<BaseUnit, BaseUnit, bool> canBeSelectFunc = delegate { return isOpenCollide; };
 
         CustomizationTask t = new CustomizationTask();
         t.AddOnEnterAction(delegate {
@@ -208,6 +211,7 @@ public class TaskManager
             // 关判定
             master.AddCanHitFunc(noHitFunc);
             master.AddCanBlockFunc(noBlockFunc);
+            master.AddCanBeSelectedAsTargetFunc(canBeSelectFunc);
         });
         t.AddTaskFunc(delegate {
             if (currentTimer >= totalTimer)
@@ -235,11 +239,34 @@ public class TaskManager
             // 开判定
             master.RemoveCanHitFunc(noHitFunc);
             master.RemoveCanBlockFunc(noBlockFunc);
+            master.RemoveCanBeSelectedAsTargetFunc(canBeSelectFunc);
             // 为目标移除当前的Flying字段
             if (master.NumericBox.IntDict.ContainsKey(StringManager.Flying))
                 master.NumericBox.IntDict[StringManager.Flying].RemoveAddModifier(flyIntModifier);
         });
         return t;
+    }
+    #endregion
+
+    #region 直线移动任务
+    public static CustomizationTask GetAccDecMoveTask(Transform trans, Vector2 delta, int t)
+    {
+        float vel = delta.magnitude / t; // 计算出平均速率
+        float acc = 4 * vel / t;
+        Vector3 rot = delta.normalized;
+
+        float v = -acc/2;
+
+        CustomizationTask task = new CustomizationTask();
+        task.AddTimeTaskFunc(t / 2, null, delegate {
+            v += acc;
+            trans.transform.position += v * rot;
+        }, null);
+        task.AddTimeTaskFunc(t / 2, null, delegate {
+            v -= acc;
+            trans.transform.position += v * rot;
+        }, null);
+        return task;
     }
     #endregion
 
@@ -350,6 +377,82 @@ public class TaskManager
             else
                 return false;
         });
+    }
+    #endregion
+
+    #region 一些图标UI
+    public static CustomizationTask GetStunRingUITask(RingUI ru, BaseUnit master, Vector3 pos)
+    {
+        Sprite sprite = GameManager.Instance.GetSprite("UI/GameNormalPanel/Ring/Icon/Stun");
+        float r = 213f / 255;
+        float g = 255f / 255;
+        float b = 206f / 255;
+
+        CustomizationTask task = new CustomizationTask();
+        task.AddOnEnterAction(delegate {
+            ru.Show();
+            ru.SetIcon(sprite);
+            ru.SetPercent(0);
+            ru.SetColor(new Color(r, g, b, 0.5f));
+        });
+        task.AddTaskFunc(delegate {
+            ru.transform.position = master.transform.position + pos;
+            return !master.IsAlive();
+        });
+        task.AddOnExitAction(delegate {
+            ru.MDestory();
+        });
+        return task;
+    }
+
+    public static CustomizationTask GetWaitRingUITask(RingUI ru, BaseUnit master, Vector3 pos)
+    {
+        Sprite sprite = GameManager.Instance.GetSprite("UI/GameNormalPanel/Ring/Icon/Wait");
+
+        float r = 238f / 255;
+        float g = 255f / 255;
+        float b = 197f / 255;
+
+        CustomizationTask task = new CustomizationTask();
+        task.AddOnEnterAction(delegate {
+            ru.Show();
+            ru.SetIcon(sprite);
+            ru.SetPercent(0);
+            ru.SetColor(new Color(r, g, b, 0.5f));
+        });
+        task.AddTaskFunc(delegate {
+            ru.transform.position = master.transform.position + pos;
+            return !master.IsAlive();
+        });
+        task.AddOnExitAction(delegate {
+            ru.MDestory();
+        });
+        return task;
+    }
+
+    public static CustomizationTask GetFinalSkillRingUITask(RingUI ru, BaseUnit master)
+    {
+        Sprite sprite = GameManager.Instance.GetSprite("UI/GameNormalPanel/Ring/Icon/FinalSkill");
+
+        float r = 247f / 255;
+        float g = 180f / 255;
+        float b = 131f / 255;
+
+        CustomizationTask task = new CustomizationTask();
+        task.AddOnEnterAction(delegate {
+            ru.Show();
+            ru.SetIcon(sprite);
+            ru.SetPercent(0);
+            ru.SetColor(new Color(r, g, b, 0.5f));
+        });
+        task.AddTaskFunc(delegate {
+            ru.transform.position = master.transform.position + 0.25f * MapManager.gridHeight * Vector3.down;
+            return !master.IsAlive();
+        });
+        task.AddOnExitAction(delegate {
+            ru.MDestory();
+        });
+        return task;
     }
     #endregion
 }

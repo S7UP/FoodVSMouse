@@ -89,7 +89,7 @@ public class WiskyBoom : FoodUnit
     /// </summary>
     public override void ExecuteDamage()
     {
-        GameManager.Instance.audioSourceManager.PlayEffectMusic("Fire");
+        GameManager.Instance.audioSourceController.PlayEffectMusic("Fire");
         // 原地产生一个爆炸效果
         {
             BaseEffect e = BaseEffect.GetInstance("FireVertical");
@@ -99,18 +99,13 @@ public class WiskyBoom : FoodUnit
         }
         // 添加对应的判定检测器
         {
-            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 1, int.MaxValue, "ItemCollideEnemy");
+            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(new Vector2(transform.position.x, MapManager.GetRowY(3)), 1, 7, "ItemCollideEnemy");
             r.isAffectMouse = true;
             r.SetInstantaneous();
             r.SetOnEnemyEnterAction((u) => {
                 BurnManager.BurnDamage(this, u);
             });
             GameController.Instance.AddAreaEffectExecution(r);
-
-            //BombAreaEffectExecution bombEffect = BombAreaEffectExecution.GetInstance();
-            //bombEffect.Init(this, 900 * mCurrentAttack / 10, GetRowIndex(), 1, int.MaxValue, 0, 0, false, true);
-            //bombEffect.transform.position = this.GetPosition();
-            //GameController.Instance.AddAreaEffectExecution(bombEffect);
         }
     }
 

@@ -82,9 +82,21 @@ public class BossManager
                 { 2, "列车终极"}
             }
         },
+        { BossNameTypeMap.XiaoMing, new Dictionary<int, string>()
+            { { 0, "酷帅小明"}
+            }
+        },
+        { BossNameTypeMap.XiaoHong, new Dictionary<int, string>()
+            { { 0, "闪亮小红"}
+            }
+        },
         { BossNameTypeMap.CaptainAmerica, new Dictionary<int, string>()
-            { { 0, "美队鼠"} 
+            { { 0, "鼠国队长"} 
             } 
+        },
+        { BossNameTypeMap.IronMan, new Dictionary<int, string>()
+            { { 0, "鼠铁侠"}
+            }
         },
     };
 

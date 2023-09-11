@@ -878,12 +878,12 @@ public class IceSlag : BossUnit
         if(targetUnit == null || !targetUnit.IsAlive())
         {
             float dist = (transform.position - targetPos).magnitude;
-            TaskManager.AddParabolaTask(b, dist / 60, dist / 2, transform.position, targetPos, true);
+            b.taskController.AddTask(TaskManager.GetParabolaTask(b, dist / 60, dist / 2, transform.position, targetPos, true));
         }
         else
         {
             float dist = (transform.position - targetUnit.transform.position).magnitude;
-            TaskManager.AddParabolaTask(b, dist / 60, dist / 2, transform.position, targetUnit, true);
+            b.taskController.AddTask(TaskManager.GetParabolaTask(b, dist / 60, dist / 2, transform.position, targetUnit, true));
         }
         GameController.Instance.AddBullet(b);
     }
@@ -931,12 +931,12 @@ public class IceSlag : BossUnit
         if (targetUnit == null || !targetUnit.IsAlive())
         {
             float dist = (transform.position - targetPos).magnitude;
-            TaskManager.AddParabolaTask(b, dist / 60, dist / 2, transform.position, targetPos, true);
+            b.taskController.AddTask(TaskManager.GetParabolaTask(b, dist / 60, dist / 2, transform.position, targetPos, true));
         }
         else
         {
             float dist = (transform.position - targetUnit.transform.position).magnitude;
-            TaskManager.AddParabolaTask(b, dist / 60, dist / 2, transform.position, targetUnit, true);
+            b.taskController.AddTask(TaskManager.GetParabolaTask(b, dist / 60, dist / 2, transform.position, targetUnit, true));
         }
         GameController.Instance.AddBullet(b);
         // 添加击中时效果

@@ -1,3 +1,4 @@
+using UnityEngine;
 /// <summary>
 /// 关卡配置面板
 /// </summary>
@@ -70,6 +71,8 @@ namespace UIPanel.StageConfigPanel
         /// </summary>
         public void OnClickReturn()
         {
+            Debug.Log("清空当前动态关卡数据");
+            PlayerData.GetInstance().SetCurrentDynamicStageInfo(null);
             mUIFacade.currentScenePanelDict[StringManager.StageConfigPanel].ExitPanel();
         }
     }

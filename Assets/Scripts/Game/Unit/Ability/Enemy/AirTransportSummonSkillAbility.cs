@@ -4,7 +4,6 @@ using System;
 /// </summary>
 public class AirTransportSummonSkillAbility : SkillAbility
 {
-    private int leftUseCount = 1; // 剩余使用次数
     private int castState = 0; // 施法阶段（0：正在打开舱门；1：舱门打开并且召唤怪中；2：召唤怪完毕后关闭舱门； 3：舱门已关闭完成准备结束技能切换回正常态）
     private Action SummonAction; // 召唤事件
     public AirTransportSummonSkillAbility(BaseUnit pmaster) : base(pmaster)
@@ -23,8 +22,7 @@ public class AirTransportSummonSkillAbility : SkillAbility
     /// <returns></returns>
     public override bool IsMeetSkillCondition()
     {
-        // 能量足够，且有剩余使用次数
-        return (leftUseCount>0);
+        return master.transform.position.x <= MapManager.GetColumnX(8);
     }
 
     public override void BeforeSpell()
@@ -60,7 +58,6 @@ public class AirTransportSummonSkillAbility : SkillAbility
     public override void AfterSpell()
     {
         castState = 0;
-        leftUseCount--;
         master.SetActionState(new MoveState(master));
     }
 

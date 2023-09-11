@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 using UnityEngine;
@@ -65,6 +66,33 @@ public class Map_BrineGarden : ChapterMap
     /// </summary>
     public override void ProcessingGridGroupList()
     {
+        Transform trans = GameController.Instance.mMapController.transform;
+        // 创建 从左一到右一列的水域
+        {
+            RetangleAreaEffectExecution r = Environment.WaterManager.GetWaterArea(MapManager.GetGridLocalPosition(4f, 3), new Vector2(7.75f * MapManager.gridWidth, 7 * MapManager.gridHeight));
+            r.name = "WaterArea";
+            r.transform.SetParent(trans);
+            GameController.Instance.AddAreaEffectExecution(r);
+        }
 
+        // 创建与大板块绑定的承载域
+        {
+            Action<BaseGrid> createVehicleAreaAction = (g) => {
+                RetangleAreaEffectExecution r = Environment.WaterManager.GetVehicleArea(g.transform.position, new Vector2(1 * MapManager.gridWidth, 0.5f * MapManager.gridHeight), new S7P.Numeric.FloatModifier(0));
+                r.name = "WaterVehicle(grid)";
+                r.transform.SetParent(trans);
+                GameController.Instance.AddAreaEffectExecution(r);
+
+                CustomizationTask t = new CustomizationTask();
+                t.AddTaskFunc(delegate {
+                    r.transform.position = g.transform.position;
+                    return !g.IsAlive();
+                });
+                r.taskController.AddTask(t);
+            };
+
+            foreach (var g in GetGridList())
+                createVehicleAreaAction(g);
+        }
     }
 }

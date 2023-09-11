@@ -90,27 +90,36 @@ MonoBehaviour:
   m_GameObject: {fileID: 6560605702601517120}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d798b1a1085ee214e9a8cbc79433d3fc, type: 3}
+  m_Script: {fileID: 11500000, guid: 728a0146f1984cb46ae610eebb15e87c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   mUnitType: 0
-  mCurrentHp: 0
   mCurrentTotalShieldValue: 0
   mHeight: 0
   moveRotate: {x: 0, y: 0}
   isFrozenState: 0
+  isIgnoreRecordDamage: 0
   mName: 
   mType: 0
   mShape: 0
   typeAndShapeValue: 0
   currentStateTimer: 0
+  disableMove: 0
+  aliveTime: 0
+  lastPosition: {x: 0, y: 0}
   rigibody2D: {fileID: 0}
   mBoxCollider2D: {fileID: 0}
+  spriteRenderer: {fileID: 0}
   spriteTrans: {fileID: 0}
   mHertIndex: 0
   currentXIndex: 0
   currentYIndex: 0
   isBoss: 0
+  canDrivenAway: 0
+  AttackClipName: 
+  IdleClipName: 
+  MoveClipName: 
+  DieClipName: 
 --- !u!1 &7911401160402135796
 GameObject:
   m_ObjectHideFlags: 0

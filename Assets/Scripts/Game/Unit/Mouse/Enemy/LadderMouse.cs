@@ -51,7 +51,7 @@ public class LadderMouse : MouseUnit
             BaseLadder l = (BaseLadder)GameController.Instance.CreateItem(targetGrid.GetColumnIndex(), targetGrid.GetRowIndex(), (int)ItemNameTypeMap.Ladder, mShape);
             // …Ë÷√Ã˘ÕºœÚ”“∆´“∆
             l.AddSpriteOffsetX(new FloatModifier(0.5f * MapManager.gridWidth));
-            if(mShape == 0)
+            if(mShape == 0 || mShape == 2)
             {
                 l.SetMoveDistanceAndMaxHight(MapManager.gridWidth * 1.5f, 0.7f*MapManager.gridHeight);
             }
@@ -59,7 +59,7 @@ public class LadderMouse : MouseUnit
             {
                 l.SetMoveDistanceAndMaxHight(MapManager.gridWidth * 3, 1.2f);
             }
-            GameManager.Instance.audioSourceManager.PlayEffectMusic("Ladder");
+            GameManager.Instance.audioSourceController.PlayEffectMusic("Ladder");
         }
     }
 

@@ -9,14 +9,14 @@ public class SelectSceneState : BaseSceneState
 
     public override IEnumerator LoadScene()
     {
-        yield return GameManager.Instance.StartCoroutine(AudioSourceManager.AsyncLoadBGMusic("SelectScene"));
+        yield return GameManager.Instance.StartCoroutine(AudioSourceController.AsyncLoadBGMusic("SelectScene"));
         yield return GameManager.Instance.StartCoroutine(GameManager.Instance.LoadSceneAsync("SelectScene"));
     }
 
     public override void EnterScene()
     {
         // SceneManager.LoadScene("SelectScene");
-        GameManager.Instance.audioSourceManager.PlayBGMusic("SelectScene");
+        GameManager.Instance.audioSourceController.PlayBGMusic("SelectScene");
         mUIFacade.AddPanelToDict(StringManager.SelectPanel);
         mUIFacade.AddPanelToDict(StringManager.PlayerInfoPanel);
         mUIFacade.AddPanelToDict(StringManager.EncyclopediaPanel);

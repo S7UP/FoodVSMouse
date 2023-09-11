@@ -21,6 +21,8 @@ public class CupLight : FoodUnit
         fireValue = 34;
         growTimeLeft = 1;
         base.MInit();
+        // 剩余成长时间
+        growTimeLeft = GetGrowTime(mShape, mLevel);
     }
 
     /// <summary>
@@ -39,8 +41,6 @@ public class CupLight : FoodUnit
         lastProductivity = floatModifier.Value;
         // 加回去
         GameController.Instance.AddCostResourceModifier("Fire", floatModifier);
-        // 剩余成长时间
-        growTimeLeft = GetGrowTime(mShape, mLevel);
     }
 
     // 死亡前就清除帧回效果
@@ -94,7 +94,7 @@ public class CupLight : FoodUnit
     {
         fireValue = 44;
         animatorController.Play("Grow");
-        GameManager.Instance.audioSourceManager.PlayEffectMusic("Grow");
+        GameManager.Instance.audioSourceController.PlayEffectMusic("Grow");
     }
 
     public override void OnTransitionState()

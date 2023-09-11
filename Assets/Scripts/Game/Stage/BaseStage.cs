@@ -50,6 +50,8 @@ public class BaseStage : MonoBehaviour
         public List<AvailableCardInfo> availableCardInfoList; // 可选用的卡片信息表
         public bool isEnableCardCount; // 是否启用卡片数量限制
         public int cardCount; // 卡片数量
+        public bool isEnableJewelCount; // 是否启用宝石数量限制
+        public int jewelCount; // 宝石数量
 
         public List<BaseRound.RoundInfo> roundInfoList; // 关卡轮数表
         public StageMode defaultMode; // 默认关卡模式
@@ -65,13 +67,38 @@ public class BaseStage : MonoBehaviour
         public List<AvailableCardInfo>[][] startCardInfoList; // 提供初始卡片相关信息表
         public string startBGMRefence; // 初始BGM引用
 
+        public Dictionary<string, List<float>> ParamArrayDict = new Dictionary<string, List<float>>(); // 该轮的参数变化字典
+
         /// <summary>
         /// 在进入战斗场景前加载资源
         /// </summary>
         public IEnumerator LoadResWhenEnterCombatScene()
         {
-            // 获取所有的BGM
+            // 载入本关会出现的资源
+            GameManager.Instance.ResourceLoadingController.LoadFood(PlayerData.GetInstance().GetCurrentDynamicStageInfo().selectedCardInfoList); // 载入本关卡片所依赖的资源
+            GameManager.Instance.ResourceLoadingController.LoadMouse(GetAllEnemyList(new List<BaseEnemyGroup>(), roundInfoList)); // 载入本关敌人所依赖的资源
+            GameManager.Instance.ResourceLoadingController.LoadBoss(GetBossList(new List<BaseEnemyGroup>(), roundInfoList)); // 载入本关BOSS所依赖的资源
+            // 预加载BGM
+            foreach (var bgm in GetBGMNameList())
+                yield return GameManager.Instance.StartCoroutine(AudioSourceController.AsyncLoadBGMusic(bgm));
+        }
+
+        public void UnLoadResWhenExitCombatScene()
+        {
+            // 卸载本关会出现的资源
+            GameManager.Instance.ResourceLoadingController.UnLoadFood(PlayerData.GetInstance().GetCurrentDynamicStageInfo().selectedCardInfoList); // 卸载本关卡片所依赖的资源
+            GameManager.Instance.ResourceLoadingController.UnLoadMouse(GetAllEnemyList(new List<BaseEnemyGroup>(), roundInfoList)); // 卸载本关敌人所依赖的资源
+            GameManager.Instance.ResourceLoadingController.UnLoadBoss(GetBossList(new List<BaseEnemyGroup>(), roundInfoList)); // 卸载本关BOSS所依赖的资源
+            // 卸载BGM
+            //foreach (var bgm in GetBGMNameList())
+            //    AudioSourceController.UnLoadBGMusic(bgm);
+        }
+
+        private List<string> GetBGMNameList()
+        {
             List<string> bgmList = new List<string>();
+            if (startBGMRefence != null && !startBGMRefence.Equals(""))
+                bgmList.Add(startBGMRefence);
             foreach (var round in roundInfoList)
             {
                 foreach (var bgm in round.GetAllBGM())
@@ -79,11 +106,7 @@ public class BaseStage : MonoBehaviour
                     bgmList.Add(bgm);
                 }
             }
-            // 预加载BGM
-            foreach (var bgm in bgmList)
-            {
-                yield return GameManager.Instance.StartCoroutine(AudioSourceManager.AsyncLoadBGMusic(bgm));
-            }
+            return bgmList;
         }
 
         /// <summary>
@@ -135,6 +158,30 @@ public class BaseStage : MonoBehaviour
                 }
             }
             return list;
+        }
+    
+        public List<float> GetParamList(string key)
+        {
+            if (ParamArrayDict.ContainsKey(key))
+                return ParamArrayDict[key];
+            else
+                return null;
+        }
+
+        public float GetParamValue(string key, int index)
+        {
+            if (ParamArrayDict.ContainsKey(key))
+            {
+                index = Mathf.Max(0, Mathf.Min(index, ParamArrayDict[key].Count - 1));
+                return ParamArrayDict[key][index];
+            }
+            else
+                return 0;
+        }
+
+        public float GetParamValue(string key)
+        {
+            return GetParamValue(key, 0);
         }
     }
 
@@ -234,6 +281,7 @@ public class BaseStage : MonoBehaviour
     /// </summary>
     public IEnumerator Execute()
     {
+        InitByParam();
         GameController.Instance.mProgressController.mRoundProgressBar.SetTotalRoundCount(mRoundList);
         GameController.Instance.mProgressController.mRoundProgressBar.UpdateRoundCountUI(0);
         mCurrentRoundIndex = -1;
@@ -251,7 +299,7 @@ public class BaseStage : MonoBehaviour
         // 然后是初始生成卡片
         ConstructeStartCard();
         // 播放BGM
-        GameManager.Instance.audioSourceManager.PlayBGMusic(mStageInfo.startBGMRefence);
+        GameManager.Instance.audioSourceController.PlayBGMusic(mStageInfo.startBGMRefence);
         GameNormalPanel.Instance.ShowBGM(MusicManager.GetMusicInfo(mStageInfo.startBGMRefence));
         // yield return StartCoroutine(WaitForIEnumerator(mStageInfo.perpareTime));
         for (int i = 0; i < mStageInfo.perpareTime; i++)
@@ -274,6 +322,16 @@ public class BaseStage : MonoBehaviour
         }
         isEndRound = true;
         //Debug.Log("出怪完毕！");
+    }
+
+    /// <summary>
+    /// 根据初始参数来作一些处理
+    /// </summary>
+    private void InitByParam()
+    {
+        // 无猫
+        if (mStageInfo.GetParamValue("isNoCat") == 1)
+            GameController.Instance.mItemController.RemoveAllCats();
     }
 
     /// <summary>

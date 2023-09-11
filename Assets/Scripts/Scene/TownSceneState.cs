@@ -10,7 +10,7 @@ public class TownSceneState : BaseSceneState
 
     public override IEnumerator LoadScene()
     {
-        yield return GameManager.Instance.StartCoroutine(AudioSourceManager.AsyncLoadBGMusic("SelectScene"));
+        yield return GameManager.Instance.StartCoroutine(AudioSourceController.AsyncLoadBGMusic("SelectScene"));
         yield return GameManager.Instance.StartCoroutine(GameManager.Instance.LoadSceneAsync("TownScene"));
     }
 
@@ -18,7 +18,7 @@ public class TownSceneState : BaseSceneState
     {
         // SceneManager.LoadScene("TownScene");
         // GameManager.Instance.LoadSceneAsync("TownScene");
-        GameManager.Instance.audioSourceManager.PlayBGMusic("SelectScene");
+        GameManager.Instance.audioSourceController.PlayBGMusic("SelectScene");
         mUIFacade.AddPanelToDict(StringManager.PlayerInfoPanel);
         mUIFacade.AddPanelToDict(StringManager.EncyclopediaPanel);
         mUIFacade.AddPanelToDict(StringManager.BigChapterPanel);

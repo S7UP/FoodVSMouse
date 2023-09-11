@@ -1,7 +1,5 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
 /// <summary>
 /// 关卡信息管理者（包括处理静态关卡，玩家存档）
@@ -46,6 +44,7 @@ public class StageInfoManager
     {
         public string name;
         public string bgPath;
+        public string introduce;
         public List<StageInfo_Static> stageList;
     }
 
@@ -57,8 +56,12 @@ public class StageInfoManager
         public string id; // 大章节ID，如Mainline
         public string name; // 大章节名，如主线任务
         public List<Chapter_Static> chapterList;
+    }
 
-        public int currentIndex; // 当前处在小章节的下标
+    public class BigChapter_Local
+    {
+        public string id;
+        public int currentIndex;  // 当前处在小章节的下标
     }
 
     /// <summary>
@@ -71,9 +74,12 @@ public class StageInfoManager
         public bool isUnlocked; // 是否解锁
         public int rank = -1; // 通过的最高难度(-1代表未通过）
         public float diffRate = 1.0f; // 通过的最高难度比率（仅在通过rank=3后解锁）
+        public int[] cardLevelArray = new int[] { -1, -1 }; // 对应星级，-1代表为空，可被任意填充
+        public int[] cardCountArray = new int[] { 0, 0 }; // 对应星级卡片数
         public List<AvailableCardInfo> currentSelectedCardInfoList = new List<AvailableCardInfo>(); // 当前携带的卡片组（选卡场景与关卡场景对接）
         public List<char> currentCardKeyList = new List<char>(); // 当前键位控制表
         public List<string> SelectedTagList = new List<string>(); // 已选词条
+        public bool isNoLimit; // 是否勾选解限模式
     }
 
     /// <summary>
@@ -84,6 +90,7 @@ public class StageInfoManager
     {
         public float version = 0; // 存档版本
         public Dictionary<string, StageInfo_Local> localStageInfoDict = new Dictionary<string, StageInfo_Local>(); // 关卡ID-关卡完成信息映射表
+        public Dictionary<string, BigChapter_Local> localBigChapterInfoDict = new Dictionary<string, BigChapter_Local>(); // 大章节ID-大章节信息映射表
     }
 
 
@@ -147,7 +154,17 @@ public class StageInfoManager
                     mPlayerStageInfo.version = 1.1f;
                     Save();
                 }
-
+                // 1.2版
+                if(mPlayerStageInfo.version < 1.2f)
+                {
+                    mPlayerStageInfo.localBigChapterInfoDict.Add("Mainline", new BigChapter_Local() { id = "Mainline", currentIndex = 0 });
+                    mPlayerStageInfo.localBigChapterInfoDict.Add("Spurline", new BigChapter_Local() { id = "Spurline", currentIndex = 0 });
+                    mPlayerStageInfo.localBigChapterInfoDict.Add("WarriorChallenge", new BigChapter_Local() { id = "WarriorChallenge", currentIndex = 0 });
+                    mPlayerStageInfo.localBigChapterInfoDict.Add("MagicTower", new BigChapter_Local() { id = "MagicTower", currentIndex = 0 });
+                    mPlayerStageInfo.localBigChapterInfoDict.Add("LegendChallenge", new BigChapter_Local() { id = "LegendChallenge", currentIndex = 0 });
+                    mPlayerStageInfo.version = 1.2f;
+                    Save();
+                }
             }
             isLoad = true;
         }
@@ -207,10 +224,18 @@ public class StageInfoManager
     /// </summary>
     /// <param name="id"></param>
     /// <returns></returns>
-    public static BigChapter_Static GetBigChapter(string id)
+    public static BigChapter_Static GetBigChapterStatic(string id)
     {
         if (bigChapterDict.ContainsKey(id))
             return bigChapterDict[id];
+        else
+            return null;
+    }
+
+    public static BigChapter_Local GetBigChapterLocal(string id)
+    {
+        if (mPlayerStageInfo.localBigChapterInfoDict.ContainsKey(id))
+            return mPlayerStageInfo.localBigChapterInfoDict[id];
         else
             return null;
     }
@@ -245,16 +270,18 @@ public class StageInfoManager
     private static List<Chapter_Static> LoadChapterList(string resPath)
     {
         List<Chapter_Static> chapterList = new List<Chapter_Static>();
-        ExcelManager.CSV csv = ExcelManager.ReadCSV(resPath+"ChapterList", 3);
+        ExcelManager.CSV csv = ExcelManager.ReadCSV(resPath+"ChapterList", 4);
         for (int i = 0; i < csv.GetRow(); i++)
         {
             Chapter_Static chapter = new Chapter_Static();
             string id = csv.GetValue(i, 0);// 章节ID
             string name = csv.GetValue(i, 1);
             string bgPath = csv.GetValue(i, 2);
+            string introduce = csv.GetValue(i, 3);
 
             chapter.name = name;
             chapter.bgPath = bgPath;
+            chapter.introduce = introduce;
 
             List<StageInfo_Static> stageInfoList = new List<StageInfo_Static>();
             ExcelManager.CSV c2 = ExcelManager.ReadCSV(resPath + id, 4);
@@ -294,8 +321,9 @@ public class StageInfoManager
     private static void LoadMainlineFirstPassReward()
     {
         ExcelManager.CSV csv = ExcelManager.ReadCSV("MainlineFirstPassExpMap", 2);
-        for (int i = 0; i < csv.GetRow(); i++)
+        for (int _i = 0; _i < csv.GetRow(); _i++)
         {
+            int i = _i;
             firstPassRewardActionDict.Add(csv.GetValue(i, 0),
                 delegate {
                     float exp = PlayerManager.GetNextLevelExp(int.Parse(csv.GetValue(i, 1)));
@@ -331,43 +359,6 @@ public class StageInfoManager
         }
         // TODO 判断其他条件
         return true;
-
-        // 这里就只能枚举了
-        //switch (id)
-        //{
-        //    case "1-1": return level >= 1;
-        //    case "1-2": return level >= 2;
-        //    case "1-3": return level >= 3;
-        //    case "1-4": return level >= 4;
-        //    case "1-5": return level >= 5;
-        //    case "1-6": return level >= 6;
-        //    case "1-7": return level >= 7;
-        //    case "2-1": return level >= 8;
-        //    case "2-2": return level >= 9;
-        //    case "2-3": return level >= 10;
-        //    case "2-4": return level >= 11;
-        //    case "2-5": return level >= 12;
-        //    case "2-6": return level >= 13;
-        //    case "2-7": return level >= 14;
-        //    case "3-1": return level >= 15;
-        //    case "3-2": return level >= 16;
-        //    case "3-3": return level >= 17;
-        //    case "3-4": return level >= 18;
-        //    case "3-5": return level >= 19;
-        //    case "4-1": return level >= 20;
-        //    case "4-2": return level >= 21;
-        //    case "4-3": return level >= 22;
-        //    case "4-4": return level >= 23;
-        //    case "4-5": return level >= 24;
-        //    case "5-1": return level >= 25;
-        //    case "5-2": return level >= 26;
-        //    case "5-3": return level >= 27;
-        //    case "5-4": return level >= 28;
-        //    case "5-5": return level >= 29;
-        //    default:
-        //        break;
-        //}
-        //return false;
     }
 
     /// <summary>

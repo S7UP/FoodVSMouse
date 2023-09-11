@@ -321,7 +321,7 @@ public class PinkPaul : BossUnit
         MouseModel m = MouseModel.GetInstance(Bullet_AnimatorController);
         bulletList.Add(m);
         m.transform.position = pos;
-        m.SetBaseAttribute(1, 10, 1.0f, 18.0f, 100, 0.5f, 1);
+        m.SetBaseAttribute(10000, 10, 1.0f, 18.0f, 100, 0.5f, 1);
         m.SetMoveRoate(rot);
         m.canTriggerCat = false;
         m.canTriggerLoseWhenEnterLoseLine = false;
@@ -440,7 +440,7 @@ public class PinkPaul : BossUnit
 
         MouseModel m = MouseModel.GetInstance(Tentacle_AnimatorController);
         m.transform.position = pos;
-        m.SetBaseAttribute(mMaxHp*mBurnRate, 10, 1.0f, GetParamValue("v1", mHertIndex), 75, 0.5f, 0);
+        m.SetBaseAttribute(10000, 10, 1.0f, GetParamValue("v1", mHertIndex), 75, 0.5f, 0);
         m.SetMoveRoate(Vector2.left);
         StatusManager.AddIgnoreSettleDownBuff(m, new BoolModifier(true));
         m.canDrivenAway = false;
@@ -476,13 +476,6 @@ public class PinkPaul : BossUnit
             {
                 if (hasTarget && u.Equals(target))
                 {
-                    //m.animatorController.Play("Idle", true);
-                    //m.DisableMove(false);
-                    //hasTarget = false;
-                    //target = null;
-                    //isMoveLeft = false; // 是否向左走
-                    //m.SetMoveRoate(Vector2.right);
-                    //moveTimeLeft = Mathf.FloorToInt(60 * GetParamValue("t1_1", mHertIndex));
                     m.DieClipName = "Drag";
                     m.ExecuteDeath(); // 若目标阵亡则自身下沉
                 }
@@ -526,13 +519,6 @@ public class PinkPaul : BossUnit
                 {
                     if (!target.IsAlive())
                     {
-                        //m.animatorController.Play("Idle", true);
-                        //m.DisableMove(false);
-                        //hasTarget = false;
-                        //target = null;
-                        //isMoveLeft = false; // 是否向左走
-                        //m.SetMoveRoate(Vector2.right);
-                        //moveTimeLeft = Mathf.FloorToInt(60 * GetParamValue("t1_1", mHertIndex));
                         m.DieClipName = "Drag";
                         m.ExecuteDeath(); // 若目标阵亡则自身下沉
                         return false;
@@ -853,23 +839,6 @@ public class PinkPaul : BossUnit
                                 GameController.Instance.AddAreaEffectExecution(r);
                             }
                         }
-
-                        // 对老鼠造成一次伤害
-                        //{
-                        //    Vector2[] v2Array = new Vector2[2] {
-                        //        new Vector2(1, 3), new Vector2(3, 1)
-                        //    };
-                        //    for (int j = 0; j < v2Array.Length; j++)
-                        //    {
-                        //        DamageAreaEffectExecution d = DamageAreaEffectExecution.GetInstance(this, transform.position, v2Array[j].x, v2Array[j].y, CombatAction.ActionType.CauseDamage, dmg2);
-                        //        d.isAffectMouse = true;
-                        //        d.isAffectFood = false;
-                        //        d.isAffectCharacter = false;
-                        //        d.SetInstantaneous();
-                        //        d.AddExcludeMouseUnit(this); // 不能打到自己
-                        //        GameController.Instance.AddAreaEffectExecution(d);
-                        //    }
-                        //}
 
                         // 如果是最后一次攻击还会造成3*3晕眩效果
                         if(index+1 == num2)

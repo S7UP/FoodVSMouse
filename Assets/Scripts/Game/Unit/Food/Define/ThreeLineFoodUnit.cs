@@ -86,7 +86,7 @@ public class ThreeLineFoodUnit : FoodUnit
         {
             mAttackFlag = false;
             ExecuteDamage();
-            GameManager.Instance.audioSourceManager.PlayEffectMusic("Swing");
+            GameManager.Instance.audioSourceController.PlayEffectMusic("Swing");
         }
     }   
 

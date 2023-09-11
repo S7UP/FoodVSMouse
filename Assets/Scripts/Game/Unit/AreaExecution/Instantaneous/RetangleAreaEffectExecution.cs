@@ -7,8 +7,6 @@ public class RetangleAreaEffectExecution : AreaEffectExecution
     public int currentRowIndex; // 当前行下标
     public float offsetX;
     public float offsetY;
-    public float colCount; // 受影响列数
-    public float rowCount; // 受影响行数
     public BoxCollider2D boxCollider2D;
 
     public override void Awake()
@@ -20,8 +18,6 @@ public class RetangleAreaEffectExecution : AreaEffectExecution
     public void Init(int currentRowIndex, float colCount, float rowCount, float offsetX, float offsetY, bool isAffectFood, bool isAffectMouse)
     {
         this.currentRowIndex = currentRowIndex;
-        this.rowCount = rowCount;
-        this.colCount = colCount;
         this.offsetX = offsetX;
         this.offsetY = offsetY;
         this.isAffectFood = isAffectFood;
@@ -41,8 +37,6 @@ public class RetangleAreaEffectExecution : AreaEffectExecution
         currentRowIndex = 0;
         offsetX = 0;
         offsetY = 0;
-        colCount = 0;
-        rowCount = 0;
         base.MInit();
     }
 
@@ -58,6 +52,16 @@ public class RetangleAreaEffectExecution : AreaEffectExecution
         e.MInit();
         e.Init(MapManager.GetYIndex(pos.y), colCount, rowCount, 0, 0, false, false);
         e.transform.position = pos;
+        e.SetCollisionLayer(CollisionLayer);
+        return e;
+    }
+
+    public static RetangleAreaEffectExecution GetInstance(Vector2 pos, Vector2 size, string CollisionLayer)
+    {
+        RetangleAreaEffectExecution e = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "AreaEffect/RetangleAreaEffectExecution").GetComponent<RetangleAreaEffectExecution>();
+        e.MInit();
+        e.transform.position = pos;
+        e.SetBoxCollider2D(Vector2.zero, size);
         e.SetCollisionLayer(CollisionLayer);
         return e;
     }

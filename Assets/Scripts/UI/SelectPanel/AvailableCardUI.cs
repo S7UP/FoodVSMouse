@@ -31,9 +31,9 @@ public class AvailableCardUI : MonoBehaviour
     /// <summary>
     /// 从当前关卡中加载可以选择的卡组信息
     /// </summary>
-    public void LoadAvailableCardInfoFromStage(BaseStage.StageInfo stageInfo)
+    public void LoadAvailableCardInfoFromStage(BaseStage.StageInfo stageInfo, bool isNoLimit)
     {
-        if (stageInfo.isEnableCardLimit)
+        if (stageInfo.isEnableCardLimit && !isNoLimit)
         {
             // 有卡片限制条件则按卡片限制条件来
             if (stageInfo.availableCardInfoList != null)
@@ -57,12 +57,13 @@ public class AvailableCardUI : MonoBehaviour
         }
         else
         {
-            // 否则读取全部卡片
-            Dictionary<FoodNameTypeMap, List<string>> dict = FoodManager.GetAllBuildableFoodDict();
-            foreach (var keyValuePair in dict)
+            // 否则读取当前版本情报岛有的全部卡片
+            // Dictionary<FoodNameTypeMap, List<string>> dict = FoodManager.GetAllBuildableFoodDict();
+            // 否则读取当前版本情报岛有的全部卡片
+            for (int i = 0; i < FoodManager.FoodTypeInfoCsv.GetRow(); i++)
             {
-                List<string> l = keyValuePair.Value;
-                AvailableCardInfo info = new AvailableCardInfo(((int)keyValuePair.Key), l.Count - 1, 16);
+                int type = int.Parse(FoodManager.FoodTypeInfoCsv.GetValue(i, 0));
+                AvailableCardInfo info = new AvailableCardInfo(type, FoodManager.GetShapeCount(type) - 1, 13);
                 Btn_AvailableCard c = Btn_AvailableCard.GetInstance();
                 c.Initial();
                 c.UpdateByAvailableCardInfo(info);
@@ -71,6 +72,18 @@ public class AvailableCardUI : MonoBehaviour
                 availableCardDict.Add((FoodNameTypeMap)info.type, c);
                 c.AddListener(delegate { mSelectEquipmentUI.SelectCard((FoodNameTypeMap)c.GetAvailableCardInfo().type); });
             }
+            //foreach (var keyValuePair in dict)
+            //{
+            //    List<string> l = keyValuePair.Value;
+            //    AvailableCardInfo info = new AvailableCardInfo(((int)keyValuePair.Key), l.Count - 1, 16);
+            //    Btn_AvailableCard c = Btn_AvailableCard.GetInstance();
+            //    c.Initial();
+            //    c.UpdateByAvailableCardInfo(info);
+            //    c.transform.SetParent(contentTrans);
+            //    c.transform.localScale = Vector3.one;
+            //    availableCardDict.Add((FoodNameTypeMap)info.type, c);
+            //    c.AddListener(delegate { mSelectEquipmentUI.SelectCard((FoodNameTypeMap)c.GetAvailableCardInfo().type); });
+            //}
         }
     }
 

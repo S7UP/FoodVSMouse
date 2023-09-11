@@ -14,6 +14,9 @@ public class BaseMap : MonoBehaviour, IGameControllerMember
     public List<GridGroup> gridGroupList = new List<GridGroup>();
     public LayerMask mask; // 打开第9层，第9层为格子！
 
+    private float symY = 0; // y方向上同步目标y坐标的速率
+    private Dictionary<BaseUnit, List<GridGroup>> unit_gridGroupMapDict = new Dictionary<BaseUnit, List<GridGroup>>(); // 单位-所<接触>的格子的映射字典
+
     // 地图
     [HideInInspector]
     public Vector3 mapCenter;
@@ -82,8 +85,10 @@ public class BaseMap : MonoBehaviour, IGameControllerMember
 
     public void MInit()
     {
+        symY = MapManager.gridHeight/240;
         mGridList.Clear();
         gridGroupList.Clear();
+        unit_gridGroupMapDict.Clear();
 
         CalculateSize();
 
@@ -94,23 +99,61 @@ public class BaseMap : MonoBehaviour, IGameControllerMember
         ProcessingGridGroupList();
 
         OtherProcessing();
-    }
 
-    /// <summary>
-    /// 回收所有格子对象与格子组对象
-    /// </summary>
-    public void RecycleAllGridAndGroup()
-    {
-        foreach (var item in mGridList)
+        // 放在最后，对所有格子组添加监听
         {
-            item.ExecuteRecycle();
+            foreach (var group in gridGroupList)
+            {
+                // 进入条件
+                group.AddOnUnitEnterCondiFunc((u) => {
+                    if (u.GetHeight() != 0)
+                        return false;
+                    if(u is MouseUnit)
+                    {
+                        MouseUnit m = u as MouseUnit;
+                        return !m.IsBoss();
+                    }
+                    return false;
+                });
+                // 进入事件
+                group.AddOnUnitEnterAction((u) => {
+                    if (!unit_gridGroupMapDict.ContainsKey(u))
+                        unit_gridGroupMapDict.Add(u, new List<GridGroup>());
+                    unit_gridGroupMapDict[u].Add(group);
+                });
+                // 退出事件
+                group.AddOnUnitExitAction((u) => {
+                    if (unit_gridGroupMapDict.ContainsKey(u))
+                        unit_gridGroupMapDict[u].Remove(group);
+                });
+
+                // 为所有格子添加一个范围检测
+                foreach (var g in group.GetGridList())
+                {
+                    RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(g.transform.position, new Vector2(0.75f*MapManager.gridWidth, 0.5f*MapManager.gridHeight), "ItemCollideEnemy");
+                    r.isAffectMouse = true;
+                    r.SetAffectHeight(0);
+                    r.SetOnEnemyEnterAction((u) => {
+                        group.TryEnter(u);
+                    });
+                    r.SetOnEnemyExitAction((u) => {
+                        group.TryExit(u);
+                    });
+                    GameController.Instance.AddAreaEffectExecution(r);
+
+                    // 跟随任务
+                    CustomizationTask t = new CustomizationTask();
+                    t.AddTaskFunc(delegate {
+                        r.transform.position = g.transform.position;
+                        return !g.IsAlive();
+                    });
+                    t.AddOnExitAction(delegate {
+                        r.MDestory();
+                    });
+                    r.taskController.AddTask(t);
+                }
+            }
         }
-        mGridList.Clear();
-        foreach (var item in gridGroupList)
-        {
-            item.ExecuteRecycle();
-        }
-        gridGroupList.Clear();
     }
 
     public void MUpdate()
@@ -128,14 +171,48 @@ public class BaseMap : MonoBehaviour, IGameControllerMember
         }
 
         foreach (var item in mGridList)
-        {
             item.MUpdate();
-        }
 
         // 格子组事件
         foreach (var item in gridGroupList)
-        {
             item.MUpdate();
+
+        // 更新单位-格子组映射关系
+        List<BaseUnit> delList = new List<BaseUnit>();
+        foreach (var keyValuePair in unit_gridGroupMapDict)
+        {
+            BaseUnit u = keyValuePair.Key;
+            List<GridGroup> groupList = keyValuePair.Value;
+            if (!u.IsAlive() || groupList.Count <= 0)
+                delList.Add(u);
+            else
+            {
+                // 取最先接触的格子组（也就是第一位）作为<位于>判定，并执行对应的同步逻辑
+                GridGroup group = groupList[0];
+                u.transform.position += (Vector3)group.GetDeltaPos();
+                // 在这个格子组里找离目标最近的格子，然后试图在y方向上同步y坐标
+                BaseGrid g = null;
+                float min = float.MaxValue;
+                foreach (var _g in group.GetGridList())
+                {
+                    float dist = (u.transform.position - _g.transform.position).magnitude;
+                    if(dist < min)
+                    {
+                        g = _g;
+                        min = dist;
+                    }
+                }
+                if (g != null)
+                {
+                    float deltaY = g.transform.position.y - u.transform.position.y;
+                    float sign = Mathf.Sign(deltaY);
+                    u.transform.position += new Vector3(0, sign * Mathf.Min(symY, Mathf.Abs(deltaY)));
+                }
+            }
+        }
+        foreach (var u in delList)
+        {
+            unit_gridGroupMapDict.Remove(u);
         }
 
         AfterUpdate();
@@ -183,6 +260,24 @@ public class BaseMap : MonoBehaviour, IGameControllerMember
     public void MDestory()
     {
         
+    }
+
+
+    /// <summary>
+    /// 回收所有格子对象与格子组对象
+    /// </summary>
+    public void RecycleAllGridAndGroup()
+    {
+        foreach (var item in mGridList)
+        {
+            item.ExecuteRecycle();
+        }
+        mGridList.Clear();
+        foreach (var group in gridGroupList)
+        {
+            group.MDestory();
+        }
+        gridGroupList.Clear();
     }
 
     public BaseGrid GetGrid(int xIndex, int yIndex)

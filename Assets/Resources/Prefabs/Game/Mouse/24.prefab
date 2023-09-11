@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6560605702601517123}
   - component: {fileID: 2273559529684654033}
   - component: {fileID: 7593310000869414451}
-  - component: {fileID: 5281249318526800365}
+  - component: {fileID: 324059669255250226}
   m_Layer: 7
   m_Name: 24
   m_TagString: Mouse
@@ -81,7 +81,7 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 0.2, y: 0.75}
   m_EdgeRadius: 0
---- !u!114 &5281249318526800365
+--- !u!114 &324059669255250226
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -90,27 +90,36 @@ MonoBehaviour:
   m_GameObject: {fileID: 6560605702601517120}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 793de591484ec2e45b442a3a22005b77, type: 3}
+  m_Script: {fileID: 11500000, guid: 6d78e012aed66db458560200bad83dc6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mUnitType: 1
-  mCurrentHp: 0
+  mUnitType: 0
   mCurrentTotalShieldValue: 0
   mHeight: 0
   moveRotate: {x: 0, y: 0}
   isFrozenState: 0
+  isIgnoreRecordDamage: 0
   mName: 
   mType: 0
   mShape: 0
   typeAndShapeValue: 0
   currentStateTimer: 0
+  disableMove: 0
+  aliveTime: 0
+  lastPosition: {x: 0, y: 0}
   rigibody2D: {fileID: 0}
   mBoxCollider2D: {fileID: 0}
+  spriteRenderer: {fileID: 0}
   spriteTrans: {fileID: 0}
   mHertIndex: 0
   currentXIndex: 0
   currentYIndex: 0
   isBoss: 0
+  canDrivenAway: 0
+  AttackClipName: 
+  IdleClipName: 
+  MoveClipName: 
+  DieClipName: 
 --- !u!1 &7911401160402135796
 GameObject:
   m_ObjectHideFlags: 0
@@ -204,7 +213,7 @@ Animator:
   m_GameObject: {fileID: 7911401160402135796}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: c25f2ec8376d4b447b5a6c0d6bbd8af6, type: 2}
+  m_Controller: {fileID: 0}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0

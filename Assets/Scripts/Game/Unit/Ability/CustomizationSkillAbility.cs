@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 /// <summary>
 /// 技能存储实体
 /// </summary>
@@ -10,6 +11,7 @@ public class CustomizationSkillAbility : SkillAbility
     public Action OnNoSpellingFunc;
     public Func<bool> IsMeetCloseSpellingConditionFunc;
     public Action AfterSpellFunc;
+    private List<Action<SkillAbility>> AfterSpellActionList = new List<Action<SkillAbility>>();
 
     public CustomizationSkillAbility(BaseUnit master) : base(master)
     {
@@ -68,5 +70,20 @@ public class CustomizationSkillAbility : SkillAbility
     {
         if (AfterSpellFunc != null)
             AfterSpellFunc();
+        foreach (var action in AfterSpellActionList)
+        {
+            action(this);
+        }
+    }
+
+
+    public void AddAfterSpellAction(Action<SkillAbility> action)
+    {
+        AfterSpellActionList.Add(action);
+    }
+
+    public void RemoveAfterSpellAction(Action<SkillAbility> action)
+    {
+        AfterSpellActionList.Remove(action);
     }
 }

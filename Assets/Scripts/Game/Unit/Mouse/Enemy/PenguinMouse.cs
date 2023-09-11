@@ -10,7 +10,7 @@ public class PenguinMouse : MouseUnit
     private ThrowIceBombSkillAbility throwIceBombSkillAbility; // Í¶ÖÀ±ùÕ¨µ¯¼¼ÄÜ
     private bool isFindTarget;
     private Vector3 targetPosition;
-    private int throwTimeLeft; // ¶ªÕ¨µ¯¼ÆÊ±Æ÷
+    private float throwTimeLeft; // ¶ªÕ¨µ¯¼ÆÊ±Æ÷
     public override void MInit()
     {
         throwTimeLeft = 360;
@@ -97,13 +97,13 @@ public class PenguinMouse : MouseUnit
 
     public override void OnMoveState()
     {
-        throwTimeLeft--;
+        throwTimeLeft-= mCurrentSkillSpeed;
         base.OnMoveState();
     }
 
     public override void OnAttackState()
     {
-        throwTimeLeft--;
+        throwTimeLeft-= mCurrentSkillSpeed;
         base.OnAttackState();
     }
 

@@ -9,6 +9,12 @@ namespace UIPanel.StageConfigPanel
 {
     public class TagFacade : IGameControllerMember
     {
+        /// <summary>
+        /// 被禁用的关卡
+        /// </summary>
+        private static List<string> lockedStageIdList = new List<string>() {
+            "LC1-1", "LC1-2", "LC1-3", "LC1-4"
+        };
         // model
         private Dictionary<string, Tag> tagBtnDict = new Dictionary<string, Tag>();
         private Dictionary<string, LimitItem> limitItemDict = new Dictionary<string, LimitItem>();
@@ -54,18 +60,60 @@ namespace UIPanel.StageConfigPanel
                 mSelectTagUI.AddTagArray(array);
             }
 
-            // 根据玩家已选择的词条来设置选择情况
-            List<string> currentStageTagList = data.GetTagList(info.chapterIndex, info.sceneIndex, info.stageIndex);
-            foreach (var tagId in currentStageTagList)
+            PlayerData.StageInfo_Dynamic info_dynamic = data.GetCurrentDynamicStageInfo();
+            string id = null;
+            if (info_dynamic != null)
+                id = info_dynamic.id;
+            bool isOpen = false;
+            if (id != null && lockedStageIdList.Contains(id))
             {
-                if (tagBtnDict.ContainsKey(tagId))
+                mSelectTagUI.ShowDisableMask("当前关卡不支持词条系统！");
+            }
+            else if (data.GetDifficult() < 3)
+            {
+                mSelectTagUI.ShowDisableMask("该系统仅遗忘级难度开启！");
+            }
+            else if(!ConfigManager.IsDeveloperMode() && !(id != null && StageInfoManager.GetLocalStageInfo(id).rank >= 3))
+            {
+                mSelectTagUI.ShowDisableMask("通过遗忘级难度解锁！");
+            }
+            else
+            {
+                isOpen = true;
+                mSelectTagUI.HideDisableMask();
+            }
+
+            // 根据玩家已选择的词条来设置选择情况
+            if (isOpen)
+            {
+                List<string> currentStageTagList = data.GetTagList(info.chapterIndex, info.sceneIndex, info.stageIndex);
+                foreach (var tagId in currentStageTagList)
                 {
-                    tagBtnDict[tagId].mStateController.ChangeState("Selected");
+                    if (tagBtnDict.ContainsKey(tagId))
+                    {
+                        tagBtnDict[tagId].mStateController.ChangeState("Selected");
+                    }
                 }
             }
 
             // 刷新一次rankrate显示
-            mSettlementUI.SetRankRateText(Mathf.FloorToInt(data.GetRankRate()*100).ToString()+"%");
+            string rankRate;
+            switch (data.GetDifficult())
+            {
+                case 2:
+                    rankRate = 75+"%";
+                    break;
+                case 1:
+                    rankRate = 50 + "%";
+                    break;
+                case 0:
+                    rankRate = 25 + "%";
+                    break;
+                default:
+                    rankRate = Mathf.FloorToInt(data.GetRankRate() * 100).ToString() + "%";
+                    break;
+            }
+            mSettlementUI.SetRankRateText(rankRate);
         }
         public void MUpdate()
         {

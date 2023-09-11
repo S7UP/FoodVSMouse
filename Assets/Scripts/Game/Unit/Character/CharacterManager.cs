@@ -16,7 +16,14 @@ public class CharacterManager
         { CharacterNameShapeMap.BabyMouse_F, "baby鼠cos"},
         { CharacterNameShapeMap.WhiteMouse_M, "一种白色的老鼠的cos"},
         { CharacterNameShapeMap.MeiLianHuaYu_F, "梦恋花语（女）" },
-        { CharacterNameShapeMap.MeiLianHuaYu_M, "梦恋花语（男）" }
+        { CharacterNameShapeMap.MeiLianHuaYu_M, "梦恋花语（男）" },
+        { CharacterNameShapeMap.HuaJia_F, "花嫁" },
+        { CharacterNameShapeMap.LiFu_M, "礼服" },
+        { CharacterNameShapeMap.Juliet, "朱丽叶" },
+        { CharacterNameShapeMap.Romeo, "罗密欧" },
+        { CharacterNameShapeMap.MoYingShengYi_M, "魔影圣衣" },
+        { CharacterNameShapeMap.MoYingShengYi_F, "魔影圣衣" },
+        { CharacterNameShapeMap.TiLaMiShu, "提拉米苏" },
     };
 
     private static Dictionary<CharacterNameShapeMap, string> AuthorNameDict = new Dictionary<CharacterNameShapeMap, string>()

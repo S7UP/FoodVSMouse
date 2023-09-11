@@ -109,40 +109,40 @@ public class BossPanel_EncyclopediaPanel : MonoBehaviour
         else
             Tex_Descript.text = BossManager.GetDetailedInfo(type, shape);
         {
-            int countPerRow = Mathf.FloorToInt(RectTrans_Descript.sizeDelta.x / Tex_Descript.fontSize);
+            int countPerRow = Mathf.FloorToInt(RectTrans_Descript.rect.width / Tex_Descript.fontSize);
             int rowCount = Mathf.CeilToInt((float)Tex_Descript.text.Length / countPerRow + 2); // 计算需要多少行
             foreach (var c in Tex_Descript.text.ToCharArray())
             {
                 if (c.Equals('\n'))
                     rowCount++;
             }
-            RectTrans_Descript.sizeDelta = new Vector2(RectTrans_Descript.sizeDelta.x, Tex_Descript.fontSize*rowCount);
-            Scr_Descript.content.sizeDelta = new Vector2(Scr_Descript.content.sizeDelta.x, RectTrans_Descript.sizeDelta.y);
+            // RectTrans_Descript.sizeDelta = new Vector2(RectTrans_Descript.sizeDelta.x, Tex_Descript.fontSize*rowCount);
+            Scr_Descript.content.sizeDelta = new Vector2(Scr_Descript.content.sizeDelta.x, Tex_Descript.fontSize * rowCount);
         }
         Tex_Tip.text = BossManager.GetTips(type, shape);
         {
-            int countPerRow = Mathf.FloorToInt(RectTrans_Tip.sizeDelta.x / Tex_Tip.fontSize);
+            int countPerRow = Mathf.FloorToInt(RectTrans_Tip.rect.width / Tex_Tip.fontSize);
             int rowCount = Mathf.CeilToInt((float)Tex_Tip.text.Length / countPerRow + 1); // 计算需要多少行
             foreach (var c in Tex_Tip.text.ToCharArray())
             {
                 if (c.Equals('\n'))
                     rowCount++;
             }
-            RectTrans_Tip.sizeDelta = new Vector2(RectTrans_Tip.sizeDelta.x, Tex_Tip.fontSize * rowCount);
-            Scr_Tip.content.sizeDelta = new Vector2(Scr_Tip.content.sizeDelta.x, RectTrans_Tip.sizeDelta.y);
+            // RectTrans_Tip.sizeDelta = new Vector2(RectTrans_Tip.sizeDelta.x, Tex_Tip.fontSize * rowCount);
+            Scr_Tip.content.sizeDelta = new Vector2(Scr_Tip.content.sizeDelta.x, Tex_Tip.fontSize * rowCount);
         }
         // 背景故事
         Tex_Background.text = BossManager.GetBackground(type, shape);
         {
-            int countPerRow = Mathf.FloorToInt(RectTrans_Background.sizeDelta.x / Tex_Background.fontSize);
+            int countPerRow = Mathf.FloorToInt(RectTrans_Background.rect.width / Tex_Background.fontSize);
             int rowCount = Mathf.CeilToInt((float)Tex_Background.text.Length / countPerRow + 1); // 计算需要多少行
             foreach (var c in Tex_Background.text.ToCharArray())
             {
                 if (c.Equals('\n'))
                     rowCount++;
             }
-            RectTrans_Background.sizeDelta = new Vector2(RectTrans_Background.sizeDelta.x, Tex_Background.fontSize * rowCount);
-            Scr_Background.content.sizeDelta = new Vector2(Scr_Background.content.sizeDelta.x, RectTrans_Background.sizeDelta.y);
+            // RectTrans_Background.sizeDelta = new Vector2(RectTrans_Background.sizeDelta.x, Tex_Background.fontSize * rowCount);
+            Scr_Background.content.sizeDelta = new Vector2(Scr_Background.content.sizeDelta.x, Tex_Background.fontSize * rowCount);
         }
     }
 }

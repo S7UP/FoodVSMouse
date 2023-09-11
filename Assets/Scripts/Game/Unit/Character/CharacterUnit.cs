@@ -51,6 +51,8 @@ public class CharacterUnit : BaseUnit
         weapons.mType = type;
         weapons.transform.SetParent(transform);
         weapons.master = this;
+        // 角色开始免疫控制
+        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, new S7P.Numeric.BoolModifier(true));
     }
 
     public override void MDestory()

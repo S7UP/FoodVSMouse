@@ -9,15 +9,14 @@ namespace Environment
     public class IceTask : BaseTask
     {
 
-        private const float decValue = -5f / 60; // 正常情况下每帧下降速度
+        private const float decValue = -25f / 60; // 凝结情况下每帧下降速度
         private const string TaskKey = "IceTask";
 
         private BaseUnit master;
         private MultiplyFloatModifierCollector DecRate = new MultiplyFloatModifierCollector();
         private float value; // 当前积累值
         private bool isForzen; // 是否触发凝结
-        private bool isForzenAndStun; // 是否在触发凝结的情况下被晕眩
-        private FloatModifier forzenAndStunDecRateMod = new FloatModifier(5);
+        private FloatModifier decAttackSpeedMod = new FloatModifier(-34f); // 减攻速
 
         private Action<BaseUnit> OnEnterWaterAction;
         private Action<BaseUnit> OnExitWaterAction;
@@ -26,7 +25,6 @@ namespace Environment
         private Action<BaseUnit> OnStayLavaAction;
         private Action<BaseUnit> OnExitLavaAction;
 
-        private bool IsRecycleEffect = false;
         private BaseEffect eff; // 冰雕特效
         private float gobal_alpha; // 全局透明度
 
@@ -36,7 +34,6 @@ namespace Environment
             this.value = value;
             this.master = master;
             isForzen = false;
-            isForzenAndStun = false;
 
             // 与水的交互
             {
@@ -57,27 +54,19 @@ namespace Environment
                 FloatModifier LavaRateMod = new FloatModifier(2);
                 OnEnterLavaAction = (u) =>
                 {
-                    // DecRate.AddModifier(IceDecRateMod);
-                    // 为目标添加岩浆伤害倍率(2倍）
-                    // CollectorComponentManager.GetFloatCollectorComponent(master.mComponentController).AddModifier("LavaRate", LavaRateMod);
                     // 消耗所有冰冻损伤使目标立即受到岩浆伤害
                     new DamageAction(CombatAction.ActionType.BurnDamage, null, master, this.value * 0.004f * master.mMaxHp).ApplyAction();
                     this.value = 0;
                 };
                 OnStayLavaAction = (u) =>
                 {
-                    // DecRate.AddModifier(IceDecRateMod);
-                    // 为目标添加岩浆伤害倍率(2倍）
-                    // CollectorComponentManager.GetFloatCollectorComponent(master.mComponentController).AddModifier("LavaRate", LavaRateMod);
                     // 消耗所有冰冻损伤使目标立即受到岩浆伤害
                     new DamageAction(CombatAction.ActionType.BurnDamage, null, master, this.value * 0.004f * master.mMaxHp).ApplyAction();
                     this.value = 0;
                 };
                 OnExitLavaAction = (u) =>
                 {
-                    // DecRate.RemoveModifier(IceDecRateMod);
-                    // 为目标移除岩浆伤害倍率
-                    // CollectorComponentManager.GetFloatCollectorComponent(master.mComponentController).RemoveModifier("LavaRate", LavaRateMod);
+
                 };
             }
 
@@ -95,6 +84,7 @@ namespace Environment
                 GameController.Instance.AddEffect(eff);
                 master.mEffectController.AddEffectToGroup("Skin", 0, eff);
                 eff.transform.localPosition = Vector2.zero;
+                eff.transform.localScale = Vector2.one;
                 // 记录一个困扰了一周的BUG：2023.6.10
                 // 如果特效在目标被彻底回收之前就被回收了，那么要取消目标回收时再回收特效的监听
                 // 因为如果不取消，会发生特效错误引用的BUG，比如小火贴图飞到敌怪身上，更严重点会引发一系列逻辑错误
@@ -138,36 +128,14 @@ namespace Environment
         {
             if (value >= 100 && !isForzen)
             {
-                TriggerIce(master); // 自我触发凝结
+                TriggerIce(); // 自我触发凝结
             }
 
             if (isForzen)
             {
                 master.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(master, 2, false));
+                value += decValue * DecRate.TotalValue;
             }
-
-            if (!isForzenAndStun)
-            {
-                if (isForzen && !master.NumericBox.GetBoolNumericValue(StringManager.IgnoreStun))
-                {
-                    isForzenAndStun = true;
-                    DecRate.AddModifier(forzenAndStunDecRateMod);
-                }
-                else
-                {
-                    isForzen = false;
-                }
-            }
-            else
-            {
-                if (!isForzen || master.GetNoCountUniqueStatus(StringManager.Stun) == null)
-                {
-                    isForzenAndStun = false;
-                    DecRate.RemoveModifier(forzenAndStunDecRateMod);
-                }
-            }
-
-            value += decValue * DecRate.TotalValue;
 
             // 更新冰雕显示
             {
@@ -175,7 +143,7 @@ namespace Environment
                 eff.spriteRenderer.sortingLayerName = master.GetSpriteRenderer().sortingLayerName;
                 eff.spriteRenderer.sortingOrder = master.GetSpriteRenderer().sortingOrder;
 
-                if (isForzenAndStun)
+                if (isForzen && !master.NumericBox.GetBoolNumericValue(StringManager.IgnoreStun))
                 {
                     eff.spriteRenderer.material.SetFloat("_lineWidth", 3);
                     eff.spriteRenderer.material.SetFloat("_Alpha", gobal_alpha * Mathf.Lerp(0, 1, Mathf.Min(1, value / 100)));
@@ -184,8 +152,7 @@ namespace Environment
                 {
                     eff.spriteRenderer.material.SetFloat("_Alpha", gobal_alpha * Mathf.Lerp(0, 0.5f, Mathf.Min(1, value / 100)));
                     eff.spriteRenderer.material.SetFloat("_lineWidth", 0);
-                }
-                    
+                } 
             }
         }
 
@@ -212,6 +179,11 @@ namespace Environment
             {
                 eff.ExecuteDeath();
             }
+
+            // 减攻速特效移除
+            {
+                master.NumericBox.AttackSpeed.RemoveFinalPctAddModifier(decAttackSpeedMod);
+            }
         }
 
         protected override void O_ShutDown()
@@ -234,6 +206,24 @@ namespace Environment
             return value;
         }
 
+        /// <summary>
+        /// 是否触发凝结
+        /// </summary>
+        /// <returns></returns>
+        public bool IsForzen()
+        {
+            return isForzen;
+        }
+
+        /// <summary>
+        /// 触发凝结
+        /// </summary>
+        public void TriggerIce()
+        {
+            isForzen = true;
+            master.NumericBox.AttackSpeed.AddFinalPctAddModifier(decAttackSpeedMod);
+        }
+
         #region 对外开放的静态方法
         /// <summary>
         /// 凝结效果
@@ -243,7 +233,7 @@ namespace Environment
             if (u.taskController.GetTask(TaskKey) != null)
             {
                 IceTask t = u.taskController.GetTask(TaskKey) as IceTask;
-                t.isForzen = true;
+                t.TriggerIce();
             }
         }
         #endregion

@@ -1,3 +1,5 @@
+using S7P.Numeric;
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -127,8 +129,8 @@ public class BaseRound
         {
             List<BaseEnemyGroup> list = new List<BaseEnemyGroup>();
             // Boss波次的敌人不统计
-            if (isBossRound)
-                return list;
+            //if (isBossRound)
+            //    return list;
             if (baseEnemyGroupList != null)
                 foreach (var item in baseEnemyGroupList)
                 {
@@ -189,7 +191,7 @@ public class BaseRound
         }
 
         // 播放BGM
-        GameManager.Instance.audioSourceManager.PlayBGMusic(mRoundInfo.musicRefenceName);
+        GameManager.Instance.audioSourceController.PlayBGMusic(mRoundInfo.musicRefenceName);
         GameNormalPanel.Instance.ShowBGM(MusicManager.GetMusicInfo(mRoundInfo.musicRefenceName));
 
         // 先执行自己的刷怪组的内容
@@ -267,12 +269,25 @@ public class BaseRound
         for (int i = 0; i < realEnemyList.GetSize(); i++)
         {
             MouseUnit m = GameController.Instance.CreateMouseUnit(realEnemyList.Get(i), realEnemyList.enemyInfo);
-            m.SetMaxHpAndCurrentHp(m.mMaxHp * enemyAttribute.HpRate * NumberManager.GetCurrentEnemyHpRate()); // 对老鼠最大生命值进行修正
+            m.SetMaxHpAndCurrentHp(m.mMaxHp * enemyAttribute.HpRate); // 对老鼠最大生命值进行修正
             m.NumericBox.MoveSpeed.SetBase(m.NumericBox.MoveSpeed.baseValue*enemyAttribute.MoveSpeedRate); // 对老鼠移动速度修正
             m.NumericBox.Attack.SetBase(m.mBaseAttack * enemyAttribute.AttackRate); // 对老鼠攻击力修正
             m.NumericBox.Defense.SetBase(enemyAttribute.Defence); // 对老鼠减伤修正
 
             // TODO：覆盖特殊参数
+            // 叠加的灰烬抗性（与基础属性叠加）
+            if (enemyAttribute.ParamDict.ContainsKey("burn_defence"))
+            {
+                float burn_rate = 1 - enemyAttribute.ParamDict["burn_defence"][0];
+                m.NumericBox.BurnRate.AddModifier(new FloatModifier(burn_rate));
+            }
+            // 重写的灰烬抗性（直接清空之前的灰烬抗性，这里你写多少它就是多少，该参数会使上面的参数设置失效！）
+            if (enemyAttribute.ParamDict.ContainsKey("override_burn_defence"))
+            {
+                float burn_rate = 1 - enemyAttribute.ParamDict["override_burn_defence"][0];
+                m.NumericBox.BurnRate.Clear();
+                m.NumericBox.BurnRate.AddModifier(new FloatModifier(burn_rate));
+            }
         }
     }
 
@@ -285,16 +300,14 @@ public class BaseRound
         for (int i = 0; i < realEnemyList.GetSize(); i++)
         {
             BossUnit b = GameController.Instance.CreateBossUnit(realEnemyList.Get(i), realEnemyList.enemyInfo, hp);
-            b.SetMaxHpAndCurrentHp(b.mMaxHp * enemyAttribute.HpRate * NumberManager.GetCurrentEnemyHpRate()); // 对老鼠最大生命值进行修正
+            b.SetMaxHpAndCurrentHp(b.mMaxHp * enemyAttribute.HpRate); // 对老鼠最大生命值进行修正
             b.NumericBox.MoveSpeed.SetBase(b.NumericBox.MoveSpeed.baseValue * enemyAttribute.MoveSpeedRate); // 对老鼠移动速度修正
             b.NumericBox.Attack.SetBase(b.mBaseAttack * enemyAttribute.AttackRate); // 对老鼠攻击力修正
             b.NumericBox.Defense.SetBase(enemyAttribute.Defence); // 对老鼠减伤修正
 
             // 覆盖特殊参数
             foreach (var keyValuePair in enemyAttribute.ParamDict)
-            {
                 b.AddParamArray(keyValuePair.Key, keyValuePair.Value);
-            }
             // 覆盖完后可以让它再刷新一次状态
             b.OnHertStageChanged();
             // 死亡后计数-1

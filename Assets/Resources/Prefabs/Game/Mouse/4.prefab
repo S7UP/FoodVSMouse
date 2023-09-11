@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6560605702601517123}
   - component: {fileID: 2273559529684654033}
   - component: {fileID: 7593310000869414451}
-  - component: {fileID: -1674629622813794672}
+  - component: {fileID: 6548554682484549591}
   m_Layer: 7
   m_Name: 4
   m_TagString: Mouse
@@ -81,7 +81,7 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 0.2, y: 0.75}
   m_EdgeRadius: 0
---- !u!114 &-1674629622813794672
+--- !u!114 &6548554682484549591
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -90,15 +90,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 6560605702601517120}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 23aaaf265e14d70408c0212e867c79a6, type: 3}
+  m_Script: {fileID: 11500000, guid: 500d84b2fb389124c9697f8556899c37, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   mUnitType: 0
-  mCurrentHp: 0
   mCurrentTotalShieldValue: 0
   mHeight: 0
   moveRotate: {x: 0, y: 0}
   isFrozenState: 0
+  isIgnoreRecordDamage: 0
   mName: 
   mType: 0
   mShape: 0
@@ -115,6 +115,7 @@ MonoBehaviour:
   currentXIndex: 0
   currentYIndex: 0
   isBoss: 0
+  canDrivenAway: 0
   AttackClipName: 
   IdleClipName: 
   MoveClipName: 
@@ -212,7 +213,7 @@ Animator:
   m_GameObject: {fileID: 7911401160402135796}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: df655f428cd4349428ac98e0009627c1, type: 2}
+  m_Controller: {fileID: 0}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0

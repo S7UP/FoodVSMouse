@@ -79,27 +79,27 @@ public class TerrainPanel_EncyclopediaPanel : MonoBehaviour
         else
             Tex_Descript.text = EnvironmentManager.GetDetailedInfo(type);
         {
-            int countPerRow = Mathf.FloorToInt(RectTrans_Descript.sizeDelta.x / Tex_Descript.fontSize);
+            int countPerRow = Mathf.FloorToInt(RectTrans_Descript.rect.width / Tex_Descript.fontSize);
             int rowCount = Mathf.CeilToInt((float)Tex_Descript.text.Length / countPerRow + 2); // 计算需要多少行
             foreach (var c in Tex_Descript.text.ToCharArray())
             {
                 if (c.Equals('\n'))
                     rowCount++;
             }
-            RectTrans_Descript.sizeDelta = new Vector2(RectTrans_Descript.sizeDelta.x, Tex_Descript.fontSize * rowCount);
-            Scr_Descript.content.sizeDelta = new Vector2(Scr_Descript.content.sizeDelta.x, RectTrans_Descript.sizeDelta.y);
+            // RectTrans_Descript.sizeDelta = new Vector2(RectTrans_Descript.sizeDelta.x, Tex_Descript.fontSize * rowCount);
+            Scr_Descript.content.sizeDelta = new Vector2(Scr_Descript.content.sizeDelta.x, Tex_Descript.fontSize * rowCount);
         }
         Tex_Tip.text = EnvironmentManager.GetTips(type);
         {
-            int countPerRow = Mathf.FloorToInt(RectTrans_Tip.sizeDelta.x / Tex_Tip.fontSize);
-            int rowCount = Mathf.CeilToInt((float)Tex_Tip.text.Length / countPerRow + 1); // 计算需要多少行
+            int countPerRow = Mathf.FloorToInt(RectTrans_Tip.rect.width / Tex_Tip.fontSize);
+            int rowCount = Mathf.CeilToInt((float)Tex_Tip.text.Length / countPerRow + 2); // 计算需要多少行
             foreach (var c in Tex_Tip.text.ToCharArray())
             {
                 if (c.Equals('\n'))
                     rowCount++;
             }
-            RectTrans_Tip.sizeDelta = new Vector2(RectTrans_Tip.sizeDelta.x, Tex_Tip.fontSize * rowCount);
-            Scr_Tip.content.sizeDelta = new Vector2(Scr_Tip.content.sizeDelta.x, RectTrans_Tip.sizeDelta.y);
+            // RectTrans_Tip.sizeDelta = new Vector2(RectTrans_Tip.sizeDelta.x, Tex_Tip.fontSize * rowCount);
+            Scr_Tip.content.sizeDelta = new Vector2(Scr_Tip.content.sizeDelta.x, Tex_Tip.fontSize * rowCount);
         }
     }
 }

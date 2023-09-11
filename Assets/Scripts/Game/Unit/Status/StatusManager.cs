@@ -10,7 +10,6 @@ public class StatusManager
     /// </summary>
     public static void AddIgnoreSettleDownBuff(BaseUnit unit, BoolModifier mod)
     {
-        unit.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozen, mod);
         unit.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, mod);
     }
 
@@ -19,7 +18,6 @@ public class StatusManager
     /// </summary>
     public static void RemoveIgnoreSettleDownBuff(BaseUnit unit, BoolModifier mod)
     {
-        unit.NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreFrozen, mod);
         unit.NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreStun, mod);
     }
 
@@ -28,7 +26,6 @@ public class StatusManager
     /// </summary>
     public static void AddIgnoreSlowDownBuff(BaseUnit unit, BoolModifier mod)
     {
-        unit.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozenSlowDown, mod);
         unit.NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreSlowDown, mod);
     }
 
@@ -37,7 +34,6 @@ public class StatusManager
     /// </summary>
     public static void RemoveIgnoreSlowDownBuff(BaseUnit unit, BoolModifier mod)
     {
-        unit.NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreFrozenSlowDown, mod);
         unit.NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreSlowDown, mod);
     }
 
@@ -51,7 +47,6 @@ public class StatusManager
         if (unit.IsAlive())
         {
             unit.statusAbilityManager.EndNoCountUniqueStatusAbility(StringManager.Stun);
-            unit.statusAbilityManager.EndNoCountUniqueStatusAbility(StringManager.Frozen);
         }  
     }
 
@@ -217,9 +212,36 @@ public class StatusManager
             unit.NumericBox.RemoveDecideModifierToBoolDict(StringManager.Invincibility, mod);
             if (!unit.NumericBox.GetBoolNumericValue(StringManager.Invincibility))
             {
-                // unit.RemoveEffect("InvincibilityBuff");
                 unit.mEffectController.RemoveEffectFromDict("InvincibilityBuff");
             }
+        });
+        unit.AddTask(t);
+    }
+
+    /// <summary>
+    /// 添加时效性免控效果
+    /// </summary>
+    public static void AddIgnoreSettleDownBuff(BaseUnit unit, int timeLeft)
+    {
+        BoolModifier mod = new BoolModifier(true);
+        CustomizationTask t = new CustomizationTask();
+        t.AddOnEnterAction(delegate {
+            StatusManager.RemoveAllSettleDownDebuff(unit);
+            AddIgnoreSettleDownBuff(unit, mod);
+        });
+        t.AddTaskFunc(delegate {
+            if (timeLeft > 0)
+            {
+                timeLeft--;
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        });
+        t.AddOnExitAction(delegate {
+            RemoveIgnoreSettleDownBuff(unit, mod);
         });
         unit.AddTask(t);
     }

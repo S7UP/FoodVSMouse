@@ -1,0 +1,149 @@
+ManifestFileVersion: 0
+CRC: 2906512557
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 6aa21c9af997ea09516a76848fda0149
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 7edf4b5022430a1c1805c688292a9a17
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 74
+  Script: {instanceID: 0}
+- Class: 91
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Resources/Pictures/Boss/14/0/187.png
+- Assets/Resources/Pictures/Boss/14/0/27.png
+- Assets/Resources/Pictures/Boss/14/0/Step.anim
+- Assets/Resources/Pictures/Boss/14/0/36.png
+- Assets/Resources/Pictures/Boss/14/0/185.png
+- Assets/Resources/Pictures/Boss/14/0/Cyclone.anim
+- Assets/Resources/Pictures/Boss/14/0/29.png
+- Assets/Resources/Pictures/Boss/14/0/Appear.anim
+- Assets/Resources/Pictures/Boss/14/0/33.png
+- Assets/Resources/Pictures/Boss/14/0/8.png
+- Assets/Resources/Pictures/Boss/14/0/41.png
+- Assets/Resources/Pictures/Boss/14/0/86.png
+- Assets/Resources/Pictures/Boss/14/0/186.png
+- Assets/Resources/Pictures/Boss/14/0/179.png
+- Assets/Resources/Pictures/Boss/14/0/78.png
+- Assets/Resources/Pictures/Boss/14/0/174.png
+- Assets/Resources/Pictures/Boss/14/0/180.png
+- Assets/Resources/Pictures/Boss/14/0/139.png
+- Assets/Resources/Pictures/Boss/14/0/136.png
+- Assets/Resources/Pictures/Boss/14/0/195.png
+- Assets/Resources/Pictures/Boss/14/0/80.png
+- Assets/Resources/Pictures/Boss/14/0/47.png
+- Assets/Resources/Pictures/Boss/14/0/88.png
+- Assets/Resources/Pictures/Boss/14/0/173.png
+- Assets/Resources/Pictures/Boss/14/0/12.png
+- Assets/Resources/Pictures/Boss/14/0/85.png
+- Assets/Resources/Pictures/Boss/14/0/13.png
+- Assets/Resources/Pictures/Boss/14/0/73.png
+- Assets/Resources/Pictures/Boss/14/0/5.png
+- Assets/Resources/Pictures/Boss/14/0/182.png
+- Assets/Resources/Pictures/Boss/14/0/30.png
+- Assets/Resources/Pictures/Boss/14/0/76.png
+- Assets/Resources/Pictures/Boss/14/0/183.png
+- Assets/Resources/Pictures/Boss/14/0/Attack.anim
+- Assets/Resources/Pictures/Boss/14/0/89.png
+- Assets/Resources/Pictures/Boss/14/0/74.png
+- Assets/Resources/Pictures/Boss/14/0/198.png
+- Assets/Resources/Pictures/Boss/14/0/35.png
+- Assets/Resources/Pictures/Boss/14/0/Die.anim
+- Assets/Resources/Pictures/Boss/14/0/97.png
+- Assets/Resources/Pictures/Boss/14/0/48.png
+- Assets/Resources/Pictures/Boss/14/0/Drink.anim
+- Assets/Resources/Pictures/Boss/14/0/169.png
+- Assets/Resources/Pictures/Boss/14/0/144.png
+- Assets/Resources/Pictures/Boss/14/0/15.png
+- Assets/Resources/Pictures/Boss/14/0/142.png
+- Assets/Resources/Pictures/Boss/14/0/99.png
+- Assets/Resources/Pictures/Boss/14/0/137.png
+- Assets/Resources/Pictures/Boss/14/0/191.png
+- Assets/Resources/Pictures/Boss/14/0/129.png
+- Assets/Resources/Pictures/Boss/14/0/75.png
+- Assets/Resources/Pictures/Boss/14/0/34.png
+- Assets/Resources/Pictures/Boss/14/0/39.png
+- Assets/Resources/Pictures/Boss/14/0/143.png
+- Assets/Resources/Pictures/Boss/14/0/128.png
+- Assets/Resources/Pictures/Boss/14/0/178.png
+- Assets/Resources/Pictures/Boss/14/0/16.png
+- Assets/Resources/Pictures/Boss/14/0/Disappear.anim
+- Assets/Resources/Pictures/Boss/14/0/14.png
+- Assets/Resources/Pictures/Boss/14/0/38.png
+- Assets/Resources/Pictures/Boss/14/0/131.png
+- Assets/Resources/Pictures/Boss/14/0/11.png
+- Assets/Resources/Pictures/Boss/14/0/134.png
+- Assets/Resources/Pictures/Boss/14/0/28.png
+- Assets/Resources/Pictures/Boss/14/0/146.png
+- Assets/Resources/Pictures/Boss/14/0/140.png
+- Assets/Resources/Pictures/Boss/14/0/171.png
+- Assets/Resources/Pictures/Boss/14/0/31.png
+- Assets/Resources/Pictures/Boss/14/0/177.png
+- Assets/Resources/Pictures/Boss/14/0/6.png
+- Assets/Resources/Pictures/Boss/14/0/92.png
+- Assets/Resources/Pictures/Boss/14/0/135.png
+- Assets/Resources/Pictures/Boss/14/0/3.png
+- Assets/Resources/Pictures/Boss/14/0/197.png
+- Assets/Resources/Pictures/Boss/14/0/40.png
+- Assets/Resources/Pictures/Boss/14/0/145.png
+- Assets/Resources/Pictures/Boss/14/0/98.png
+- Assets/Resources/Pictures/Boss/14/0/84.png
+- Assets/Resources/Pictures/Boss/14/0/190.png
+- Assets/Resources/Pictures/Boss/14/0/170.png
+- Assets/Resources/Pictures/Boss/14/0/181.png
+- Assets/Resources/Pictures/Boss/14/0/172.png
+- Assets/Resources/Pictures/Boss/14/0/193.png
+- Assets/Resources/Pictures/Boss/14/0/7.png
+- Assets/Resources/Pictures/Boss/14/0/1.png
+- Assets/Resources/Pictures/Boss/14/0/94.png
+- Assets/Resources/Pictures/Boss/14/0/132.png
+- Assets/Resources/Pictures/Boss/14/0/196.png
+- Assets/Resources/Pictures/Boss/14/0/91.png
+- Assets/Resources/Pictures/Boss/14/0/2.png
+- Assets/Resources/Pictures/Boss/14/0/9.png
+- Assets/Resources/Pictures/Boss/14/0/44.png
+- Assets/Resources/Pictures/Boss/14/0/138.png
+- Assets/Resources/Pictures/Boss/14/0/72.png
+- Assets/Resources/Pictures/Boss/14/0/42.png
+- Assets/Resources/Pictures/Boss/14/0/10.png
+- Assets/Resources/Pictures/Boss/14/0/4.png
+- Assets/Resources/Pictures/Boss/14/0/184.png
+- Assets/Resources/Pictures/Boss/14/0/141.png
+- Assets/Resources/Pictures/Boss/14/0/147.png
+- Assets/Resources/Pictures/Boss/14/0/77.png
+- Assets/Resources/Pictures/Boss/14/0/32.png
+- Assets/Resources/Pictures/Boss/14/0/90.png
+- Assets/Resources/Pictures/Boss/14/0/Idle.anim
+- Assets/Resources/Pictures/Boss/14/0/87.png
+- Assets/Resources/Pictures/Boss/14/0/93.png
+- Assets/Resources/Pictures/Boss/14/0/0.controller
+- Assets/Resources/Pictures/Boss/14/0/188.png
+- Assets/Resources/Pictures/Boss/14/0/46.png
+- Assets/Resources/Pictures/Boss/14/0/175.png
+- Assets/Resources/Pictures/Boss/14/0/96.png
+- Assets/Resources/Pictures/Boss/14/0/192.png
+- Assets/Resources/Pictures/Boss/14/0/130.png
+- Assets/Resources/Pictures/Boss/14/0/83.png
+- Assets/Resources/Pictures/Boss/14/0/45.png
+- Assets/Resources/Pictures/Boss/14/0/43.png
+- Assets/Resources/Pictures/Boss/14/0/189.png
+- Assets/Resources/Pictures/Boss/14/0/133.png
+- Assets/Resources/Pictures/Boss/14/0/95.png
+- Assets/Resources/Pictures/Boss/14/0/127.png
+- Assets/Resources/Pictures/Boss/14/0/194.png
+- Assets/Resources/Pictures/Boss/14/0/79.png
+- Assets/Resources/Pictures/Boss/14/0/82.png
+- Assets/Resources/Pictures/Boss/14/0/176.png
+- Assets/Resources/Pictures/Boss/14/0/26.png
+- Assets/Resources/Pictures/Boss/14/0/37.png
+- Assets/Resources/Pictures/Boss/14/0/81.png
+Dependencies: []

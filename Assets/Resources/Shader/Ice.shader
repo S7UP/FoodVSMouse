@@ -2,17 +2,18 @@ Shader "Unlit/Ice"
 {
     Properties
     {
-        [MainTexture]_MainTex ("Texture", 2D) = "white" {}
+        _MainTex ("Texture", 2D) = "white" {}
         _IceTex ("IceTex", 2D) = "white" {}
         _Alpha("alpha", Range(0, 1)) = 1
         _lineWidth("lineWidth", float) = 0
     }
     SubShader
     {
-        Tags { "RenderType"="Opaque" "QUEUE" = "Transparent" }
+        Tags { "QUEUE" = "Transparent" "IGNOREPROJECTOR" = "true" "RenderType" = "Transparent"}
         Blend SrcAlpha OneMinusSrcAlpha // 传统透明度
         ZWrite Off
         LOD 100
+                Cull Off
 
         Pass
         {
@@ -21,21 +22,18 @@ Shader "Unlit/Ice"
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            // make fog work
-            #pragma multi_compile_fog
 
             #include "UnityCG.cginc"
 
             struct appdata
             {
-                float4 vertex : POSITION;
+                half4 vertex:POSITION;
                 float2 uv : TEXCOORD0;
             };
 
             struct v2f
             {
                 float2 uv : TEXCOORD0;
-                //UNITY_FOG_COORDS(1)
                 float4 vertex : SV_POSITION;
 				float2 uv_Ice : TEXCOORD1;
             };
@@ -56,7 +54,7 @@ Shader "Unlit/Ice"
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 o.uv_Ice = TRANSFORM_TEX(v.uv, _IceTex);
-                UNITY_TRANSFER_FOG(o,o.vertex);
+                // UNITY_TRANSFER_FOG(o,o.vertex);
                 return o;
             }
 
@@ -87,4 +85,5 @@ Shader "Unlit/Ice"
             ENDCG
         }
     }
+
 }

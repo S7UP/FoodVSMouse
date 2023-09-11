@@ -48,11 +48,10 @@ public class MouseCatcher : FoodUnit
         r.SetAffectHeight(0);
         Action<MouseUnit> action = (u) =>
         {
-            //if (r.isAlive && UnitManager.CanBeSelectedAsTarget(this, u))
-            if (r.isAlive)
+            if (r.isAlive && !(u.NumericBox.IntDict.ContainsKey(StringManager.Flying) && u.NumericBox.IntDict[StringManager.Flying].Value > 0))
             {
                 isTriggerBoom = true;
-                GameManager.Instance.audioSourceManager.PlayEffectMusic("CatcherTrigger");
+                GameManager.Instance.audioSourceController.PlayEffectMusic("CatcherTrigger");
                 ExecuteDeath();
                 r.MDestory();
             }
@@ -100,7 +99,7 @@ public class MouseCatcher : FoodUnit
         // 在准备动画几帧内，进入无敌、免疫灰烬秒杀、免疫冻结效果
         NumericBox.AddDecideModifierToBoolDict(StringManager.Invincibility, boolModifier);
         NumericBox.BurnRate.AddModifier(burnMod);
-        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozen, boolModifier);
+        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, boolModifier);
     }
 
     public override void OnTransitionState()
@@ -114,7 +113,7 @@ public class MouseCatcher : FoodUnit
         // 移除这些效果
         NumericBox.RemoveDecideModifierToBoolDict(StringManager.Invincibility, boolModifier);
         NumericBox.BurnRate.RemoveModifier(burnMod);
-        NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreFrozen, boolModifier);
+        NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreStun, boolModifier);
         // 添加检测效果
         CreateCheckArea();
     }

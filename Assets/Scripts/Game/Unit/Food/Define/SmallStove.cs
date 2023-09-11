@@ -87,10 +87,12 @@ public class SmallStove : FoodUnit
         e.transform.SetParent(GameManager.Instance.GetUICanvas().transform);
         e.transform.localScale = Vector3.one;
         e.transform.position = position;
-        e.transform.Find("Img_AddFireEffect").Find("Text").GetComponent<Text>().text = "+" + (int)replyCount;
+        Text text = e.transform.Find("Text").GetComponent<Text>();
+        text.text = "+" + (int)replyCount;
+        text.color = new Color(1, 0.4627f, 0);
         // Êµ¼Ê»Ø¸´
         GameController.Instance.AddFireResource(replyCount);
-        GameManager.Instance.audioSourceManager.PlayEffectMusic("Points");
+        GameManager.Instance.audioSourceController.PlayEffectMusic("Points");
     }
 
     /// <summary>

@@ -179,7 +179,7 @@ public class GrumpyJack : BossUnit
     
     private void AddFireBulletMoveTask(BaseBullet b, Vector2 firstPosition, Vector2 targetPosition)
     {
-        TaskManager.AddParabolaTask(b, (targetPosition-firstPosition).magnitude/60, MapManager.gridHeight, firstPosition, targetPosition, true);
+        b.taskController.AddTask(TaskManager.GetParabolaTask(b, (targetPosition - firstPosition).magnitude / 60, MapManager.gridHeight, firstPosition, targetPosition, true));
     }
 
     /// <summary>
@@ -493,17 +493,21 @@ public class GrumpyJack : BossUnit
     
     private void CreateS0DamageArea()
     {
-        float dmg = GetParamValue("dmg0");
         RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 2.5f, 0.5f, "EnemyAllyGrid");
         r.SetInstantaneous();
         r.isAffectMouse = true;
-        r.isAffectGrid = true;
-        r.AddExcludeMouseUnit(this);
-        r.SetOnEnemyEnterAction((m)=>{
-            new DamageAction(CombatAction.ActionType.CauseDamage, this, m, dmg).ApplyAction();
+        r.SetOnEnemyEnterAction((u) => {
+            if (u.IsBoss())
+                return;
+            UnitManager.Execute(this, u);
         });
+
+        r.isAffectGrid = true;
         r.SetOnGridEnterAction((g) => {
-            g.TakeDamage(this, dmg, false);
+            g.TakeAction(this, (u) => {
+                DamageAction action = UnitManager.Execute(this, u);
+                new DamageAction(CombatAction.ActionType.CauseDamage, this, this, action.RealCauseValue * GetParamValue("dmg_trans0") / 100).ApplyAction();
+            }, false);
         });
         GameController.Instance.AddAreaEffectExecution(r);
     }
@@ -648,12 +652,31 @@ public class GrumpyJack : BossUnit
             u.mStateController.ChangeState("PostDrop");
             // 创建十字炎弹与落地伤害
             CreateFourFireBullet(u.transform.position, 1);
-            DamageAreaEffectExecution d = DamageAreaEffectExecution.GetInstance(u, u.transform.position, 0.75f, 0.5f, CombatAction.ActionType.CauseDamage, GetParamValue("dmg1"));
-            d.isAffectFood = true;
-            d.isAffectMouse = true;
-            d.isAffectCharacter = false;
-            d.AddExcludeMouseUnit((MouseUnit)u);
-            GameController.Instance.AddAreaEffectExecution(d);
+            {
+                RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(u.transform.position, 0.5f, 0.5f, "EnemyAllyGrid");
+                r.SetInstantaneous();
+                r.isAffectMouse = true;
+                r.SetOnEnemyEnterAction((u) => {
+                    if (u.IsBoss())
+                        return;
+                    UnitManager.Execute(this, u);
+                });
+
+                r.isAffectGrid = true;
+                r.SetOnGridEnterAction((g) => {
+                    g.TakeAction(this, (u) => {
+                        DamageAction action = UnitManager.Execute(this, u);
+                        new DamageAction(CombatAction.ActionType.CauseDamage, this, this, action.RealCauseValue * GetParamValue("dmg_trans1") / 100).ApplyAction();
+                    }, false);
+                });
+                GameController.Instance.AddAreaEffectExecution(r);
+            }
+            //DamageAreaEffectExecution d = DamageAreaEffectExecution.GetInstance(u, u.transform.position, 0.75f, 0.5f, CombatAction.ActionType.CauseDamage, GetParamValue("dmg1"));
+            //d.isAffectFood = true;
+            //d.isAffectMouse = true;
+            //d.isAffectCharacter = false;
+            //d.AddExcludeMouseUnit((MouseUnit)u);
+            //GameController.Instance.AddAreaEffectExecution(d);
         });
         task.AddTaskFunc(delegate {
             if (u.animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
@@ -833,12 +856,31 @@ public class GrumpyJack : BossUnit
                 CreateFourFireBullet(u.transform.position, 1);
                 CreateFourFireBullet(u.transform.position, 2);
             }
-            DamageAreaEffectExecution d = DamageAreaEffectExecution.GetInstance(u, u.transform.position, 0.75f, 0.5f, CombatAction.ActionType.CauseDamage, GetParamValue("dmg1"));
-            d.isAffectFood = true;
-            d.isAffectMouse = true;
-            d.isAffectCharacter = false;
-            d.AddExcludeMouseUnit((MouseUnit)u);
-            GameController.Instance.AddAreaEffectExecution(d);
+            {
+                RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(u.transform.position, 0.5f, 0.5f, "EnemyAllyGrid");
+                r.SetInstantaneous();
+                r.isAffectMouse = true;
+                r.SetOnEnemyEnterAction((u) => {
+                    if (u.IsBoss())
+                        return;
+                    UnitManager.Execute(this, u);
+                });
+
+                r.isAffectGrid = true;
+                r.SetOnGridEnterAction((g) => {
+                    g.TakeAction(this, (u) => {
+                        DamageAction action = UnitManager.Execute(this, u);
+                        new DamageAction(CombatAction.ActionType.CauseDamage, this, this, action.RealCauseValue * GetParamValue("dmg_trans2") / 100).ApplyAction();
+                    }, false);
+                });
+                GameController.Instance.AddAreaEffectExecution(r);
+            }
+            //DamageAreaEffectExecution d = DamageAreaEffectExecution.GetInstance(u, u.transform.position, 0.75f, 0.5f, CombatAction.ActionType.CauseDamage, GetParamValue("dmg1"));
+            //d.isAffectFood = true;
+            //d.isAffectMouse = true;
+            //d.isAffectCharacter = false;
+            //d.AddExcludeMouseUnit((MouseUnit)u);
+            //GameController.Instance.AddAreaEffectExecution(d);
         });
         task.AddTaskFunc(delegate {
             if (u.animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())

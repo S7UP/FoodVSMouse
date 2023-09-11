@@ -50,7 +50,7 @@ public class SnailMouse : MouseUnit
 
     public override void OnDieStateEnter()
     {
-        GameManager.Instance.audioSourceManager.PlayEffectMusic("Explosion");
+        GameManager.Instance.audioSourceController.PlayEffectMusic("Explosion");
         base.OnDieStateEnter();
     }
 }

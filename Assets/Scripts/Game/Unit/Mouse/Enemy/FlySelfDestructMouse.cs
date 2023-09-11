@@ -1,14 +1,22 @@
 using UnityEngine;
 using S7P.Numeric;
+using System;
+
 public class FlySelfDestructMouse : MouseUnit, IFlyUnit
 {
+    private static RuntimeAnimatorController BoomEffect;
+
     private bool isDrop; // 是否被击落
     private int dropColumn; // 降落列
     private FloatModifier burnRateMod = new FloatModifier(0.01f); // 免疫炸弹秒杀效果
     private BoolModifier IgnoreFrozen = new BoolModifier(true); // 免疫冻结
-    private Vector2 start_position; // 起始坠机点
-    private Vector2 target_position; // 目标落点
-    private Vector3 last_pos;
+
+    public override void Awake()
+    {
+        if (BoomEffect == null)
+            BoomEffect = GameManager.Instance.GetRuntimeAnimatorController("Mouse/8/BoomEffect");
+        base.Awake();
+    }
 
     public override void MInit()
     {
@@ -26,9 +34,7 @@ public class FlySelfDestructMouse : MouseUnit, IFlyUnit
     {
         base.MUpdate();
         if (IsMeetDropCondition())
-        {
             ExecuteDestruct();
-        }
     }
 
     /// <summary>
@@ -46,11 +52,11 @@ public class FlySelfDestructMouse : MouseUnit, IFlyUnit
     {
         if (!isDrop)
         {
+            // 标记已坠机，此后该实例一些行为会发生变化
+            isDrop = true;
             // 设置为不可选取，以及不可击中
             AddCanBeSelectedAsTargetFunc(delegate { return false; });
             AddCanHitFunc(delegate { return false; });
-            // 标记已坠机，此后该实例一些行为会发生变化
-            isDrop = true;
             // 移除免疫炸弹秒杀效果
             NumericBox.BurnRate.RemoveModifier(burnRateMod);
             // 添加冻结免疫效果
@@ -58,92 +64,111 @@ public class FlySelfDestructMouse : MouseUnit, IFlyUnit
             NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, IgnoreFrozen);
             // 同时移除身上所有定身类控制效果
             StatusManager.RemoveAllSettleDownDebuff(this);
-            // 确定起始点和最终点，其中最终点为起始点+1.5格*当前标准移动速度值，但最小不能为左一列
-            start_position = transform.position;
-            target_position = transform.position + (Vector3)moveRotate * 1.5f * MapManager.gridWidth * TransManager.TranToStandardVelocity(NumericBox.MoveSpeed.Value);
-            if(target_position.x < MapManager.GetColumnX(0))
-            {
-                target_position = new Vector2(MapManager.GetColumnX(0), target_position.y);
-            }
-            last_pos = start_position;
+            // 修改基础移速为在200帧内移动3格
+            NumericBox.MoveSpeed.SetBase(3 * MapManager.gridWidth / 200);
             // 设为转场状态
             SetActionState(new MoveState(this));
+
+            int timeLeft = 200;
+            CustomizationTask task = new CustomizationTask();
+            task.AddTaskFunc(delegate {
+                timeLeft--;
+                if(timeLeft <= 0)
+                {
+                    return true;
+                }
+                return false;
+            });
+            task.AddOnExitAction(delegate {
+                CreateCheckArea();
+                ExecuteDeath();
+            });
+            taskController.AddTask(task);
+        }
+    }
+
+    private void CreateCheckArea()
+    {
+        float bomb_dmg_rate = 1.0f;
+
+        // 如果身上有冰冻损伤debuff
+        if(Environment.EnvironmentFacade.GetIceDebuff(this)!=null)
+        {
+            bomb_dmg_rate = 0.5f;
+            Action<BaseUnit> action = (u) => 
+            {
+                Environment.EnvironmentFacade.AddIceDebuff(u, 100);
+            };
+            // 对3*3所有单位施加100冰冻损伤
+            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, new Vector2(2.75f*MapManager.gridWidth, 2.75f * MapManager.gridHeight), "BothCollide");
+            r.SetAffectHeight(0);
+            r.isAffectFood = true;
+            r.isAffectMouse = true;
+            r.SetInstantaneous();
+            r.SetOnFoodEnterAction(action);
+            r.SetOnEnemyEnterAction(action);
+            r.AddExcludeMouseUnit(this);
+            GameController.Instance.AddAreaEffectExecution(r);
+        }
+
+        // 落地爆炸判定
+        {
+            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, new Vector2(0.5f*MapManager.gridWidth, 0.5f * MapManager.gridHeight), "BothCollide");
+            r.SetAffectHeight(0);
+            r.isAffectFood = true;
+            r.isAffectMouse = true;
+            r.SetTotoalTimeAndTimeLeft(2);
+            r.AddExcludeMouseUnit(this);
+            r.AddBeforeDestoryAction(delegate
+            {
+                // 所有美食单位分摊伤害
+                int count = r.foodUnitList.Count;
+                foreach (var u in r.foodUnitList.ToArray())
+                    new DamageAction(CombatAction.ActionType.BurnDamage, this, u, Mathf.Max(50, u.mMaxHp / 2) / count * bomb_dmg_rate).ApplyAction();
+                // 所有老鼠单位受到一次灰烬效果
+                foreach (var u in r.mouseUnitList.ToArray())
+                    BurnManager.BurnDamage(this, u, bomb_dmg_rate);
+            });
+            GameController.Instance.AddAreaEffectExecution(r);
+        }
+
+        // 爆炸特效
+        {
+            BaseEffect e = BaseEffect.CreateInstance(BoomEffect, null, "Disappear", null, false);
+            e.SetSpriteRendererSorting(GetSpriteRenderer().sortingLayerName, GetSpriteRenderer().sortingOrder + 1);
+            e.transform.position = transform.position;
+            GameController.Instance.AddEffect(e);
         }
     }
 
     public override void OnMoveStateEnter()
     {
         if (isDrop)
-        {
             animatorController.Play("Move1");
-        }
         else
-        {
             animatorController.Play("Move0", true);
-        }
     }
 
-    public override void OnMoveState()
+    public override bool CanTriggerCat()
     {
-        if (isDrop && !isDeathState)
-        {
-            float t = animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime();
-            Vector3 pos = Vector3.Lerp(start_position, target_position, t);
-            SetPosition(GetPosition()+(pos - last_pos));
-            last_pos = pos;
-            // 这种情况下表明已坠落，执行死亡
-            if (t >= 1)
-            {
-                ExecuteDeath();
-            }
-        }
-        else
-        {
-            base.OnMoveState();
-        }
+        return false;
+    }
+
+    public override bool CanTriggerLoseWhenEnterLoseLine()
+    {
+        return false;
     }
 
     /// <summary>
-    /// 正常死亡时带走一个卡片
+    /// 没有死亡动画
     /// </summary>
-    public override void BeforeDeath()
+    public override void OnDieStateEnter()
     {
-        base.BeforeDeath();
-        BaseGrid grid = GameController.Instance.mMapController.GetGrid(GetColumnIndex(), GetRowIndex());
-        if (grid != null)
-        {
-            BaseUnit unit = grid.GetHighestAttackPriorityUnit(this);
-            if (unit != null && unit.tag!="Character")
-            {
-                BurnManager.BurnDamage(this, unit);
-            }
-        }
+        DeathEvent();
     }
 
-    /// <summary>
-    /// 是否能被作为目标选中
-    /// </summary>
-    /// <returns></returns>
-    public override bool CanBeSelectedAsTarget(BaseUnit otherUnit)
+    public override void DuringDeath()
     {
-        // 如果在坠机状态则不可被选为目标
-        if (isDrop)
-            return false;
-        else
-            return base.CanBeSelectedAsTarget(otherUnit);
-    }
-
-    /// <summary>
-    /// 是否能被子弹击中
-    /// </summary>
-    /// <param name="bullet"></param>
-    /// <returns></returns>
-    public override bool CanHit(BaseBullet bullet)
-    {
-        // 如果在坠机状态下则不可被子弹击中
-        if (isDrop)
-            return false;
-        else
-            return base.CanHit(bullet);
+        
     }
 }

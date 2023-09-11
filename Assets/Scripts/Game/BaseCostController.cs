@@ -70,7 +70,11 @@ public class BaseCostController : MonoBehaviour, IBaseCostController, IGameContr
         }
         else
         {
-            mAddFireText.text = "+" + (mAddCostDict["Fire"].Value * 60).ToString("F2") + "/s";
+            // mAddFireText.text = "+" + (mAddCostDict["Fire"].Value * 60).ToString("F2") + "/s";
+            if(mAddCostDict["Fire"].Value>0)
+                mAddFireText.text = "+" + (mAddCostDict["Fire"].Value * 60).ToString("F2");
+            else
+                mAddFireText.text = (mAddCostDict["Fire"].Value * 60).ToString("F2");
         }
         
     }

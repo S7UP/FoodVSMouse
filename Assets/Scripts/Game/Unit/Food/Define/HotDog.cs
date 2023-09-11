@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 
+using Environment;
+
 using S7P.Numeric;
 
 using UnityEngine;
@@ -202,7 +204,7 @@ public class HotDog : FoodUnit
     /// </summary>
     public override void ExecuteDamage()
     {
-        GameManager.Instance.audioSourceManager.PlayEffectMusic("Throw" + GameManager.Instance.rand.Next(0, 2));
+        GameManager.Instance.audioSourceController.PlayEffectMusic("Throw" + GameManager.Instance.rand.Next(0, 2));
         // 立即进行一次索敌更新
         FindTarget();
         int c = attackCount - attackLeft; // 计算当前是第几次攻击(0,1)
@@ -241,12 +243,9 @@ public class HotDog : FoodUnit
             {
                 if (u != null)
                 {
-                    int timeLeft = (isAirTarget ? airSlowTime : groundSlowTime);
-                    // 为目标施加减速
-                    u.AddStatusAbility(new SlowStatusAbility(-50, u, timeLeft));
-                    // 若目标为空中敌人，则产生对空AOE
-                    if(isAirTarget)
-                        CreateDamageArea(u.transform.position, ori_dmg);
+                    float ice_val = (isAirTarget ? 60 : 30);
+                    // 为目标施加冰冻损伤
+                    EnvironmentFacade.AddIceDebuff(u, ice_val);
                 }
             };
         }
@@ -262,23 +261,5 @@ public class HotDog : FoodUnit
 
         GameController.Instance.AddBullet(b);
         return b;
-    }
-
-
-    /// <summary>
-    /// 对空AOE伤害
-    /// </summary>
-    private void CreateDamageArea(Vector2 pos, float ori_dmg)
-    {
-        RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(pos, 3, 3, "ItemCollideEnemy");
-        r.isAffectMouse = true;
-        r.SetAffectHeight(1);
-        r.SetInstantaneous();
-        r.SetOnEnemyEnterAction((u) => {
-            DamageAction d = new DamageAction(CombatAction.ActionType.CauseDamage, this, u, Mathf.Min(airAoeDamageRate * ori_dmg, u.mMaxHp * 0.1f));
-            d.AddDamageType(DamageAction.DamageType.AOE);
-            d.ApplyAction();
-        });
-        GameController.Instance.AddAreaEffectExecution(r);
     }
 }

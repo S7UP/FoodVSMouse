@@ -299,7 +299,7 @@ public class MouseUnit : BaseUnit
     {
         if (IsHasTarget())
             TakeDamage(GetCurrentTarget());
-        GameManager.Instance.audioSourceManager.PlayEffectMusic("Chomp" + GameManager.Instance.rand.Next(0, 3));
+        GameManager.Instance.audioSourceController.PlayEffectMusic("Chomp" + GameManager.Instance.rand.Next(0, 3));
     }
 
 
@@ -856,7 +856,7 @@ public class MouseUnit : BaseUnit
         attackPercent = attr.attackPercent; // 攻击动画播放进度到attackPercent以上时允许出真正的攻击
 
         if (attr.burnDefence != 0)
-            NumericBox.BurnRate.AddModifier(new FloatModifier(1-attr.burnDefence));
+            NumericBox.BurnRate.AddModifier(new FloatModifier(1 - attr.burnDefence));
         if(attr.aoeDefence != 0)
             NumericBox.AoeRate.AddModifier(new FloatModifier(1 - attr.aoeDefence));
         mHertRateList.Clear();

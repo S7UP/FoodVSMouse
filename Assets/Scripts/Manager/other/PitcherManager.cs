@@ -35,7 +35,7 @@ public class PitcherManager
         float h = Mathf.Max(0.5f, g * t * t / 2); // 高度最小不超过0.5个unity单位
 
         // 确定好参数后添加抛物线运动
-        TaskManager.AddParabolaTask(b, v, h, startPosition, target, isNavi, notEndWithTakeDamage);
+        b.taskController.AddTask(TaskManager.GetParabolaTask(b, v, h, startPosition, target, isNavi, notEndWithTakeDamage));
     }
 
     /// <summary>
@@ -57,7 +57,7 @@ public class PitcherManager
         float h = Mathf.Max(0.5f, g * t * t / 2); // 高度最小不超过0.5个unity单位
 
         // 确定好参数后添加抛物线运动
-        TaskManager.AddParabolaTask(b, v, h, startPosition, targetPosition, isNavi, notEndWithTakeDamage);
+        b.taskController.AddTask(TaskManager.GetParabolaTask(b, v, h, startPosition, targetPosition, isNavi, notEndWithTakeDamage));
     }
 
 
@@ -67,35 +67,6 @@ public class PitcherManager
     /// <returns></returns>
     public static BaseUnit FindTargetByPitcher(BaseUnit unit, float minX, int rowIndex)
     {
-        //BaseUnit target = null;
-        //// 单行索敌
-        //List<BaseUnit> list = new List<BaseUnit>();
-        //// 筛选出高度为0且大于指定坐标的可选取单位
-        //foreach (var item in GameController.Instance.GetSpecificRowEnemyList(rowIndex))
-        //{
-        //    if (item.GetHeight() == 0 && UnitManager.CanBeSelectedAsTarget(unit, item) && item.transform.position.x >= minX)
-        //        list.Add(item);
-        //}
-        //// 去找坐标最小的单位
-        //if (list.Count > 0)
-        //{
-        //    foreach (var item in list)
-        //    {
-        //        if (target == null || item.transform.position.x < target.transform.position.x)
-        //        {
-        //            target = item;
-        //        }
-        //    }
-        //}
-        //// 寻找本行的友方布丁单位，如果比上述目标敌人更靠左则可以以它为目标
-        //foreach (var u in GameController.Instance.GetSpecificRowAllyList(rowIndex))
-        //{
-        //    if (u.mType == (int)FoodNameTypeMap.CherryPudding && (u.transform.position.x > minX && (target == null || u.transform.position.x < target.transform.position.x)))
-        //    {
-        //        target = u;
-        //    }
-        //}
-        //return target;
         List<BaseUnit> unitList = new List<BaseUnit>();
         foreach (var u in GameController.Instance.GetSpecificRowEnemyList(rowIndex))
         {
@@ -122,10 +93,18 @@ public class PitcherManager
         BaseUnit target = null;
         // 单行索敌
         List<BaseUnit> list = new List<BaseUnit>();
-        // 筛选出高度为0且大于指定坐标的可选取单位
+        // 筛选出高度为0且大于指定坐标的可选取单位，或者是布丁单位
         foreach (var item in EnemyList)
         {
-            if (item.GetHeight() == 0 && UnitManager.CanBeSelectedAsTarget(unit, item) && item.transform.position.x >= minX && (otherConditionFunc==null|| otherConditionFunc(unit, item)))
+            bool canSelect = UnitManager.CanBeSelectedAsTarget(unit, item);
+            // 对于布丁来说，不需要它能否被选为攻击目标的条件，但不能被控制
+            if(item is CherryPuddingFoodUnit)
+            {
+                CherryPuddingFoodUnit pud = item as CherryPuddingFoodUnit;
+                canSelect = !pud.isFrozenState;
+            }
+
+            if (item.GetHeight() == 0 && canSelect && item.transform.position.x >= minX && (otherConditionFunc==null|| otherConditionFunc(unit, item)))
                 list.Add(item);
         }
         // 去找坐标最小的单位

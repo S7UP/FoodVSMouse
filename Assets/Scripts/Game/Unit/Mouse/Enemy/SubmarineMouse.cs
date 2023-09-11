@@ -12,7 +12,7 @@ public class SubmarineMouse : MouseUnit, IInWater
     {
         isEnterWater = false;
         base.MInit();
-        // 免疫灰烬秒杀效果、水蚀效果
+        // 免疫水蚀效果
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreWaterGridState, new BoolModifier(true));
     }
 
@@ -91,13 +91,13 @@ public class SubmarineMouse : MouseUnit, IInWater
     /// <returns></returns>
     public override bool CanBlock(BaseUnit unit)
     {
-        return WaterGridType.IsInWater(this) && base.CanBlock(unit);
+        return WaterGridType.IsInWater(this) && !Environment.WaterManager.IsBearing(this) && base.CanBlock(unit);
     }
 
     public override void OnDieStateEnter()
     {
         // 如果自己在水域中且没有被承载就播放特有的淹死动画
-        if (WaterGridType.IsInWater(this) && !WoodenDisk.IsBearing(this))
+        if (WaterGridType.IsInWater(this) && !Environment.WaterManager.IsBearing(this))
             animatorController.Play("Die1");
         else
             animatorController.Play("Die0");
@@ -108,12 +108,18 @@ public class SubmarineMouse : MouseUnit, IInWater
     /// </summary>
     public override void OnAllyCollision(BaseUnit unit)
     {
+        if (unit == null)
+            return;
         // 检测本格美食最高受击优先级单位（包括水中载具）
-        BaseUnit target = unit.GetGrid().GetHighestAttackPriorityUnitIncludeWaterVehicle(this);
-        if (!isBlock && UnitManager.CanBlock(this, target)) // 检测双方能否互相阻挡
+        BaseGrid g = unit.GetGrid();
+        if(g != null)
         {
-            isBlock = true;
-            mBlockUnit = target;
+            BaseUnit target = unit.GetGrid().GetHighestAttackPriorityUnitIncludeWaterVehicle(this);
+            if (!isBlock && UnitManager.CanBlock(this, target)) // 检测双方能否互相阻挡
+            {
+                isBlock = true;
+                mBlockUnit = target;
+            }
         }
     }
 
@@ -134,33 +140,6 @@ public class SubmarineMouse : MouseUnit, IInWater
             return true;
         }
         return false;
-    }
-
-    /// <summary>
-    /// 拳皇拳击鼠攻击附带单格AOE伤害效果
-    /// </summary>
-    public override void ExecuteDamage()
-    {
-        if(mShape==2 || mShape == 5)
-        {
-            if (IsHasTarget())
-            {
-                BaseGrid g = GetCurrentTarget().GetGrid();
-                if (g != null)
-                {
-                    foreach (var item in g.GetAttackableFoodUnitListIncludeWaterVehicle())
-                    {
-                        TakeDamage(item);
-                    }
-                }
-                else
-                    base.ExecuteDamage();
-            } 
-        }
-        else
-        {
-            base.ExecuteDamage();
-        }
     }
 
     /// <summary>

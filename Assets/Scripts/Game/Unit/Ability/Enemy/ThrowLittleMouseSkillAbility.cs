@@ -71,7 +71,7 @@ public class ThrowLittleMouseSkillAbility : SkillAbility
             canThrowEntity = false;
             // 
             PandaRetinueMouse m = GameController.Instance.CreateMouseUnit(master.GetRowIndex(), new BaseEnemyGroup.EnemyInfo() { type = 24, shape = master.mShape }).GetComponent<PandaRetinueMouse>();
-            m.SetMaxHpAndCurrentHp(m.mMaxHp * NumberManager.GetCurrentEnemyHpRate());
+            m.SetMaxHpAndCurrentHp(m.mMaxHp);
             m.transform.position = new Vector3(master.transform.position.x, targetPosition.y, master.transform.position.z);
             m.SetActionState(new TransitionState(m));
             float dist = Mathf.Abs(targetPosition.x - master.transform.position.x);

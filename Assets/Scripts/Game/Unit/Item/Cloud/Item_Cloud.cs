@@ -31,7 +31,7 @@ public class Item_Cloud : BaseItem
         recoverTimeLeft = 0;
         base.MInit();
         // 设置判定大小
-        SetBoxCollider2DParam(Vector2.zero, new Vector2(0.5f*MapManager.gridWidth, 0.5f*MapManager.gridHeight));
+        SetBoxCollider2DParam(Vector2.zero, new Vector2(0.75f*MapManager.gridWidth, 0.5f*MapManager.gridHeight));
         spriteRenderer.enabled = false;
     }
 
@@ -115,7 +115,7 @@ public class Item_Cloud : BaseItem
 
     private bool CanEnter(BaseUnit unit)
     {
-        return !unitList.Contains(unit) && unit.GetHeight() == 0 && !unit.NumericBox.GetBoolNumericValue(SkyGridType.NoAffect) && unit.IsAlive();
+        return !unitList.Contains(unit) && unit.GetHeight() == 0 && unit.IsAlive();
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -247,6 +247,7 @@ public class Item_Cloud : BaseItem
     public static Item_Cloud GetInstance(int type, bool isShadow)
     {
         Item_Cloud c = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Item/5/0").GetComponent<Item_Cloud>();
+        c.name = "Item_Cloud";
         c.MInit();
         c.spriteRenderer.sprite = GameManager.Instance.GetSprite("Item/5/"+type+"/"+(isShadow?0:1));
         return c;
@@ -287,8 +288,8 @@ public class Item_Cloud : BaseItem
 
             // 云朵依次出现
             int timeLeft = 120/count * i;
-            CustomizationTask tsk = new CustomizationTask();
-            tsk.AddTaskFunc(delegate {
+            CustomizationTask task = new CustomizationTask();
+            task.AddTaskFunc(delegate {
                 timeLeft--;
                 if (timeLeft <= 0)
                 {
@@ -298,7 +299,7 @@ public class Item_Cloud : BaseItem
                 else
                     return false;
             });
-            c.AddTask(tsk);
+            c.AddTask(task);
         }
 
         float last_offsetX = 0;

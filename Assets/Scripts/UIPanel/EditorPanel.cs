@@ -138,7 +138,7 @@ public class EditorPanel : BasePanel
         Btn_AddEnemyGroup.onClick.AddListener(delegate { OnAddEnemyGroupClick(); });
         scr_SelectEnemyType = transform.Find("MouseEditorUI").Find("Emp_EnemyGroupList").Find("Scr_SelectEnemyType").GetComponent<Scr_SelectEnemyType>();
         scr_SelectEnemyType.gameObject.SetActive(false);
-        DefineParamUI = MouseEditorUI.transform.Find("DefineParamUI").GetComponent<EditorPanel_MouseEditorUI_DefineParamUI>();
+        DefineParamUI = transform.Find("DefineParamUI").GetComponent<EditorPanel_MouseEditorUI_DefineParamUI>();
         DefineParamUI.gameObject.SetActive(false);
 
         Dro_RoundMode = MouseEditorUI.transform.Find("Emp_Mode").Find("Dropdown").GetComponent<Dropdown>();
@@ -877,7 +877,7 @@ public class EditorPanel : BasePanel
     private void OnAddEnemyGroupClick()
     {
         if (GetCurrentRoundInfo().isBossRound)
-            GetCurrentEnemyGroupList().Add(new BaseEnemyGroup() { mCount=1, mEnemyInfo = new BaseEnemyGroup.EnemyInfo() { type=20, shape=0 } });
+            GetCurrentEnemyGroupList().Add(new BaseEnemyGroup() { mCount=1, mEnemyInfo = new BaseEnemyGroup.EnemyInfo() { type=0, shape=0 } });
         else
             GetCurrentEnemyGroupList().Add(BaseEnemyGroup.GetInitalEnemyGroupInfo());
         UpdateUI();

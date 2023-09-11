@@ -22,7 +22,6 @@ public class CardBuilderManager
     private static List<FoodNameTypeMap> GoldenCardList = new List<FoodNameTypeMap>() {
         FoodNameTypeMap.BigStove,
         FoodNameTypeMap.SpinCoffee,
-        FoodNameTypeMap.RaidenBaguette,
         FoodNameTypeMap.Takoyaki,
         FoodNameTypeMap.ChocolateBread,
         FoodNameTypeMap.TofuPitcher,

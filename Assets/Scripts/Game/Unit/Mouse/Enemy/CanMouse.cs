@@ -1,5 +1,7 @@
 using S7P.Numeric;
 
+using System;
+
 using UnityEngine;
 /// <summary>
 /// 罐头鼠
@@ -36,21 +38,27 @@ public class CanMouse : MouseUnit
         float maxDist = transform.position.x - MapManager.GetColumnX(0);
 
         // 处于重装状态但不能是飞行动画期间
-        if (isReinstallState && taskController.GetTask("CanMouseFly")==null && maxDist > 0)
+        if (isReinstallState && (!NumericBox.IntDict.ContainsKey(StringManager.Flying) || NumericBox.IntDict[StringManager.Flying].Value <= 0) && maxDist > 0)
         {
             float dist = Mathf.Min(maxDist, 3 * MapManager.gridWidth);
             CustomizationTask t = TaskManager.GetParabolaTask(this, dist / 60, dist / 2, transform.position, transform.position + (Vector3)moveRotate * dist, false);
             t.AddOnEnterAction(delegate {
                 // 起飞咯！！！！
-                SetActionState(new TransitionState(this));
                 DisableMove(true);
+                // SetActionState(new TransitionState(this));
+                animatorController.Play("Fly");
             });
             t.AddOnExitAction(delegate
             {
-                SetActionState(new CastState(this));
                 DisableMove(false);
+                // SetActionState(new CastState(this));
+                // 转为轻装状态
+                SetLightState();
+                // 仅仅是晕眩动画
+                taskController.AddTask(GetStunTask());
             });
-            AddUniqueTask("CanMouseFly", t);
+            //AddUniqueTask("CanMouseFly", t);
+            taskController.AddTask(t);
         }
         // 原先的伤害执行
         return base.OnBombBurnDamage(dmg);
@@ -105,41 +113,28 @@ public class CanMouse : MouseUnit
         OnHertStageChanged();
     }
 
-
-    public override void OnTransitionStateEnter()
+    private CustomizationTask GetStunTask()
     {
-        animatorController.Play("Fly");
-        // 进入不可选取状态
-        // CloseCollision();
-    }
-
-    public override void OnTransitionStateExit()
-    {
-        // 转为轻装状态
-        SetLightState();
-        // OpenCollision();
-    }
-
-    public override bool CanBlock(BaseUnit unit)
-    {
-        return !isDroping && base.CanBlock(unit);
-    }
-
-    public override void OnCastStateEnter()
-    {
-        animatorController.Play("Drop");
-        isDroping = true;
-    }
-
-    public override void OnCastState()
-    {
-        if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
-            SetActionState(new MoveState(this));
-    }
-
-    public override void OnCastStateExit()
-    {
-        isDroping = false;
+        CustomizationTask t = new CustomizationTask();
+        Func<BaseUnit, BaseUnit, bool> canBlockFunc = delegate { return false; };
+        
+        t.AddOnEnterAction(delegate
+        {
+            animatorController.Play("Drop");
+            AddCanBlockFunc(canBlockFunc);
+            DisableMove(true);
+        });
+        t.AddTaskFunc(delegate
+        {
+            return animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce();
+        });
+        t.AddOnExitAction(delegate
+        {
+            RemoveCanBlockFunc(canBlockFunc);
+            DisableMove(false);
+            animatorController.Play("Move");
+        });
+        return t;
     }
 
     /// <summary>

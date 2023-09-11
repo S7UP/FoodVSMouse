@@ -7,6 +7,7 @@ public class FlyMouse : MouseUnit, IFlyUnit
     private bool isDrop; // 是否被击落
     private int dropColumn; // 降落列
     private FloatModifier floatModifier = new FloatModifier(100);
+    private BoolModifier boolMod = new BoolModifier(true);
 
     public override void MInit()
     {
@@ -17,6 +18,8 @@ public class FlyMouse : MouseUnit, IFlyUnit
         dropColumn = 0; // 降落列默认为0，即左一列
         // 飞行状态下获取100%移速加成
         NumericBox.MoveSpeed.AddPctAddModifier(floatModifier);
+        if(mShape == 6)
+            Environment.WaterTask.AddUnitWaterRate(this, new S7P.Numeric.FloatModifier(2.0f));
     }
 
     public override void MUpdate()
@@ -64,22 +67,6 @@ public class FlyMouse : MouseUnit, IFlyUnit
         }
     }
 
-
-    /// <summary>
-    /// 当处于下落状态时，应当完全不被子弹击中
-    /// </summary>
-    /// <param name="bullet"></param>
-    /// <returns></returns>
-    public override bool CanHit(BaseBullet bullet)
-    {
-        return !(mCurrentActionState is TransitionState) && base.CanHit(bullet);
-    }
-
-    public override bool CanBeSelectedAsTarget(BaseUnit otherUnit)
-    {
-        return !(mCurrentActionState is TransitionState) && base.CanBeSelectedAsTarget(otherUnit);
-    }
-
     /// <summary>
     /// 当贴图更新时要做的事
     /// </summary>
@@ -101,25 +88,24 @@ public class FlyMouse : MouseUnit, IFlyUnit
     /// </summary>
     public override void OnTransitionStateEnter()
     {
+        // 被击落期间移除所有定身类效果且免疫定身类效果
+        StatusManager.RemoveAllSettleDownDebuff(this);
+        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, boolMod);
         animatorController.Play("Drop");
     }
 
     public override void OnTransitionState()
     {
-        if (currentStateTimer <= 0)
-        {
-            return;
-        }
-        // 动画播放完一次后，转为移动状态
-        //if (AnimatorManager.GetCurrentFrame(animator) == AnimatorManager.GetTotalFrame(animator)) 
-        if(animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
+        if(!animatorController.GetCurrentAnimatorStateRecorder().aniName.Equals("Drop") || animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
         {
             SetActionState(new MoveState(this));
+            AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(this, 60, false));
         }
     }
 
     public override void OnTransitionStateExit()
     {
+        NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreStun, boolMod);
         mHeight = 0; // 高度降低为地面高度
     }
 }

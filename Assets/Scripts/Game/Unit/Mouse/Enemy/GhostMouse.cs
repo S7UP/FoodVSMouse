@@ -21,8 +21,8 @@ public class GhostMouse : MouseUnit
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreSlowDown, IgnoreModifier);
         // 完全免疫水
         WaterGridType.AddNoAffectByWater(this, IgnoreModifier);
-        // 完全免疫天空
-        SkyGridType.AddNoAffectBySky(this, IgnoreModifier);
+        // 完全免疫空
+        Environment.SkyManager.AddNoAffectBySky(this, IgnoreModifier);
         // 在生成时附带一个范围效果
         CreateArea();
     }

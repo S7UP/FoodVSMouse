@@ -1,3 +1,5 @@
+using S7P.Numeric;
+
 using System;
 using System.Collections.Generic;
 /// <summary>
@@ -53,6 +55,13 @@ public class MouseFactory : IGameControllerMember
         m.MInit();
         // 设置基础属性
         m.SetAttribute(MouseManager.GetAttribute(type, shape));
+        // 不同难度下对属性的补正处理
+        {
+            m.NumericBox.Attack.AddPctAddModifier(new FloatModifier((NumberManager.GetEnemyAttackRate()-1) * 100)); // 攻击力
+            m.NumericBox.AttackSpeed.AddPctAddModifier(new FloatModifier((NumberManager.GetEnemyAttackSpeedRate()-1) * 100)); // 攻击速度
+            m.NumericBox.MoveSpeed.AddPctAddModifier(new FloatModifier((NumberManager.GetEnemyMoveSpeedRate()-1) * 100)); // 移动速度
+            m.NumericBox.SkillSpeed.AddModifier(new FloatModifier(NumberManager.GetEnemySkillSpeedRate())); // 技能速度
+        }
         // 特殊加工
         Process(m);
         return m;

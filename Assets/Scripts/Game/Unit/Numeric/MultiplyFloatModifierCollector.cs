@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 using S7P.Numeric;
@@ -8,11 +9,14 @@ public class MultiplyFloatModifierCollector
 {
     public float TotalValue { get; private set; } = 1;
     public List<FloatModifier> Modifiers { get; } = new List<FloatModifier>();
+    private List<Action<MultiplyFloatModifierCollector>> beforeValueChangeActionList = new List<Action<MultiplyFloatModifierCollector>>();
+    private List<Action<MultiplyFloatModifierCollector>> afterValueChangeActionList = new List<Action<MultiplyFloatModifierCollector>>();
 
     public void Clear()
     {
         Modifiers.Clear();
-        Update();
+        afterValueChangeActionList.Clear();
+        TotalValue = 1;
     }
 
     public float GetMax()
@@ -60,12 +64,38 @@ public class MultiplyFloatModifierCollector
         return Modifiers;
     }
 
-    public void Update()
+    private void Update()
     {
+        foreach (var action in beforeValueChangeActionList)
+            action(this);
         TotalValue = 1;
         foreach (var item in Modifiers)
         {
             TotalValue *= item.Value;
         }
+        foreach (var action in afterValueChangeActionList)
+            action(this);
     }
+
+    #region 供外界调用的方法
+    public void AddBeforeValueChangeAction(Action<MultiplyFloatModifierCollector> action)
+    {
+        beforeValueChangeActionList.Add(action);
+    }
+
+    public void RemoveBeforeValueChangeAction(Action<MultiplyFloatModifierCollector> action)
+    {
+        beforeValueChangeActionList.Remove(action);
+    }
+
+    public void AddAfterValueChangeAction(Action<MultiplyFloatModifierCollector> action)
+    {
+        afterValueChangeActionList.Add(action);
+    }
+
+    public void RemoveAfterValueChangeAction(Action<MultiplyFloatModifierCollector> action)
+    {
+        afterValueChangeActionList.Remove(action);
+    }
+    #endregion
 }

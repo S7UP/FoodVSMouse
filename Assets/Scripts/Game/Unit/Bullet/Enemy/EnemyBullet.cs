@@ -118,6 +118,18 @@ public class EnemyBullet : BaseBullet
         return e;
     }
 
+    public static EnemyBullet GetInstance(Sprite sprite, BaseUnit master)
+    {
+        EnemyBullet e = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Bullet/EnemyBullet").GetComponent<EnemyBullet>();
+        e.MInit();
+        e.spriteRenderer.sprite = sprite;
+        e.SetCollisionLayer("EnemyBullet");
+        e.mMasterBaseUnit = master;
+        e.SetRuntimeAnimatorController(null);
+        e.transform.position = master.transform.position;
+        return e;
+    }
+
     /// <summary>
     /// ÷¥––ªÿ ’
     /// </summary>

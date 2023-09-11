@@ -114,7 +114,16 @@ public class SelectStageUI : MonoBehaviour
     /// </summary>
     public void OnBtnStageClick(Button btn, int index)
     {
-        PlayerData.GetInstance().SetCurrentStageInfo(mSelectPanel.GetCurrentSceneStageList()[index]);
+        //PlayerData.GetInstance().SetCurrentStageInfo(mSelectPanel.GetCurrentSceneStageList()[index]);
+        // 进入场景前先创建动态关卡信息对象，但是以这个方式创建的动态关卡信息对象id为null
+        {
+            PlayerData data = PlayerData.GetInstance();
+            PlayerData.StageInfo_Dynamic info_dynamic = new PlayerData.StageInfo_Dynamic();
+            info_dynamic.info = mSelectPanel.GetCurrentSceneStageList()[index];
+            info_dynamic.id = null;
+            data.SetCurrentDynamicStageInfo(info_dynamic);
+        }
+
         selectIndex = index;
         // 当前页所有按钮变蓝
         foreach (var item in Btn_StageList)

@@ -168,7 +168,7 @@ public class WaterPipeGun : BaseWeapons
                 }
             });
             GameController.Instance.AddBullet(b);
-            GameManager.Instance.audioSourceManager.PlayEffectMusic("Throw" + GameManager.Instance.rand.Next(0, 2));
+            GameManager.Instance.audioSourceController.PlayEffectMusic("Throw" + GameManager.Instance.rand.Next(0, 2));
         }
     }
 }

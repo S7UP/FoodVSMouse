@@ -26,6 +26,17 @@ public class MapManager
     }
 
     // 反向根据坐标反推出格子下标
+    public static float GetXIndexF(float xPos)
+    {
+        return (xPos - CenterX) / gridWidth + (MapController.xColumn - 1) / 2 + 0.5f;
+    }
+
+    public static float GetYIndexF(float yPos)
+    {
+        return -(yPos - CenterY) / gridHeight + (MapController.yRow - 1) / 2 + 0.5f;
+    }
+
+    // 反向根据坐标反推出格子下标
     public static int GetXIndex(float xPos)
     {
         return Mathf.FloorToInt((xPos - CenterX) / gridWidth + (MapController.xColumn - 1) / 2 + 0.5f);
