@@ -73,7 +73,7 @@ public class IceEggPitcher : FoodUnit
     /// <returns></returns>
     protected override bool IsHasTarget()
     {
-        BaseUnit targetUnit = PitcherManager.FindTargetByPitcher(this, transform.position.x, GetRowIndex());
+        BaseUnit targetUnit = PitcherManager.FindTargetByPitcher(this, transform.position.x - MapManager.gridWidth / 2, GetRowIndex());
         if (targetUnit != null)
         {
             targetPosition = targetUnit.transform.position;
@@ -147,7 +147,7 @@ public class IceEggPitcher : FoodUnit
     {
         GameManager.Instance.audioSourceController.PlayEffectMusic("Throw" + GameManager.Instance.rand.Next(0, 2));
         // Ñ¡ÔñÄ¿±ê
-        BaseUnit target = PitcherManager.FindTargetByPitcher(this, transform.position.x, GetRowIndex());
+        BaseUnit target = PitcherManager.FindTargetByPitcher(this, transform.position.x - MapManager.gridWidth / 2, GetRowIndex());
 
         CreateBullet(transform.position, mCurrentAttack, target);
     }

@@ -478,9 +478,7 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     public void ExecuteHitAction(BaseUnit hitedUnit)
     {
         foreach (var action in HitActionList)
-        {
             action(this, hitedUnit);
-        }
     }
 
     /// <summary>

@@ -81,7 +81,7 @@ public class ChocolatePitcher : FoodUnit
     /// <returns></returns>
     protected override bool IsHasTarget()
     {
-        BaseUnit targetUnit = PitcherManager.FindTargetByPitcher(this, transform.position.x, GetRowIndex());
+        BaseUnit targetUnit = PitcherManager.FindTargetByPitcher(this, transform.position.x - MapManager.gridWidth / 2, GetRowIndex());
         if (targetUnit != null)
             targetPosition = targetUnit.transform.position;
         return targetUnit != null;
@@ -156,7 +156,7 @@ public class ChocolatePitcher : FoodUnit
         if(bigLeft > 0)
         {
             bigLeft--;
-            BaseUnit target = PitcherManager.FindTargetByPitcher(this, transform.position.x, rowIndex);
+            BaseUnit target = PitcherManager.FindTargetByPitcher(this, transform.position.x - MapManager.gridWidth / 2, rowIndex);
             CreateSmallBullet(transform.position, target);
         }
         else
@@ -180,9 +180,9 @@ public class ChocolatePitcher : FoodUnit
                         unitList.Add(u);
                 }
                 List<BaseUnit> list = UnitManager.GetList(unitList, (u) => { return u.GetNoCountUniqueStatus(StringManager.Stun) == null; });
-                BaseUnit target = PitcherManager.FindTargetByPitcher(this, transform.position.x, list, null);
+                BaseUnit target = PitcherManager.FindTargetByPitcher(this, transform.position.x - MapManager.gridWidth / 2, list, null);
                 if(target == null)
-                    target = PitcherManager.FindTargetByPitcher(this, transform.position.x, i);
+                    target = PitcherManager.FindTargetByPitcher(this, transform.position.x - MapManager.gridWidth / 2, i);
                 if(target != null || i == rowIndex)
                     CreateBigBullet(transform.position, target);
             }

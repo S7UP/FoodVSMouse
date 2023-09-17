@@ -1,16 +1,12 @@
-using Environment;
 
 using GameNormalPanel_UI;
 
 using S7P.Numeric;
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Timeline;
 
-using static UnityEngine.Rendering.DebugUI.Table;
+using UnityEngine;
 
 public class IronMan : BossUnit
 {
@@ -850,7 +846,7 @@ public class IronMan : BossUnit
         
         Vector2 startPos = transform.position + new Vector3(deltaX, deltaY);
         float dist = (startPos - endPos).magnitude;
-        b.taskController.AddTask(TaskManager.GetParabolaTask(b, dist/t, 5*MapManager.gridHeight, startPos, endPos, true));
+        b.taskController.AddTask(TaskManager.GetParabolaTask(b, t, 5*MapManager.gridHeight, startPos, endPos, true));
         GameController.Instance.AddBullet(b);
     }
 

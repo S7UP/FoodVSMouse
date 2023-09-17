@@ -58,26 +58,9 @@ public class XiaoHong : BossUnit
             FinalSkillRingUI.SetPercent(1);
             AddOnDestoryAction(delegate { if (FinalSkillRingUI.IsValid()) FinalSkillRingUI.MDestory(); });
         }
+
         // 受击事件
-        {
-            actionPointController.AddListener(ActionPointType.PostReceiveDamage, (combatAction) =>
-            {
-                if (combatAction is DamageAction)
-                {
-                    float triggerFinalSkillDamage = mMaxHp * GetParamValue("p_lost_hp_percent") / 100;
-                    DamageAction dmgAction = combatAction as DamageAction;
-                    dmgRecord += dmgAction.RealCauseValue;
-                    FinalSkillRingUI.SetPercent(1 - dmgRecord / triggerFinalSkillDamage);
-                    if (dmgRecord >= triggerFinalSkillDamage)
-                    {
-                        FinalSkillRingUI.Hide();
-                        dmgRecord -= triggerFinalSkillDamage;
-                        CustomizationSkillAbility s = SKill2Init(AbilityManager.Instance.GetSkillAbilityInfoList(mUnitType, mType, mShape)[2]);
-                        mSkillQueueAbilityManager.SetNextSkill(s);
-                    }
-                }
-            });
-        }
+        CreateHitAction();
 
         // 添加出现的技能
         {
@@ -122,7 +105,6 @@ public class XiaoHong : BossUnit
 
     public override void MUpdate()
     {
-
         base.MUpdate();
     }
 
@@ -199,6 +181,27 @@ public class XiaoHong : BossUnit
         mBoxCollider2D.size = new Vector2(0.99f * MapManager.gridWidth, 0.49f * MapManager.gridHeight);
     }
 
+    private void CreateHitAction()
+    {
+        actionPointController.AddListener(ActionPointType.PostReceiveDamage, (combatAction) =>
+        {
+            if (combatAction is DamageAction)
+            {
+                float triggerFinalSkillDamage = mMaxHp * GetParamValue("p_lost_hp_percent") / 100;
+                DamageAction dmgAction = combatAction as DamageAction;
+                dmgRecord += dmgAction.RealCauseValue;
+                FinalSkillRingUI.SetPercent(1 - dmgRecord / triggerFinalSkillDamage);
+                if (dmgRecord >= triggerFinalSkillDamage)
+                {
+                    FinalSkillRingUI.Hide();
+                    dmgRecord -= triggerFinalSkillDamage;
+                    CustomizationSkillAbility s = SKill2Init(AbilityManager.Instance.GetSkillAbilityInfoList(mUnitType, mType, mShape)[2]);
+                    mSkillQueueAbilityManager.SetNextSkill(s);
+                }
+            }
+        });
+    }
+
     #region 一技能
     private List<Vector2> GetS0PosList(int count)
     {
@@ -273,28 +276,9 @@ public class XiaoHong : BossUnit
                 //    });
                 //    GameController.Instance.AddAreaEffectExecution(r);
                 //}
-                // 对老鼠单位
-                {
-                    RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(e.transform.position, new Vector2(MapManager.gridWidth, MapManager.gridHeight), "ItemCollideEnemy");
-                    r.SetInstantaneous();
-                    r.isAffectMouse = true;
-                    r.SetOnEnemyEnterAction((m) => {
-                        if (m.IsBoss() || !MouseManager.IsGeneralMouse(m))
-                            return;
-                        MouseUnit new_mouse = GameController.Instance.mMouseFactory.GetMouse(type, shape);
-                        new_mouse.transform.position = m.transform.position;
-                        GameController.Instance.AddMouseUnit(new_mouse);
 
-                        CustomizationTask stun_task = new CustomizationTask();
-                        stun_task.AddTimeTaskFunc(4);
-                        stun_task.AddOnExitAction(delegate { new_mouse.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(new_mouse, stun_time, false)); });
-                        new_mouse.taskController.AddTask(stun_task);
-                        
-                        m.MDestory();
-                    });
-                    GameController.Instance.AddAreaEffectExecution(r);
-                }
                 // 保底生成一只老鼠
+                MouseUnit baodi = null;
                 {
                     MouseUnit new_mouse = GameController.Instance.mMouseFactory.GetMouse(type, shape);
                     new_mouse.transform.position = e.transform.position;
@@ -304,6 +288,50 @@ public class XiaoHong : BossUnit
                     stun_task.AddTimeTaskFunc(4);
                     stun_task.AddOnExitAction(delegate { new_mouse.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(new_mouse, stun_time, false)); });
                     new_mouse.taskController.AddTask(stun_task);
+                    baodi = new_mouse;
+                }
+                // 对其他老鼠单位
+                {
+                    RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(e.transform.position, new Vector2(MapManager.gridWidth, MapManager.gridHeight), "ItemCollideEnemy");
+                    r.SetInstantaneous();
+                    r.isAffectMouse = true;
+                    r.AddExcludeMouseUnit(baodi);
+                    r.AddEnemyEnterConditionFunc((m)=>{
+                        return !m.IsBoss() && MouseManager.IsGeneralMouse(m);
+                    });
+                    //r.SetOnEnemyEnterAction((m) =>
+                    //{
+                    //    if (m.IsBoss() || !MouseManager.IsGeneralMouse(m))
+                    //        return;
+                    //    MouseUnit new_mouse = GameController.Instance.mMouseFactory.GetMouse(type, shape);
+                    //    new_mouse.transform.position = m.transform.position;
+                    //    GameController.Instance.AddMouseUnit(new_mouse);
+
+                    //    CustomizationTask stun_task = new CustomizationTask();
+                    //    stun_task.AddTimeTaskFunc(4);
+                    //    stun_task.AddOnExitAction(delegate { new_mouse.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(new_mouse, stun_time, false)); });
+                    //    new_mouse.taskController.AddTask(stun_task);
+
+                    //    //m.MDestory();
+                    //    m.ExecuteDeath();
+                    //});
+                    r.AddBeforeDestoryAction(delegate {
+                        foreach (var m in r.mouseUnitList.ToArray())
+                        {
+                            MouseUnit new_mouse = GameController.Instance.mMouseFactory.GetMouse(type, shape);
+                            new_mouse.transform.position = m.transform.position;
+                            GameController.Instance.AddMouseUnit(new_mouse);
+
+                            CustomizationTask stun_task = new CustomizationTask();
+                            stun_task.AddTimeTaskFunc(4);
+                            stun_task.AddOnExitAction(delegate { new_mouse.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(new_mouse, stun_time, false)); });
+                            new_mouse.taskController.AddTask(stun_task);
+
+                            m.MDestory();
+                            //m.ExecuteDeath();
+                        }
+                    });
+                    GameController.Instance.AddAreaEffectExecution(r);
                 }
             });
             e.taskController.AddTask(task);
@@ -557,7 +585,7 @@ public class XiaoHong : BossUnit
             {
                 // 如果完全没目标，就直接向最左侧砸去，砸完消失
                 float dist = (pos2 - (Vector2)b.transform.position).magnitude;
-                CustomizationTask task1 = TaskManager.GetParabolaTask(b, v, dist / 2, b.transform.position, pos2, false, true);
+                CustomizationTask task1 = TaskManager.GetParabolaTask(b, Mathf.FloorToInt(dist/v), dist / 2, b.transform.position, pos2, false, true);
                 task1.AddOnExitAction(delegate {
                     CreateS1StarDamageArea(b.transform.position);
                     b.ExecuteRecycle();
@@ -568,7 +596,7 @@ public class XiaoHong : BossUnit
             {
                 // 如果只有一个目标，就只砸这个目标
                 float dist = (target1.transform.position - b.transform.position).magnitude;
-                CustomizationTask task1 = TaskManager.GetParabolaTask(b, v, dist / 2, b.transform.position, target1, false, true);
+                CustomizationTask task1 = TaskManager.GetParabolaTask(b, Mathf.FloorToInt(dist / v), dist / 2, b.transform.position, target1, false, true);
                 task1.AddOnExitAction(delegate {
                     CreateS1StarDamageArea(b.transform.position);
                     b.ExecuteRecycle();
@@ -579,7 +607,7 @@ public class XiaoHong : BossUnit
             {
                 // 如果有两个目标，就砸这两个目标
                 float dist = (target1.transform.position - b.transform.position).magnitude;
-                CustomizationTask task1 = TaskManager.GetParabolaTask(b, v, dist / 2, b.transform.position, target1, false, true);
+                CustomizationTask task1 = TaskManager.GetParabolaTask(b, Mathf.FloorToInt(dist / v), dist / 2, b.transform.position, target1, false, true);
                 task1.AddOnExitAction(delegate {
                     // 处决第一个目标所在格子
                     CreateS1StarDamageArea(b.transform.position);
@@ -589,12 +617,12 @@ public class XiaoHong : BossUnit
                     if (target2 == null || !target2.IsAlive())
                     {
                         dist = (pos2 - (Vector2)b.transform.position).magnitude;
-                        task2 = TaskManager.GetParabolaTask(b, v, dist / 2, b.transform.position, pos2, false, true);
+                        task2 = TaskManager.GetParabolaTask(b, Mathf.FloorToInt(dist / v), dist / 2, b.transform.position, pos2, false, true);
                     }
                     else
                     {
                         dist = (target2.transform.position - b.transform.position).magnitude;
-                        task2 = TaskManager.GetParabolaTask(b, v, dist / 2, b.transform.position, target2, false, true);
+                        task2 = TaskManager.GetParabolaTask(b, Mathf.FloorToInt(dist / v), dist / 2, b.transform.position, target2, false, true);
                     }
                     task2.AddOnExitAction(delegate {
                         CreateS1StarDamageArea(b.transform.position);
@@ -1127,6 +1155,7 @@ public class XiaoHong : BossUnit
                             // 移除减伤
                             NumericBox.DamageRate.RemoveModifier(DamageRateMod);
                             rUI.mTaskController.RemoveTask(waitTask);
+                            rUI = null;
                             posList = GetS2PosList(count); // 获取三个点位
                             // 砸下去
                             foreach (var v2 in posList)

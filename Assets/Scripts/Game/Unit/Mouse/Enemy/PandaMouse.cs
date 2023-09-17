@@ -86,7 +86,7 @@ public class PandaMouse : MouseUnit
             if (throwLittleMouseSkillAbility != null)
             {
                 // 投掷落点X坐标为  自身X坐标再向左走四格  与  左二列中心点X 坐标中的较小值，即最远也只能扔到左二列
-                float targetX = Mathf.Max( transform.position.x - 4 * GameController.Instance.mMapController.gridWidth, MapManager.GetColumnX(1));
+                float targetX = Mathf.Max(transform.position.x + 4 * GameController.Instance.mMapController.gridWidth*moveRotate.x, MapManager.GetColumnX(1));
                 throwLittleMouseSkillAbility.ThrowEntity(new Vector3(targetX, MapManager.GetRowY(GetRowIndex()), 0));
             }
         }

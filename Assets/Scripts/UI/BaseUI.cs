@@ -1,9 +1,15 @@
+using System;
+using System.Collections.Generic;
+
 using UnityEngine;
 
 public class BaseUI : MonoBehaviour, IGameControllerMember
 {
+    private List<Action<BaseUI>> BeforeDestoryActionList = new List<Action<BaseUI>>();
     public TaskController mTaskController = new TaskController();
     private bool isHide;
+
+
 
     public void MInit()
     {
@@ -33,6 +39,9 @@ public class BaseUI : MonoBehaviour, IGameControllerMember
     }
     public void MDestory()
     {
+        foreach (var action in BeforeDestoryActionList)
+            action(this);
+        BeforeDestoryActionList.Clear();
         mTaskController.Initial();
         O_Recycle();
     }
@@ -59,6 +68,16 @@ public class BaseUI : MonoBehaviour, IGameControllerMember
             isHide = false;
             O_Show();
         }
+    }
+
+    public void AddBeforeDestoryAction(Action<BaseUI> action)
+    {
+        BeforeDestoryActionList.Add(action);
+    }
+
+    public void RemoveBeforeDestoryAction(Action<BaseUI> action)
+    {
+        BeforeDestoryActionList.Remove(action);
     }
     #endregion
 

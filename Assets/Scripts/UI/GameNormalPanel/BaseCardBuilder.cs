@@ -782,6 +782,9 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        if (GameManager.Instance.configManager.mConfig.isHideCardInfo)
+            return;
+
         if (mType != -1)
         {
             TextArea.Instance.SetText(FoodManager.GetFoodName(mType, mShape) + "\n" + FoodManager.GetVerySimpleFeature((FoodNameTypeMap)mType));
@@ -792,6 +795,9 @@ public class BaseCardBuilder : MonoBehaviour, IBaseCardBuilder, IGameControllerM
 
     public void OnPointerExit(PointerEventData eventData)
     {
+        if (GameManager.Instance.configManager.mConfig.isHideCardInfo)
+            return;
+
         if (mType != -1)
             TextArea.ExecuteRecycle();
     }

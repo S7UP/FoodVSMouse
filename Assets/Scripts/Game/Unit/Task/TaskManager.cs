@@ -21,26 +21,27 @@ public class TaskManager
     /// <param name="targetPosition"></param>
     /// <param name="isNavi"></param>
     /// <returns></returns>
-    public static CustomizationTask GetParabolaTask(BaseBullet master, float horizontalVelocity, float height, Vector3 firstPosition, Vector3 targetPosition, bool isNavi, bool notEndWithTakeDamage, Func<BaseBullet, BaseUnit, bool> hitCondition)
+    public static CustomizationTask GetParabolaTask(BaseBullet master, int totalTimer, float height, Vector3 firstPosition, Vector3 targetPosition, bool isNavi, bool notEndWithTakeDamage, Func<BaseBullet, BaseUnit, bool> hitCondition)
     {
-        int totalTimer = 0; // 初始点到目标点用时
+        totalTimer = Mathf.Max(1, totalTimer);
         int currentTimer = 0; // 当前用时
         float g = 0; // 加速度
+        Vector3 deltaPos = (targetPosition - firstPosition) / totalTimer;
         float velocityVertical = 0; // 垂直方向的速度
         FloatModifier yPosModifier = new FloatModifier(0);
 
-        Vector3 last_vector = Vector3.zero;
+        // Vector3 last_vector = Vector3.zero;
         Func<BaseBullet, BaseUnit, bool> noHitFunc = delegate { return false; };
 
         CustomizationTask t = new CustomizationTask();
         t.AddOnEnterAction(delegate {
             master.transform.position = firstPosition;
-            totalTimer = Mathf.Max(4, Mathf.CeilToInt((targetPosition - firstPosition).magnitude / horizontalVelocity));
+            
             // 计算得出重力加速度（向下）
             g = 8 * height / (totalTimer * totalTimer);
             // 为垂直方向的初速度赋值
             velocityVertical = g * totalTimer / 2;
-            last_vector = master.transform.position;
+            // last_vector = master.transform.position;
             master.AddCanHitFunc(noHitFunc);
             master.AddCanHitFunc(hitCondition);
         });
@@ -55,16 +56,16 @@ public class TaskManager
                 master.RemoveCanHitFunc(noHitFunc);
             }
             velocityVertical -= g;
-            Vector3 v = Vector3.Lerp(firstPosition, targetPosition, (float)currentTimer / totalTimer);
-            Vector3 dv = v - last_vector;
+            //Vector3 v = Vector3.Lerp(firstPosition, targetPosition, (float)currentTimer / totalTimer);
+            //Vector3 dv = v - last_vector;
             master.RemoveSpriteOffsetY(yPosModifier);
             yPosModifier.Value += velocityVertical;
             master.AddSpriteOffsetY(yPosModifier);
-            master.transform.position += dv;
+            master.transform.position += deltaPos;
             currentTimer++;
-            last_vector = v;
+            //last_vector = v;
             if (isNavi)
-                master.SetSpriteRight(dv + Vector3.up * velocityVertical);
+                master.SetSpriteRight(deltaPos + Vector3.up * velocityVertical);
             return false;
         });
         t.AddOnExitAction(delegate
@@ -88,14 +89,14 @@ public class TaskManager
     /// <param name="targetPosition"></param>
     /// <param name="isNavi"></param>
     /// <returns></returns>
-    public static CustomizationTask GetParabolaTask(BaseBullet master, float horizontalVelocity, float height, Vector3 firstPosition, Vector3 targetPosition, bool isNavi, bool notEndWithTakeDamage)
+    public static CustomizationTask GetParabolaTask(BaseBullet master, int totalTimer, float height, Vector3 firstPosition, Vector3 targetPosition, bool isNavi, bool notEndWithTakeDamage)
     {
-        return GetParabolaTask(master, horizontalVelocity, height, firstPosition, targetPosition, isNavi, notEndWithTakeDamage, delegate { return true; });
+        return GetParabolaTask(master, totalTimer, height, firstPosition, targetPosition, isNavi, notEndWithTakeDamage, delegate { return true; });
     }
 
-    public static CustomizationTask GetParabolaTask(BaseBullet master, float horizontalVelocity, float height, Vector3 firstPosition, Vector3 targetPosition, bool isNavi)
+    public static CustomizationTask GetParabolaTask(BaseBullet master, int totalTimer, float height, Vector3 firstPosition, Vector3 targetPosition, bool isNavi)
     {
-        return GetParabolaTask(master, horizontalVelocity, height, firstPosition, targetPosition, isNavi, false);
+        return GetParabolaTask(master, totalTimer, height, firstPosition, targetPosition, isNavi, false);
     }
 
     /// <summary>
@@ -108,7 +109,7 @@ public class TaskManager
     /// <param name="target"></param>
     /// <param name="isNavi"></param>
     /// <returns></returns>
-    public static CustomizationTask GetParabolaTask(BaseBullet master, float horizontalVelocity, float height, Vector3 firstPosition, BaseUnit target, bool isNavi, bool notEndWithTakeDamage)
+    public static CustomizationTask GetParabolaTask(BaseBullet master, int totalTimer, float height, Vector3 firstPosition, BaseUnit target, bool isNavi, bool notEndWithTakeDamage)
     {
         // 添加一个锁定目标事件，如果目标不死的话子弹一定优先命中目标，目标死了才可能会命中其附近范围内的目标
         bool targetIsDie = false;
@@ -128,9 +129,10 @@ public class TaskManager
         };
 
         // 先为目标添加无目标的抛物线运动
-        CustomizationTask oriTask = GetParabolaTask(master, horizontalVelocity, height, firstPosition, target.transform.position, isNavi, notEndWithTakeDamage, hitCondition);
+        CustomizationTask oriTask = GetParabolaTask(master, totalTimer, height, firstPosition, target.transform.position, isNavi, notEndWithTakeDamage, hitCondition);
         // 然后添加一个位移补正机制
         Vector3 CurrentDelta = Vector3.zero;
+        float maxV = TransManager.TranToVelocity(18);
 
         CustomizationTask t = new CustomizationTask();
         t.AddOnEnterAction(delegate {
@@ -142,7 +144,7 @@ public class TaskManager
                 return true;
             CurrentDelta += (Vector3)target.DeltaPosition;
             // 位移补正，每次补正的距离不超过传入的水平速度
-            float v = Mathf.Min(horizontalVelocity, CurrentDelta.magnitude);
+            float v = Mathf.Min(maxV, CurrentDelta.magnitude);
             Vector3 deltaV2 = v * CurrentDelta.normalized;
             master.transform.position += deltaV2;
             CurrentDelta -= deltaV2;
@@ -157,9 +159,9 @@ public class TaskManager
         return oriTask;
     }
 
-    public static CustomizationTask GetParabolaTask(BaseBullet master, float horizontalVelocity, float height, Vector3 firstPosition, BaseUnit target, bool isNavi)
+    public static CustomizationTask GetParabolaTask(BaseBullet master, int totalTimer, float height, Vector3 firstPosition, BaseUnit target, bool isNavi)
     {
-        return GetParabolaTask(master, horizontalVelocity, height, firstPosition, target, isNavi, false);
+        return GetParabolaTask(master, totalTimer, height, firstPosition, target, isNavi, false);
     }
     #endregion
 

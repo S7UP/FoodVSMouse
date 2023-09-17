@@ -468,7 +468,7 @@ public class Thundered : BossUnit
                     BurnManager.BurnDamage(this, u);
             }
         });
-        b.taskController.AddTask(TaskManager.GetParabolaTask(b, TransManager.TranToVelocity(48f), 1.5f, transform.position, targetpos, true));
+        b.taskController.AddTask(TaskManager.GetParabolaTask(b, 60, 1.5f, transform.position, targetpos, true));
         GameController.Instance.AddBullet(b);
     }
 

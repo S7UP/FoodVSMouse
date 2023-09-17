@@ -22,20 +22,15 @@ public class PitcherManager
         float d;
 
         // 有目标的攻击
-        // 一样的话加一点点就行了，这样能保证弹射一次而不是原地爆炸
-        if (target.transform.position.x == startPosition.x)
-        {
-            startPosition += 0.01f * Vector2.right;
-        }
         d = Mathf.Abs(target.transform.position.x - startPosition.x);
 
         float v = Mathf.Min(TransManager.TranToVelocity(36), d / 20); // 控制水平速度使耗时不小于20帧
-        float t = Mathf.FloorToInt(d / v);
+        int t = Mathf.Max(20, Mathf.FloorToInt(d / v));
         float g = 2 * 3.0f / Mathf.Pow(9 * MapManager.gridWidth / v, 2);
         float h = Mathf.Max(0.5f, g * t * t / 2); // 高度最小不超过0.5个unity单位
 
         // 确定好参数后添加抛物线运动
-        b.taskController.AddTask(TaskManager.GetParabolaTask(b, v, h, startPosition, target, isNavi, notEndWithTakeDamage));
+        b.taskController.AddTask(TaskManager.GetParabolaTask(b, t, h, startPosition, target, isNavi, notEndWithTakeDamage));
     }
 
     /// <summary>
@@ -46,18 +41,14 @@ public class PitcherManager
     /// <param name="targetPosition"></param>
     public static void AddDefaultFlyTask(BaseBullet b, Vector2 startPosition, Vector2 targetPosition, bool isNavi, bool notEndWithTakeDamage)
     {
-        if(targetPosition.x == startPosition.x)
-        {
-            startPosition += 0.01f * Vector2.right;
-        }
         float d = Mathf.Abs(targetPosition.x - startPosition.x);
         float v = Mathf.Min(TransManager.TranToVelocity(36), d / 20); // 控制水平速度使耗时不小于20帧
-        float t = Mathf.FloorToInt(d / v);
+        int t = Mathf.Max(20, Mathf.FloorToInt(d / v));
         float g = 2 * 3.0f / Mathf.Pow(9 * MapManager.gridWidth / v, 2);
         float h = Mathf.Max(0.5f, g * t * t / 2); // 高度最小不超过0.5个unity单位
 
         // 确定好参数后添加抛物线运动
-        b.taskController.AddTask(TaskManager.GetParabolaTask(b, v, h, startPosition, targetPosition, isNavi, notEndWithTakeDamage));
+        b.taskController.AddTask(TaskManager.GetParabolaTask(b, t, h, startPosition, targetPosition, isNavi, notEndWithTakeDamage));
     }
 
 

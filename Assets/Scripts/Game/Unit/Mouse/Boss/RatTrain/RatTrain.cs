@@ -195,19 +195,17 @@ public class RatTrain : BaseRatTrain
         int stun1_0 = Mathf.FloorToInt(GetParamValue("stun1_0", mHertIndex) * 60);
         // 炮台数据
         float hp0 = GetParamValue("hp0");
-        float burn_defence0 = GetParamValue("burn_defence0");
-        float extra_burn_defence0 = GetParamValue("extra_burn_defence0");
+        float extra_burn_defence0 = GetParamValue("extra_burn_defence0")/100;
         // 传送带数据
         float hp1 = GetParamValue("hp1");
-        float burn_defence1 = GetParamValue("burn_defence1");
-        float extra_burn_defence1 = GetParamValue("extra_burn_defence1");
+        float extra_burn_defence1 = GetParamValue("extra_burn_defence1")/100;
 
         return Movement2(
             delegate
             {
                 List<Action<int, int>> actionList = new List<Action<int, int>>();
-                actionList.Add(CreateMissileAttackAction(hp0, 1 - (1 - burn_defence0) * (1 - extra_burn_defence0), t0_0)); // 指令-炮击
-                actionList.Add(CreateEnemySpawnerAction(t1_0, soldier_type, soldier_shape, stun1_0, hp1, 1 - (1 - burn_defence1) * (1 - extra_burn_defence1))); // 指令-奇袭
+                actionList.Add(CreateMissileAttackAction(hp0, extra_burn_defence0, t0_0)); // 指令-炮击
+                actionList.Add(CreateEnemySpawnerAction(t1_0, soldier_type, soldier_shape, stun1_0, hp1, extra_burn_defence1)); // 指令-奇袭
                 return actionList;
             }
             );
@@ -222,12 +220,10 @@ public class RatTrain : BaseRatTrain
         int stun1_0 = Mathf.FloorToInt(GetParamValue("stun1_0", mHertIndex) * 60);
         // 炮台数据
         float hp0 = GetParamValue("hp0");
-        float burn_defence0 = GetParamValue("burn_defence0");
-        float extra_burn_defence0 = GetParamValue("extra_burn_defence0");
+        float burn_defence0 = GetParamValue("burn_defence0")/100;
         // 传送带数据
         float hp1 = GetParamValue("hp1");
-        float burn_defence1 = GetParamValue("burn_defence1");
-        float extra_burn_defence1 = GetParamValue("extra_burn_defence1");
+        float burn_defence1 = GetParamValue("burn_defence1")/100;
 
         List<SkillAbility> list = new List<SkillAbility>();
         list.Add(Movement0(
@@ -292,11 +288,11 @@ public class RatTrain : BaseRatTrain
         // 炮台数据
         float hp0 = GetParamValue("hp0");
         float burn_defence0 = GetParamValue("burn_defence0");
-        float extra_burn_defence0 = GetParamValue("extra_burn_defence0");
+        float extra_burn_defence0 = GetParamValue("extra_burn_defence0")/100;
         // 传送带数据
         float hp1 = GetParamValue("hp1");
         float burn_defence1 = GetParamValue("burn_defence1");
-        float extra_burn_defence1 = GetParamValue("extra_burn_defence1");
+        float extra_burn_defence1 = GetParamValue("extra_burn_defence1")/100;
 
         List<SkillAbility> list = new List<SkillAbility>();
         list.Add(Movement0(
@@ -365,11 +361,11 @@ public class RatTrain : BaseRatTrain
         // 炮台数据
         float hp0 = GetParamValue("hp0");
         float burn_defence0 = GetParamValue("burn_defence0");
-        float extra_burn_defence0 = GetParamValue("extra_burn_defence0");
+        float extra_burn_defence0 = GetParamValue("extra_burn_defence0")/100;
         // 传送带数据
         float hp1 = GetParamValue("hp1");
         float burn_defence1 = GetParamValue("burn_defence1");
-        float extra_burn_defence1 = GetParamValue("extra_burn_defence1");
+        float extra_burn_defence1 = GetParamValue("extra_burn_defence1")/100;
 
         List<SkillAbility> list = new List<SkillAbility>();
         list.Add(Movement0(
@@ -541,8 +537,8 @@ public class RatTrain : BaseRatTrain
             m.AddCanBeSelectedAsTargetFunc(delegate { return false; }); // 不可作为选取的目标
             m.AddCanBlockFunc(delegate { return false; }); // 不可被阻挡
             m.AddCanHitFunc(delegate { return false; }); // 不可被子弹击中
-            m.mBoxCollider2D.offset = new Vector2(0, (isLeft?1:-1)*0.49f * MapManager.gridHeight);
-            m.mBoxCollider2D.size = new Vector2(0.49f * MapManager.gridWidth, 1.49f * MapManager.gridHeight);
+            m.mBoxCollider2D.offset = new Vector2(0, (isLeft?-1:1)*0.98f * MapManager.gridHeight);
+            m.mBoxCollider2D.size = new Vector2(0.49f * MapManager.gridWidth, 0.49f * MapManager.gridHeight);
             m.isBoss = true;
             m.canTriggerCat = false;
             // 收纳为自身随从
@@ -670,15 +666,15 @@ public class RatTrain : BaseRatTrain
             m.transform.position = master.transform.position;
             m.currentYIndex = MapManager.GetYIndex(m.transform.position.y);
             if(isAttackLeft)
-                m.transform.right = master.moveRotate*Mathf.Sign(master.moveRotate.y);
+                m.transform.right = master.moveRotate * Mathf.Sign(master.moveRotate.y);
             else
                 m.transform.right = -master.moveRotate * Mathf.Sign(master.moveRotate.y);
             m.transform.localScale = new Vector2(hscale, 1);
             m.AddCanBeSelectedAsTargetFunc(delegate { return false; }); // 不可作为选取的目标
             m.AddCanBlockFunc(delegate { return false; }); // 不可被阻挡
             m.AddCanHitFunc(delegate { return false; }); // 不可被子弹击中
-            m.mBoxCollider2D.offset = new Vector2(0, 0.49f * MapManager.gridHeight);
-            m.mBoxCollider2D.size = new Vector2(0.49f * MapManager.gridWidth, 1.49f * MapManager.gridHeight);
+            m.mBoxCollider2D.offset = new Vector2(0, 0.98f * MapManager.gridHeight);
+            m.mBoxCollider2D.size = new Vector2(0.49f * MapManager.gridWidth, 0.49f * MapManager.gridHeight);
             m.isBoss = true;
             m.canTriggerCat = false;
             // 收纳为自身随从

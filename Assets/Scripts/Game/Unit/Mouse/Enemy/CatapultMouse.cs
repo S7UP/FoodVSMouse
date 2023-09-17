@@ -62,11 +62,6 @@ public class CatapultMouse : MouseUnit
     {
         mAttackFlag = true;
         UpdateBlockState(); // 更新阻挡状态
-        // 如果有可以攻击的目标，则停下来等待下一次攻击，否则前进
-        //if (IsHasTarget() || (targetUnit!=null && targetUnit.IsAlive()))
-        //    SetActionState(new IdleState(this));
-        //else
-        //    SetActionState(new MoveState(this));
 
         if(IsBlock())
             SetActionState(new IdleState(this));
@@ -133,13 +128,18 @@ public class CatapultMouse : MouseUnit
                     new DamageAction(CombatAction.ActionType.CauseDamage, this, target, dmg).ApplyAction();
                 }
             });
-            b.taskController.AddTask(TaskManager.GetParabolaTask(b, TransManager.TranToVelocity(24f), 0.25f, transform.position, u, false));
+            b.taskController.AddTask(TaskManager.GetParabolaTask(b, 20, 0.25f, transform.position, u, false));
             GameController.Instance.AddBullet(b);
 
         }
         else if(targetUnit != null &&  targetUnit.IsAlive())
         {
+            targetUnit = FoodManager.GetSpecificRowFarthestLeftCanTargetedAlly(GetRowIndex(), transform.position.x, true); // 攻击前可以再进行一次索敌
             UpdateTargetUnit();
+
+            if (targetUnit == null || !targetUnit.IsAlive())
+                return;
+
             float v = TransManager.TranToStandardVelocity(Mathf.Abs(targetUnit.transform.position.x - transform.position.x)/90f);
             EnemyBullet b = EnemyBullet.GetInstance(RunArray[mShape], this, 0);
             b.AddHitAction((b, u) =>
@@ -153,7 +153,7 @@ public class CatapultMouse : MouseUnit
                     new DamageAction(CombatAction.ActionType.CauseDamage, this, target, dmg).ApplyAction();
                 }
             });
-            b.taskController.AddTask(TaskManager.GetParabolaTask(b, TransManager.TranToVelocity(v), 2.0f, transform.position, targetUnit, false));
+            b.taskController.AddTask(TaskManager.GetParabolaTask(b, Mathf.FloorToInt((targetUnit.transform.position - transform.position).magnitude/TransManager.TranToVelocity(v)), 2.0f, transform.position, targetUnit, false));
             GameController.Instance.AddBullet(b);
         }
     }

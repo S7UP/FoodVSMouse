@@ -86,7 +86,7 @@ public class IceSpoonCrossbowGun : BaseWeapons
     {
         GameManager.Instance.audioSourceController.PlayEffectMusic("Throw" + GameManager.Instance.rand.Next(0, 2));
         // Ñ¡ÔñÄ¿±ê
-        BaseUnit target = PitcherManager.FindTargetByPitcher(master, transform.position.x, GetRowIndex());
+        BaseUnit target = PitcherManager.FindTargetByPitcher(master, transform.position.x - MapManager.gridWidth / 2, GetRowIndex());
         CreateBullet(transform.position, 4*master.mCurrentAttack, target);
     }
 

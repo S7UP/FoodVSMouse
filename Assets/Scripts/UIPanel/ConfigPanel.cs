@@ -9,6 +9,7 @@ public class ConfigPanel : MonoBehaviour, IBasePanel
     private Toggle Toggle_SoundEffect;
     private Toggle Toggle_QuickCardRelease;
     private Toggle Toggle_DebugMode;
+    private Toggle Toggle_HideCardInfo;
 
     private Slider Slider_BGM;
     private Slider Slider_SoundEffect;
@@ -28,6 +29,7 @@ public class ConfigPanel : MonoBehaviour, IBasePanel
         Btn_ReturnToMain = transform.Find("Btn_ReturnToMain").GetComponent<Button>();
         Btn_RestoreTheDefaultSettings = transform.Find("Btn_RestoreTheDefaultSettings").GetComponent<Button>();
         Toggle_DebugMode = transform.Find("Img_DebugMode").Find("Toggle").GetComponent<Toggle>();
+        Toggle_HideCardInfo = transform.Find("Img_HideCardInfo").Find("Toggle").GetComponent<Toggle>();
     }
 
 
@@ -110,5 +112,9 @@ public class ConfigPanel : MonoBehaviour, IBasePanel
         Toggle_DebugMode.onValueChanged.RemoveAllListeners();
         Toggle_DebugMode.isOn = ConfigManager.IsDeveloperMode();
         Toggle_DebugMode.onValueChanged.AddListener(delegate { ConfigManager.SetDeveloperMode(Toggle_DebugMode.isOn); });
+        // ÆÁ±Î¿¨Æ¬ÐÅÏ¢
+        Toggle_HideCardInfo.onValueChanged.RemoveAllListeners();
+        Toggle_HideCardInfo.isOn = config.isHideCardInfo;
+        Toggle_HideCardInfo.onValueChanged.AddListener(delegate { config.isHideCardInfo = Toggle_HideCardInfo.isOn; });
     }
 }

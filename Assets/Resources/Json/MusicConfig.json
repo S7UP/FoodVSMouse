@@ -59,9 +59,9 @@
 {"refenceName":"SkyLandBig0","displayName":"浮空岛皇冠关先锋段","author":"美食大战老鼠","resPath":"Default/SkyLandBig0","loopStartTime":0.0,"volume":0.5},
 {"refenceName":"SkyLandBig1","displayName":"浮空岛皇冠关精英段","author":"美食大战老鼠","resPath":"Default/SkyLandBig1","loopStartTime":0.0,"volume":0.5},
 
-{"refenceName":"WuYingHuanJing1","displayName":"「探索者的银凇止境」呼魂","author":"初弦__","resPath":"LittleCat/WuYingHuanJing1","startTime":0.0,"loopStartTime":0,"volume":0.5},
-{"refenceName":"WuYingHuanJing2","displayName":"「探索者的银凇止境」泯灭","author":"初弦__","resPath":"LittleCat/WuYingHuanJing2","startTime":0.0,"loopStartTime":0,"volume":0.5},
-{"refenceName":"WuYingHuanJing3","displayName":"「探索者的银凇止境」维度逃逸","author":"初弦__","resPath":"LittleCat/WuYingHuanJing3","startTime":0.0,"volume":0.5},
+{"refenceName":"WuYingHuanJing1","displayName":"Universum","author":"Laur","resPath":"LittleCat/WuYingHuanJing1","startTime":0.0,"loopStartTime":0,"volume":0.5},
+{"refenceName":"WuYingHuanJing2","displayName":"PRISTINE","author":"Laur","resPath":"LittleCat/WuYingHuanJing2","startTime":0.0,"loopStartTime":0,"volume":0.5},
+{"refenceName":"WuYingHuanJing3","displayName":"Viyella's Memory","author":"Laur","resPath":"LittleCat/WuYingHuanJing3","startTime":0.0,"volume":0.5},
 
 {"refenceName":"KuaFuDay0","displayName":"跨服远征白天道中段","author":"美食大战老鼠","resPath":"Default/KuaFuDay0","loopStartTime":0.0,"volume":0.5},
 {"refenceName":"KuaFuDayBoss0","displayName":"跨服远征白天BOSS段","author":"美食大战老鼠","resPath":"Default/KuaFuDayBoss0","loopStartTime":0.0,"volume":0.5},

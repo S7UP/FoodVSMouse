@@ -8,6 +8,8 @@ using GameNormalPanel_UI;
 using S7P.Numeric;
 
 using UnityEngine;
+
+using static UnityEngine.UI.CanvasScaler;
 /// <summary>
 /// ¿áË§Ð¡Ã÷
 /// </summary>
@@ -275,6 +277,7 @@ public class XiaoMing : BossUnit
         m.canTriggerLoseWhenEnterLoseLine = false;
         m.isIgnoreRecordDamage = true;
         StatusManager.AddIgnoreSettleDownBuff(m, new BoolModifier(true));
+        StatusManager.AddIgnoreSlowDownBuff(m, new BoolModifier(true));
         m.AddCanBeSelectedAsTargetFunc(delegate { return false; });
         m.AddCanBlockFunc(delegate { return false; });
         m.AddCanHitFunc(delegate { return false; });
@@ -935,7 +938,9 @@ public class XiaoMing : BossUnit
             RingUI ru = RingUI.GetInstance(0.2f * Vector2.one);
             BaseUnit u = b.mProduct;
             u.taskController.AddUniqueTask("IceDebuffDisplayer", GetRingUITask(ru, u));
-            u.AddOnDestoryAction(delegate { if (ru.IsValid()) ru.MDestory(); });
+            Action<BaseUnit> beforeDestoryAction = delegate { if (ru != null && ru.IsValid()) ru.MDestory(); };
+            u.AddOnDestoryAction(beforeDestoryAction);
+            ru.AddBeforeDestoryAction(delegate { ru = null; });
             panel.AddUI(ru);
         };
 
@@ -946,7 +951,9 @@ public class XiaoMing : BossUnit
             {
                 RingUI ru = RingUI.GetInstance(0.2f * Vector2.one);
                 u.taskController.AddUniqueTask("IceDebuffDisplayer", GetRingUITask(ru, u));
-                u.AddOnDestoryAction(delegate { if (ru.IsValid()) ru.MDestory(); });
+                Action<BaseUnit> beforeDestoryAction = delegate { if (ru != null && ru.IsValid()) ru.MDestory(); };
+                u.AddOnDestoryAction(beforeDestoryAction);
+                ru.AddBeforeDestoryAction(delegate { ru = null; });
                 panel.AddUI(ru);
             }
 
@@ -965,7 +972,9 @@ public class XiaoMing : BossUnit
                 builder.RemoveAfterBuildAction(action);
 
             foreach (var u in GameController.Instance.GetEachAlly())
+            {
                 u.taskController.RemoveUniqueTask("IceDebuffDisplayer");
+            }
         });
         return task;
     }

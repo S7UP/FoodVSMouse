@@ -19,6 +19,7 @@ public class ConfigManager
         public float BGMVolume; // BGM音量
         public float SEVolume;  // 音效音量
         public bool isEnableQuickReleaseCard; // 是否开启快捷放卡模式
+        public bool isHideCardInfo; // 是否隐藏关内卡片信息
     }
 
     /// <summary>
@@ -32,6 +33,7 @@ public class ConfigManager
         c.BGMVolume = 0.5f;
         c.SEVolume = 0.5f;
         c.isEnableQuickReleaseCard = false;
+        c.isHideCardInfo = false;
         return c;
     }
 

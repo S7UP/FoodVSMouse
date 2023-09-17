@@ -327,6 +327,12 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         mComponentController.Destory();
         actionPointController.Initialize();
 
+        skillAbilityManager.TryEndAllSpellingSkillAbility();
+        statusAbilityManager.TryEndAllStatusAbility();
+        mEffectController.MDestory();
+        animatorController.RemoveAllPauseModifier();
+        taskController.Initial();
+
         if (GetSpriteRenderer() != null)
             GetSpriteRenderer().sprite = null;
         aliveTime = 0;

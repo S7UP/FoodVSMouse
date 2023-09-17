@@ -200,7 +200,7 @@ public class BlazingKingKong : BossUnit
 
     private void AddFireBulletMoveTask(BaseBullet b, Vector2 firstPosition, Vector2 targetPosition)
     {
-        b.taskController.AddTask(TaskManager.GetParabolaTask(b, (targetPosition - firstPosition).magnitude / 60, MapManager.gridHeight, firstPosition, targetPosition, true));
+        b.taskController.AddTask(TaskManager.GetParabolaTask(b, 60, MapManager.gridHeight, firstPosition, targetPosition, true));
     }
     #endregion
 

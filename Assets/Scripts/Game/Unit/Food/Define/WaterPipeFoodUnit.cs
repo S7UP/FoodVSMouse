@@ -8,8 +8,8 @@ public class WaterPipeFoodUnit : FoodUnit
 {
     private static RuntimeAnimatorController Bullet_RuntimeAnimatorController;
 
-    private static List<int> maxFrontAttackCountList = new List<int>{ 1, 2, 3};
-    private static List<int> maxBackAttackCountList = new List<int> { 2, 2, 3};
+    private static List<int> maxFrontAttackCountList = new List<int>{ 1, 2, 3 };
+    private static List<int> maxBackAttackCountList = new List<int> { 2, 2, 3 };
 
     private int maxFrontAttackCount;
     private int maxBackAttackCount;
@@ -126,7 +126,7 @@ public class WaterPipeFoodUnit : FoodUnit
         if (currentAttackCount < maxFrontAttackCount)
         {
             AllyBullet b = AllyBullet.GetInstance(BulletStyle.Normal, Bullet_RuntimeAnimatorController, this, mCurrentAttack);
-            b.transform.position = transform.position;
+            b.transform.position = transform.position + 0.25f*MapManager.gridWidth*Vector3.left;
             b.SetSpriteLocalPosition(GetSpriteLocalPosition() + Vector2.up * 0.1f);
             b.SetStandardVelocity(24);
             b.SetRotate(Vector2.right);
@@ -137,7 +137,7 @@ public class WaterPipeFoodUnit : FoodUnit
         if(currentAttackCount < maxBackAttackCount)
         {
             AllyBullet b = AllyBullet.GetInstance(BulletStyle.Normal, Bullet_RuntimeAnimatorController, this, mCurrentAttack);
-            b.transform.position = transform.position;
+            b.transform.position = transform.position + 0.25f * MapManager.gridWidth * Vector3.right;
             b.SetSpriteLocalPosition(GetSpriteLocalPosition());
             b.SetStandardVelocity(24);
             b.SetRotate(Vector2.left);

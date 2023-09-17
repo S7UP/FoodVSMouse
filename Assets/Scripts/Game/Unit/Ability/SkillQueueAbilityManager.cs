@@ -26,6 +26,9 @@ public sealed class SkillQueueAbilityManager
         skillList.Clear();
         index = -1;
         currentSkillAbility = null;
+        nextSkillAbility = null;
+        nextSkillIndexQueue.Clear();
+        GetNextSkillIndexQueueFunc = null;
     }
 
     public void Update()

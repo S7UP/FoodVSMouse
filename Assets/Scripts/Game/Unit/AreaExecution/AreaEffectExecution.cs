@@ -757,7 +757,7 @@ public abstract class AreaEffectExecution : MonoBehaviour, IGameControllerMember
         {
             action(this);
         }
-
+        BeforeDestoryActionList.Clear();
         // 释放自身范围内的所有单位，执行一次OnExit
         foreach (var item in foodUnitList)
         {

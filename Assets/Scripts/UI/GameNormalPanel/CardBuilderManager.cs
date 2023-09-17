@@ -25,8 +25,7 @@ public class CardBuilderManager
         FoodNameTypeMap.Takoyaki,
         FoodNameTypeMap.ChocolateBread,
         FoodNameTypeMap.TofuPitcher,
-        FoodNameTypeMap.IceEggPitcher,
-        FoodNameTypeMap.SugarGourd
+        FoodNameTypeMap.IceEggPitcher
     };
 
     public static bool IsGoldenCard(FoodNameTypeMap type)

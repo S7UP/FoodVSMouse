@@ -1,4 +1,3 @@
-using S7P.Numeric;
 
 using System.Collections.Generic;
 
@@ -8,11 +7,8 @@ using UnityEngine;
 /// </summary>
 public class SugarGourd : FoodUnit
 {
-    private FloatModifier costMod = new FloatModifier(-50f / 7 / 60);
-
     private static readonly int[] countArray = { 1, 1, 2 }; // 根据转职情况来确定发射几颗子弹
     private static readonly float[] damageRateArray = { 1.0f, 1.0f, 0.75f}; // 伤害比率与转职关系
-    private static readonly int[] stunTimeArray = { 60, 120, 120}; // 击晕时间（帧）与转职关系
     private int currentAttackCount;
     private int maxAttackCount;
     private List<float> attackPercentList;
@@ -37,13 +33,10 @@ public class SugarGourd : FoodUnit
             }
         }
         currentAttackCount = 0;
-        // 每7秒50费
-        GameController.Instance.AddCostResourceModifier("Fire", costMod);
     }
 
     public override void MDestory()
     {
-        GameController.Instance.RemoveCostResourceModifier("Fire", costMod);
         base.MDestory();
     }
 
@@ -147,7 +140,7 @@ public class SugarGourd : FoodUnit
         b.SetSearchEnemyEnable(true); // 开启索敌模式
         b.SetCompareFunc(BulletCompareFunc);
         b.SetVelocityChangeEvent(TransManager.TranToVelocity(12), TransManager.TranToVelocity(48), 90);
-        b.SetDamage(mCurrentAttack* damageRateArray[mShape]);
+        b.SetDamage(mCurrentAttack * damageRateArray[mShape]);
         b.AddHitAction(BulletHitAction); // 设置击中后的事件
     }
 
@@ -165,7 +158,11 @@ public class SugarGourd : FoodUnit
             return false;
         if (currentTarget == null || !currentTarget.IsAlive() || !UnitManager.CanBeSelectedAsTarget(this, compareTarget) || currentTarget.GetHeight() != 1)
             return true;
-        return (compareTarget.transform.position.x < currentTarget.transform.position.x);
+
+        if (compareTarget.mMaxHp == currentTarget.mMaxHp)
+            return (compareTarget.transform.position.x < currentTarget.transform.position.x);
+        else
+            return compareTarget.mMaxHp > currentTarget.mMaxHp;
     }
 
     /// <summary>
@@ -173,10 +170,16 @@ public class SugarGourd : FoodUnit
     /// </summary>
     /// <param name="bullet">当前子弹</param>
     /// <param name="targetUnit">被击中的目标</param>
-    private void BulletHitAction(BaseBullet bullet, BaseUnit targetUnit)
+    private void BulletHitAction(BaseBullet b, BaseUnit u)
     {
-        if (bullet == null || targetUnit == null)
-            return;
-        targetUnit.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(targetUnit, stunTimeArray[mShape], false));
+        RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(b.transform.position, new Vector2(2.5f * MapManager.gridWidth, 2.5f * MapManager.gridHeight), "ItemCollideEnemy");
+        r.isAffectMouse = true;
+        r.SetInstantaneous();
+        r.SetAffectHeight(1);
+        r.SetOnEnemyEnterAction((m) =>
+        {
+            new DamageAction(CombatAction.ActionType.CauseDamage, this, m, 0.1f * mCurrentAttack).ApplyAction();
+        });
+        GameController.Instance.AddAreaEffectExecution(r);
     }
 }
