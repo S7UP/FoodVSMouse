@@ -94,16 +94,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mUnitType: 0
-  mCurrentHp: 0
   mCurrentTotalShieldValue: 0
   mHeight: 0
   moveRotate: {x: 0, y: 0}
   isFrozenState: 0
+  isIgnoreRecordDamage: 0
   mName: 
   mType: 0
   mShape: 0
   typeAndShapeValue: 0
   currentStateTimer: 0
+  disableMove: 0
+  aliveTime: 0
+  lastPosition: {x: 0, y: 0}
   mGrid: {fileID: 0}
   spriteRenderer: {fileID: 0}
   animator: {fileID: 0}
@@ -201,7 +204,7 @@ Animator:
   m_GameObject: {fileID: 7911401160402135796}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: ba5f4d67bb422c34999e149da6848074, type: 2}
+  m_Controller: {fileID: 0}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0

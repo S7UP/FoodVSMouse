@@ -382,7 +382,7 @@ public class BlazingKingKong : BossUnit
                 if (u is FoodUnit)
                 {
                     FoodUnit f = u as FoodUnit;
-                    if (FoodManager.IsAttackableFoodType(f) && UnitManager.CanBeSelectedAsTarget(this, f) && f.IsAlive() && u.transform.position.x < MapManager.GetColumnX(7))
+                    if (FoodManager.IsAttackableFoodType(f) && UnitManager.CanBeSelectedAsTarget(this, f) && f.IsAlive())
                     {
                         list.Add(f);
                     }

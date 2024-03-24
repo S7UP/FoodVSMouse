@@ -153,6 +153,7 @@ public class EncyclopediaPanel : BasePanel
                 bossItem.transform.localScale = Vector2.one;
                 bossItemList.Add(bossItem);
             }
+
             SetCurrentBossItem(bossItemList[0]);
             // 自适应滑动窗口的高度
             RectTrans_BossItemContent.sizeDelta = new Vector2(RectTrans_BossItemContent.sizeDelta.x, 10 + 125 * (1 + BossManager.BossInfoCsv.GetRow() / 5));

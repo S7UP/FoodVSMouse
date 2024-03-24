@@ -58,6 +58,11 @@ public sealed class ActionPointController
                 item(action);
     }
 
+    public List<Action<CombatAction>> GetActionPointListeners(ActionPointType actionPointType)
+    {
+        return ActionPoints[actionPointType].Listeners;
+    }
+
     public void AddAction(string key, Action<BaseUnit> action)
     {
         if (!ActionListDict.ContainsKey(key))

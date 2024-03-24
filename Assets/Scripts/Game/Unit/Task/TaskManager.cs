@@ -195,6 +195,7 @@ public class TaskManager
         Func<BaseUnit, BaseBullet, bool> noHitFunc = delegate { return isOpenCollide; };
         Func<BaseUnit, BaseUnit, bool> noBlockFunc = delegate { return false; };
         Func<BaseUnit, BaseUnit, bool> canBeSelectFunc = delegate { return isOpenCollide; };
+        BoolModifier noUseBearMod = new BoolModifier(true);
 
         CustomizationTask t = new CustomizationTask();
         t.AddOnEnterAction(delegate {
@@ -214,10 +215,22 @@ public class TaskManager
             master.AddCanHitFunc(noHitFunc);
             master.AddCanBlockFunc(noBlockFunc);
             master.AddCanBeSelectedAsTargetFunc(canBeSelectFunc);
+            master.NumericBox.AddDecideModifierToBoolDict(StringManager.NoBearInSky, noUseBearMod); // 不占用承载数
+            Environment.SkyManager.AddNoAffectBySky(master, noUseBearMod); // 不会掉下去
         });
         t.AddTaskFunc(delegate {
             if (currentTimer >= totalTimer)
             {
+                if (isNavi)
+                    master.transform.right = Vector2.right;
+                master.RemoveSpriteOffsetY(yPosModifier);
+                // 开判定
+                master.RemoveCanHitFunc(noHitFunc);
+                master.RemoveCanBeSelectedAsTargetFunc(canBeSelectFunc);
+                master.NumericBox.RemoveDecideModifierToBoolDict(StringManager.NoBearInSky, noUseBearMod); // 不占用承载数
+                // 为目标移除当前的Flying字段
+                if (master.NumericBox.IntDict.ContainsKey(StringManager.Flying))
+                    master.NumericBox.IntDict[StringManager.Flying].RemoveAddModifier(flyIntModifier);
                 return true;
             }
             velocityVertical -= g;
@@ -235,16 +248,8 @@ public class TaskManager
         });
         t.AddOnExitAction(delegate
         {
-            if (isNavi)
-                master.transform.right = Vector2.right;
-            master.RemoveSpriteOffsetY(yPosModifier);
-            // 开判定
-            master.RemoveCanHitFunc(noHitFunc);
-            master.RemoveCanBlockFunc(noBlockFunc);
-            master.RemoveCanBeSelectedAsTargetFunc(canBeSelectFunc);
-            // 为目标移除当前的Flying字段
-            if (master.NumericBox.IntDict.ContainsKey(StringManager.Flying))
-                master.NumericBox.IntDict[StringManager.Flying].RemoveAddModifier(flyIntModifier);
+            Environment.SkyManager.RemoveNoAffectBySky(master, noUseBearMod); // 不会掉下去
+            master.RemoveCanBlockFunc(noBlockFunc);// 开阻挡判定
         });
         return t;
     }
@@ -432,28 +437,36 @@ public class TaskManager
         return task;
     }
 
-    public static CustomizationTask GetFinalSkillRingUITask(RingUI ru, BaseUnit master)
+    public static CustomizationTask GetFinalSkillRingUITask(RingUI ru, BaseUnit master, Vector3 pos)
     {
         Sprite sprite = GameManager.Instance.GetSprite("UI/GameNormalPanel/Ring/Icon/FinalSkill");
-
-        float r = 247f / 255;
-        float g = 180f / 255;
-        float b = 131f / 255;
 
         CustomizationTask task = new CustomizationTask();
         task.AddOnEnterAction(delegate {
             ru.Show();
             ru.SetIcon(sprite);
             ru.SetPercent(0);
-            ru.SetColor(new Color(r, g, b, 0.5f));
+            ru.SetColor(new Color(1, 1, 0, 0.5f));
         });
         task.AddTaskFunc(delegate {
-            ru.transform.position = master.transform.position + 0.25f * MapManager.gridHeight * Vector3.down;
+            ru.transform.position = master.transform.position + pos;
+            float per = ru.GetPercent();
+            ru.SetColor(new Color(1, 1 - per, 0, 0.5f));
             return !master.IsAlive();
         });
         task.AddOnExitAction(delegate {
             ru.MDestory();
         });
+        return task;
+    }
+
+    public static CustomizationTask GetRingUIChangeTask(RingUI ru, int time, float start, float end)
+    {
+        CustomizationTask task = new CustomizationTask();
+        task.AddTimeTaskFunc(time, null, (leftTime, totalTime) => {
+            float rate = 1 - (float)leftTime / totalTime;
+            ru.SetPercent(Mathf.Lerp(start, end, rate));
+        }, null);
         return task;
     }
     #endregion

@@ -698,7 +698,7 @@ public class NeedleBaron : BossUnit
             if(u is MouseUnit && u.IsAlive())
             {
                 MouseUnit m = u as MouseUnit;
-                if(!m.IsBoss() && CanAdsorpte(m))
+                if(!m.IsBoss() && CanAdsorpte(m) && m.GetHeight()==0)
                 {
                     if(target == null || m.mMaxHp > target.mMaxHp)
                     {
@@ -747,40 +747,71 @@ public class NeedleBaron : BossUnit
 
     private void CreateS1Area(Vector2 pos)
     {
-        RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(pos, 1, 0.5f, "BothCollide");
-        r.SetAffectHeight(0);
-        r.isAffectFood = true;
-        r.isAffectMouse = true;
-        r.AddEnemyEnterConditionFunc((m)=>{ return CanAdsorpte(m); });
-        r.SetInstantaneous();
-        r.AddBeforeDestoryAction(delegate {
-            float dmg = 0;
-            foreach (var f in r.foodUnitList)
-            {
-                dmg += UnitManager.Execute(this, f).RealCauseValue;
-            }
-            foreach (var m in r.mouseUnitList)
-            {
-                if (CanAdsorpte(m))
+        // 对老鼠
+        {
+            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(pos, 1, 0.5f, "ItemCollideEnemy");
+            r.SetAffectHeight(0);
+            r.isAffectMouse = true;
+            r.AddEnemyEnterConditionFunc((m) => { return CanAdsorpte(m); });
+            r.SetInstantaneous();
+            r.AddBeforeDestoryAction(delegate {
+                float dmg = 0;
+                foreach (var f in r.foodUnitList)
+                    dmg += UnitManager.Execute(this, f).RealCauseValue;
+                foreach (var m in r.mouseUnitList)
                 {
-                    float cureValue = m.GetLostHp();
-                    new CureAction(CombatAction.ActionType.GiveCure, this, m, cureValue).ApplyAction();
-                    EffectManager.AddHealEffectToUnit(m);
-                    dmg += cureValue;
-
-                    MouseUnit bat = CreateBat(m.transform.position);
-                    if(!TryAdsorpte(bat, m))
+                    if (CanAdsorpte(m))
                     {
-                        bat.SetActionState(CreateRecycleState(bat));
+                        float cureValue = m.GetLostHp();
+                        new CureAction(CombatAction.ActionType.GiveCure, this, m, cureValue).ApplyAction();
+                        EffectManager.AddHealEffectToUnit(m);
+                        dmg += cureValue;
+
+                        MouseUnit bat = CreateBat(m.transform.position);
+                        if (!TryAdsorpte(bat, m))
+                        {
+                            bat.SetActionState(CreateRecycleState(bat));
+                        }
                     }
                 }
-            }
-            // 自身损失生命值
-            dmg = Mathf.Min(dmg, GetCurrentHp()- 0.01f*GetParamValue("hp_percent1") *mMaxHp);
-            if (dmg > 0)
-                new DamageAction(CombatAction.ActionType.RealDamage, null, this, dmg).ApplyAction();
-        });
-        GameController.Instance.AddAreaEffectExecution(r);
+                // 自身损失生命值
+                dmg = Mathf.Min(dmg, GetCurrentHp() - 0.01f * GetParamValue("hp_percent1") * mMaxHp);
+                if (dmg > 0)
+                    new DamageAction(CombatAction.ActionType.RealDamage, null, this, dmg).ApplyAction();
+            });
+            GameController.Instance.AddAreaEffectExecution(r);
+        }
+
+        // 对格子
+        {
+            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(pos, 0.5f, 0.5f, "CollideGrid");
+            r.isAffectGrid = true;
+            r.SetInstantaneous();
+            r.AddBeforeDestoryAction(delegate {
+                float dmg = 0;
+
+                BaseGrid targetGrid = null;
+                float minDist = float.MaxValue;
+                foreach (var g in r.gridList.ToArray())
+                {
+                    float dist = (r.transform.position - g.transform.position).magnitude;
+                    if (dist < minDist)
+                    {
+                        targetGrid = g;
+                        minDist = dist;
+                    }
+                }
+                if (targetGrid != null)
+                {
+                    targetGrid.TakeAction(this, (u) => { dmg += UnitManager.Execute(this, u).RealCauseValue; }, false);
+                }
+                // 自身损失生命值
+                dmg = Mathf.Min(dmg, GetCurrentHp() - 0.01f * GetParamValue("hp_percent1") * mMaxHp);
+                if (dmg > 0)
+                    new DamageAction(CombatAction.ActionType.RealDamage, null, this, dmg).ApplyAction();
+            });
+            GameController.Instance.AddAreaEffectExecution(r);
+        }
     }
 
     /// <summary>

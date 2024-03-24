@@ -3,11 +3,11 @@
 /// </summary>
 public enum WeaponsNameTypeMap
 {
-    IceSpoonCrossbowGun = 0, // ฑ๙ษืๅ๓วน
-    CatGun = 1, // รจรจวน
-    V5Gun = 2, // อþฮไวน
-    ThreeLineGun = 3, // ธึืฆวน
-    WaterPipeGun = 4, // หซฯ๒หฎวน
-    BunGun = 5, // ะกมýฐüวน
-    IceGun = 6 // ฑ๙ฟ้วน
+    BunGun = 0, // ะกมýฐüวน
+    IceGun = 1, // ฑ๙ฟ้วน
+    ThreeLineGun = 2, // ธึืฆวน
+    WaterPipeGun = 3, // หซฯ๒หฎวน
+    IceSpoonCrossbowGun = 4, // ฑ๙ษืๅ๓วน
+    CatGun = 5, // รจรจวน
+    V5Gun = 999, // VSวน
 }

@@ -1,28 +1,30 @@
 using S7P.Numeric;
+
+using System;
 /// <summary>
 /// 幽灵鼠
 /// </summary>
 public class GhostMouse : MouseUnit
 {
     private static BoolModifier IgnoreModifier = new BoolModifier(true);
-    private RetangleAreaEffectExecution r;
 
     public override void MInit()
     {
         base.MInit();
+        typeAndShapeValue = 10;
         // 添加只有距离一格才能被视为目标
         AddCanBeSelectedAsTargetFunc(BeSelectedAsTargetCondition);
         // 添加只有子弹发射者距离自己一格才能被击中
         AddCanHitFunc(CanHitFunc);
         // 免疫减速、晕眩、冰冻效果
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozen, IgnoreModifier);
-        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozenSlowDown, IgnoreModifier);
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, IgnoreModifier);
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreSlowDown, IgnoreModifier);
         // 完全免疫水
         WaterGridType.AddNoAffectByWater(this, IgnoreModifier);
         // 完全免疫空
         Environment.SkyManager.AddNoAffectBySky(this, IgnoreModifier);
+        NumericBox.AddDecideModifierToBoolDict(StringManager.NoBearInSky, IgnoreModifier);
         // 在生成时附带一个范围效果
         CreateArea();
     }
@@ -30,7 +32,6 @@ public class GhostMouse : MouseUnit
     public override void MUpdate()
     {
         base.MUpdate();
-        r.transform.position = transform.position; // 跟随
     }
 
     private bool BeSelectedAsTargetCondition(BaseUnit u1, BaseUnit u2)
@@ -55,27 +56,38 @@ public class GhostMouse : MouseUnit
     }
 
     /// <summary>
-    /// 产生一个范围效果，这个范围效果内的美食会失去阻挡能力且不会被选取为攻击目标
+    /// 产生一个范围效果，这个范围效果内的美食会失去阻挡能力
     /// </summary>
     private void CreateArea()
     {
-        r = RetangleAreaEffectExecution.GetInstance(transform.position, 0.5f, 0.5f, "ItemCollideAlly");
+        Func<BaseUnit, BaseUnit, bool> noBlockFunc = delegate { return false; };
+
+        RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 0.5f, 0.5f, "ItemCollideAlly");
+        r.transform.position = transform.position;
         r.isAffectFood = true;
         r.SetOnFoodEnterAction((unit)=> {
-            unit.AddCanBlockFunc(ToFoodNoBlockFunc);
-            // unit.AddCanBeSelectedAsTargetFunc(ToFoodNoSelectedAsTarget);
+            unit.AddCanBlockFunc(noBlockFunc);
         });
         r.SetOnFoodExitAction((unit) => {
-            unit.RemoveCanBlockFunc(ToFoodNoBlockFunc);
-            // unit.RemoveCanBeSelectedAsTargetFunc(ToFoodNoSelectedAsTarget);
+            unit.RemoveCanBlockFunc(noBlockFunc);
         });
         GameController.Instance.AddAreaEffectExecution(r);
+
+        // 跟随
+        CustomizationTask task = new CustomizationTask();
+        task.AddTaskFunc(delegate {
+            r.transform.position = transform.position;
+            return !IsAlive();
+        });
+        task.AddOnExitAction(delegate {
+            r.MDestory();
+        });
+        r.taskController.AddTask(task);
     }
 
     public override void AfterDeath()
     {
         base.AfterDeath();
-        r.MDestory();
     }
 
     /// <summary>

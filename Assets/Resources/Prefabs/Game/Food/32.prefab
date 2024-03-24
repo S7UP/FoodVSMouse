@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8116370559506349390}
   - component: {fileID: 8116370559506349385}
-  - component: {fileID: 2754781403781938967}
+  - component: {fileID: 4886382262049743646}
   m_Layer: 6
   m_Name: 32
   m_TagString: Food
@@ -60,7 +60,7 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 0.5, y: 0.4}
   m_EdgeRadius: 0
---- !u!114 &2754781403781938967
+--- !u!114 &4886382262049743646
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -69,28 +69,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 8116370559506349391}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fa6bb0f6a8c7e114ab02f9ab25ac6278, type: 3}
+  m_Script: {fileID: 11500000, guid: e737b45f3138eda408d7916867feb235, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mUnitType: 0
-  mCurrentHp: 0
-  mCurrentTotalShieldValue: 0
-  mHeight: 0
-  moveRotate: {x: 0, y: 0}
-  isFrozenState: 0
-  mName: 
-  mType: 0
-  mShape: 0
-  typeAndShapeValue: 0
-  currentStateTimer: 0
-  defaultMaterial: {fileID: 0}
-  mBoxCollider2D: {fileID: 0}
-  spriteTrans: {fileID: 0}
-  mFoodType: 0
-  mBuilder: {fileID: 0}
-  mLevel: 0
-  typeAndShapeToLayer: 0
-  isUseSingleGrid: 0
 --- !u!1 &8116370559772073301
 GameObject:
   m_ObjectHideFlags: 0
@@ -163,15 +144,15 @@ SpriteRenderer:
   m_SortingLayerID: 481756845
   m_SortingLayer: 5
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: b365ce9ed394fba498169dbfd0db4804, type: 3}
+  m_Sprite: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1, y: 1}
+  m_Size: {x: 1.61, y: 1.26}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!95 &8116370559772073303
@@ -184,7 +165,7 @@ Animator:
   m_GameObject: {fileID: 8116370559772073301}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 9f5b50125b3f97942b14ff414cc9cb6a, type: 2}
+  m_Controller: {fileID: 0}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -259,10 +240,6 @@ PrefabInstance:
     - target: {fileID: 4918401844580172144, guid: eda71e04dfd1bbe4aa1c0f498a732b19, type: 3}
       propertyPath: m_Name
       value: Ani_Rank
-      objectReference: {fileID: 0}
-    - target: {fileID: 4918401844580172144, guid: eda71e04dfd1bbe4aa1c0f498a732b19, type: 3}
-      propertyPath: m_IsActive
-      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: eda71e04dfd1bbe4aa1c0f498a732b19, type: 3}

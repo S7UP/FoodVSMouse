@@ -13,7 +13,7 @@ namespace UIPanel.StageConfigPanel
         /// 被禁用的关卡
         /// </summary>
         private static List<string> lockedStageIdList = new List<string>() {
-            "LC1-1", "LC1-2", "LC1-3", "LC1-4"
+            "LC1-1", "LC1-2", "LC1-3", "LC1-4", "LC1-5", "LC1-6", "LC1-7", "LC1-8"
         };
         // model
         private Dictionary<string, Tag> tagBtnDict = new Dictionary<string, Tag>();
@@ -69,13 +69,9 @@ namespace UIPanel.StageConfigPanel
             {
                 mSelectTagUI.ShowDisableMask("当前关卡不支持词条系统！");
             }
-            else if (data.GetDifficult() < 3)
+            else if (!ConfigManager.IsDeveloperMode() && !(id != null && StageInfoManager.GetLocalStageInfo(id).rank >= 3))
             {
-                mSelectTagUI.ShowDisableMask("该系统仅遗忘级难度开启！");
-            }
-            else if(!ConfigManager.IsDeveloperMode() && !(id != null && StageInfoManager.GetLocalStageInfo(id).rank >= 3))
-            {
-                mSelectTagUI.ShowDisableMask("通过遗忘级难度解锁！");
+                mSelectTagUI.ShowDisableMask("正常通关一次解锁！");
             }
             else
             {
@@ -96,23 +92,7 @@ namespace UIPanel.StageConfigPanel
                 }
             }
 
-            // 刷新一次rankrate显示
-            string rankRate;
-            switch (data.GetDifficult())
-            {
-                case 2:
-                    rankRate = 75+"%";
-                    break;
-                case 1:
-                    rankRate = 50 + "%";
-                    break;
-                case 0:
-                    rankRate = 25 + "%";
-                    break;
-                default:
-                    rankRate = Mathf.FloorToInt(data.GetRankRate() * 100).ToString() + "%";
-                    break;
-            }
+            string rankRate = Mathf.FloorToInt(data.GetRankRate() * 100).ToString() + "%";
             mSettlementUI.SetRankRateText(rankRate);
         }
         public void MUpdate()

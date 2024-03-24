@@ -59,6 +59,11 @@ public class MultiplyFloatModifierCollector
         return TotalValue;
     }
 
+    public bool Contains(FloatModifier mod)
+    {
+        return Modifiers.Contains(mod);
+    }
+
     public List<FloatModifier> GetModifierList()
     {
         return Modifiers;

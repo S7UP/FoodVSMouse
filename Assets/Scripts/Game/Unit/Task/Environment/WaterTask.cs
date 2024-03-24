@@ -25,10 +25,9 @@ namespace Environment
         private float cutRate;
         private float cutRateEnd;
         private int currentTime = 0;
-        private int totalTime = 30;
+        private const int totalTime = 30;
         private Action<float> SetCutRateFunc;
         private float currentCutRate;
-        // private float descendGridCount; // 下降格数
         private float minPos; // 下降最低高度
         private float sprite_pivot_y;
         private float sprite_rect_height;
@@ -92,7 +91,6 @@ namespace Environment
             cutRate = 0;
             cutRateEnd = 0;
             currentTime = 0;
-            totalTime = 30;
 
             CreateWaterEffect();
 
@@ -266,6 +264,7 @@ namespace Environment
                     cutRate = currentCutRate; // 裁剪高度
                     cutRateEnd = (sprite_pivot_y - TransManager.WorldToTex(offsetYEnd)) / sprite_rect_height;
                     EffectManager.AddWaterWaveEffectToUnit(unit, new Vector2(0, -offsetYEnd)); // 添加下水特效
+
                 }
             }
         }
@@ -294,8 +293,9 @@ namespace Environment
                     InWater.OnExitWater();
                     // 也要浮起来
                     currentTime = 0;
+
                     offsetY = EnterWaterSpriteOffsetY.Value;
-                    offsetYEnd = (unit.NumericBox.FloatDict.ContainsKey("WaterVehicleHeight") ? unit.NumericBox.FloatDict["WaterVehicleHeight"].AddCollector.MaxValue : 0);
+                    offsetYEnd = Mathf.Max(0, (unit.NumericBox.FloatDict.ContainsKey("WaterVehicleHeight") ? unit.NumericBox.FloatDict["WaterVehicleHeight"].AddCollector.MaxValue : 0));
                     cutRate = currentCutRate; // 裁剪高度
                     cutRateEnd = 0;
                 }
@@ -304,7 +304,7 @@ namespace Environment
                     // 浮起来！
                     currentTime = 0;
                     offsetY = EnterWaterSpriteOffsetY.Value;
-                    offsetYEnd = (unit.NumericBox.FloatDict.ContainsKey("WaterVehicleHeight") ? unit.NumericBox.FloatDict["WaterVehicleHeight"].AddCollector.MaxValue : 0);
+                    offsetYEnd = Mathf.Max(0, (unit.NumericBox.FloatDict.ContainsKey("WaterVehicleHeight") ? unit.NumericBox.FloatDict["WaterVehicleHeight"].AddCollector.MaxValue : 0));
                     cutRate = currentCutRate; // 裁剪高度
                     cutRateEnd = 0;
                     EffectManager.RemoveWaterWaveEffectFromUnit(unit);
@@ -334,7 +334,6 @@ namespace Environment
             if (!typeof(IInWater).IsAssignableFrom(unit.GetType()) && !isDieInWater && count > 0 && !hasVehicle)
             {
                 currentTime = 0;
-                totalTime = 120;
                 offsetY = EnterWaterSpriteOffsetY.Value;
                 offsetYEnd = -MapManager.gridHeight;  // 下降1格
                 cutRate = currentCutRate; // 裁剪高度

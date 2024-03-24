@@ -36,11 +36,6 @@ public class HeaterFoodUnit : FoodUnit
     {
         base.MInit();
         CreateCheckArea();
-        if(mShape >= 2)
-        {
-            // 二转下场时有3秒无敌
-            StatusManager.AddInvincibilityBuff(this, 180);
-        }
     }
 
     /// <summary>
@@ -90,29 +85,46 @@ public class HeaterFoodUnit : FoodUnit
     /// </summary>
     private void CreateCheckArea()
     {
-        RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 1.0f, 1.0f, "ItemCollideBullet");
-        r.isAffectBullet = true;
-        r.SetOnBulletEnterAction(OnCollision);
-        r.SetOnBulletStayAction(OnCollision);
+        if(mShape < 2)
         {
-            CustomizationTask t = new CustomizationTask();
-            t.AddTaskFunc(delegate {
-                if (this.IsAlive())
-                {
+            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 1.0f, 1.0f, "ItemCollideBullet");
+            r.isAffectBullet = true;
+            r.SetOnBulletEnterAction(OnCollision);
+            r.SetOnBulletStayAction(OnCollision);
+            {
+                CustomizationTask t = new CustomizationTask();
+                t.AddTaskFunc(delegate {
                     r.transform.position = transform.position;
-                    return false;
-                }
-                else
-                {
-                    return true;
-                }
-            });
-            t.AddOnExitAction(delegate {
-                r.MDestory();
-            });
-            r.AddTask(t);
+                    return !IsAlive();
+                });
+                t.AddOnExitAction(delegate {
+                    r.MDestory();
+                });
+                r.AddTask(t);
+            }
+            GameController.Instance.AddAreaEffectExecution(r);
         }
-        GameController.Instance.AddAreaEffectExecution(r);
+        else
+        {
+            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(new Vector2(MapManager.GetColumnX(4), transform.position.y), 9.0f, 1.0f, "ItemCollideBullet");
+            r.isAffectBullet = true;
+            r.SetOnBulletEnterAction(OnCollision);
+            r.SetOnBulletStayAction(OnCollision);
+            {
+                CustomizationTask t = new CustomizationTask();
+                t.AddTaskFunc(delegate {
+                    r.transform.position = new Vector2(MapManager.GetColumnX(4), transform.position.y);
+                    return !IsAlive();
+                });
+                t.AddOnExitAction(delegate {
+                    r.MDestory();
+                });
+                r.AddTask(t);
+            }
+            GameController.Instance.AddAreaEffectExecution(r);
+        }
+
+
     }
 
     public void OnCollision(BaseBullet b)

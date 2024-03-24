@@ -1,3 +1,5 @@
+using GameNormalPanel_UI;
+
 using S7P.Numeric;
 
 using System;
@@ -12,8 +14,10 @@ namespace Environment
         private const float decValue = -25f / 60; // 凝结情况下每帧下降速度
         private const string TaskKey = "IceTask";
 
+
         private BaseUnit master;
         private MultiplyFloatModifierCollector DecRate = new MultiplyFloatModifierCollector();
+        private float maxValue;
         private float value; // 当前积累值
         private bool isForzen; // 是否触发凝结
         private FloatModifier decAttackSpeedMod = new FloatModifier(-34f); // 减攻速
@@ -28,10 +32,14 @@ namespace Environment
         private BaseEffect eff; // 冰雕特效
         private float gobal_alpha; // 全局透明度
 
+        private bool isOpenRingUI = false;
+        private RingUI ru;
+
         public IceTask(BaseUnit master, float value)
         {
             gobal_alpha = 0;
             this.value = value;
+            maxValue = Mathf.Max(100, value);
             this.master = master;
             isForzen = false;
 
@@ -93,6 +101,28 @@ namespace Environment
                 // 于是，只要加上下面这行，在特效被回收时，移除目标被回收时回收特效的监听，即可破局！
             }
 
+            if (master is FoodUnit && (master as FoodUnit).GetFoodInGridType().Equals(FoodInGridType.Default))
+                isOpenRingUI = true;
+
+            // 冰冻损伤条
+            if(isOpenRingUI){
+                GameNormalPanel panel = GameNormalPanel.Instance;
+                ru = RingUI.GetInstance(0.15f * Vector2.one);
+                Action<BaseUnit> beforeDestoryAction = delegate { if (ru != null && ru.IsValid()) ru.MDestory(); };
+                master.AddOnDestoryAction(beforeDestoryAction);
+                ru.AddBeforeDestoryAction(delegate { ru = null; });
+                panel.AddUI(ru);
+
+                {
+                    float r = 199f / 255;
+                    float g = 233f / 255;
+                    float b = 255f / 255;
+                    ru.SetIcon(GameManager.Instance.GetSprite("UI/GameNormalPanel/Ring/Icon/Ice"));
+                    ru.SetPercent(0);
+                    ru.SetColor(new Color(r, g, b, 1));
+                    ru.transform.position = master.transform.position + 0.25f * MapManager.gridHeight * Vector3.down + 0.25f * MapManager.gridWidth * Vector3.right;
+                }
+            }
         }
 
         #region 由子类继承
@@ -131,11 +161,30 @@ namespace Environment
                 TriggerIce(); // 自我触发凝结
             }
 
+            float r = 199f / 255;
+            float g = 233f / 255;
+            float b = 255f / 255;
+            float a;
+
             if (isForzen)
             {
                 master.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(master, 2, false));
                 value += decValue * DecRate.TotalValue;
+                a = 1;
             }
+            else
+            {
+                a = 0.5f;
+            }
+
+            // 冰冻损伤条显示
+            if (isOpenRingUI && ru != null)
+            {
+                ru.transform.position = master.transform.position + 0.25f * MapManager.gridHeight * Vector3.down + 0.25f * MapManager.gridWidth * Vector3.right;
+                ru.SetColor(new Color(r, g, b, a));
+                ru.SetPercent((float)value / maxValue);
+            }
+
 
             // 更新冰雕显示
             {
@@ -184,6 +233,10 @@ namespace Environment
             {
                 master.NumericBox.AttackSpeed.RemoveFinalPctAddModifier(decAttackSpeedMod);
             }
+
+            // 损伤条移除
+            if(isOpenRingUI && ru != null)
+                ru.MDestory();
         }
 
         protected override void O_ShutDown()
@@ -199,6 +252,8 @@ namespace Environment
         public void AddValue(float value)
         {
             this.value += value;
+            if (this.value > maxValue)
+                maxValue = this.value;
         }
 
         public float GetValue()

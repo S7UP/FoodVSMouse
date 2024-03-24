@@ -23,7 +23,6 @@ public class IceSpoonCrossbowGun : BaseWeapons
     public override void MInit()
     {
         base.MInit();
-        //targetPosition = null;
     }
 
     /// <summary>
@@ -36,8 +35,8 @@ public class IceSpoonCrossbowGun : BaseWeapons
         weaponsGeneralAttackSkillAbility = new WeaponsGeneralAttackSkillAbility(this, new SkillAbility.SkillAbilityInfo()
         {
             name = "普通攻击",
-            needEnergy = 180,
-            startEnergy = 180,
+            needEnergy = 60,
+            startEnergy = 60,
             energyRegeneration = 1.0f,
             skillType = SkillAbility.Type.GeneralAttack,
             isExclusive = true,
@@ -53,30 +52,41 @@ public class IceSpoonCrossbowGun : BaseWeapons
     /// <returns></returns>
     public override bool IsHasTarget()
     {
-        // 单行索敌
-        List<BaseUnit> list = new List<BaseUnit>();
-        // 筛选出高度为0的可选取单位
-        foreach (var item in GameController.Instance.GetSpecificRowEnemyList(GetRowIndex()))
+        int startIndex = Mathf.Max(0, GetRowIndex() - 1);
+        int endIndex = Mathf.Min(6, GetRowIndex() + 1);
+
+        for (int i = startIndex; i <= endIndex; i++)
         {
-            if (item.GetHeight() == 0 && UnitManager.CanBeSelectedAsTarget(master, item))
-                list.Add(item);
-        }
-        if (list.Count > 0)
-        {
-            bool flag = false;
-            foreach (var item in list)
-            {
-                if(item.transform.position.x > master.transform.position.x)
-                {
-                    flag = true;
-                    target = item;
-                    SearchTargetPosition();
-                    break;
-                }
-            }
-            return flag;
+            BaseUnit targetUnit = PitcherManager.FindTargetByPitcher(master, master.transform.position.x - MapManager.gridWidth / 2, i);
+            if (targetUnit != null)
+                return true;
         }
         return false;
+
+        //// 单行索敌
+        //List<BaseUnit> list = new List<BaseUnit>();
+        //// 筛选出高度为0的可选取单位
+        //foreach (var item in GameController.Instance.GetSpecificRowEnemyList(GetRowIndex()))
+        //{
+        //    if (item.GetHeight() == 0 && UnitManager.CanBeSelectedAsTarget(master, item))
+        //        list.Add(item);
+        //}
+        //if (list.Count > 0)
+        //{
+        //    bool flag = false;
+        //    foreach (var item in list)
+        //    {
+        //        if(item.transform.position.x > master.transform.position.x)
+        //        {
+        //            flag = true;
+        //            target = item;
+        //            SearchTargetPosition();
+        //            break;
+        //        }
+        //    }
+        //    return flag;
+        //}
+        //return false;
     }
 
     /// <summary>
@@ -84,10 +94,75 @@ public class IceSpoonCrossbowGun : BaseWeapons
     /// </summary>
     public override void ExecuteDamage()
     {
+        //GameManager.Instance.audioSourceController.PlayEffectMusic("Throw" + GameManager.Instance.rand.Next(0, 2));
+        //// 选择目标
+        //BaseUnit target = PitcherManager.FindTargetByPitcher(master, transform.position.x - MapManager.gridWidth / 2, GetRowIndex());
+        //CreateBullet(transform.position, target);
         GameManager.Instance.audioSourceController.PlayEffectMusic("Throw" + GameManager.Instance.rand.Next(0, 2));
         // 选择目标
-        BaseUnit target = PitcherManager.FindTargetByPitcher(master, transform.position.x - MapManager.gridWidth / 2, GetRowIndex());
-        CreateBullet(transform.position, 4*master.mCurrentAttack, target);
+        BaseUnit target = PitcherManager.FindTargetByPitcher(master, master.transform.position.x - MapManager.gridWidth / 2, master.GetRowIndex());
+
+        if (target != null)
+        {
+            CreateBullet(master.transform.position, target);
+        }
+        else
+        {
+            if (GetRowIndex() == 0)
+            {
+                target = PitcherManager.FindTargetByPitcher(master, master.transform.position.x - MapManager.gridWidth / 2, master.GetRowIndex() + 1);
+                if (target != null)
+                    CreateBullet(master.transform.position, target);
+                else
+                    CreateBullet(master.transform.position, MapManager.GetGridLocalPosition(8, master.GetRowIndex()));
+            }
+            else if (GetRowIndex() == 6)
+            {
+                target = PitcherManager.FindTargetByPitcher(master, master.transform.position.x - MapManager.gridWidth / 2, master.GetRowIndex() - 1);
+                if (target != null)
+                    CreateBullet(master.transform.position, target);
+                else
+                    CreateBullet(master.transform.position, MapManager.GetGridLocalPosition(8.5f, master.GetRowIndex()));
+            }
+            else
+            {
+                BaseUnit target_down = PitcherManager.FindTargetByPitcher(master, master.transform.position.x - MapManager.gridWidth / 2, master.GetRowIndex() + 1);
+                BaseUnit target_up = PitcherManager.FindTargetByPitcher(master, master.transform.position.x - MapManager.gridWidth / 2, master.GetRowIndex() - 1);
+                float min_x = MapManager.GetColumnX(8.5f);
+                if (target_down != null && target_down.transform.position.x < min_x)
+                {
+                    min_x = target_down.transform.position.x;
+                }
+                if (target_up != null && target_up.transform.position.x < min_x)
+                {
+                    min_x = target_up.transform.position.x;
+                }
+                CreateBullet(master.transform.position, new Vector2(min_x, MapManager.GetRowY(master.GetRowIndex())));
+            }
+        }
+    }
+
+    /// <summary>
+    /// 创建一发弹射子弹
+    /// </summary>
+    /// <param name="startPosition"></param>
+    /// <param name="target"></param>
+    private BaseBullet CreateBullet(Vector2 startPosition, Vector2 endPos)
+    {
+        AllyBullet b = AllyBullet.GetInstance(BulletStyle.Throwing, IceEggBullet_RuntimeAnimatorController, master, 0);
+        b.AddSpriteOffsetY(new FloatModifier(0.5f * MapManager.gridHeight));
+        b.isnDelOutOfBound = true; // 出屏不自删
+        b.SetHitSoundEffect("Eggimpact" + GameManager.Instance.rand.Next(0, 2));
+
+        b.AddHitAction((b, u) =>
+        {
+            Vector2 pos = b.transform.position; // 范围冰冻减速效果中心位置
+            // 创建一个范围冰冻减速效果
+            CreateIceSlowDownArea(pos);
+        });
+        PitcherManager.AddDefaultFlyTask(b, startPosition, endPos, true, false);
+        GameController.Instance.AddBullet(b);
+        return b;
     }
 
     /// <summary>
@@ -96,9 +171,9 @@ public class IceSpoonCrossbowGun : BaseWeapons
     /// <param name="startPosition"></param>
     /// <param name="ori_dmg"></param>
     /// <param name="target"></param>
-    private BaseBullet CreateBullet(Vector2 startPosition, float ori_dmg, BaseUnit target)
+    private BaseBullet CreateBullet(Vector2 startPosition, BaseUnit target)
     {
-        AllyBullet b = AllyBullet.GetInstance(BulletStyle.Throwing, IceEggBullet_RuntimeAnimatorController, master, ori_dmg);
+        AllyBullet b = AllyBullet.GetInstance(BulletStyle.Throwing, IceEggBullet_RuntimeAnimatorController, master, 0);
         b.SetHitSoundEffect("Eggimpact" + GameManager.Instance.rand.Next(0, 2));
         b.AddSpriteOffsetY(new FloatModifier(0.5f * MapManager.gridHeight));
         b.isnDelOutOfBound = true; // 出屏不自删
@@ -107,27 +182,7 @@ public class IceSpoonCrossbowGun : BaseWeapons
         {
             hitEnemyAction = (b, u) =>
             {
-                Vector2 pos; // 范围冰冻减速效果中心位置
-                if (u != null && u.IsValid())
-                {
-                    // 如果单位存在，则在单位位置爆炸，并且单位受到3%最大生命值与攻击力中较大者伤害，对BOSS恒为攻击力
-                    float dmg = Mathf.Max(0.03f * u.mMaxHp, b.GetDamage());
-                    if (u is MouseUnit)
-                    {
-                        MouseUnit m = u as MouseUnit;
-                        if (m.IsBoss())
-                        {
-                            dmg = b.GetDamage();
-                        }
-                    }
-                    new DamageAction(CombatAction.ActionType.CauseDamage, master, u, dmg).ApplyAction();
-                   pos = u.transform.position;
-                }
-                else
-                {
-                    // 否则位于格子正中心爆炸
-                    pos = MapManager.GetGridLocalPosition(b.GetColumnIndex(), b.GetRowIndex());
-                }
+                Vector2 pos = b.transform.position; // 范围冰冻减速效果中心位置
                 // 创建一个范围冰冻减速效果
                 CreateIceSlowDownArea(pos);
             };
@@ -160,7 +215,7 @@ public class IceSpoonCrossbowGun : BaseWeapons
                     if (next_target != null)
                     {
                         b.isnUseHitEffect = true; // 当前子弹不采用击中动画，直接消失
-                        CreateBullet(b.transform.position, ori_dmg, next_target);
+                        CreateBullet(b.transform.position, next_target);
                     }
                     else
                     {
@@ -196,8 +251,12 @@ public class IceSpoonCrossbowGun : BaseWeapons
         r.isAffectMouse = true;
         r.SetAffectHeight(0); // 只有地面单位被影响
         r.SetOnEnemyEnterAction((u) => {
-            // u.AddStatusAbility(new FrozenSlowStatusAbility(-35, u, 120));
-            EnvironmentFacade.AddIceDebuff(u, 35);
+            MouseUnit m = u as MouseUnit;
+            if (!m.IsBoss())
+            {
+                EnvironmentFacade.AddIceDebuff(u, 12);
+                new DamageAction(CombatAction.ActionType.CauseDamage, master, u, 0.005f*u.mCurrentHp).ApplyAction();
+            }
         });
         GameController.Instance.AddAreaEffectExecution(r);
         return r;

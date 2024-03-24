@@ -13,6 +13,7 @@ public class SelectedCardUI : MonoBehaviour
     private ScrollRect Scr_SelectedCardList;
     private Transform CardGroupListTrans;
     private Button Btn_Save;
+    private Button Btn_Clear;
     private Dropdown Dro_Rank;
     
 
@@ -28,6 +29,12 @@ public class SelectedCardUI : MonoBehaviour
         CardGroupListTrans = transform.Find("Emp_CardGroupList");
         Btn_Save = transform.Find("Btn_Save").GetComponent<Button>();
         Btn_Save.onClick.AddListener(delegate { SaveCurrentStageCardGroupList(); });
+        Btn_Clear = transform.Find("Btn_Clear").GetComponent<Button>();
+        Btn_Clear.onClick.AddListener(delegate {
+            currentSelectedCardGroup.Clear();
+            currentSelectedKeyGroup.Clear();
+            UpdateCardModelList();
+        });
         Dro_Rank = transform.Find("Emp_ChangeRank").Find("Dro_Rank").GetComponent<Dropdown>();
     }
 
@@ -311,7 +318,7 @@ public class SelectedCardUI : MonoBehaviour
     {
         BaseStage.StageInfo info = PlayerData.GetInstance().GetCurrentStageInfo();
         int cardCount = 18;
-        if (info.isEnableCardCount)
+        if (info.isEnableCardCount && !PlayerData.GetInstance().GetCurrentDynamicStageInfo().isNoLimit)
             cardCount = info.cardCount;
         Tex_CardCount.text = "Ð¯´ø¿¨Æ¬ÊýÁ¿£º"+ GetSelectedCardCount() + "/"+ cardCount;
     }

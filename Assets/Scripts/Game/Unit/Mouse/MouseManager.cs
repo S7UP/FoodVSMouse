@@ -147,7 +147,6 @@ public class MouseManager
             string name, descript, tip;
             int.TryParse(csv.GetValue(i, 0).ToString(), out type);
             name = csv.GetValue(i, 1).ToString();
-            //descript = csv.GetValue(i, 2).ToString();
             descript = csv.GetValueByReplaceAllParam(i, 2);
             tip = csv.GetValue(i, 3).ToString();
             // 加入到字典以存储

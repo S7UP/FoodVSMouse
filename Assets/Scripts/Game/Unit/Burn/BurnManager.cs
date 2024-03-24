@@ -34,4 +34,19 @@ public class BurnManager
         action.ApplyAction();
         return action;
     }
+
+    /// <summary>
+    /// 灰烬处决
+    /// </summary>
+    /// <param name="creator"></param>
+    /// <param name="target"></param>
+    /// <param name="rate"></param>
+    /// <returns></returns>
+    public static DamageAction BurnInstanceKill(BaseUnit creator, BaseUnit target)
+    {
+        DamageAction action = new DamageAction(CombatAction.ActionType.BurnDamage, creator, target, target.mMaxHp);
+        // action.AddDamageType(DamageAction.DamageType.BombBurn); // 标记为灰烬来源
+        action.ApplyAction();
+        return action;
+    }
 }

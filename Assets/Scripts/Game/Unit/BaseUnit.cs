@@ -42,7 +42,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         }
         set { _mCurrentHp = value; }
     }
-    private float _mCurrentHp; // 当前生命值
+    protected float _mCurrentHp; // 当前生命值
     private Func<BaseUnit, float> GetCurrentHpFunc;
     public float mBaseAttack { get { return NumericBox.Attack.baseValue; } } // 基础攻击力
     public float mCurrentAttack { get { return NumericBox.Attack.Value; } } // 当前攻击力
@@ -743,7 +743,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         dmg = Mathf.Min(dmg, _mCurrentHp);
         // 最后扣除本体生命值
         _mCurrentHp -= dmg;
-        if (_mCurrentHp <= 0)
+        if (GetCurrentHp() <= 0)
         {
             _mCurrentHp = 0;
             ExecuteDeath();
@@ -770,7 +770,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         dmg = Mathf.Min(dmg, _mCurrentHp);
         // 直接扣除本体生命值
         _mCurrentHp -= dmg;
-        if (_mCurrentHp <= 0)
+        if (GetCurrentHp() <= 0)
         {
             _mCurrentHp = 0;
             ExecuteDeath();
@@ -793,7 +793,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         dmg = Mathf.Min(dmg, _mCurrentHp);
         // 扣除本体生命值
         _mCurrentHp -= dmg;
-        if (_mCurrentHp <= 0)
+        if (GetCurrentHp() <= 0)
         {
             _mCurrentHp = 0;
             ExecuteDeath();
@@ -819,7 +819,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         dmg = Mathf.Min(dmg, _mCurrentHp);
         // 扣除本体生命值
         _mCurrentHp -= dmg;
-        if (_mCurrentHp <= 0)
+        if (GetCurrentHp() <= 0)
         {
             _mCurrentHp = 0;
             ExecuteBurn();
@@ -845,7 +845,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         dmg = Mathf.Min(dmg * mBurnRate, _mCurrentHp);
         // 扣除本体生命值
         _mCurrentHp -= dmg;
-        if (_mCurrentHp <= 0)
+        if (GetCurrentHp() <= 0)
         {
             _mCurrentHp = 0;
             ExecuteBurn();
@@ -869,7 +869,7 @@ public class BaseUnit : MonoBehaviour, IGameControllerMember, IBaseStateImplemen
         dmg = Mathf.Min(dmg, _mCurrentHp);
         // 最后扣除本体生命值
         _mCurrentHp -= dmg;
-        if (_mCurrentHp <= 0)
+        if (GetCurrentHp() <= 0)
         {
             _mCurrentHp = 0;
             ExecuteDeath();

@@ -315,7 +315,7 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
     /// <returns></returns>
     public virtual bool CanHit(BaseUnit unit)
     {
-        return IsAlive() && (isIgnoreHeight || mHeight == unit.mHeight);
+        return aliveTime > 2 && IsAlive() && (isIgnoreHeight || mHeight == unit.mHeight);
     }
 
     public virtual void OnFlyStateEnter()
@@ -326,6 +326,8 @@ public class BaseBullet : MonoBehaviour, IBaseBullet, IGameControllerMember
 
     public virtual void OnFlyState()
     {
+        if (aliveTime <= 2)
+            return;
         transform.position += (Vector3)mRotate * mVelocity;
         if (mMovetime < mAccelerateTime)
             mVelocity += mAccelerate;

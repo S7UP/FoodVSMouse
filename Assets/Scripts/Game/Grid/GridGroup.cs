@@ -146,6 +146,11 @@ public class GridGroup : MonoBehaviour, IGameControllerMember
             }        
         }
     }
+
+    public bool IsAlive()
+    {
+        return isActiveAndEnabled;
+    }
     #endregion
 
     #region 事件方法

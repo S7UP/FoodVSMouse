@@ -54,17 +54,35 @@ public class RoundProgressBar : BaseProgressBar
         // float per = 1.0f / (totalRoundCount + 1);
         // Emp_FlagListRectTrans.sizeDelta = new Vector2(FlagListTotalWidth*(1.0f-per) + 25, Emp_FlagListRectTrans.rect.height);
         float per = 0;
+        int currentTimer = 0;
         foreach (var round in roundList)
         {
-            if (!round.mRoundInfo.isBossRound)
+            if (round.mRoundInfo.isBossRound)
+                continue;
+
+            foreach (var r in round.mRoundInfo.PreorderTraversal())
             {
-                per += (float)round.GetTotalTimer() / totalTime;
-                GameObject go = GameManager.Instance.GetGameObjectResource(FactoryType.UIFactory, "Img_Flag");
-                go.transform.SetParent(Emp_FlagListRectTrans);
-                go.transform.localScale = new Vector2(1, 1);
-                go.GetComponent<RectTransform>().anchoredPosition = new Vector2(-Emp_FlagListRectTrans.sizeDelta.x * per, 0);
-                flagList.Add(go);
+                if(r.isShowBigWaveRound)
+                {
+                    //per += (float)currentTimer / totalTime;
+                    GameObject go = GameManager.Instance.GetGameObjectResource(FactoryType.UIFactory, "Img_Flag");
+                    go.transform.SetParent(Emp_FlagListRectTrans);
+                    go.transform.localScale = new Vector2(1, 1);
+                    go.GetComponent<RectTransform>().anchoredPosition = new Vector2(-Emp_FlagListRectTrans.sizeDelta.x * ((float)currentTimer / totalTime), 0);
+                    flagList.Add(go);
+                }
+                currentTimer += r.baseEnemyGroupList.Count * r.interval + r.endTime;
             }
+
+            //if (!round.mRoundInfo.isBossRound)
+            //{
+            //    per += (float)round.GetTotalTimer() / totalTime;
+            //    GameObject go = GameManager.Instance.GetGameObjectResource(FactoryType.UIFactory, "Img_Flag");
+            //    go.transform.SetParent(Emp_FlagListRectTrans);
+            //    go.transform.localScale = new Vector2(1, 1);
+            //    go.GetComponent<RectTransform>().anchoredPosition = new Vector2(-Emp_FlagListRectTrans.sizeDelta.x * per, 0);
+            //    flagList.Add(go);
+            //}
         }
     }
 

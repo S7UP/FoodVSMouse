@@ -80,6 +80,9 @@ public class StageInfoManager
         public List<char> currentCardKeyList = new List<char>(); // 当前键位控制表
         public List<string> SelectedTagList = new List<string>(); // 已选词条
         public bool isNoLimit; // 是否勾选解限模式
+        public int minPassTime = -1; // 最短通关用时（游戏帧）（若为-1则代表没有记录）
+        public float firstPassPlayTime = -1; // 首次通关时已游玩的总时间之和（秒）（若为-1则代表还没记录）
+        public float totalPlayTime = 0; // 实际游玩总时间之和（秒）
     }
 
     /// <summary>
@@ -88,13 +91,11 @@ public class StageInfoManager
     [System.Serializable]
     public class PlayerStageInfo
     {
-        public float version = 0; // 存档版本
+        public float version = 0f; // 存档版本
         public Dictionary<string, StageInfo_Local> localStageInfoDict = new Dictionary<string, StageInfo_Local>(); // 关卡ID-关卡完成信息映射表
         public Dictionary<string, BigChapter_Local> localBigChapterInfoDict = new Dictionary<string, BigChapter_Local>(); // 大章节ID-大章节信息映射表
     }
 
-
-    private const float version = 1.1f; // 最新版本号（若存档版本号低于该版本号，则对存档进行一次更新）
     private static Dictionary<string, BigChapter_Static> bigChapterDict = new Dictionary<string, BigChapter_Static>(); // 大章节ID映射表
     private static Dictionary<string, StageInfo_Static> staticInfoDict = new Dictionary<string, StageInfo_Static>(); // 关卡ID-关卡静态信息映射表
     private static Dictionary<string, BaseStage.StageInfo> detailInfoDict = new Dictionary<string, BaseStage.StageInfo>(); // 关卡ID-关卡详细信息映射表
@@ -112,6 +113,8 @@ public class StageInfoManager
             bigChapterDict.Add("WarriorChallenge", new BigChapter_Static() { id = "WarriorChallenge", name = "勇士挑战", chapterList = LoadChapterList("Stage/WarriorChallenge/") });
             bigChapterDict.Add("MagicTower", new BigChapter_Static() { id = "MagicTower", name = "魔塔蛋糕", chapterList = LoadChapterList("Stage/MagicTower/") });
             bigChapterDict.Add("LegendChallenge", new BigChapter_Static() { id = "LegendChallenge", name = "传说挑战", chapterList = LoadChapterList("Stage/LegendChallenge/") });
+            bigChapterDict.Add("SpeedRun", new BigChapter_Static() { id = "SpeedRun", name = "速通挑战", chapterList = LoadChapterList("Stage/SpeedRun/") });
+            bigChapterDict.Add("Unused", new BigChapter_Static() { id = "Unused", name = "遗忘档案", chapterList = LoadChapterList("Stage/Unused/") });
             // 加载首通奖励
             LoadMainlineFirstPassReward();
             // 加载玩家存档信息
@@ -165,10 +168,39 @@ public class StageInfoManager
                     mPlayerStageInfo.version = 1.2f;
                     Save();
                 }
+                // 1.3版（浮空第一版）
+                if(mPlayerStageInfo.version < 1.3f)
+                {
+                    Move("LC1-2", "LC1-5"); // 炼狱迁移
+                    Move("LC1-1", "LC1-2"); // 绝境迁移
+                    mPlayerStageInfo.version = 1.3f;
+                    Save();
+                }
+                // 1.4版（浮空春节内测版本）
+                if (mPlayerStageInfo.version < 1.4f)
+                {
+                    // 把幻境迁移到LC1-6
+                    Move("LC1-7", "LC1-6"); // 幻境迁移
+                    mPlayerStageInfo.localBigChapterInfoDict.Add("SpeedRun", new BigChapter_Local() { id = "SpeedRun", currentIndex = 0 }); // 添加速通
+                    mPlayerStageInfo.localBigChapterInfoDict.Add("Unused", new BigChapter_Local() { id = "Unused", currentIndex = 0 }); // 添加遗忘档案
+                    mPlayerStageInfo.version = 1.4f;
+                    Save();
+                }
+                // 1.5版（浮空春节内测版本2，旧三火山传说移植）
+                if (mPlayerStageInfo.version < 1.5f)
+                {
+                    Move("LC1-3", "OLD-LC1-3"); // 幻想迁移
+                    Move("LC1-4", "OLD-LC1-4"); // 风港迁移
+                    Move("LC1-5", "OLD-LC1-5"); // 炼狱迁移
+                    mPlayerStageInfo.version = 1.5f;
+                    Save();
+                }
             }
             isLoad = true;
         }
     }
+
+
 
     #region 供外界调用的方法
     /// <summary>
@@ -373,6 +405,28 @@ public class StageInfoManager
             return local_info.rank > -1;
         else
             return false;
+    }
+
+    /// <summary>
+    /// 迁移关卡存档（不会执行序列化到本地）（原ID位会被删除）
+    /// </summary>
+    /// <param name="old_id">原关卡ID</param>
+    /// <param name="new_id">迁移后的关卡ID</param>
+    private static void Move(string old_id, string new_id)
+    {
+        if (mPlayerStageInfo.localStageInfoDict.ContainsKey(old_id))
+        {
+            if (mPlayerStageInfo.localStageInfoDict.ContainsKey(new_id))
+            {
+                mPlayerStageInfo.localStageInfoDict[new_id] = mPlayerStageInfo.localStageInfoDict[old_id];
+            }
+            else
+            {
+                mPlayerStageInfo.localStageInfoDict.Add(new_id, mPlayerStageInfo.localStageInfoDict[old_id]);
+            }
+            // 删除原记录
+            mPlayerStageInfo.localStageInfoDict.Remove(old_id);
+        }
     }
     #endregion
 }

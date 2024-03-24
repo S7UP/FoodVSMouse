@@ -15,7 +15,7 @@ namespace UIPanel.StageConfigPanel
         private MousePanel_StageConfigPanel mMousePanel;
         private ScrollRect Scr_EnemyList;
         private RectTransform RectTrans_MouseItemContent;
-        private GameObject Scr_AddInfo;
+        private ScrollRect Scr_AddInfo;
         private Sprite btnSprite0; // 上方按钮暗
         private Sprite btnSprite1; // 上方按钮亮
         private Image[] imgList;
@@ -30,6 +30,11 @@ namespace UIPanel.StageConfigPanel
         private Text Tex_Illustrate;
         private Text Tex_AddInfo;
 
+        private Text Tex_MinPassTime; // 速通时间
+        private Text Tex_FirstPassTime; // 首通时间
+        private Text Tex_TotalTime; // 总游玩时间
+
+
         private List<MouseItem_StageConfigPanel> mouseItemList = new List<MouseItem_StageConfigPanel>();
         private List<BossItem_StageConfigPanel> bossItemList = new List<BossItem_StageConfigPanel>();
         private MouseItem_StageConfigPanel currentMouseItem; // 当前选中的老鼠
@@ -42,7 +47,7 @@ namespace UIPanel.StageConfigPanel
             mMousePanel = Emp_EnemyInfo.transform.Find("MousePanel").GetComponent<MousePanel_StageConfigPanel>();
             Scr_EnemyList = Emp_EnemyInfo.transform.Find("Scr_EnemyList").GetComponent<ScrollRect>();
             RectTrans_MouseItemContent = Scr_EnemyList.content.GetComponent<RectTransform>();
-            Scr_AddInfo = transform.Find("Scr_AddInfo").gameObject;
+            Scr_AddInfo = transform.Find("Scr_AddInfo").GetComponent<ScrollRect>();
 
             btnSprite0 = GameManager.Instance.GetSprite("UI/SelectPanel/36");
             btnSprite1 = GameManager.Instance.GetSprite("UI/SelectPanel/33");
@@ -62,6 +67,10 @@ namespace UIPanel.StageConfigPanel
             Tex_Background = Scr_Background.content.Find("Tex_Background").GetComponent<Text>();
             Tex_Illustrate = Scr_Illustrate.content.Find("Tex_Illustrate").GetComponent<Text>();
             Tex_AddInfo = Scr_AddInfo.transform.Find("Viewport").Find("Content").Find("Text").GetComponent<Text>();
+
+            Tex_MinPassTime = Emp_StageInfo.transform.Find("Img_MinPassTime").Find("Text").GetComponent<Text>();
+            Tex_FirstPassTime = Emp_StageInfo.transform.Find("Img_FirstPassTime").Find("Text").GetComponent<Text>();
+            Tex_TotalTime = Emp_StageInfo.transform.Find("Img_TotalTime").Find("Text").GetComponent<Text>();
         }
 
         /// <summary>
@@ -258,6 +267,74 @@ namespace UIPanel.StageConfigPanel
 
             // 附加说明
             Tex_AddInfo.text = info.additionalNotes;
+            {
+                RectTransform Rect_AddInfo = Tex_AddInfo.GetComponent<RectTransform>();
+                int countPerRow = Mathf.FloorToInt(Rect_AddInfo.rect.width / Tex_AddInfo.fontSize);
+                int rowCount = Mathf.CeilToInt((float)Tex_AddInfo.text.Length / countPerRow + 2); // 计算需要多少行
+                foreach (var c in Tex_AddInfo.text.ToCharArray())
+                {
+                    if (c.Equals('\n'))
+                        rowCount++;
+                }
+                Scr_AddInfo.content.sizeDelta = new Vector2(Scr_AddInfo.content.sizeDelta.x, Tex_AddInfo.fontSize * rowCount);
+            }
+
+
+            // 时间信息
+            PlayerData.StageInfo_Dynamic info_dynamic = PlayerData.GetInstance().GetCurrentDynamicStageInfo();
+            if (info_dynamic != null && info_dynamic.id != null)
+            {
+                string id = info_dynamic.id;
+                StageInfoManager.StageInfo_Local local_info = StageInfoManager.GetLocalStageInfo(id);
+                if (local_info.minPassTime < 0)
+                    Tex_MinPassTime.text = "-- : -- : --.--";
+                else
+                    Tex_MinPassTime.text = GetMinPassTime(local_info.minPassTime);
+                if (local_info.firstPassPlayTime < 0)
+                    Tex_FirstPassTime.text = "-- : -- : --";
+                else
+                    Tex_FirstPassTime.text = GetRealTime(local_info.firstPassPlayTime);
+                Tex_TotalTime.text = GetRealTime(local_info.totalPlayTime);
+            }
+            else
+            {
+                Tex_MinPassTime.text = "-- : -- : --.--";
+                Tex_FirstPassTime.text = "-- : -- : --";
+                Tex_TotalTime.text = "-- : -- : --";
+            }
+        }
+
+        private string GetMinPassTime(int frame)
+        {
+            int hour = frame / 216000;
+            frame = frame % 216000;
+            int min = frame / 3600;
+            frame = frame % 3600;
+            int sec = frame / 60;
+            frame = frame % 60;
+            int ms = 100 * frame / 60;
+
+            string hh = (hour >= 10 ? hour.ToString() : "0" + hour.ToString());
+            string mm = (min >= 10 ? min.ToString() : "0" + min.ToString());
+            string ss = (sec >= 10 ? sec.ToString() : "0" + sec.ToString());
+            string msms = (ms >= 10 ? ms.ToString() : "0" + ms.ToString());
+
+            return hh + " : " + mm + " : " + ss + "." + msms;
+        }
+
+        private string GetRealTime(float real_time)
+        {
+            int hour = Mathf.FloorToInt(real_time / 3600);
+            real_time = real_time % 3600;
+            int min = Mathf.FloorToInt(real_time / 60);
+            real_time = real_time % 60;
+            int sec = Mathf.FloorToInt(real_time);
+
+            string hh = (hour >= 10 ? hour.ToString() : "0" + hour.ToString());
+            string mm = (min >= 10 ? min.ToString() : "0" + min.ToString());
+            string ss = (sec >= 10 ? sec.ToString() : "0" + sec.ToString());
+
+            return hh + " : " + mm + " : " + ss;
         }
 
         /////////////////////////////////////以下方法是暴露给按钮用的/////////////////////////////////

@@ -16,6 +16,7 @@ public class ConfigPanel : MonoBehaviour, IBasePanel
 
     private Button Btn_ReturnToMain;
     private Button Btn_RestoreTheDefaultSettings;
+    private Button Btn_OpenSave;
 
 
 
@@ -30,6 +31,10 @@ public class ConfigPanel : MonoBehaviour, IBasePanel
         Btn_RestoreTheDefaultSettings = transform.Find("Btn_RestoreTheDefaultSettings").GetComponent<Button>();
         Toggle_DebugMode = transform.Find("Img_DebugMode").Find("Toggle").GetComponent<Toggle>();
         Toggle_HideCardInfo = transform.Find("Img_HideCardInfo").Find("Toggle").GetComponent<Toggle>();
+        Btn_OpenSave = transform.Find("Btn_OpenSave").GetComponent<Button>();
+        Btn_OpenSave.onClick.AddListener(delegate {
+            Application.OpenURL(Application.persistentDataPath);
+        });
     }
 
 

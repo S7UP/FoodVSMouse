@@ -18,6 +18,7 @@ public class PlayerInfoPanel : BasePanel
     private Text Tex_ExpValue;
     private Text Tex_Level;
     private Text Tex_PlayerName;
+    private Text Tex_PlayTime; // 关卡总时长
     private Image Img_PlayerImage;
     private EventTrigger EventTrigger_PlayerImage;
     private Image Img_MainWeapons;
@@ -42,6 +43,9 @@ public class PlayerInfoPanel : BasePanel
     private Button Btn_WarriorChallenge;
     private Button Btn_Spurline;
     private Button Btn_MagicTower;
+    private Button Btn_SpeedRun;
+    private Button Btn_Unused;
+    private Button Btn_LocalStage;
 
     private GameObject SelectWeaponsUI;
     private Transform Tran_WeaponsDisplay;
@@ -68,6 +72,7 @@ public class PlayerInfoPanel : BasePanel
         Tex_ExpValue = RectTrans_PlayerUI.Find("Tex_Exp").Find("Text").GetComponent<Text>();
         Tex_Level = RectTrans_PlayerUI.Find("Tex_Level").GetComponent<Text>();
         Tex_PlayerName = RectTrans_PlayerUI.Find("Tex_PlayerName").GetComponent<Text>();
+        Tex_PlayTime = RectTrans_PlayerUI.Find("Tex_TotalTime").Find("Text").GetComponent<Text>();
         Img_PlayerImage = RectTrans_PlayerUI.Find("Btn_PlayerImage").Find("Image").GetComponent<Image>();
         EventTrigger_PlayerImage = RectTrans_PlayerUI.Find("Btn_PlayerImage").GetComponent<EventTrigger>();
         Img_MainWeapons = RectTrans_PlayerUI.Find("Btn_MainWeapons").Find("Image").GetComponent<Image>();
@@ -92,6 +97,9 @@ public class PlayerInfoPanel : BasePanel
         Btn_Spurline = Trans_ModeSelectList.Find("Btn_Spurline").GetComponent<Button>();
         Btn_MagicTower = Trans_ModeSelectList.Find("Btn_MagicTowerCake").GetComponent<Button>();
         Btn_LegendChallenge = Trans_ModeSelectList.Find("Btn_LegendChallenge").GetComponent<Button>();
+        Btn_LocalStage = Trans_ModeSelectList.Find("Btn_LocalStage").GetComponent<Button>();
+        Btn_SpeedRun = Trans_ModeSelectList.Find("Btn_SpeedRun").GetComponent<Button>();
+        Btn_Unused = Trans_ModeSelectList.Find("Btn_Unused").GetComponent<Button>();
 
         SelectWeaponsUI = transform.Find("SelectWeaponsUI").gameObject;
         Tran_WeaponsDisplay = SelectWeaponsUI.transform.Find("Img_center").Find("Emp_Weapons").Find("Scr").Find("Viewport").Find("Content");
@@ -308,6 +316,43 @@ public class PlayerInfoPanel : BasePanel
                 tex.text = OtherUnlockManager.GetUnlockLevel(id) + "级解锁";
             }
         }
+        // 速通挑战
+        {
+            Image img = Btn_SpeedRun.GetComponent<Image>();
+            Text tex = Btn_SpeedRun.transform.Find("Text").GetComponent<Text>();
+            string id = "SpeedRun";
+            if (isDeveloperMode || (OtherUnlockManager.IsUnlock(id) || OtherUnlockManager.TryUnlock(id)))
+            {
+                Btn_SpeedRun.interactable = true;
+                img.color = new Color(1, 1, 1, 1);
+                tex.gameObject.SetActive(false);
+            }
+            else
+            {
+                Btn_SpeedRun.interactable = false;
+                img.color = new Color(0.5f, 0.5f, 0.5f, 1);
+                tex.text = OtherUnlockManager.GetUnlockLevel(id) + "级解锁";
+            }
+        }
+
+        // 遗忘档案
+        {
+            Image img = Btn_Unused.GetComponent<Image>();
+            Text tex = Btn_Unused.transform.Find("Text").GetComponent<Text>();
+            string id = "Unused";
+            if (isDeveloperMode || (OtherUnlockManager.IsUnlock(id) || OtherUnlockManager.TryUnlock(id)))
+            {
+                Btn_Unused.interactable = true;
+                img.color = new Color(1, 1, 1, 1);
+                tex.gameObject.SetActive(false);
+            }
+            else
+            {
+                Btn_Unused.interactable = false;
+                img.color = new Color(0.5f, 0.5f, 0.5f, 1);
+                tex.text = OtherUnlockManager.GetUnlockLevel(id) + "级解锁";
+            }
+        }
     }
 
     public override void EnterPanel()
@@ -340,6 +385,20 @@ public class PlayerInfoPanel : BasePanel
         PlayerData data = PlayerData.GetInstance();
         Tex_PlayerName.text = data.name;
         Tex_Level.text = data.GetLevel().ToString();
+        // 统计游玩时间
+        {
+            float real_time = data.playTime;
+            int hour = Mathf.FloorToInt(real_time / 3600);
+            real_time = real_time % 3600;
+            int min = Mathf.FloorToInt(real_time / 60);
+            real_time = real_time % 60;
+            int sec = Mathf.FloorToInt(real_time);
+            string hh = (hour >= 10 ? hour.ToString() : "0" + hour.ToString());
+            string mm = (min >= 10 ? min.ToString() : "0" + min.ToString());
+            string ss = (sec >= 10 ? sec.ToString() : "0" + sec.ToString());
+            Tex_PlayTime.text = hh + " : " + mm + " : " + ss;
+        }
+        
         if (data.IsMaxLevel())
         {
             Tex_ExpValue.text = data.currentExp.ToString("#0") + "/--";
@@ -680,6 +739,36 @@ public class PlayerInfoPanel : BasePanel
         BigChapterPanel.BigChapterPanel panel = mUIFacade.currentScenePanelDict[StringManager.BigChapterPanel] as BigChapterPanel.BigChapterPanel;
         panel.EnterPanel();
         panel.SetBigChapter("LegendChallenge");
+    }
+
+
+    /// <summary>
+    /// 当实验室按钮被点击时（由编辑器赋值给按钮）
+    /// </summary>
+    public void OnClickLocalStage()
+    {
+        LocalStagePanel.LocalStagePanel panel = mUIFacade.currentScenePanelDict[StringManager.LocalStagePanel] as LocalStagePanel.LocalStagePanel;
+        panel.EnterPanel();
+    }
+
+    /// <summary>
+    /// 当速通挑战按钮被点击时（由编辑器赋值给按钮）
+    /// </summary>
+    public void OnClickSpeedRun()
+    {
+        BigChapterPanel.BigChapterPanel panel = mUIFacade.currentScenePanelDict[StringManager.BigChapterPanel] as BigChapterPanel.BigChapterPanel;
+        panel.EnterPanel();
+        panel.SetBigChapter("SpeedRun");
+    }
+
+    /// <summary>
+    /// 当遗忘档案按钮被点击时（由编辑器赋值给按钮）
+    /// </summary>
+    public void OnClickUnused()
+    {
+        BigChapterPanel.BigChapterPanel panel = mUIFacade.currentScenePanelDict[StringManager.BigChapterPanel] as BigChapterPanel.BigChapterPanel;
+        panel.EnterPanel();
+        panel.SetBigChapter("Unused");
     }
 
     /// <summary>

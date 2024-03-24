@@ -28,6 +28,15 @@ public class PandaMouse : MouseUnit
     }
 
     /// <summary>
+    /// 设置判定参数
+    /// </summary>
+    public override void SetCollider2DParam()
+    {
+        mBoxCollider2D.offset = Vector2.zero;
+        mBoxCollider2D.size = new Vector2(0.75f * MapManager.gridWidth, 0.49f * MapManager.gridHeight);
+    }
+
+    /// <summary>
     /// 加载技能
     /// </summary>
     public override void LoadSkillAbility()
@@ -68,10 +77,6 @@ public class PandaMouse : MouseUnit
 
     public override void OnCastState()
     {
-        if (currentStateTimer <= 0)
-        {
-            return;
-        }
         // 动画播放完一次后，退出技能状态
         if(animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
         {

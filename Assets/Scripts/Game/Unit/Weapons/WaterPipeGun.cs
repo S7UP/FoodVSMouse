@@ -142,7 +142,7 @@ public class WaterPipeGun : BaseWeapons
                     MouseUnit m = u as MouseUnit;
                     if (!m.IsBoss())
                     {
-                        new DamageAction(CombatAction.ActionType.RealDamage, master, u, 0.01f * u.GetCurrentHp()).ApplyAction();
+                        new DamageAction(CombatAction.ActionType.CauseDamage, master, u, 0.01f * u.GetCurrentHp()).ApplyAction();
                     }
                 }
             });

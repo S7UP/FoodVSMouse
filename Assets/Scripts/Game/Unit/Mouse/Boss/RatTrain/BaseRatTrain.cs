@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System;
 using UnityEngine;
+using System.Linq;
 /// <summary>
 /// 鼠国列车通用
 /// </summary>
@@ -81,12 +82,13 @@ public class BaseRatTrain : BossUnit
         // 自身实际坐标固定在0
         transform.position = Vector3.zero;
 
-        // 第一帧强制设置所有车厢生命值与灰烬抗生同步自身
+        // 第一帧强制设置所有车厢生命值与灰烬抗性同步自身
         CustomizationTask t = new CustomizationTask();
-        t.AddTaskFunc(delegate {
+        t.AddTaskFunc(delegate
+        {
             foreach (var comp in GetAllRatTrainComponent())
             {
-                comp.SetGetBurnRateFunc(delegate { return mBurnRate; } );
+                comp.SetGetBurnRateFunc(delegate { return mBurnRate; });
                 comp.SetMaxHpAndCurrentHp(mMaxHp);
             }
             return true;
@@ -96,6 +98,55 @@ public class BaseRatTrain : BossUnit
 
     public override void MUpdate()
     {
+        {
+            List<RatTrainComponent> delList = new List<RatTrainComponent>();
+            {
+                List<RatTrainBody> bodyDelList = new List<RatTrainBody>();
+                foreach (var u in bodyList)
+                {
+                    if (!u.IsAlive())
+                        bodyDelList.Add(u);
+                }
+                foreach (var u in bodyDelList)
+                {
+                    bodyList.Remove(u);
+                    delList.Add(u);
+                }
+                    
+            }
+            if (head != null && !head.IsAlive())
+            {
+                delList.Add(head);
+                head = null;
+            }
+
+            List<ComponetPosInfo> delInfoList = new List<ComponetPosInfo>();
+            foreach (var info in infoList)
+            {
+                if (delList.Contains(info.component))
+                    delInfoList.Add(info);
+            }
+            foreach (var info in delInfoList)
+            {
+                infoList.Remove(info);
+            }
+
+            if(delInfoList.Count > 0)
+                foreach (var infoList in route_componetPosInfoDict.Values.ToArray())
+                {
+                    delInfoList.Clear();
+                    foreach (var info in infoList)
+                    {
+                        if (delList.Contains(info.component))
+                            delInfoList.Add(info);
+                    }
+                    foreach (var info in delInfoList)
+                    {
+                        infoList.Remove(info);
+                    }
+                }
+        }
+
         base.MUpdate();
     }
 
@@ -106,11 +157,16 @@ public class BaseRatTrain : BossUnit
     {
         float move_dist = 0;
         // 车头
-        head = RatTrainHead.GetInstance();
-        head.SetMaster(this);
-        head.SetDmgRate(1.0f, 1.0f);
-        infoList.Add(new ComponetPosInfo(head, move_dist));
-        GameController.Instance.AddMouseUnit(head);
+        if(head == null)
+        {
+            head = RatTrainHead.GetInstance();
+            head.SetMaster(this);
+            head.SetDmgRate(1.0f, 1.0f);
+            head.SetGetBurnRateFunc(delegate { return mBurnRate; });
+            head.SetMaxHpAndCurrentHp(mMaxHp);
+            infoList.Add(new ComponetPosInfo(head, move_dist));
+            GameController.Instance.AddMouseUnit(head);
+        }
         move_dist -= 0.5f * headLength + 0.5f * length * hscale;
 
         // 车身
@@ -120,6 +176,8 @@ public class BaseRatTrain : BossUnit
             b.SetMaster(this);
             b.SetDmgRate(1.0f, 1.0f);
             b.transform.localScale = new Vector2(hscale, 1);
+            //b.SetGetBurnRateFunc(delegate { return mBurnRate; });
+            //b.SetMaxHpAndCurrentHp(mMaxHp);
             bodyList.Add(b);
             infoList.Add(new ComponetPosInfo(b, move_dist));
             GameController.Instance.AddMouseUnit(b);
@@ -225,9 +283,6 @@ public class BaseRatTrain : BossUnit
 
     public override void OnMoveState()
     {
-        //if (IsHeadMoveToDestination())
-        //    return;
-
         // 对每节车厢位置信息移动更新
         bool delEmptyRoute = true;
         bool isMoveToDestination = IsHeadMoveToDestination();
@@ -286,20 +341,7 @@ public class BaseRatTrain : BossUnit
             // 移出需要转移的info
             foreach (var info in skipList)
                 infoList.Remove(info);
-
-            //if (infoList.Count <= 0 && delEmptyRoute)
-            //{
-            //    delRouteList.Add(route);
-            //    continue;
-            //}
-            //else
-            //    delEmptyRoute = false;
-
         }
-
-        // 移除空的Route
-        //foreach (var route in delRouteList)
-        //    route_componetPosInfoDict.Remove(route);
     }
 
     private CustomizationTask GetSkipToNextRouteDisappearTask(ComponetPosInfo info)
@@ -504,5 +546,16 @@ public class BaseRatTrain : BossUnit
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// 清空所有车厢的路径
+    /// </summary>
+    public void ClearRouteComponetPosInfoDict()
+    {
+        bodyList.Clear();
+        infoList.Clear();
+        route_componetPosInfoDict.Clear();
+        lastRoutePoints = null;
     }
 }

@@ -2,7 +2,7 @@ using UnityEngine;
 using S7P.Numeric;
 using System;
 
-public class FlySelfDestructMouse : MouseUnit, IFlyUnit
+public class FlySelfDestructMouse : MouseUnit
 {
     private static RuntimeAnimatorController BoomEffect;
 
@@ -27,7 +27,26 @@ public class FlySelfDestructMouse : MouseUnit, IFlyUnit
         // 初始免疫炸弹秒杀效果
         NumericBox.BurnRate.AddModifier(burnRateMod);
         // 在受到伤害结算之后，直接判定为击坠状态
-        AddActionPointListener(ActionPointType.PostReceiveDamage, delegate { ExecuteDestruct(); });
+        AddActionPointListener(ActionPointType.PostReceiveDamage, (combat)=> { 
+            if(!isDrop)
+                ExecuteDestruct();
+            else
+            {
+                // 在坠机状态下受到灰烬效果会直接化灰
+                if(combat is DamageAction)
+                {
+                    DamageAction dmgAction = combat as DamageAction;
+                    if(dmgAction.IsDamageType(DamageAction.DamageType.BombBurn))
+                    {
+                        ExecuteBurn();
+                    }
+                }
+            }
+        });
+        // 锁1血
+        SetGetCurrentHpFunc(delegate {
+            return Mathf.Max(1, _mCurrentHp);
+        });
     }
 
     public override void MUpdate()
@@ -60,8 +79,12 @@ public class FlySelfDestructMouse : MouseUnit, IFlyUnit
             // 移除免疫炸弹秒杀效果
             NumericBox.BurnRate.RemoveModifier(burnRateMod);
             // 添加冻结免疫效果
-            NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozen, IgnoreFrozen);
             NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, IgnoreFrozen);
+            // 如果自身有冰冻损伤，则再自我添加100点冰冻损伤（以实现能稳定携带冰冻损伤落地）
+            if (Environment.EnvironmentFacade.GetIceDebuff(this) != null)
+            {
+                Environment.EnvironmentFacade.AddIceDebuff(this, 100);
+            }
             // 同时移除身上所有定身类控制效果
             StatusManager.RemoveAllSettleDownDebuff(this);
             // 修改基础移速为在200帧内移动3格
@@ -94,13 +117,13 @@ public class FlySelfDestructMouse : MouseUnit, IFlyUnit
         // 如果身上有冰冻损伤debuff
         if(Environment.EnvironmentFacade.GetIceDebuff(this)!=null)
         {
-            bomb_dmg_rate = 0.5f;
+            bomb_dmg_rate = 0.01f;
             Action<BaseUnit> action = (u) => 
             {
                 Environment.EnvironmentFacade.AddIceDebuff(u, 100);
             };
             // 对3*3所有单位施加100冰冻损伤
-            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, new Vector2(2.75f*MapManager.gridWidth, 2.75f * MapManager.gridHeight), "BothCollide");
+            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, new Vector2(0.5f*MapManager.gridWidth, 0.5f * MapManager.gridHeight), "BothCollide");
             r.SetAffectHeight(0);
             r.isAffectFood = true;
             r.isAffectMouse = true;
@@ -111,9 +134,9 @@ public class FlySelfDestructMouse : MouseUnit, IFlyUnit
             GameController.Instance.AddAreaEffectExecution(r);
         }
 
-        // 落地爆炸判定
+        // 落地爆炸判定(对美食）
         {
-            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, new Vector2(0.5f*MapManager.gridWidth, 0.5f * MapManager.gridHeight), "BothCollide");
+            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, new Vector2(0.5f*MapManager.gridWidth, 0.5f * MapManager.gridHeight), "ItemCollideAlly");
             r.SetAffectHeight(0);
             r.isAffectFood = true;
             r.isAffectMouse = true;
@@ -125,6 +148,18 @@ public class FlySelfDestructMouse : MouseUnit, IFlyUnit
                 int count = r.foodUnitList.Count;
                 foreach (var u in r.foodUnitList.ToArray())
                     new DamageAction(CombatAction.ActionType.BurnDamage, this, u, Mathf.Max(50, u.mMaxHp / 2) / count * bomb_dmg_rate).ApplyAction();
+            });
+            GameController.Instance.AddAreaEffectExecution(r);
+        }
+        // 对老鼠
+        {
+            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, new Vector2(1f * MapManager.gridWidth, 1f * MapManager.gridHeight), "ItemCollideEnemy");
+            r.SetAffectHeight(0);
+            r.isAffectMouse = true;
+            r.SetTotoalTimeAndTimeLeft(2);
+            r.AddExcludeMouseUnit(this);
+            r.AddBeforeDestoryAction(delegate
+            {
                 // 所有老鼠单位受到一次灰烬效果
                 foreach (var u in r.mouseUnitList.ToArray())
                     BurnManager.BurnDamage(this, u, bomb_dmg_rate);

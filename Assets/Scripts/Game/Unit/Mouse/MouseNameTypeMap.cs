@@ -6,7 +6,7 @@ public enum MouseNameTypeMap
     NormalMouse = 0, // 普通老鼠
     StraddleMouse = 1, // 跨越类
     KangarooMouse = 2, // 袋鼠类
-    DoorMouse = 3, // 正面防御类
+    DoorMouse = 3, // 房东类
     LadderMouse = 4, // 梯子类
     HealMouse = 5, // 加血类
     FlyMouse = 6, // 基础飞行类
@@ -33,6 +33,8 @@ public enum MouseNameTypeMap
     NonMainstreamMouse = 27, // 非主流
     BeeMouse = 28, // 机械蜂箱
     CanMouse = 29, // 罐头鼠
+    GUNDAMMouse = 30, // 机械高达鼠
+    ValiMouse = 31, // 瓦力鼠
     TrumpetMouse = 32, // 小号鼠
     WonderLandNormalMouse = 33, // 奇境常规老鼠
     WonderLandMole = 34, // 奇境刺猬

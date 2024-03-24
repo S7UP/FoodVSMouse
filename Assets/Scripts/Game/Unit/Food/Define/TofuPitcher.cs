@@ -12,15 +12,15 @@ public class TofuPitcher : FoodUnit
     private static RuntimeAnimatorController RedBulletRuntimeAnimatorController;
     private static RuntimeAnimatorController PoisonEffectRuntimeAnimatorController;
     private static RuntimeAnimatorController PoisonAreaEffectRuntimeAnimatorController;
-    private static string DebuffName = "臭豆腐中毒";
+    private const string DebuffName = "臭豆腐中毒";
 
-    private Vector2 targetPosition;
-    private int GreenBulletAttackCount; // 投掷臭豆腐所需要的攻击次数
-    private int greenLeft; // 投掷臭豆腐前还需要的攻击次数
-    private float GreenDamageRate; // 臭豆腐的伤害倍率
     private float poisonDamageRate; // 每秒中毒伤害倍率
     private int PoisonTime; // 中毒时间
-    private FloatModifier costMod = new FloatModifier(-15f / 7 / 60);
+
+    private int chargeTime; // 充能一次需要的时间
+    private int chargeCount; // 当前充能数
+    private const int maxChargeCount = 2; // 最大充能数
+    private int chargeTimeLeft; // 剩余充能时间
 
     public override void Awake()
     {
@@ -45,32 +45,44 @@ public class TofuPitcher : FoodUnit
         switch (mShape)
         {
             case 1:
-                GreenBulletAttackCount = 2;
-                PoisonTime = 360;
-                greenLeft = 0;
+                poisonDamageRate = 0.5f;
+                PoisonTime = 720;
+                chargeTime = 180;
                 break;
             case 2:
-                GreenBulletAttackCount = 1;
+                poisonDamageRate = 1f;
                 PoisonTime = 360;
-                greenLeft = 0;
+                chargeTime = 102;
                 break;
             default:
-                GreenBulletAttackCount = 2;
-                PoisonTime = 240;
-                greenLeft = GreenBulletAttackCount;
+                poisonDamageRate = 0.5f;
+                PoisonTime = 720;
+                chargeTime = 180;
                 break;
         }
-        
-        GreenDamageRate = 1.0f;
-        poisonDamageRate = 0.5f;
-        targetPosition = Vector2.zero;
 
-        GameController.Instance.AddCostResourceModifier("Fire", costMod);
+        chargeCount = 1;
+        chargeTimeLeft = chargeTime;
+    }
+
+    public override void MUpdate()
+    {
+        // 充能机制
+        if(chargeCount < maxChargeCount)
+        {
+            chargeTimeLeft--;
+            if(chargeTimeLeft <= 0)
+            {
+                chargeTimeLeft += chargeTime;
+                chargeCount++;
+            }
+        }
+
+        base.MUpdate();
     }
 
     public override void MDestory()
     {
-        GameController.Instance.RemoveCostResourceModifier("Fire", costMod);
         base.MDestory();
     }
 
@@ -84,10 +96,7 @@ public class TofuPitcher : FoodUnit
 
     public override void OnAttackStateEnter()
     {
-        if (greenLeft > 0)
-            animatorController.Play("Attack0");
-        else
-            animatorController.Play("Attack1");
+        animatorController.Play("Attack0");
     }
 
     protected override void UpdateAttackAnimationSpeed()
@@ -103,10 +112,6 @@ public class TofuPitcher : FoodUnit
     protected override bool IsHasTarget()
     {
         BaseUnit targetUnit = PitcherManager.FindTargetByPitcher(this, transform.position.x - MapManager.gridWidth / 2, GetRowIndex());
-        if (targetUnit != null)
-        {
-            targetPosition = targetUnit.transform.position;
-        }
         return targetUnit != null;
     }
 
@@ -174,20 +179,22 @@ public class TofuPitcher : FoodUnit
     /// </summary>
     public override void ExecuteDamage()
     {
+        int rowIndex = GetRowIndex();
         GameManager.Instance.audioSourceController.PlayEffectMusic("Throw" + GameManager.Instance.rand.Next(0, 2));
-        // 选择目标
-        BaseUnit target = PitcherManager.FindTargetByPitcher(this, transform.position.x - MapManager.gridWidth / 2, GetRowIndex());
-
-
-        if (greenLeft > 0)
+        // 选择红豆腐目标
         {
-            greenLeft--;
+            BaseUnit target = PitcherManager.FindTargetByPitcher(this, transform.position.x - MapManager.gridWidth / 2, rowIndex);
             CreateRedBullet(transform.position, target, mCurrentAttack);
         }
-        else
+
+        // 选择臭豆腐目标
         {
-            greenLeft = GreenBulletAttackCount;
-            CreateGreenBullet(transform.position, target, mCurrentAttack);
+            BaseUnit target;
+            if (chargeCount > 0 && TryFindGreenBulletTarget(out target))
+            {
+                chargeCount--;
+                CreateGreenBullet(transform.position, target, mCurrentAttack);
+            }
         }
 
     }
@@ -241,7 +248,7 @@ public class TofuPitcher : FoodUnit
         if (target != null)
             PitcherManager.AddDefaultFlyTask(b, startPosition, target, true, false);
         else
-            PitcherManager.AddDefaultFlyTask(b, startPosition, targetPosition, true, false);
+            PitcherManager.AddDefaultFlyTask(b, startPosition, new Vector2(MapManager.GetColumnX(8.5f), startPosition.y), true, false);
 
         GameController.Instance.AddBullet(b);
         return b;
@@ -255,7 +262,7 @@ public class TofuPitcher : FoodUnit
     /// <returns></returns>
     private BaseBullet CreateGreenBullet(Vector2 startPosition, BaseUnit target, float ori_dmg)
     {
-        AllyBullet b = AllyBullet.GetInstance(BulletStyle.Throwing, GreenBulletRuntimeAnimatorController, this, GreenDamageRate * ori_dmg);
+        AllyBullet b = AllyBullet.GetInstance(BulletStyle.Throwing, GreenBulletRuntimeAnimatorController, this, 0);
         b.SetHitSoundEffect("Splat" + GameManager.Instance.rand.Next(0, 3));
         b.AddSpriteOffsetY(new FloatModifier(0.5f * MapManager.gridHeight));
         b.isnDelOutOfBound = true; // 出屏不自删
@@ -264,97 +271,98 @@ public class TofuPitcher : FoodUnit
         if (target != null)
             PitcherManager.AddDefaultFlyTask(b, startPosition, target, true, false);
         else
-            PitcherManager.AddDefaultFlyTask(b, startPosition, targetPosition, true, false);
+            PitcherManager.AddDefaultFlyTask(b, startPosition, new Vector2(MapManager.GetColumnX(8.5f), startPosition.y), true, false);
 
-
-        // 这里判断目标是友方还是敌方，还是没有，根据这些情况来制定逻辑
-        if (target != null && target is FoodUnit && target.mType == (int)FoodNameTypeMap.CherryPudding)
-        {
-            // 目标是友方布丁
-            CherryPuddingFoodUnit pudding = target.GetComponent<CherryPuddingFoodUnit>();
-
-            // 添加目标布丁存活监听
-            CustomizationTask t = new CustomizationTask();
-            t.AddTaskFunc(delegate
+        // 添加击中后的事件
+        b.AddHitAction((b, u) => {
+            if (u != null && u.IsAlive())
             {
-                return !pudding.IsAlive();
-            });
-            t.AddOnExitAction(delegate
-            {
-                pudding = null; // 如果目标布丁不存活，则取消其引用
-            });
-            b.AddTask(t);
-
-            // 定义与添加重定向任务
-            b.AddHitAction((b, u) => {
-                // 重定向
-                if (pudding != null)
+                TofuTask t;
+                if (u.GetTask(DebuffName) == null)
                 {
-                    BaseUnit next_target = pudding.FindRedirectThrowingObjectTarget(b);
-                    if (next_target != null)
-                    {
-                        b.isnUseHitEffect = true; // 当前子弹不采用击中动画，直接消失
-                        CreateGreenBullet(b.transform.position, next_target, ori_dmg);
-                    }
-                    else
-                    {
-                        // 原地破裂，但还是会触发范围效果
-                        CreateDebuffArea(b.transform.position, ori_dmg);
-                    }
+                    t = new TofuTask(u);
+                    u.taskController.AddUniqueTask(DebuffName, t);
                 }
-            });
-        }
-        else
-        {
-            // 添加击中后的事件
-            b.AddHitAction((b, u) => {
-                if (u == null || !u.IsAlive())
-                    CreateDebuffArea(b.transform.position, ori_dmg);
                 else
-                    CreateDebuffArea(u.transform.position, ori_dmg);
-            });
-        }
-
+                {
+                    t = u.GetTask(DebuffName) as TofuTask;
+                }
+                t.AddBuff(poisonDamageRate * ori_dmg, PoisonTime);
+            }
+        });
         GameController.Instance.AddBullet(b);
         return b;
     }
 
-
     /// <summary>
-    /// 为一定范围内的敌人附上中毒
+    /// 尝试去找臭豆腐的攻击目标
     /// </summary>
-    /// <param name="pos"></param>
-    /// <param name="ori_dmg"></param>
-    private void CreateDebuffArea(Vector2 pos, float ori_dmg)
+    /// <param name="target"></param>
+    /// <returns></returns>
+    public bool TryFindGreenBulletTarget(out BaseUnit target)
     {
-        RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(pos, 3, 3, "ItemCollideEnemy");
-        r.isAffectMouse = true;
-        r.SetAffectHeight(0);
-        r.SetInstantaneous();
-
-        r.SetOnEnemyEnterAction((u) => {
-            TofuTask t;
-            if (u.GetTask(DebuffName) == null)
-            {
-                t = new TofuTask(u);
-                u.AddUniqueTask(DebuffName, t);
-            }
-            else
-            {
-                t = u.GetTask(DebuffName) as TofuTask;
-            }
-            t.AddBuff(poisonDamageRate * ori_dmg, PoisonTime);
-        });
-
-        GameController.Instance.AddAreaEffectExecution(r);
-
-        // 添加范围特效
+        float minX = transform.position.x - MapManager.gridWidth / 2;
+        // 单行索敌
+        List<BaseUnit> list = new List<BaseUnit>();
+        List<BaseUnit> debuffList = new List<BaseUnit>(); // 中毒的单位
+        // 筛选出合适的单位
+        float maxHp = float.MinValue;
+        foreach (var u in GameController.Instance.GetSpecificRowEnemyList(GetRowIndex()).ToArray())
         {
-            BaseEffect e = BaseEffect.CreateInstance(PoisonAreaEffectRuntimeAnimatorController, null, "Appear", "Disappear", false);
-            e.SetSpriteRendererSorting("Unit", LayerManager.CalculateSortingLayer(LayerManager.UnitType.Enemy, 7, 0, UnityEngine.Random.Range(0, 100)));
-            e.transform.position = pos;
-            GameController.Instance.AddEffect(e);
+            bool canSelect = UnitManager.CanBeSelectedAsTarget(this, u);
+
+            // 高度为0，可被选为攻击目标，在范围内，且不中毒
+            if (u.GetHeight() == 0 && canSelect && u.transform.position.x >= minX)
+            {
+                if (u.GetTask(DebuffName) != null)
+                {
+                    debuffList.Add(u);
+                    continue;
+                }
+
+                // 找血最多的
+                if (u.mCurrentHp > maxHp)
+                {
+                    maxHp = u.mCurrentHp;
+                    list.Clear();
+                    list.Add(u);
+                }
+                else if (u.mCurrentHp == maxHp)
+                    list.Add(u);
+            }
         }
+
+        // 如果都是中毒单位
+        if (list.Count == 0 && debuffList.Count > 0)
+        {
+            foreach (var u in debuffList)
+            {
+                // 找血最多的
+                if (u.mCurrentHp > maxHp)
+                {
+                    maxHp = u.mCurrentHp;
+                    list.Clear();
+                    list.Add(u);
+                }
+                else if (u.mCurrentHp == maxHp)
+                    list.Add(u);
+            }
+        }
+
+        target = null;
+        // 去找坐标最小的单位
+        if (list.Count > 0)
+        {
+            foreach (var u in list)
+            {
+                if (target == null || u.transform.position.x < target.transform.position.x)
+                {
+                    target = u;
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     /// <summary>
@@ -362,24 +370,11 @@ public class TofuPitcher : FoodUnit
     /// </summary>
     private class TofuTask : ITask
     {
-        private FloatModifier decMod = new FloatModifier(-50);
-
-        private class Recorder
-        {
-            public float dmg; // 秒伤
-            public int timeLeft;
-
-            public Recorder(float dmg, int timeLeft)
-            {
-                this.dmg = dmg;
-                this.timeLeft = timeLeft;
-            }
-        }
-
         // 每半秒伤害系列
-        private const int interval = 30;
+        private const int interval = 15;
         private int triggerDamageTimeLeft; // 触发伤害剩余时间
-        private List<Recorder> rList = new List<Recorder>();
+        private float dmg; // 每跳伤害
+        private int timeLeft; // 剩余时间
         private BaseUnit unit;
 
         public TofuTask(BaseUnit unit)
@@ -390,83 +385,50 @@ public class TofuPitcher : FoodUnit
 
         private void Initial()
         {
-            rList.Clear();
             triggerDamageTimeLeft = interval;
         }
 
         public void OnEnter()
         {
             // 添加中毒特效
-            BaseEffect e = BaseEffect.CreateInstance(PoisonEffectRuntimeAnimatorController, "Appear", "Idle", "Disappear", true);
+            BaseEffect e = BaseEffect.CreateInstance(PoisonAreaEffectRuntimeAnimatorController, "Appear", "Idle", "Disappear", true);
             string name;
             int order;
             if (unit.TryGetSpriteRenternerSorting(out name, out order))
             {
-                e.SetSpriteRendererSorting(name, order + 4);
+                e.SetSpriteRendererSorting(name, order + 2);
             }
             GameController.Instance.AddEffect(e);
-            unit.mEffectController.AddEffectToDict(DebuffName, e, 0.3f*Vector2.up);
-            // 减速，减攻击，减攻速
-            unit.NumericBox.MoveSpeed.AddFinalPctAddModifier(decMod);
-            unit.NumericBox.AttackSpeed.AddFinalPctAddModifier(decMod);
-            unit.NumericBox.Attack.AddFinalPctAddModifier(decMod);
+            unit.mEffectController.AddEffectToDict(DebuffName, e, 0.35f * Vector2.up + 0.15f * Vector2.left);
         }
 
         public void OnUpdate()
         {
+            timeLeft--;
             triggerDamageTimeLeft--;
             if (triggerDamageTimeLeft <= 0)
             {
                 triggerDamageTimeLeft += interval;
-                float totalDamage = 0;
-                List<Recorder> delList = new List<Recorder>();
-                foreach (var r in rList)
-                {
-                    totalDamage += r.dmg;
-                    r.timeLeft--;
-                    if (r.timeLeft <= 0)
-                        delList.Add(r);
-                }
-                foreach (var r in delList)
-                    rList.Remove(r);
-                DamageAction d = new DamageAction(CombatAction.ActionType.CauseDamage, null, unit, totalDamage);
-                d.AddDamageType(DamageAction.DamageType.AOE);
-                d.ApplyAction();
+                new DamageAction(CombatAction.ActionType.CauseDamage, null, unit, dmg).ApplyAction();
             }
-            else
-            {
-                List<Recorder> delList = new List<Recorder>();
-                foreach (var r in rList)
-                {
-                    r.timeLeft--;
-                    if (r.timeLeft <= 0)
-                        delList.Add(r);
-                }
-                foreach (var r in delList)
-                    rList.Remove(r);
-            }
-               
         }
 
         public bool IsMeetingExitCondition()
         {
-            return rList.Count <= 0;
+            return timeLeft <= 0;
         }
 
         public void OnExit()
         {
             // 移除中毒特效
             unit.mEffectController.RemoveEffectFromDict(DebuffName);
-            // 减速，减攻击，减攻速
-            unit.NumericBox.MoveSpeed.RemoveFinalPctAddModifier(decMod);
-            unit.NumericBox.AttackSpeed.RemoveFinalPctAddModifier(decMod);
-            unit.NumericBox.Attack.RemoveFinalPctAddModifier(decMod);
         }
 
         // 叠加一层效果
         public void AddBuff(float dmg, int timeLeft)
         {
-            rList.Add(new Recorder(dmg, timeLeft));
+            this.dmg = dmg / (60f/interval);
+            this.timeLeft = timeLeft;
         }
 
         public void ShutDown()

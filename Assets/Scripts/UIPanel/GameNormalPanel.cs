@@ -41,6 +41,7 @@ public class GameNormalPanel : BasePanel
     private Text Tex_Rank;
     private Text Tex_StageName;
     private Text Tex_PlayTime;
+    private Text Tex_RealPlayTime;
     private Text Tex_TotalEnergy;
     private Text Tex_PauseCount;
     private GameObject NoLimit_Go;
@@ -53,6 +54,8 @@ public class GameNormalPanel : BasePanel
 
     private List<BaseUI> uiList = new List<BaseUI>(); // 附加ui表
     private Transform Trans_BottomLayer;
+
+    private float startRealTime; // 起始记录的实际时间
 
 
     protected override void Awake()
@@ -91,9 +94,9 @@ public class GameNormalPanel : BasePanel
         Tex_Rank = transform.Find("LeftBottomInfo").Find("Rank_Label").Find("Text").GetComponent<Text>();
         Tex_StageName = transform.Find("LeftBottomInfo").Find("StageName_Label").Find("Text").GetComponent<Text>();
         Tex_PlayTime = transform.Find("LeftBottomInfo").Find("Time_Label").Find("Text").GetComponent<Text>();
+        Tex_RealPlayTime = transform.Find("LeftBottomInfo").Find("RealTime_Label").Find("Text").GetComponent<Text>();
         Tex_TotalEnergy = transform.Find("LeftBottomInfo").Find("TotalEnergy_Label").Find("Text").GetComponent<Text>();
         Tex_PauseCount = transform.Find("LeftBottomInfo").Find("PauseCount_Label").Find("Text").GetComponent<Text>();
-        
         NoLimit_Go = transform.Find("LeftBottomInfo").Find("NoLimit_Go").gameObject;
         {
             RectTransform rect = NoLimit_Go.GetComponent<RectTransform>();
@@ -179,38 +182,25 @@ public class GameNormalPanel : BasePanel
         for (int i = 0; i < 3; i++)
         {
             int type = data.GetJewel(i);
-            if (i + 1 > info.jewelCount && info.isEnableJewelCount)
+            if (i + 1 > info.jewelCount && info.isEnableJewelCount && !info_dynamic.isNoLimit)
                 type = -1; // -1表示的是锁定
             JewelSkillArray[i].MInit(type, GameController.Instance.mJewelSkillArray[i]);
         }
         // 读取游戏当前难度并重置时间
         Tex_Rank.gameObject.SetActive(false);
         Img_Rank.gameObject.SetActive(true);
-        switch (data.GetDifficult())
-        {
-            case 1: Img_Rank.sprite = GameManager.Instance.GetSprite("UI/Difficulty/Normal");break;
-            case 2: Img_Rank.sprite = GameManager.Instance.GetSprite("UI/Difficulty/Hard"); break;
-            case 3: { 
-                    if(data.GetRankRate() > 1)
-                    {
-                        Img_Rank.gameObject.SetActive(false);
-                        Tex_Rank.gameObject.SetActive(true);
-                        Tex_Rank.text = (Mathf.FloorToInt(data.GetRankRate() * 100)).ToString() + "%";
-                    }
-                    else
-                    {
-                        Img_Rank.sprite = GameManager.Instance.GetSprite("UI/Difficulty/Lunatic");
-                    }
-                    break;
-                } 
-            default:
-                Img_Rank.sprite = GameManager.Instance.GetSprite("UI/Difficulty/Easy");
-                break;
-        }
+        Img_Rank.gameObject.SetActive(false);
+        Tex_Rank.gameObject.SetActive(true);
+        Tex_Rank.text = (Mathf.FloorToInt(data.GetRankRate() * 100)).ToString() + "%";
+
         Tex_StageName.text = "unknow";
         Tex_PlayTime.text = "00:00:00.00";
+        Tex_RealPlayTime.text = "00:00:00.00";
         Tex_TotalEnergy.text = "--";
-        Tex_PauseCount.text = "0";
+        if(info.pauseCount > -1)
+            Tex_PauseCount.text = "0/"+info.pauseCount;
+        else
+            Tex_PauseCount.text = "0/∞";
         // 是否解限
         NoLimit_Go.SetActive(info_dynamic.isNoLimit);
     }
@@ -220,8 +210,8 @@ public class GameNormalPanel : BasePanel
     /// </summary>
     public void OnPauseButtonClick()
     {
-        // 在人物放置阶段点暂停是没有任何吊用的
-        if (IsInCharacterConstructMode || MenuUI.activeInHierarchy)
+        // 在人物放置阶段点暂停 或者 游戏结束时暂停 是没有任何吊用的
+        if (IsInCharacterConstructMode || MenuUI.activeInHierarchy || GameController.Instance.isOver)
             return;
 
         // 先获取目前是暂停还是非暂停状态
@@ -236,12 +226,19 @@ public class GameNormalPanel : BasePanel
         }
         else
         {
-            // 如果是非暂停状态，则暂停
-            GameController.Instance.Pause();
-            // 设置文字
-            Tex_Pause.text = "解除暂停";
-            // 显示遮罩
-            PauseUI.SetActive(true);
+            // 如果是非暂停状态，则需要判断一下可否暂停
+            PlayerData data = PlayerData.GetInstance();
+            PlayerData.StageInfo_Dynamic info_dynamic = data.GetCurrentDynamicStageInfo();
+            BaseStage.StageInfo info = info_dynamic.info;
+
+            if(info_dynamic.isNoLimit || info.pauseCount <= -1 || GameController.Instance.pauseCount < info.pauseCount)
+            {
+                GameController.Instance.Pause();
+                // 设置文字
+                Tex_Pause.text = "解除暂停";
+                // 显示遮罩
+                PauseUI.SetActive(true);
+            }
         }
     }
 
@@ -272,12 +269,31 @@ public class GameNormalPanel : BasePanel
     }
 
     /// <summary>
+    /// 当游戏非正常结束时（胜利和失败以外的中断方式）的奖励结算
+    /// </summary>
+    private void RewardWhenGameInterrupted()
+    {
+        PlayerData data = PlayerData.GetInstance();
+        data.AddExp(GameController.Instance.GetDefaultExpReward()); // 加经验值
+        data.playTime += GetRealTime();
+        // 如果是正式收录的关，还需要更新用时记录
+        PlayerData.StageInfo_Dynamic info_dynamic = data.GetCurrentDynamicStageInfo();
+        if (info_dynamic != null && info_dynamic.id != null)
+        {
+            string id = info_dynamic.id;
+            StageInfoManager.StageInfo_Local local_info = StageInfoManager.GetLocalStageInfo(id);
+            // 总用时记录
+            local_info.totalPlayTime += GetRealTime();
+        }
+    }
+
+    /// <summary>
     /// 当重新尝试被点击时（游戏还未结束，是从菜单主动点击重新尝试的）
     /// </summary>
     public void OnClickRetryWhenNoEnd()
     {
         // 推把也加经验值的
-        PlayerData.GetInstance().AddExp(GameController.Instance.GetDefaultExpReward());
+        RewardWhenGameInterrupted();
         OnRetryClick();
     }
 
@@ -295,7 +311,7 @@ public class GameNormalPanel : BasePanel
     public void OnReturnToSelcetClickWhenNoEnd()
     {
         // 推把也加经验值的
-        PlayerData.GetInstance().AddExp(GameController.Instance.GetDefaultExpReward());
+        RewardWhenGameInterrupted();
         OnReturnToSelcetClick();
     }
 
@@ -314,7 +330,7 @@ public class GameNormalPanel : BasePanel
     public void OnReturnToMainClickWhenNoEnd()
     {
         // 推把也加经验值的
-        PlayerData.GetInstance().AddExp(GameController.Instance.GetDefaultExpReward());
+        RewardWhenGameInterrupted();
         OnReturnToMainClick();
     }
 
@@ -330,9 +346,20 @@ public class GameNormalPanel : BasePanel
         MenuUI.SetActive(enable);
 
         if (enable)
-            GameController.Instance.Pause();
-        else
+        {
+            // 如果是非暂停状态，则需要判断一下可否暂停
+            PlayerData data = PlayerData.GetInstance();
+            PlayerData.StageInfo_Dynamic info_dynamic = data.GetCurrentDynamicStageInfo();
+            BaseStage.StageInfo info = info_dynamic.info;
+
+            if (!GameController.Instance.isPause && (info_dynamic.isNoLimit || info.pauseCount <= -1 || GameController.Instance.pauseCount < info.pauseCount))
+                GameController.Instance.Pause();
+        }
+        else if(GameController.Instance.isPause)
+        {
             GameController.Instance.Resume();
+        }
+            
     }
 
     /// <summary>
@@ -548,6 +575,10 @@ public class GameNormalPanel : BasePanel
 
     public override void UpdatePanel()
     {
+        PlayerData data = PlayerData.GetInstance();
+        PlayerData.StageInfo_Dynamic info_dynamic = data.GetCurrentDynamicStageInfo();
+        BaseStage.StageInfo info = info_dynamic.info;
+
         if (InfoUI.isActiveAndEnabled)
         {
             InfoUI.MUpdate();
@@ -559,23 +590,51 @@ public class GameNormalPanel : BasePanel
         // 更新时间轴
         if (GameController.Instance != null)
         {
-            int frame = GameController.Instance.GetCurrentStageFrame();
-            int hour = frame / 216000;
-            frame = frame % 216000;
-            int min = frame / 3600;
-            frame = frame % 3600;
-            int sec = frame / 60;
-            frame = frame % 60;
-            int ms = 100 * frame / 60;
-
-            string hh = (hour >= 10 ? hour.ToString() : "0" + hour.ToString());
-            string mm = (min >= 10 ? min.ToString() : "0" + min.ToString());
-            string ss = (sec >= 10 ? sec.ToString() : "0" + sec.ToString());
-            string msms = (ms >= 10 ? ms.ToString() : "0" + ms.ToString());
             Tex_StageName.text = GameController.Instance.mCurrentStage.mStageInfo.name;
-            Tex_PlayTime.text = hh + ":" + mm + ":" + ss + "." + msms;
+            // 游戏时间
+            {
+                int frame = GameController.Instance.GetCurrentStageFrame();
+                int hour = frame / 216000;
+                frame = frame % 216000;
+                int min = frame / 3600;
+                frame = frame % 3600;
+                int sec = frame / 60;
+                frame = frame % 60;
+                int ms = 100 * frame / 60;
+
+                string hh = (hour >= 10 ? hour.ToString() : "0" + hour.ToString());
+                string mm = (min >= 10 ? min.ToString() : "0" + min.ToString());
+                string ss = (sec >= 10 ? sec.ToString() : "0" + sec.ToString());
+                string msms = (ms >= 10 ? ms.ToString() : "0" + ms.ToString());
+
+                Tex_PlayTime.text = hh + ":" + mm + ":" + ss + "." + msms;
+            }
+            // 实际时间
+            if(!GameController.Instance.isOver){
+                if (IsInCharacterConstructMode)
+                    startRealTime = Time.time;
+                float real_time = GetRealTime();
+                int hour = Mathf.FloorToInt(real_time / 3600);
+                real_time = real_time % 3600;
+                int min = Mathf.FloorToInt(real_time / 60);
+                real_time = real_time % 60;
+                int sec = Mathf.FloorToInt(real_time);
+                real_time = real_time - sec;
+                int ms = Mathf.FloorToInt(100 * real_time);
+
+                string hh = (hour >= 10 ? hour.ToString() : "0" + hour.ToString());
+                string mm = (min >= 10 ? min.ToString() : "0" + min.ToString());
+                string ss = (sec >= 10 ? sec.ToString() : "0" + sec.ToString());
+                string msms = (ms >= 10 ? ms.ToString() : "0" + ms.ToString());
+
+                Tex_RealPlayTime.text = hh + ":" + mm + ":" + ss + "." + msms;
+            }
+            
             Tex_TotalEnergy.text = GameController.Instance.mCostController.totalFire.ToString("#0");
-            Tex_PauseCount.text = GameController.Instance.pauseCount.ToString();
+            if(!info_dynamic.isNoLimit && info.pauseCount > -1)
+                Tex_PauseCount.text = GameController.Instance.pauseCount.ToString() + "/" + info.pauseCount;
+            else
+                Tex_PauseCount.text = GameController.Instance.pauseCount.ToString() + "/∞";
         }
         // 更新附加小ui组件
         List<BaseUI> delList = new List<BaseUI>();
@@ -637,5 +696,14 @@ public class GameNormalPanel : BasePanel
         uiList.Add(ui);
         ui.transform.SetParent(Trans_BottomLayer);
         ui.transform.localScale = size;
+    }
+
+    /// <summary>
+    /// 获取当前关实际用时
+    /// </summary>
+    /// <returns></returns>
+    public float GetRealTime()
+    {
+        return Time.time - startRealTime;
     }
 }

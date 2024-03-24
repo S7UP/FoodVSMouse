@@ -48,6 +48,8 @@ public class BombingJewelSkill : BaseJewelSkill
             return false;
         });
         t.AddOnExitAction(delegate {
+            // 要有音效!
+            GameManager.Instance.audioSourceController.PlayEffectMusic("Boom");
             // 产生特效
             BaseEffect e = BaseEffect.CreateInstance(Boom_RuntimeAnimatorController, null, "Boom", null, false);
             e.transform.position = item.transform.position;

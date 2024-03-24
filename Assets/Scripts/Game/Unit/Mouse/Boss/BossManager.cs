@@ -95,9 +95,21 @@ public class BossManager
             } 
         },
         { BossNameTypeMap.IronMan, new Dictionary<int, string>()
-            { { 0, "ÊóÌúÏÀ"}
+            { { 0, "ÊóÌú¸ò"}
             }
         },
+        {
+            BossNameTypeMap.SpiderMan, new Dictionary<int, string>()
+            {
+                { 0, "¼¦¾ÏÊó"}
+            }
+        },
+        {
+            BossNameTypeMap.Hulk, new Dictionary<int, string>()
+            {
+                { 0, "¾ŞÂÌÊó"}
+            }
+        }
     };
 
     private static ExcelManager.CSV _BossInfoCsv;

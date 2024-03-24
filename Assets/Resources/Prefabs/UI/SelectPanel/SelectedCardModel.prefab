@@ -423,8 +423,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 13.84, y: 20.928999}
-  m_SizeDelta: {x: 18, y: 18}
+  m_AnchoredPosition: {x: 15.5573, y: 22.6463}
+  m_SizeDelta: {x: 14.5653, y: 14.5654}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2399205993094163254
 CanvasRenderer:
@@ -685,8 +685,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -6.74, y: -19.39}
-  m_SizeDelta: {x: 26.9015, y: 16.921}
+  m_AnchoredPosition: {x: -3.5, y: -19.6}
+  m_SizeDelta: {x: 33.8072, y: 16.921}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2443443697917098251
 CanvasRenderer:
@@ -729,7 +729,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 50
+  m_Text: 9999
 --- !u!1 &2443443698193491114
 GameObject:
   m_ObjectHideFlags: 0
@@ -899,8 +899,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 13.839, y: -20.4322}
-  m_SizeDelta: {x: 22.724, y: 23.5356}
+  m_AnchoredPosition: {x: 16.71, y: -23.2263}
+  m_SizeDelta: {x: 16.271, y: 16.8526}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &585682176674091581
 CanvasRenderer:
@@ -1559,7 +1559,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Navigation:
-    m_Mode: 3
+    m_Mode: 0
     m_WrapAround: 0
     m_SelectOnUp: {fileID: 0}
     m_SelectOnDown: {fileID: 0}
@@ -1669,7 +1669,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -2832,7 +2832,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Navigation:
-    m_Mode: 3
+    m_Mode: 0
     m_WrapAround: 0
     m_SelectOnUp: {fileID: 0}
     m_SelectOnDown: {fileID: 0}

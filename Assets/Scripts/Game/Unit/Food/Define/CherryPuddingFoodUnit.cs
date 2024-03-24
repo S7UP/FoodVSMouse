@@ -15,6 +15,22 @@ public class CherryPuddingFoodUnit : FoodUnit
     {
         base.MInit();
         CreateReboundArea();
+        if (mShape >= 1)
+        {
+            // 每1秒回复2%最大生命值
+            int timeLeft = 0;
+            CustomizationTask task = new CustomizationTask();
+            task.AddTaskFunc(delegate {
+                timeLeft--;
+                if (timeLeft <= 0)
+                {
+                    timeLeft += 60;
+                    new CureAction(CombatAction.ActionType.GiveCure, this, this, 0.02f * mMaxHp).ApplyAction();
+                }
+                return false;
+            });
+            taskController.AddTask(task);
+        }
     }
 
     /// <summary>
@@ -22,10 +38,7 @@ public class CherryPuddingFoodUnit : FoodUnit
     /// </summary>
     public override void UpdateAttributeByLevel()
     {
-        if(mShape >= 1)
-            SetMaxHpAndCurrentHp((float)(attr.baseAttrbute.baseHP + attr.valueList[mLevel])*1.25f);
-        else
-            SetMaxHpAndCurrentHp((float)(attr.baseAttrbute.baseHP + attr.valueList[mLevel]));
+        SetMaxHpAndCurrentHp((float)(attr.baseAttrbute.baseHP + attr.valueList[mLevel]));
     }
 
     /// <summary>

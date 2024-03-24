@@ -72,6 +72,9 @@ public class ChapterManager
             { 12, "丁香彩虹（日）"},
             { 13, "丁香彩虹（夜）"},
             { 14, "十三香中心岛"},
+            { 15, "幻境花园"},
+            { 16, "永夜中心"},
+            { 17, "废弃飞船"},
         }},
         // 梦游仙境
         { ChapterNameTypeMap.WonderLand, new Dictionary<int, string>(){

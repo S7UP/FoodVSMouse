@@ -26,7 +26,8 @@ public class Mole : MouseUnit
         base.MInit();
         // 初始在地下时免疫冰冻效果
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozen, IgnoreFrozen);
-        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozenSlowDown, IgnoreFrozenSlowDown);
+        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreSlowDown, IgnoreFrozenSlowDown);
+        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, IgnoreFrozen);
         // 初始在地下时增加基础移速300%
         speedModifier = new FloatModifier(300f);
         NumericBox.MoveSpeed.AddPctAddModifier(speedModifier);
@@ -42,19 +43,20 @@ public class Mole : MouseUnit
     /// <summary>
     /// 执行出土
     /// </summary>
-    public void ExecuteAppear(bool isMoveLeft)
+    private void ExecuteAppear(bool isMoveLeft)
     {
-        // 若此时控制器还处于P1阶段，则需要强制转成P2阶段
-        if (mHertIndex < 1)
+        if (!isAppear)
         {
-            mHertRateList[mHertIndex] = 1.0f;
-            UpdateHertMap();
-        }
+            if (mHertIndex == 0)
+                mHertIndex++;
 
-        isAppear = true;
-        this.isMoveLeft = isMoveLeft;
-        // 改朝向
-        SetActionState(new TransitionState(this));
+            isAppear = true;
+            mHertRateList[0] = 1.0f;
+            OnHertStageChanged();
+            this.isMoveLeft = isMoveLeft;
+            // 改朝向
+            SetActionState(new TransitionState(this));
+        }
     }
 
     /// <summary>
@@ -62,7 +64,7 @@ public class Mole : MouseUnit
     /// </summary>
     public override void OnUpdateRuntimeAnimatorController()
     {
-        if (mHertIndex > 0 && mHertIndex <= 2 && !isAppear)
+        if (mHertIndex > 0 && mHertIndex <= 2)
         {
             ExecuteAppear(true);
         }
@@ -95,7 +97,7 @@ public class Mole : MouseUnit
     {
         base.OnMoveState();
         // 当移动到左一列格子最左边缘时出土，但是是逆行
-        if(!isAppear && transform.position.x < MapManager.GetColumnX(-0.4f))
+        if(transform.position.x < MapManager.GetColumnX(-0.5f))
         {
             ExecuteAppear(false);
         }
@@ -124,7 +126,8 @@ public class Mole : MouseUnit
         {
             // 不再免疫冻结状态
             NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreFrozen, IgnoreFrozen);
-            NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreFrozenSlowDown, IgnoreFrozenSlowDown);
+            NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreSlowDown, IgnoreFrozenSlowDown);
+            NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreStun, IgnoreFrozen);
             SetActionState(new CastState(this));
             // 移除加速效果
             NumericBox.MoveSpeed.RemovePctAddModifier(speedModifier);
@@ -162,6 +165,6 @@ public class Mole : MouseUnit
 
     public override bool CanTriggerCat()
     {
-        return moveRotate.x < 0;
+        return isAppear && isMoveLeft;
     }
 }

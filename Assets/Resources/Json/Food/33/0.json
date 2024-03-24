@@ -1,1 +1,1 @@
-{"baseAttrbute":{"name":"扑克护罩","type":33,"shape":0,"baseHP":600.0,"baseAttack":0.0,"baseAttackSpeed":0.0,"attackPercent":0.0,"baseMoveSpeed":0.0,"baseDefense":0.0,"baseRange":0.0,"baseHeight":0},"valueList":[0,48,96,144,216,288,360,456,552,648,768,888,1008,1128,1248,1368,1488],"foodType":9}
+{"baseAttrbute":{"name":"猫猫盒","type":33,"shape":0,"baseHP":0.0,"baseAttack":10.0,"baseAttackSpeed":1.0,"attackPercent":0.0,"baseMoveSpeed":0.0,"baseDefense":0.0,"baseRange":0.0,"baseHeight":0},"valueList":[50,60,70,80,90,100,110,130,150,170,210,250,290,330,370,410,450],"foodType":9}

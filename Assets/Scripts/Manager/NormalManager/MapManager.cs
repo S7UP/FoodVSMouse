@@ -28,23 +28,25 @@ public class MapManager
     // 反向根据坐标反推出格子下标
     public static float GetXIndexF(float xPos)
     {
-        return (xPos - CenterX) / gridWidth + (MapController.xColumn - 1) / 2 + 0.5f;
+        return (xPos - CenterX) / gridWidth + (MapController.xColumn - 1) / 2;
     }
 
     public static float GetYIndexF(float yPos)
     {
-        return -(yPos - CenterY) / gridHeight + (MapController.yRow - 1) / 2 + 0.5f;
+        return -(yPos - CenterY) / gridHeight + (MapController.yRow - 1) / 2;
     }
 
     // 反向根据坐标反推出格子下标
     public static int GetXIndex(float xPos)
     {
-        return Mathf.FloorToInt((xPos - CenterX) / gridWidth + (MapController.xColumn - 1) / 2 + 0.5f);
+         return Mathf.FloorToInt((xPos - CenterX) / gridWidth + (MapController.xColumn - 1) / 2 + 0.5f);
+        //return Mathf.FloorToInt((xPos - CenterX) / gridWidth + (MapController.xColumn - 1) / 2);
     }
 
     public static int GetYIndex(float yPos)
     {
-        return Mathf.FloorToInt(-(yPos - CenterY) / gridHeight + (MapController.yRow - 1) / 2 + 0.5f);
+         return Mathf.FloorToInt(-(yPos - CenterY) / gridHeight + (MapController.yRow - 1) / 2 + 0.5f);
+        //return Mathf.FloorToInt(-(yPos - CenterY) / gridHeight + (MapController.yRow - 1) / 2);
     }
 
     // 获取某一格的中心坐标（相对）

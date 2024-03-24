@@ -11,7 +11,7 @@ public class WeaponsManager
     /// </summary>
     private static List<WeaponsNameTypeMap> currentVersionWeaponsList = new List<WeaponsNameTypeMap>() { 
         WeaponsNameTypeMap.BunGun, WeaponsNameTypeMap.WaterPipeGun, WeaponsNameTypeMap.ThreeLineGun,
-        WeaponsNameTypeMap.IceGun, WeaponsNameTypeMap.V5Gun, WeaponsNameTypeMap.CatGun, WeaponsNameTypeMap.IceSpoonCrossbowGun
+        WeaponsNameTypeMap.IceGun, WeaponsNameTypeMap.CatGun, WeaponsNameTypeMap.IceSpoonCrossbowGun
     };
     private static ExcelManager.CSV _InfoCsv;
     private static Dictionary<WeaponsNameTypeMap, int> WeaponsType_InfoCsvRowMap = new Dictionary<WeaponsNameTypeMap, int>(); // 武器种类对武器信息表行的映射关系

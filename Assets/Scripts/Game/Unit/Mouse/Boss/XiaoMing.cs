@@ -8,14 +8,12 @@ using GameNormalPanel_UI;
 using S7P.Numeric;
 
 using UnityEngine;
-
-using static UnityEngine.UI.CanvasScaler;
 /// <summary>
 /// 酷帅小明
 /// </summary>
 public class XiaoMing : BossUnit
 {
-    private static List<XiaoMing> bossList = new List<XiaoMing>();
+    // private static List<XiaoMing> bossList = new List<XiaoMing>();
 
     private List<int>[] rowListArray;
     private List<int> avaliableIndexList = new List<int>();
@@ -23,6 +21,9 @@ public class XiaoMing : BossUnit
     private List<BaseUnit> bulletList = new List<BaseUnit>();
     private Vector2 start;
     private int[][] valueArray;
+
+    private Queue<float> lost_hp_percent_queue = new Queue<float>();
+    private float current_lost_hp_percent;
     private float dmgRecord; // 受到的伤害总和
 
     private RingUI FinalSkillRingUI;
@@ -49,24 +50,26 @@ public class XiaoMing : BossUnit
 
     public override void MInit()
     {
-        if(bossList.Count == 0)
-        {
-            GameController.Instance.mTaskController.AddTask(GetDisplayAllyIceValueTask());
-        }
-        bossList.Add(this);
+        //if(bossList.Count == 0)
+        //{
+        //    GameController.Instance.mTaskController.AddTask(GetDisplayAllyIceValueTask());
+        //}
+        //bossList.Add(this);
 
         dmgRecord = 0;
         rowListArray = null;
         avaliableIndexList.Clear();
         bulletList.Clear();
+        lost_hp_percent_queue.Clear();
+        current_lost_hp_percent = 9999;
         base.MInit();
         // 大招UI
         {
             FinalSkillRingUI = RingUI.GetInstance(0.3f * Vector2.one);
             GameNormalPanel.Instance.AddUI(FinalSkillRingUI);
-            taskController.AddTask(TaskManager.GetFinalSkillRingUITask(FinalSkillRingUI, this));
+            taskController.AddTask(TaskManager.GetFinalSkillRingUITask(FinalSkillRingUI, this, 0.25f * MapManager.gridHeight * Vector3.down));
             FinalSkillRingUI.Hide();
-            FinalSkillRingUI.SetPercent(1);
+            FinalSkillRingUI.SetPercent(0);
             AddOnDestoryAction(delegate { if (FinalSkillRingUI.IsValid()) FinalSkillRingUI.MDestory(); });
         }
         // 受击事件
@@ -74,16 +77,27 @@ public class XiaoMing : BossUnit
             actionPointController.AddListener(ActionPointType.PostReceiveDamage, (combatAction) => {
                 if(combatAction is DamageAction)
                 {
-                    float triggerFinalSkillDamage = mMaxHp * GetParamValue("p_lost_hp_percent") / 100;
+                    float triggerFinalSkillDamage = mMaxHp * current_lost_hp_percent;
                     DamageAction dmgAction = combatAction as DamageAction;
                     dmgRecord += dmgAction.RealCauseValue;
-                    FinalSkillRingUI.SetPercent(1 - dmgRecord / triggerFinalSkillDamage);
+                    FinalSkillRingUI.SetPercent(dmgRecord / triggerFinalSkillDamage);
                     if (dmgRecord >= triggerFinalSkillDamage)
                     {
-                        FinalSkillRingUI.Hide();
+                        CustomizationTask task = TaskManager.GetRingUIChangeTask(FinalSkillRingUI, 60, 1, 0);
+                        task.AddOnExitAction(delegate {
+                            FinalSkillRingUI.Hide();
+                        });
+                        FinalSkillRingUI.mTaskController.AddTask(task);
                         dmgRecord -= triggerFinalSkillDamage;
                         CustomizationSkillAbility s = SKill2Init(AbilityManager.Instance.GetSkillAbilityInfoList(mUnitType, mType, mShape)[2]);
                         mSkillQueueAbilityManager.SetNextSkill(s);
+
+                        if (lost_hp_percent_queue.Count > 0)
+                            current_lost_hp_percent = lost_hp_percent_queue.Dequeue();
+                        else
+                        {
+                            current_lost_hp_percent = 9999;
+                        }
                     }
                 }
             });
@@ -106,7 +120,8 @@ public class XiaoMing : BossUnit
             c.AddSpellingFunc(delegate {
                 if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
                 {
-                    FinalSkillRingUI.Show();
+                    if (current_lost_hp_percent != 9999)
+                        FinalSkillRingUI.Show();
                     animatorController.Play("Idle", true);
                     return true;
                 }
@@ -168,7 +183,7 @@ public class XiaoMing : BossUnit
     public override void MDestory()
     {
         base.MDestory();
-        bossList.Remove(this);
+        // bossList.Remove(this);
     }
 
     /// <summary>
@@ -177,12 +192,31 @@ public class XiaoMing : BossUnit
     protected override void InitBossParam()
     {
         // 切换阶段血量百分比
-        AddParamArray("hpRate", new float[] { 0.5f, 0.2f });
+        AddParamArray("hpRate", new float[] { 0.66f, 0.33f });
         // 读取参数
         foreach (var keyValuePair in BossManager.GetParamDict(BossNameTypeMap.XiaoMing, 0))
             AddParamArray(keyValuePair.Key, keyValuePair.Value);
 
         // 特殊参数初始化
+        // 获取大招损失生命值条件
+        {
+            Action<float[]> action = delegate
+            {
+                float[] arr = GetParamArray("p_lost_hp_percent");
+                lost_hp_percent_queue.Clear();
+                foreach (var val in arr)
+                    lost_hp_percent_queue.Enqueue(val / 100);
+                if (lost_hp_percent_queue.Count > 0)
+                    current_lost_hp_percent = lost_hp_percent_queue.Dequeue();
+                else
+                {
+                    current_lost_hp_percent = 9999;
+                    FinalSkillRingUI.Hide();
+                }
+            };
+            AddParamChangeAction("p_lost_hp_percent", action);
+            action(null);
+        }
         // 获取Rset
         {
             Action<float[]> action = (arr) =>
@@ -217,18 +251,20 @@ public class XiaoMing : BossUnit
                 Vector2 left_up = start;
                 Vector2 right_down = new Vector2(8 - (float)w / 2 + 0.5f, 6 - (float)h / 2 + 0.5f);
                 // 求数组宽高
-                int x = Mathf.Max(1, Mathf.FloorToInt(right_down.x - left_up.x));
-                int y = Mathf.Max(1, Mathf.FloorToInt(right_down.y - left_up.y));
+                int x = Mathf.Max(0, Mathf.FloorToInt(right_down.x - left_up.x));
+                int y = Mathf.Max(0, Mathf.FloorToInt(right_down.y - left_up.y));
 
-                valueArray = new int[x][];
+                valueArray = new int[x+1][];
                 for (int i = 0; i < valueArray.Length; i++)
                 {
-                    valueArray[i] = new int[y];
+                    valueArray[i] = new int[y+1];
                     for (int j = 0; j < valueArray[i].Length; j++)
                     {
                         valueArray[i][j] = 0;
                     }
                 }
+                //Debug.Log("left_up=" + left_up + ",right_down=" + right_down);
+                //Debug.Log("x="+x+",y="+y);
             };
             AddParamChangeAction("w1", action);
             AddParamChangeAction("h1", action);
@@ -466,35 +502,25 @@ public class XiaoMing : BossUnit
             // 获得格子坐标
             Vector2 p = new Vector2(MapManager.GetXIndexF(u.transform.position.x), MapManager.GetYIndexF(u.transform.position.y));
 
-            List<int> xList = new List<int>();
-            for (float i = Mathf.CeilToInt(p.x - w/2 - start.x); i <= p.x + w/2 - start.x; i++)
-            {
-                if (i < 0)
-                    continue;
-                else if (i >= valueArray.Length)
-                    break;
-                else
-                    xList.Add(Mathf.FloorToInt(i));
-            }
-
-            List<int> yList = new List<int>();
-            for (float i = Mathf.CeilToInt(p.y - h / 2 - start.y); i <= p.y + h / 2 - start.y; i++)
-            {
-                if (i < 0)
-                    continue;
-                else if (i >= valueArray[0].Length)
-                    break;
-                else
-                    yList.Add(Mathf.FloorToInt(i));
-            }
-
             // 计算权值
             int val = (Environment.EnvironmentFacade.GetIceDebuff(u) != null ? 100 : 1);
 
-            // 为范围内的点加权
-            for (int i = 0; i < xList.Count; i++)
-                for (int j = 0; j < yList.Count; j++)
-                    valueArray[xList[i]][yList[j]] += val;
+            for (int x = 0; x < valueArray.Length; x++)
+            {
+                if (x < p.x - w / 2 - start.x)
+                    continue;
+                else if (x > p.x + w / 2 - start.x)
+                    break;
+                for (int y = 0; y < valueArray[x].Length; y++)
+                {
+                    if (y < p.y - h / 2 - start.y)
+                        continue;
+                    else if (y > p.y + h / 2 - start.y)
+                        break;
+                    else
+                        valueArray[x][y] += val;
+                }
+            }
         }
 
         // 最后统计一次，取出权重最大的几个点
@@ -607,7 +633,8 @@ public class XiaoMing : BossUnit
                             GameController.Instance.AddEffect(eff);
                         }
                         {
-                            BaseEffect eff = BaseEffect.CreateInstance(IceShield_Run, "Appear", "Idle", "Disapear", false);
+                            BaseEffect eff = BaseEffect.CreateInstance(IceShield_Run, "Appear", null, null, false);
+                            eff.spriteRenderer.material = GameManager.Instance.GetMaterial("LinearDodge");
                             eff.SetSpriteRendererSorting("Effect", 1);
                             eff.transform.position = transform.position;
                             GameController.Instance.AddEffect(eff);
@@ -752,12 +779,46 @@ public class XiaoMing : BossUnit
         float dmg_percent = GetParamValue("dmg_percent2", mHertIndex)/100;
         float trigger_percent = GetParamValue("trigger_percent2") / 100;
         float aoe_ice_val0 = GetParamValue("aoe_ice_val2_0");
+        int max_add_time = Mathf.FloorToInt(GetParamValue("max_add_time2")*60);
+        int add_time = Mathf.FloorToInt(GetParamValue("add_time2") * 60);
 
         // 变量
         RingUI rUI = null;
         CustomizationTask waitTask = null;
         CustomizationTask iceShieldTask = null;
         FloatModifier DamageRateMod = new FloatModifier(dmg_rate);
+        // 被炸后加2秒的设定
+        int av_add_time_left = 0; // 还可以被用来延长的时间
+        int timeLeft = 0;
+        Action<CombatAction> bombAction = (combat) => {
+            if (combat is DamageAction)
+            {
+                DamageAction dmgAction = combat as DamageAction;
+                if (dmgAction.IsDamageType(DamageAction.DamageType.BombBurn))
+                {
+                    int add = 0; // 初步确定要延长的时间
+                    if(av_add_time_left <= add_time)
+                    {
+                        add = av_add_time_left;
+                        av_add_time_left = 0;
+                    }
+                    else
+                    {
+                        add = add_time;
+                        av_add_time_left -= add_time;
+                    }
+
+                    if (wait0 - timeLeft > add)
+                        timeLeft += add;
+                    else
+                    {
+                        add -= (wait0 - timeLeft);
+                        av_add_time_left += add;
+                        timeLeft = wait0;
+                    }
+                }
+            }
+        };
 
         int changeTimeLeft = 0;
         int totalTimeLeft = 0;
@@ -783,7 +844,7 @@ public class XiaoMing : BossUnit
         c.IsMeetSkillConditionFunc = delegate { return true; };
         c.BeforeSpellFunc = delegate
         {
-
+            
         };
         {
             c.AddCreateTaskFunc(delegate {
@@ -802,10 +863,7 @@ public class XiaoMing : BossUnit
                 return task;
             });
             c.AddCreateTaskFunc(delegate {
-                CustomizationTask task;
-                CompoundSkillAbilityManager.GetWaitTimeTask(wait0, (timeLeft)=> {
-                    rUI.SetPercent(1-(float)timeLeft/wait0);
-                }, out task);
+                CustomizationTask task = new CustomizationTask();
                 task.AddOnEnterAction(delegate {
                     animatorController.Play("Drink");
                     rUI = RingUI.GetInstance(0.3f * Vector2.one);
@@ -814,6 +872,18 @@ public class XiaoMing : BossUnit
                     rUI.mTaskController.AddTask(waitTask);
                     // 获得减伤
                     NumericBox.DamageRate.AddModifier(DamageRateMod);
+                    // 添加被炸后加时设定
+                    AddActionPointListener(ActionPointType.PreReceiveDamage, bombAction);
+                    av_add_time_left = max_add_time;
+                    timeLeft = wait0;
+                });
+                task.AddTaskFunc(delegate {
+                    timeLeft--;
+                    // 控制读条UI
+                    rUI.SetPercent(1 - (float)timeLeft / wait0);
+                    if (timeLeft <= 0)
+                        return true;
+                    return false;
                 });
                 task.AddOnExitAction(delegate {
                     totalTimeLeft = totalTime;
@@ -821,6 +891,8 @@ public class XiaoMing : BossUnit
                     targetYPos = transform.position.y;
                     // 移除减伤
                     NumericBox.DamageRate.RemoveModifier(DamageRateMod);
+                    // 移除被炸加时
+                    RemoveActionPointListener(ActionPointType.PreReceiveDamage, bombAction);
                     // 播放旋风动画
                     animatorController.Play("Cyclone");
                     // UI改成冰反UI
@@ -918,7 +990,8 @@ public class XiaoMing : BossUnit
                     if (dmgArea != null)
                         dmgArea.MDestory();
                     // 显示大招UI
-                    FinalSkillRingUI.Show();
+                    if(current_lost_hp_percent < 9999)
+                        FinalSkillRingUI.Show();
                 });
                 return task;
             });
@@ -930,105 +1003,105 @@ public class XiaoMing : BossUnit
     #endregion
 
     #region 外显UI任务
-    private static CustomizationTask GetDisplayAllyIceValueTask()
-    {
-        GameNormalPanel panel = GameNormalPanel.Instance;
-        Action<BaseCardBuilder> action = (b) =>
-        {
-            RingUI ru = RingUI.GetInstance(0.2f * Vector2.one);
-            BaseUnit u = b.mProduct;
-            u.taskController.AddUniqueTask("IceDebuffDisplayer", GetRingUITask(ru, u));
-            Action<BaseUnit> beforeDestoryAction = delegate { if (ru != null && ru.IsValid()) ru.MDestory(); };
-            u.AddOnDestoryAction(beforeDestoryAction);
-            ru.AddBeforeDestoryAction(delegate { ru = null; });
-            panel.AddUI(ru);
-        };
+    //private static CustomizationTask GetDisplayAllyIceValueTask()
+    //{
+    //    GameNormalPanel panel = GameNormalPanel.Instance;
+    //    Action<BaseCardBuilder> action = (b) =>
+    //    {
+    //        RingUI ru = RingUI.GetInstance(0.2f * Vector2.one);
+    //        BaseUnit u = b.mProduct;
+    //        u.taskController.AddUniqueTask("IceDebuffDisplayer", GetRingUITask(ru, u));
+    //        Action<BaseUnit> beforeDestoryAction = delegate { if (ru != null && ru.IsValid()) ru.MDestory(); };
+    //        u.AddOnDestoryAction(beforeDestoryAction);
+    //        ru.AddBeforeDestoryAction(delegate { ru = null; });
+    //        panel.AddUI(ru);
+    //    };
 
 
-        CustomizationTask task = new CustomizationTask();
-        task.AddOnEnterAction(delegate {
-            foreach (var u in GameController.Instance.GetEachAlly())
-            {
-                RingUI ru = RingUI.GetInstance(0.2f * Vector2.one);
-                u.taskController.AddUniqueTask("IceDebuffDisplayer", GetRingUITask(ru, u));
-                Action<BaseUnit> beforeDestoryAction = delegate { if (ru != null && ru.IsValid()) ru.MDestory(); };
-                u.AddOnDestoryAction(beforeDestoryAction);
-                ru.AddBeforeDestoryAction(delegate { ru = null; });
-                panel.AddUI(ru);
-            }
+    //    CustomizationTask task = new CustomizationTask();
+    //    task.AddOnEnterAction(delegate {
+    //        foreach (var u in GameController.Instance.GetEachAlly())
+    //        {
+    //            RingUI ru = RingUI.GetInstance(0.2f * Vector2.one);
+    //            u.taskController.AddUniqueTask("IceDebuffDisplayer", GetRingUITask(ru, u));
+    //            Action<BaseUnit> beforeDestoryAction = delegate { if (ru != null && ru.IsValid()) ru.MDestory(); };
+    //            u.AddOnDestoryAction(beforeDestoryAction);
+    //            ru.AddBeforeDestoryAction(delegate { ru = null; });
+    //            panel.AddUI(ru);
+    //        }
 
-            // 除此之外，后续生成的美食单位也会附加这个UI
-            foreach (var builder in GameController.Instance.mCardController.mCardBuilderList)
-            {
-                builder.AddAfterBuildAction(action);
-            }
-        });
-        task.AddTaskFunc(delegate {
-            return bossList.Count <= 0;
-        });
-        task.AddOnExitAction(delegate 
-        {
-            foreach (var builder in GameController.Instance.mCardController.mCardBuilderList)
-                builder.RemoveAfterBuildAction(action);
+    //        // 除此之外，后续生成的美食单位也会附加这个UI
+    //        foreach (var builder in GameController.Instance.mCardController.mCardBuilderList)
+    //        {
+    //            builder.AddAfterBuildAction(action);
+    //        }
+    //    });
+    //    task.AddTaskFunc(delegate {
+    //        return bossList.Count <= 0;
+    //    });
+    //    task.AddOnExitAction(delegate 
+    //    {
+    //        foreach (var builder in GameController.Instance.mCardController.mCardBuilderList)
+    //            builder.RemoveAfterBuildAction(action);
 
-            foreach (var u in GameController.Instance.GetEachAlly())
-            {
-                u.taskController.RemoveUniqueTask("IceDebuffDisplayer");
-            }
-        });
-        return task;
-    }
+    //        foreach (var u in GameController.Instance.GetEachAlly())
+    //        {
+    //            u.taskController.RemoveUniqueTask("IceDebuffDisplayer");
+    //        }
+    //    });
+    //    return task;
+    //}
 
-    /// <summary>
-    /// 获取给友方卡片添加冰冻损伤UI显示的任务
-    /// </summary>
-    /// <param name="ru"></param>
-    /// <param name="u"></param>
-    /// <returns></returns>
-    private static CustomizationTask GetRingUITask(RingUI ru, BaseUnit u)
-    {
-        float maxVal = 100;
-        float r = 199f / 255;
-        float g = 233f / 255;
-        float b = 255f / 255;
+    ///// <summary>
+    ///// 获取给友方卡片添加冰冻损伤UI显示的任务
+    ///// </summary>
+    ///// <param name="ru"></param>
+    ///// <param name="u"></param>
+    ///// <returns></returns>
+    //private static CustomizationTask GetRingUITask(RingUI ru, BaseUnit u)
+    //{
+    //    float maxVal = 100;
+    //    float r = 199f / 255;
+    //    float g = 233f / 255;
+    //    float b = 255f / 255;
 
-        CustomizationTask task = new CustomizationTask();
-        task.AddOnEnterAction(delegate {
-            ru.Hide();
-            ru.SetIcon(Ice_Icon_Sprite);
-            ru.SetPercent(0);
-            ru.SetColor(new Color(r, g, b, 0.5f));
-        });
-        task.AddTaskFunc(delegate {
-            if (u == null || !u.IsAlive())
-                return true;
-            ru.transform.position = u.transform.position + 0.25f*MapManager.gridHeight * Vector3.down;
-            ITask t = EnvironmentFacade.GetIceDebuff(u);
-            if(t != null)
-            {
-                ru.Show();
-                IceTask iceTask = t as IceTask;
-                if (iceTask.IsForzen())
-                {
-                    maxVal = Mathf.Max(100, Mathf.Max(maxVal, iceTask.GetValue()));
-                    ru.SetColor(new Color(r, g, b, 1));
-                }else
-                {
-                    maxVal = 100;
-                    ru.SetColor(new Color(r, g, b, 0.5f));
-                }
-                ru.SetPercent(iceTask.GetValue() / maxVal);
-            }
-            else
-            {
-                ru.Hide();
-            }
-            return false;
-        });
-        task.AddOnExitAction(delegate {
-            ru.MDestory();
-        });
-        return task;
-    }
+    //    CustomizationTask task = new CustomizationTask();
+    //    task.AddOnEnterAction(delegate {
+    //        ru.Hide();
+    //        ru.SetIcon(Ice_Icon_Sprite);
+    //        ru.SetPercent(0);
+    //        ru.SetColor(new Color(r, g, b, 0.5f));
+    //    });
+    //    task.AddTaskFunc(delegate {
+    //        if (u == null || !u.IsAlive())
+    //            return true;
+    //        ru.transform.position = u.transform.position + 0.25f*MapManager.gridHeight * Vector3.down;
+    //        ITask t = EnvironmentFacade.GetIceDebuff(u);
+    //        if(t != null)
+    //        {
+    //            ru.Show();
+    //            IceTask iceTask = t as IceTask;
+    //            if (iceTask.IsForzen())
+    //            {
+    //                maxVal = Mathf.Max(100, Mathf.Max(maxVal, iceTask.GetValue()));
+    //                ru.SetColor(new Color(r, g, b, 1));
+    //            }else
+    //            {
+    //                maxVal = 100;
+    //                ru.SetColor(new Color(r, g, b, 0.5f));
+    //            }
+    //            ru.SetPercent(iceTask.GetValue() / maxVal);
+    //        }
+    //        else
+    //        {
+    //            ru.Hide();
+    //        }
+    //        return false;
+    //    });
+    //    task.AddOnExitAction(delegate {
+    //        ru.MDestory();
+    //    });
+    //    return task;
+    //}
     #endregion
 }

@@ -47,8 +47,8 @@ public class Map_CurryIsland2 : ChapterMap
     {
         // ÎªÈ«Í¼Ìí¼ÓºÚÒ¹BUFF
         {
-            ShadeAreaEffectExecution e = ShadeAreaEffectExecution.GetInstance(11, 7, new Vector2(MapManager.GetColumnX(4), MapManager.GetRowY(3)));
-            GameController.Instance.AddAreaEffectExecution(e);
+            //ShadeAreaEffectExecution e = ShadeAreaEffectExecution.GetInstance(11, 7, new Vector2(MapManager.GetColumnX(4), MapManager.GetRowY(3)));
+            //GameController.Instance.AddAreaEffectExecution(e);
         }
 
 

@@ -1,13 +1,20 @@
+using System;
 using System.Collections.Generic;
+
+using Environment;
+using GameNormalPanel_UI;
 
 using S7P.Numeric;
 
 using UnityEngine;
+
+using static UnityEngine.Rendering.DebugUI;
 /// <summary>
 /// ¿§·È·Û
 /// </summary>
 public class CoffeePowder : FoodUnit
 {
+    public static Sprite Coffee_Icon_Sprite;
     private static FloatModifier attackSpeedModifier = new FloatModifier(10);
     private static FloatModifier attackModifier = new FloatModifier(10);
     private static BoolModifier boolModifier = new BoolModifier(true);
@@ -18,7 +25,10 @@ public class CoffeePowder : FoodUnit
     public override void Awake()
     {
         if (Run == null)
+        {
             Run = GameManager.Instance.GetRuntimeAnimatorController("Food/3/0");
+            Coffee_Icon_Sprite = GameManager.Instance.GetSprite("UI/GameNormalPanel/Ring/Icon/Coffee");
+        }
         base.Awake();
     }
 
@@ -162,12 +172,32 @@ public class CoffeePowder : FoodUnit
     private class BuffTask : ITask
     {
         private BaseUnit master;
+        private RingUI ru;
+        private int totalTime;
         public int timeLeft;
 
-        public BuffTask(BaseUnit master, int timeLeft)
+        public BuffTask(BaseUnit u, int timeLeft)
         {
-            this.master = master;
+            master = u;
+            totalTime = timeLeft;
             this.timeLeft = timeLeft;
+
+            GameNormalPanel panel = GameNormalPanel.Instance;
+            ru = RingUI.GetInstance(0.15f * Vector2.one);
+            Action<BaseUnit> beforeDestoryAction = delegate { if (ru != null && ru.IsValid()) ru.MDestory(); };
+            u.AddOnDestoryAction(beforeDestoryAction);
+            ru.AddBeforeDestoryAction(delegate { ru = null; });
+            panel.AddUI(ru);
+
+            {
+                float r = 255f / 255;
+                float g = 204f / 255;
+                float b = 122f / 255;
+                ru.SetIcon(Coffee_Icon_Sprite);
+                ru.SetPercent(0);
+                ru.SetColor(new Color(r, g, b, 1));
+                ru.transform.position = u.transform.position + 0.25f * MapManager.gridHeight * Vector3.down + 0.25f * MapManager.gridWidth * Vector3.left;
+            }
         }
 
         public void OnEnter()
@@ -182,6 +212,8 @@ public class CoffeePowder : FoodUnit
         public void OnUpdate()
         {
             timeLeft--;
+            ru.transform.position = master.transform.position + 0.25f * MapManager.gridHeight * Vector3.down + 0.25f * MapManager.gridWidth * Vector3.left;
+            ru.SetPercent((float)timeLeft/totalTime);
         }
 
         public bool IsMeetingExitCondition()
@@ -194,6 +226,7 @@ public class CoffeePowder : FoodUnit
             master.NumericBox.AttackSpeed.RemovePctAddModifier(attackSpeedModifier);
             master.NumericBox.Attack.RemovePctAddModifier(attackModifier);
             StatusManager.RemoveIgnoreSettleDownBuff(master, boolModifier);
+            ru.MDestory();
         }
 
         public void ShutDown()

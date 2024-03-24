@@ -74,6 +74,8 @@ public class ThrowLittleMouseSkillAbility : SkillAbility
             m.SetMaxHpAndCurrentHp(m.mMaxHp);
             m.transform.position = new Vector3(master.transform.position.x, targetPosition.y, master.transform.position.z);
             m.SetActionState(new TransitionState(m));
+            m.SetMoveRoate(new Vector2(Mathf.Sign(targetPosition.x - master.transform.position.x), 0));
+            m.transform.localScale = new Vector2(-m.moveRotate.x, 1);
             float dist = Mathf.Abs(targetPosition.x - master.transform.position.x);
 
             // 添加一个弹起的任务
@@ -82,6 +84,7 @@ public class ThrowLittleMouseSkillAbility : SkillAbility
             t.AddOnEnterAction(delegate {
                 m.DisableMove(true);
             });
+            t.AddTimeTaskFunc(15); // 落地后还需要等待15s才会执行OnExit，同时获得阻挡判定，以防止在岩浆上偷卡
             t.AddOnExitAction(delegate {
                 m.DisableMove(false);
                 // 但是落地后晕眩2s

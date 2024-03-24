@@ -25,6 +25,7 @@ public class BaseRound
         public RoundMode roundMode; // 当前轮刷怪模式
         public bool isShowBigWaveRound; // 当前轮是否要提示为一大波老鼠
         public bool isBossRound; // 是否为BOSS轮次
+        public bool isSkipWhenBossDie; // 当BOSS阵亡时是否立即跳过BOSS段刷怪（不跳结尾等待）
         public List<BaseEnemyGroup> bossList; // BOSS列表
         public string musicRefenceName; // BGM的引用名
         public Dictionary<string, List<float>> ParamArrayDict = new Dictionary<string, List<float>>(); // 该轮的参数变化字典
@@ -142,6 +143,49 @@ public class BaseRound
             list = BaseRound.GetAllEnemyList(list, roundInfoList);
             return list;
         }
+    
+        /// <summary>
+        /// 深度拷贝本轮
+        /// </summary>
+        /// <returns></returns>
+        public RoundInfo DeepCopy()
+        {
+            RoundInfo new_info = new RoundInfo();
+            new_info.name = name;
+            new_info.info = info;
+            if(roundInfoList != null)
+            {
+                new_info.roundInfoList = new List<RoundInfo>();
+                foreach (var info in roundInfoList)
+                    new_info.roundInfoList.Add(info.DeepCopy());
+            }
+            if(baseEnemyGroupList != null)
+            {
+                new_info.baseEnemyGroupList = new List<BaseEnemyGroup>();
+                foreach (var group in baseEnemyGroupList)
+                    new_info.baseEnemyGroupList.Add(group.DeepCopy());
+            }
+            new_info.interval = interval;
+            new_info.endTime = endTime;
+            new_info.roundMode = roundMode;
+            new_info.isShowBigWaveRound = isShowBigWaveRound;
+            new_info.isBossRound = isBossRound;
+            if (bossList != null)
+            {
+                new_info.bossList = new List<BaseEnemyGroup>();
+                foreach (var group in bossList)
+                    new_info.bossList.Add(group.DeepCopy());
+            }
+            new_info.musicRefenceName = musicRefenceName;
+            foreach (var keyValuePair in ParamArrayDict)
+            {
+                List<float> ls = new List<float>();
+                foreach (var val in keyValuePair.Value)
+                    ls.Add(val);
+                new_info.ParamArrayDict.Add(keyValuePair.Key, ls);
+            }
+            return new_info;
+        }
     }
 
     public RoundInfo mRoundInfo;
@@ -171,7 +215,102 @@ public class BaseRound
     }
 
     // 使用协程执行本轮的出怪逻辑
-    public IEnumerator Execute()
+    //public IEnumerator Execute()
+    //{
+    //    //// 触发一次参数变化的监听
+    //    //foreach (var keyValuePair in mRoundInfo.ParamArrayDict)
+    //    //    GameController.Instance.mCurrentStage.ChangeParamValue(keyValuePair.Key, keyValuePair.Value);
+
+    //    //// 设置行偏移量
+    //    //if (mRoundInfo.roundMode.Equals(RoundMode.Fixed))
+    //    //    GameController.Instance.mCurrentStage.PushZeroToRowOffsetStack();
+    //    //else if(mRoundInfo.roundMode.Equals(RoundMode.HalfRandom))
+    //    //    GameController.Instance.mCurrentStage.PushRandomToRowOffsetStack();
+
+    //    //// 判断是否要显示一大波，以及，显示的内容
+    //    //if (mRoundInfo.isShowBigWaveRound)
+    //    //{
+    //    //    bool isLastWave = GameController.Instance.mCurrentStage.IsNextBigWaveIsLastWave();
+    //    //    GameController.Instance.mGameNormalPanel.ShowBigWave(isLastWave);
+    //    //}
+
+    //    //// 播放BGM
+    //    //GameManager.Instance.audioSourceController.PlayBGMusic(mRoundInfo.musicRefenceName);
+    //    //GameNormalPanel.Instance.ShowBGM(MusicManager.GetMusicInfo(mRoundInfo.musicRefenceName));
+
+    //    // 先执行自己的刷怪组的内容
+    //    if (mRoundInfo.isBossRound)
+    //    {
+    //        //// 如果是BOSS轮次
+    //        //for (int i = 0; i < mRoundInfo.bossList.Count; i++)
+    //        //{
+    //        //    // 获取当前组
+    //        //    mCurrentEnemyGroup = mRoundInfo.bossList[i];
+    //        //    // 获取最终实际刷怪位置表
+    //        //    BaseEnemyGroup.RealEnemyList realEnemyList = mCurrentEnemyGroup.TransFormToRealEnemyGroup();
+    //        //    // 通知GameController刷怪啦
+    //        //    CreateBoss(realEnemyList, mCurrentEnemyGroup.mHp, mCurrentEnemyGroup.GetEnemyAttribute());
+    //        //    // 没有间隔，BOSS是同时刷新的
+    //        //}
+
+    //        //// 执行完后执行自身子轮的刷怪组内容
+    //        //// 在BOSS轮次中，子轮先顺序执行一遍之后无限循环子轮的最后一个小轮直至BOSS死亡
+    //        //if (mRoundList.Count > 0)
+    //        //{
+    //        //    int j = 0;
+    //        //    while (GameController.Instance.IsHasBoss())
+    //        //    {
+    //        //        BaseRound round = mRoundList[j];
+    //        //        yield return GameController.Instance.mCurrentStage.StartCoroutine(round.Execute());
+    //        //        if (j < mRoundList.Count - 1)
+    //        //            j++;
+    //        //    }
+    //        //}
+    //        //else
+    //        //{
+    //        //    // 如果没有定义小轮，则改为每秒检测一次BOSS是否存在，不存在则进入下一阶段
+    //        //    while (GameController.Instance.IsHasBoss())
+    //        //    {
+    //        //        yield return GameController.Instance.mCurrentStage.StartCoroutine(GameController.Instance.mCurrentStage.WaitForIEnumerator(60));
+    //        //    }
+    //        //}
+    //        ExecuteSpawnBoss();
+    //    }
+    //    else
+    //    {
+    //        //// 小怪轮次
+    //        //for (int i = 0; i < mRoundInfo.baseEnemyGroupList.Count; i++)
+    //        //{
+    //        //    // 获取当前组
+    //        //    mCurrentEnemyGroup = mRoundInfo.baseEnemyGroupList[i];
+    //        //    // 获取最终实际刷怪位置表
+    //        //    BaseEnemyGroup.RealEnemyList realEnemyList = mCurrentEnemyGroup.TransFormToRealEnemyGroup();
+    //        //    // 通知GameController刷怪啦
+    //        //    CreateEnemies(realEnemyList, mCurrentEnemyGroup.GetEnemyAttribute());
+
+    //        //    // 间隔若干帧后刷新下一组
+    //        //    yield return GameController.Instance.mCurrentStage.StartCoroutine(GameController.Instance.mCurrentStage.WaitForIEnumerator(mRoundInfo.interval));
+    //        //}
+
+    //        //// 执行完后执行自身子轮的刷怪组内容
+    //        //for (int i = 0; i < mRoundList.Count; i++)
+    //        //{
+    //        //    BaseRound round = mRoundList[i];
+    //        //    yield return GameController.Instance.mCurrentStage.StartCoroutine(round.Execute());
+    //        //}
+    //        ExecuteSpawnEnemy();
+    //    }
+
+    //    //yield return GameController.Instance.mCurrentStage.StartCoroutine(GameController.Instance.mCurrentStage.WaitForIEnumerator(mRoundInfo.endTime));
+
+    //    //GameController.Instance.mCurrentStage.PopRowOffsetStack();
+    //}
+
+    /// <summary>
+    /// 刷本轮BOSS以及本轮子轮的小怪
+    /// </summary>
+    /// <returns></returns>
+    public IEnumerator ExecuteSpawnBoss(bool isSkipWhenBossDie)
     {
         // 触发一次参数变化的监听
         foreach (var keyValuePair in mRoundInfo.ParamArrayDict)
@@ -180,7 +319,7 @@ public class BaseRound
         // 设置行偏移量
         if (mRoundInfo.roundMode.Equals(RoundMode.Fixed))
             GameController.Instance.mCurrentStage.PushZeroToRowOffsetStack();
-        else if(mRoundInfo.roundMode.Equals(RoundMode.HalfRandom))
+        else if (mRoundInfo.roundMode.Equals(RoundMode.HalfRandom))
             GameController.Instance.mCurrentStage.PushRandomToRowOffsetStack();
 
         // 判断是否要显示一大波，以及，显示的内容
@@ -194,48 +333,77 @@ public class BaseRound
         GameManager.Instance.audioSourceController.PlayBGMusic(mRoundInfo.musicRefenceName);
         GameNormalPanel.Instance.ShowBGM(MusicManager.GetMusicInfo(mRoundInfo.musicRefenceName));
 
-        // 先执行自己的刷怪组的内容
-        if (mRoundInfo.isBossRound)
+        // 如果是BOSS轮次
+        for (int i = 0; i < mRoundInfo.bossList.Count; i++)
         {
-            // 如果是BOSS轮次
-            for (int i = 0; i < mRoundInfo.bossList.Count; i++)
-            {
-                // 获取当前组
-                mCurrentEnemyGroup = mRoundInfo.bossList[i];
-                // 获取最终实际刷怪位置表
-                BaseEnemyGroup.RealEnemyList realEnemyList = mCurrentEnemyGroup.TransFormToRealEnemyGroup();
-                // 通知GameController刷怪啦
-                CreateBoss(realEnemyList, mCurrentEnemyGroup.mHp, mCurrentEnemyGroup.GetEnemyAttribute());
-                // 没有间隔，BOSS是同时刷新的
-            }
+            // 获取当前组
+            mCurrentEnemyGroup = mRoundInfo.bossList[i];
+            // 获取最终实际刷怪位置表
+            BaseEnemyGroup.RealEnemyList realEnemyList = mCurrentEnemyGroup.TransFormToRealEnemyGroup();
+            // 通知GameController刷怪啦
+            CreateBoss(realEnemyList, mCurrentEnemyGroup.mHp, mCurrentEnemyGroup.GetEnemyAttribute());
+            // 没有间隔，BOSS是同时刷新的
+        }
 
-            // 执行完后执行自身子轮的刷怪组内容
-            // 在BOSS轮次中，子轮先顺序执行一遍之后无限循环子轮的最后一个小轮直至BOSS死亡
-            if (mRoundList.Count > 0)
+        // 执行完后执行自身子轮的刷怪组内容
+        // 在BOSS轮次中，子轮先顺序执行一遍之后无限循环子轮的最后一个小轮直至BOSS死亡
+        if (mRoundList.Count > 0)
+        {
+            int j = 0;
+            while (GameController.Instance.IsHasBoss())
             {
-                int j = 0;
-                while (GameController.Instance.IsHasBoss())
-                {
-                    BaseRound round = mRoundList[j];
-                    yield return GameController.Instance.mCurrentStage.StartCoroutine(round.Execute());
-                    if (j < mRoundList.Count - 1)
-                        j++;
-                }
+                BaseRound round = mRoundList[j];
+                yield return GameController.Instance.mCurrentStage.StartCoroutine(round.ExecuteSpawnEnemy(isSkipWhenBossDie));
+                if (j < mRoundList.Count - 1)
+                    j++;
             }
-            else
-            {
-                // 如果没有定义小轮，则改为每秒检测一次BOSS是否存在，不存在则进入下一阶段
-                while (GameController.Instance.IsHasBoss())
-                {
-                    yield return GameController.Instance.mCurrentStage.StartCoroutine(GameController.Instance.mCurrentStage.WaitForIEnumerator(60));
-                }
-            }
-
         }
         else
         {
-            // 小怪轮次
-            for (int i = 0; i < mRoundInfo.baseEnemyGroupList.Count; i++)
+            // 如果没有定义小轮，则改为每秒检测一次BOSS是否存在，不存在则进入下一阶段
+            while (GameController.Instance.IsHasBoss())
+            {
+                yield return GameController.Instance.mCurrentStage.StartCoroutine(GameController.Instance.mCurrentStage.WaitForIEnumerator(60, false));
+            }
+        }
+
+        yield return GameController.Instance.mCurrentStage.StartCoroutine(GameController.Instance.mCurrentStage.WaitForIEnumerator(mRoundInfo.endTime, false));
+
+        GameController.Instance.mCurrentStage.PopRowOffsetStack();
+    }
+
+    /// <summary>
+    /// 生成小怪
+    /// </summary>
+    /// <param name="isSkipWhenBossDie">最上层为BOSS轮且Boss死亡时立即跳过</param>
+    /// <returns></returns>
+    public IEnumerator ExecuteSpawnEnemy(bool isSkipWhenBossDie)
+    {
+        // 触发一次参数变化的监听
+        foreach (var keyValuePair in mRoundInfo.ParamArrayDict)
+            GameController.Instance.mCurrentStage.ChangeParamValue(keyValuePair.Key, keyValuePair.Value);
+
+        // 设置行偏移量
+        if (mRoundInfo.roundMode.Equals(RoundMode.Fixed))
+            GameController.Instance.mCurrentStage.PushZeroToRowOffsetStack();
+        else if (mRoundInfo.roundMode.Equals(RoundMode.HalfRandom))
+            GameController.Instance.mCurrentStage.PushRandomToRowOffsetStack();
+
+        // 判断是否要显示一大波，以及，显示的内容
+        if (mRoundInfo.isShowBigWaveRound)
+        {
+            bool isLastWave = GameController.Instance.mCurrentStage.IsNextBigWaveIsLastWave();
+            GameController.Instance.mGameNormalPanel.ShowBigWave(isLastWave);
+        }
+
+        // 播放BGM
+        GameManager.Instance.audioSourceController.PlayBGMusic(mRoundInfo.musicRefenceName);
+        GameNormalPanel.Instance.ShowBGM(MusicManager.GetMusicInfo(mRoundInfo.musicRefenceName));
+
+        // 小怪轮次
+        for (int i = 0; i < mRoundInfo.baseEnemyGroupList.Count; i++)
+        {
+            if(!isSkipWhenBossDie || GameController.Instance.IsHasBossAlive())
             {
                 // 获取当前组
                 mCurrentEnemyGroup = mRoundInfo.baseEnemyGroupList[i];
@@ -243,20 +411,20 @@ public class BaseRound
                 BaseEnemyGroup.RealEnemyList realEnemyList = mCurrentEnemyGroup.TransFormToRealEnemyGroup();
                 // 通知GameController刷怪啦
                 CreateEnemies(realEnemyList, mCurrentEnemyGroup.GetEnemyAttribute());
-
-                // 间隔若干帧后刷新下一组
-                yield return GameController.Instance.mCurrentStage.StartCoroutine(GameController.Instance.mCurrentStage.WaitForIEnumerator(mRoundInfo.interval));
             }
 
-            // 执行完后执行自身子轮的刷怪组内容
-            for (int i = 0; i < mRoundList.Count; i++)
-            {
-                BaseRound round = mRoundList[i];
-                yield return GameController.Instance.mCurrentStage.StartCoroutine(round.Execute());
-            }
+            // 间隔若干帧后刷新下一组
+            yield return GameController.Instance.mCurrentStage.StartCoroutine(GameController.Instance.mCurrentStage.WaitForIEnumerator(mRoundInfo.interval, isSkipWhenBossDie));
         }
 
-        yield return GameController.Instance.mCurrentStage.StartCoroutine(GameController.Instance.mCurrentStage.WaitForIEnumerator(mRoundInfo.endTime));
+        // 执行完后执行自身子轮的刷怪组内容
+        for (int i = 0; i < mRoundList.Count; i++)
+        {
+            BaseRound round = mRoundList[i];
+            yield return GameController.Instance.mCurrentStage.StartCoroutine(round.ExecuteSpawnEnemy(isSkipWhenBossDie));
+        }
+
+        yield return GameController.Instance.mCurrentStage.StartCoroutine(GameController.Instance.mCurrentStage.WaitForIEnumerator(mRoundInfo.endTime, isSkipWhenBossDie));
 
         GameController.Instance.mCurrentStage.PopRowOffsetStack();
     }

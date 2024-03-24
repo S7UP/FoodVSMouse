@@ -7,7 +7,7 @@ using UnityEngine;
 /// <summary>
 /// 空中运输型
 /// </summary>
-public class AirTransportMouse : MouseUnit, IFlyUnit
+public class AirTransportMouse : MouseUnit
 {
     private AirTransportSummonSkillAbility airTransportSummonSkillAbility;
 
@@ -17,17 +17,43 @@ public class AirTransportMouse : MouseUnit, IFlyUnit
         mHeight = 1;
         // 图层权重-1
         typeAndShapeValue = -1;
-        // 当自身生命值低于33%时会逃跑
+        // 当自身生命值低于33%或自身位置超过右2列会逃跑
         {
             CustomizationTask task = new CustomizationTask();
             task.AddTaskFunc(delegate {
-                return GetHeathPercent() < 0.33f;
+                if(GetHeathPercent() < 0.33f || transform.position.x <= MapManager.GetColumnX(7))
+                {
+                    DisableMove(true);
+                    return true;
+                }
+                return false;
+            });
+            task.AddTaskFunc(delegate {
+                if (GetHeathPercent() < 0.33f)
+                {
+                    DisableMove(false);
+                    SetMoveRoate(Vector2.right);
+                    // 加速跑润了润了
+                    NumericBox.MoveSpeed.AddPctAddModifier(new FloatModifier(100));
+                    return true;
+                }
+                return false;
+            });
+            task.AddTaskFunc(delegate {
+                return transform.position.x >= MapManager.GetColumnX(8.5f);
             });
             task.AddOnExitAction(delegate {
-                // 润了润了
-                SetMoveRoate(Vector2.right);
+                MDestory();
             });
             taskController.AddTask(task);
+        }
+        // 添加冻结与晕眩免疫效果
+        {
+            BoolModifier mod = new BoolModifier(true);
+            NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozen, mod);
+            NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, mod);
+            NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreSlowDown, mod);
+            NumericBox.AddDecideModifierToBoolDict(WindAreaEffectExecution.IgnoreWind, mod); // 无视风场
         }
     }
 
@@ -93,7 +119,7 @@ public class AirTransportMouse : MouseUnit, IFlyUnit
         {
             MouseUnit m = GameController.Instance.CreateMouseUnit(GetColumnIndex(), i,
                 new BaseEnemyGroup.EnemyInfo() { type = ((int)MouseNameTypeMap.AerialBombardmentMouse), shape = 0 });
-            CustomizationTask task = GetSummonsTask(m, new Vector2(transform.position.x + 2 * MapManager.gridWidth, transform.position.y), new Vector2(transform.position.x + 2 * MapManager.gridWidth, transform.position.y + MapManager.gridHeight * (rowIndex - i)), totalTime);
+            CustomizationTask task = GetSummonsTask(m, new Vector2(transform.position.x + 2 * MapManager.gridWidth, transform.position.y), new Vector2(transform.position.x + 0.5f * MapManager.gridWidth, transform.position.y + MapManager.gridHeight * (rowIndex - i)), totalTime);
             m.taskController.AddTask(task);
         }
         // 自身关闭仓门
@@ -105,60 +131,6 @@ public class AirTransportMouse : MouseUnit, IFlyUnit
             });
             taskController.AddTask(task);
         }
-
-        //GameController.Instance.AddTasker(
-        //    // Init
-        //    delegate 
-        //    {
-        //        for (int i = startIndex; i <= endIndex; i++)
-        //        {
-        //            MouseUnit m = GameController.Instance.CreateMouseUnit(GetColumnIndex(), i, 
-        //                new BaseEnemyGroup.EnemyInfo() { type=((int)MouseNameTypeMap.AerialBombardmentMouse), shape = 0});
-        //            mouseList.Add(m);
-        //            // 确定初始坐标和最终坐标
-        //            startV3.Add(new Vector3(transform.position.x + 2*MapManager.gridWidth, transform.position.y, m.transform.position.z));
-        //            endV3.Add(new Vector3(transform.position.x + 2*MapManager.gridWidth, transform.position.y + MapManager.gridHeight*(rowIndex-i), m.transform.position.z));
-        //            m.transform.position = startV3[startV3.Count-1]; // 对初始坐标进行进一步修正
-        //            m.CloseCollision(); // 关闭判定
-        //            m.SetAlpha(0); // 0透明度
-        //        }
-        //    },
-        //    // Update
-        //    delegate 
-        //    {
-        //        float t = (float)currentTime / totalTime;
-        //        // 这里实现的是渐出并且上下移动的效果
-        //        for (int i = 0; i < mouseList.Count; i++)
-        //        {
-        //            MouseUnit m = mouseList[i];
-        //            m.SetPosition(Vector3.Lerp(startV3[i], endV3[i], t));
-        //            m.SetAlpha(t);
-        //        }
-        //        currentTime++;
-        //    }, 
-        //    // ExitCondition
-        //    delegate 
-        //    { 
-
-        //        return currentTime > totalTime; 
-        //    },
-        //    // EndEvent
-        //    delegate
-        //    {
-        //        // 标记已完成召唤动作
-        //        if (this.IsAlive())
-        //        {
-        //            airTransportSummonSkillAbility.SetFinishCast();
-        //            // 润了润了
-        //            SetMoveRoate(Vector2.right);
-        //        }
-        //        // 启用判定
-        //        foreach (var m in mouseList)
-        //        {
-        //            m.OpenCollision();
-        //            //m.UpdateRenderLayer();
-        //        }
-        //    });
     }
 
     /// <summary>

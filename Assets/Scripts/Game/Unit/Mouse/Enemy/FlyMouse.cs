@@ -1,4 +1,6 @@
 using S7P.Numeric;
+
+using System;
 /// <summary>
 /// 基础空军
 /// </summary>
@@ -8,6 +10,8 @@ public class FlyMouse : MouseUnit, IFlyUnit
     private int dropColumn; // 降落列
     private FloatModifier floatModifier = new FloatModifier(100);
     private BoolModifier boolMod = new BoolModifier(true);
+    private static Func<BaseUnit, BaseUnit, bool> noBeSelectFunc = delegate { return false; };
+    private static Func<BaseUnit, BaseBullet, bool> noHitFunc = delegate { return false; };
 
     public override void MInit()
     {
@@ -27,7 +31,7 @@ public class FlyMouse : MouseUnit, IFlyUnit
         base.MUpdate();
         if (IsMeetDropCondition())
         {
-            ExecuteDrop();
+            OnShootDown();
         }
     }
 
@@ -36,22 +40,20 @@ public class FlyMouse : MouseUnit, IFlyUnit
     /// </summary>
     private bool IsMeetDropCondition()
     {
-        return (transform.position.x <= MapManager.GetColumnX(dropColumn+0.4f) && !isDrop);
+        return (transform.position.x <= MapManager.GetColumnX(dropColumn) && !isDrop);
     }
 
     /// <summary>
     /// 执行降落，仅一次
     /// </summary>
-    public void ExecuteDrop()
+    public void OnShootDown()
     {
         if (!isDrop)
         {
             isDrop = true;
-            // 若当前生命值大于飞行状态临界点，则需要强制同步生命值至临界点
-            if (mCurrentHp > mHertRateList[0] * mMaxHp)
-            {
+            // 强制同步生命值至临界点
+            // if (mCurrentHp > mHertRateList[0] * mMaxHp)
                 mCurrentHp = (float)mHertRateList[0] * mMaxHp;
-            }
             mHertRateList[0] = double.MaxValue;
             UpdateHertMap(); // 强制更新一次贴图
             // 设为转场状态，该状态下的具体实下如下几个方法
@@ -79,7 +81,7 @@ public class FlyMouse : MouseUnit, IFlyUnit
         // 2 受伤移动
         if (mHertIndex > 0 && mHertIndex <= 2 && !isDrop)
         {
-            ExecuteDrop();
+            OnShootDown();
         }
     }
 
@@ -88,10 +90,12 @@ public class FlyMouse : MouseUnit, IFlyUnit
     /// </summary>
     public override void OnTransitionStateEnter()
     {
-        // 被击落期间移除所有定身类效果且免疫定身类效果
+        // 被击落期间移除所有定身类效果且免疫定身类效果，且无法被选取为攻击目标
         StatusManager.RemoveAllSettleDownDebuff(this);
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, boolMod);
         animatorController.Play("Drop");
+        AddCanBeSelectedAsTargetFunc(noBeSelectFunc);
+        AddCanHitFunc(noHitFunc);
     }
 
     public override void OnTransitionState()
@@ -106,6 +110,8 @@ public class FlyMouse : MouseUnit, IFlyUnit
     public override void OnTransitionStateExit()
     {
         NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreStun, boolMod);
+        RemoveCanBeSelectedAsTargetFunc(noBeSelectFunc);
+        RemoveCanHitFunc(noHitFunc);
         mHeight = 0; // 高度降低为地面高度
     }
 }

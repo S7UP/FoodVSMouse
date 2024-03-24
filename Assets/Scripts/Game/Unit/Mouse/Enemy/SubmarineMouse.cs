@@ -141,12 +141,4 @@ public class SubmarineMouse : MouseUnit, IInWater
         }
         return false;
     }
-
-    /// <summary>
-    /// 潜水艇更倾向于水地形，而非陆地
-    /// </summary>
-    public override void SetGridDangerousWeightDict()
-    {
-        GridDangerousWeightDict[GridType.Water] = GridDangerousWeightDict[GridType.Default] - 1;
-    }
 }

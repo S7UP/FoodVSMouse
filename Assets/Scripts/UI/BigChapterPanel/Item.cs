@@ -9,6 +9,8 @@ namespace BigChapterPanel
 {
     public class Item : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
+        private static Sprite[] Spr_Label;
+
         private Button Btn;
         private Image Img_Item;
         private Image Img_Medal;
@@ -18,10 +20,22 @@ namespace BigChapterPanel
         private GameObject Lowest;
         private Text[] Tex_LowestNumArray;
         private Image[] Img_LowestLevelArray;
+        
         private string unlockCondition;
 
         public void Awake()
         {
+            if(Spr_Label == null)
+            {
+                Spr_Label = new Sprite[6];
+                Spr_Label[0] = GameManager.Instance.GetSprite("UI/BigChapterPanel/StageLabel/Easy");
+                Spr_Label[1] = GameManager.Instance.GetSprite("UI/BigChapterPanel/StageLabel/Normal");
+                Spr_Label[2] = GameManager.Instance.GetSprite("UI/BigChapterPanel/StageLabel/Hard");
+                Spr_Label[3] = GameManager.Instance.GetSprite("UI/BigChapterPanel/StageLabel/Lunatic");
+                Spr_Label[4] = GameManager.Instance.GetSprite("UI/BigChapterPanel/StageLabel/Ultra");
+                Spr_Label[5] = GameManager.Instance.GetSprite("UI/BigChapterPanel/StageLabel/Unknow");
+            }
+
             Btn = GetComponent<Button>();
             Img_Item = transform.Find("Btn").GetComponent<Image>();
             Img_Medal = transform.Find("Img_Medal").GetComponent<Image>();
@@ -56,56 +70,54 @@ namespace BigChapterPanel
             Btn.onClick.RemoveListener(call);
         }
 
-        public static Item GetInstance(int rank, bool isLock, string name, string unlockCondition, float rankRate, int[] cardLevelArray, int[] cardCountArray)
+        public static Item GetInstance(int rank, bool isLock, string name, int diff, string unlockCondition, float rankRate, int[] cardLevelArray, int[] cardCountArray)
         {
             Item item = GameManager.Instance.GetGameObjectResource(FactoryType.UIFactory, "BigChapterPanel/Item").GetComponent<Item>();
             item.Initial();
+            diff = Mathf.Max(0, Mathf.Min(diff, Spr_Label.Length - 1));
+            item.Img_Item.sprite = Spr_Label[diff];
             if (isLock)
             {
+                item.Btn.interactable = false;
                 item.unlockCondition = unlockCondition;
                 item.Img_Medal.gameObject.SetActive(true);
                 item.Img_Medal.sprite = GameManager.Instance.GetSprite("UI/BigChapterPanel/Lock");
-                item.Img_Item.sprite = GameManager.Instance.GetSprite("UI/BigChapterPanel/Item_Locked");
-                item.Btn.interactable = false;
             }
             else
             {
-                item.Img_Item.sprite = GameManager.Instance.GetSprite("UI/BigChapterPanel/Item");
+                item.Btn.interactable = true;
                 if (rank > -1)
                 {
                     item.Img_Medal.gameObject.SetActive(true);
-                    item.Img_Medal.sprite = GameManager.Instance.GetSprite("UI/BigChapterPanel/Medals" + rank);
-                    if(rank == 3)
+                    item.Img_Medal.sprite = GameManager.Instance.GetSprite("UI/BigChapterPanel/Medals3");
+                    item.RankRate.SetActive(true);
+                    item.Tex_Rank.text = Mathf.FloorToInt(rankRate * 100) + "%难度";
+
+                    if (cardCountArray[0] > 0 && cardLevelArray[0] > -1)
                     {
-                        item.RankRate.SetActive(true);
-                        item.Tex_Rank.text = Mathf.FloorToInt(rankRate * 100) + "%难度";
+                        item.Lowest.SetActive(true);
+                        item.Tex_LowestNumArray[0].text = cardCountArray[0].ToString();
+                        item.Img_LowestLevelArray[0].sprite = GameManager.Instance.GetSprite("UI/Rank2/" + cardLevelArray[0]);
 
-                        if(cardCountArray[0] > 0 && cardLevelArray[0] > -1)
+                        if (cardCountArray[1] > 0 && cardLevelArray[1] > -1)
                         {
-                            item.Lowest.SetActive(true);
-                            item.Tex_LowestNumArray[0].text = cardCountArray[0].ToString();
-                            item.Img_LowestLevelArray[0].sprite = GameManager.Instance.GetSprite("UI/Rank2/"+ cardLevelArray[0]);
-
-                            if(cardCountArray[1] > 0 && cardLevelArray[1] > -1)
-                            {
-                                item.Tex_LowestNumArray[1].gameObject.SetActive(true);
-                                item.Tex_LowestNumArray[1].text = cardCountArray[1].ToString();
-                                item.Img_LowestLevelArray[1].gameObject.SetActive(true);
-                                item.Img_LowestLevelArray[1].sprite = GameManager.Instance.GetSprite("UI/Rank2/" + cardLevelArray[1]);
-                            }
-                            else
-                            {
-                                item.Tex_LowestNumArray[1].gameObject.SetActive(false);
-                                item.Img_LowestLevelArray[1].gameObject.SetActive(false);
-                            }
+                            item.Tex_LowestNumArray[1].gameObject.SetActive(true);
+                            item.Tex_LowestNumArray[1].text = cardCountArray[1].ToString();
+                            item.Img_LowestLevelArray[1].gameObject.SetActive(true);
+                            item.Img_LowestLevelArray[1].sprite = GameManager.Instance.GetSprite("UI/Rank2/" + cardLevelArray[1]);
+                        }
+                        else
+                        {
+                            item.Tex_LowestNumArray[1].gameObject.SetActive(false);
+                            item.Img_LowestLevelArray[1].gameObject.SetActive(false);
                         }
                     }
                 }
                 else
                 {
+                    // 未通关是不显示这些东西的
                     item.Img_Medal.gameObject.SetActive(false);
                 }
-                item.Btn.interactable = true;
             }
             item.Img_Medal.SetNativeSize();
             item.Tex_Name.text = name;

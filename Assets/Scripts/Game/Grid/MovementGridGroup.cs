@@ -17,7 +17,8 @@ public class MovementGridGroup : GridGroup
     }
 
     // 引用
-    public SpriteRenderer spriteRenderer;
+    public SpriteRenderer spriteRenderer0;
+    public SpriteRenderer spriteRenderer1;
     // 变量
     public List<PointInfo> positionList = new List<PointInfo>();
     public int currentMoveCount; // 当前已移动过的路径点次数
@@ -25,11 +26,15 @@ public class MovementGridGroup : GridGroup
     public int currentTime; // 当前路径点事件中已花费时间
     public Vector3 startPosition;
     public Vector3 endPosition;
+
+    private const float deltaAlpha = 1f / 60;
+
     public bool isPause { get; private set; }
 
     public override void Awake()
     {
-        spriteRenderer = transform.Find("SpriteGo").GetComponent<SpriteRenderer>();
+        spriteRenderer0 = transform.Find("SpriteGo").GetComponent<SpriteRenderer>();
+        spriteRenderer1 = transform.Find("SpriteGo1").GetComponent<SpriteRenderer>();
     }
 
     /// <summary>
@@ -44,11 +49,15 @@ public class MovementGridGroup : GridGroup
 
         if (sprite != null)
         {
-            spriteRenderer.sprite = sprite;
+            spriteRenderer0.sprite = sprite;
+            spriteRenderer1.sprite = sprite;
         }
-        spriteRenderer.flipX = filpX;
-        spriteRenderer.flipY = filpY;
-        spriteRenderer.transform.localPosition = offset;
+        spriteRenderer0.flipX = filpX;
+        spriteRenderer1.flipX = filpX;
+        spriteRenderer0.flipY = filpY;
+        spriteRenderer1.flipY = filpY;
+        spriteRenderer0.transform.localPosition = offset;
+        spriteRenderer1.transform.localPosition = offset;
         currentPositionListIndex++; // 1为起始
         startPosition = this.positionList[currentPositionListIndex-1].targetPosition; // 0
         endPosition = this.positionList[currentPositionListIndex].targetPosition; // 1
@@ -59,6 +68,8 @@ public class MovementGridGroup : GridGroup
     public override void MInit()
     {
         base.MInit();
+        spriteRenderer0.sprite = null;
+        spriteRenderer1.sprite = null;
         positionList.Clear();
         currentMoveCount = 0;
         currentPositionListIndex = 0;
@@ -69,6 +80,8 @@ public class MovementGridGroup : GridGroup
     public override void MUpdate()
     {
         base.MUpdate();
+        spriteRenderer1.color = new Color(1, 1, 1, Mathf.Min(1, Mathf.Max(0, spriteRenderer1.color.a - deltaAlpha)));
+
         if (isPause)
             return;
         currentTime++;
@@ -91,6 +104,8 @@ public class MovementGridGroup : GridGroup
             endPosition = positionList[currentPositionListIndex].targetPosition;
             currentTime = 0;
         }
+
+        
     }
 
     /// <summary>
@@ -107,7 +122,9 @@ public class MovementGridGroup : GridGroup
     /// </summary>
     public static MovementGridGroup GetInstance()
     {
-        return GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Grid/MovementGridGroup").GetComponent<MovementGridGroup>();
+        MovementGridGroup group = GameManager.Instance.GetGameObjectResource(FactoryType.GameFactory, "Grid/MovementGridGroup").GetComponent<MovementGridGroup>();
+        group.MInit();
+        return group;
     }
 
     /// <summary>

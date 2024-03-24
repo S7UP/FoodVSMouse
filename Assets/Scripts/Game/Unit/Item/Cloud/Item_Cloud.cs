@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using S7P.Numeric;
 
 using UnityEngine;
+
+using static UnityEngine.UI.CanvasScaler;
 /// <summary>
 /// 云朵
 /// </summary>
@@ -12,9 +14,10 @@ public class Item_Cloud : BaseItem
     private int maxBearCount; // 最大承载单位数
     private IntModifier BearInSkyModifier = new IntModifier(1); // 高空承载
     private bool isHide;
-    private bool isBreak; // 是否处于破裂状态
-    private int timer;
-    private int recoverTimeLeft; // 剩余恢复时间
+    private float bear_rate; // 承载比例（空载时为0，满载时为1）
+    private int breakTimer = 0; // 破裂动画计时器（0为完全破裂，60为完全正常）
+    private int recoverTimeLeft; // 剩余恢复时间（为0则自动恢复，如果填-1则永不恢复）
+    private int timer = 0;
 
     private static List<FoodNameTypeMap> NoAffectFoodList = new List<FoodNameTypeMap>() 
     { 
@@ -24,41 +27,81 @@ public class Item_Cloud : BaseItem
     public override void MInit()
     {
         unitList.Clear();
+        bear_rate = 0;
         maxBearCount = 5;
-        isHide = true;
-        timer = -1;
-        isBreak = false;
+        isHide = false;
         recoverTimeLeft = 0;
+        breakTimer = 0;
         base.MInit();
         // 设置判定大小
-        SetBoxCollider2DParam(Vector2.zero, new Vector2(0.75f*MapManager.gridWidth, 0.5f*MapManager.gridHeight));
-        spriteRenderer.enabled = false;
+        SetBoxCollider2DParam(Vector2.zero, new Vector2(0.55f*MapManager.gridWidth, 0.55f*MapManager.gridHeight));
     }
 
     public override void MUpdate()
     {
-        if (timer > -1)
-            timer++;
+        timer++;
+        // 检测大于0.5格的单位并释放
+        foreach (var u in unitList.ToArray())
+        {
+            float dist = u.transform.position.x - transform.position.x;
+            if (dist <= -0.5f * MapManager.gridWidth || dist > 0.5f * MapManager.gridWidth)
+            {
+                OnUnitExit(u);
+                unitList.Remove(u);
+            }
+        }
 
-        if (isBreak)
+        // 超过承受数直接隐藏（破裂）
+        if (!isHide && unitList.Count >= maxBearCount)
+        {
+            Hide(60 * 24); // 这个触发了的话 isHide就会变成true
+        }
+
+        if (isHide)
         {
             if (recoverTimeLeft > 0)
                 recoverTimeLeft--;
+            else if(recoverTimeLeft == 0)
+                Show();
+
+            if (breakTimer > 0)
+                breakTimer--;
+        }
+        else
+        {
+            List<BaseUnit> delList = new List<BaseUnit>();
+            foreach (var item in unitList)
+                if (!item.IsAlive())
+                    delList.Add(item);
+            foreach (var item in delList)
+                unitList.Remove(item);
+
+            if (breakTimer < 60)
+                breakTimer++;
+        }
+
+        // 根据承载情况来设置云朵透明度
+        {
+            float rate = (float)unitList.Count / maxBearCount;
+            if (bear_rate < rate)
+                bear_rate = Mathf.Min(rate, bear_rate + 0.01f);
+            else if (bear_rate > rate)
+                bear_rate = Mathf.Max(rate, bear_rate - 0.01f);
+            // bear_rate = rate;
+
+            float break_rate = (float)breakTimer / 60;
+            // 云朵大小变化
+            spriteRenderer.transform.localScale = Vector3.one * (0.25f + 0.75f * (1 - bear_rate)) * break_rate;
+            // 云朵相对高度变化
+            spriteRenderer.transform.localPosition = new Vector3(0, 0.025f*Mathf.Sin((float)timer/180*Mathf.PI) - 0.4f*bear_rate, 0);
+            // 如果还剩一个就破了，则会变色提示
+            float alpha = (0.1f + 0.9f * (1 - bear_rate)) * break_rate;
+            if (unitList.Count + 1 >= maxBearCount)
+                spriteRenderer.color = new Color(1, 0.8f, 0.8f, alpha);
             else
-                Recover();
+                spriteRenderer.color = new Color(1, 1, 1, alpha);
         }
 
-
-        List<BaseUnit> delList = new List<BaseUnit>();
-        foreach (var item in unitList)
-        {
-            if (!item.IsAlive())
-                delList.Add(item);
-        }
-        foreach (var item in delList)
-        {
-            unitList.Remove(item);
-        }
         base.MUpdate();
     }
 
@@ -68,13 +111,6 @@ public class Item_Cloud : BaseItem
         if (!unit.NumericBox.IntDict.ContainsKey(StringManager.BearInSky))
             unit.NumericBox.IntDict.Add(StringManager.BearInSky, new IntNumeric());
         unit.NumericBox.IntDict[StringManager.BearInSky].AddAddModifier(BearInSkyModifier);
-        // 超过承受数直接隐藏（破裂）
-        if (unitList.Count >= maxBearCount)
-        {
-            isBreak = true;
-            recoverTimeLeft = 60 * 24;
-            Hide();
-        }
     }
 
     private void OnUnitExit(BaseUnit unit)
@@ -86,6 +122,9 @@ public class Item_Cloud : BaseItem
 
     private void OnCollision(Collider2D collision)
     {
+        if (isHide)
+            return;
+
         if(collision.tag.Equals("Food"))
         {
             FoodUnit unit = collision.GetComponent<FoodUnit>();
@@ -115,7 +154,10 @@ public class Item_Cloud : BaseItem
 
     private bool CanEnter(BaseUnit unit)
     {
-        return !unitList.Contains(unit) && unit.GetHeight() == 0 && unit.IsAlive();
+        // return !unitList.Contains(unit) && unit.GetHeight() == 0 && unit.IsAlive() && (unit.transform.position.x - transform.position.x) <= 0.5f*MapManager.gridWidth;
+        float dist = unit.transform.position.x - transform.position.x;
+
+        return !unit.NumericBox.GetBoolNumericValue(StringManager.NoBearInSky) && !unitList.Contains(unit) && unit.GetHeight() == 0 && unit.IsAlive() && (dist > -0.5f * MapManager.gridWidth && dist <= 0.5f * MapManager.gridWidth);
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -145,9 +187,7 @@ public class Item_Cloud : BaseItem
     {
         // 释放其上的所有单位
         foreach (var item in unitList)
-        {
             OnUnitExit(item);
-        }
         unitList.Clear();
         // 下面这个好像暂时是空的
         base.CloseCollision();
@@ -168,75 +208,32 @@ public class Item_Cloud : BaseItem
     {
         // 释放其上的所有单位
         foreach (var item in unitList)
-        {
             OnUnitExit(item);
-        }
         unitList.Clear();
         base.AfterDeath();
     }
 
-    public override void OnTransitionStateEnter()
-    {
-        if (isHide)
-        {
-            OpenCollision();
-            animatorController.Play("Appear");
-        }
-        else
-        {
-            CloseCollision();
-            animatorController.Play("Die");
-        }
-        isHide = !isHide;
-    }
-
-    public override void OnTransitionState()
-    {
-        if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
-        {
-            // 第一时调用时时间开始流动
-            if (timer == -1)
-                timer = 0;
-            SetActionState(new IdleState(this));
-        } 
-    }
-
     public override void OnIdleStateEnter()
     {
-        animatorController.Play("Idle", true, (float)timer/animatorController.GetAnimatorStateRecorder("Idle").aniTime);
-        spriteRenderer.enabled = !isHide;
-    }
-
-    public void Hide()
-    {
-        if (!isHide)
-        {
-            SetActionState(new TransitionState(this));
-            CloseCollision();
-            unitList.Clear();
-        }
+        
     }
 
     public void Show()
     {
-        if (isHide && !isBreak)
+        if (isHide)
         {
-            spriteRenderer.enabled = true;
-            SetActionState(new TransitionState(this));
+            isHide = false;
             OpenCollision();
         }
     }
 
-    /// <summary>
-    /// 恢复
-    /// </summary>
-    public void Recover()
+    public void Hide(int recoverTimeLeft)
     {
-        if (isBreak)
+        if (!isHide)
         {
-            recoverTimeLeft = 0;
-            isBreak = false;
-            Show();
+            isHide = true;
+            this.recoverTimeLeft = recoverTimeLeft;
+            CloseCollision();
         }
     }
 
@@ -288,18 +285,10 @@ public class Item_Cloud : BaseItem
 
             // 云朵依次出现
             int timeLeft = 120/count * i;
-            CustomizationTask task = new CustomizationTask();
-            task.AddTaskFunc(delegate {
-                timeLeft--;
-                if (timeLeft <= 0)
-                {
-                    c.Show();
-                    return true;
-                }
-                else
-                    return false;
-            });
-            c.AddTask(task);
+            {
+                c.Hide(0);
+                c.timer = 360 / count * i;
+            }
         }
 
         float last_offsetX = 0;
@@ -327,15 +316,10 @@ public class Item_Cloud : BaseItem
                             {
                                 cloudArray[i].transform.position -= length * Vector3.right;
                                 cloudArray[i].Show();
-                                cloudArray[i].Recover();
                             }
                             else if(cloudArray[i].transform.position.x >= rightFadePos)
                             {
-                                cloudArray[i].Hide();
-                            }
-                            else
-                            {
-                                cloudArray[i].Show();
+                                cloudArray[i].Hide(2);
                             }
                         }
                         else
@@ -345,15 +329,10 @@ public class Item_Cloud : BaseItem
                             {
                                 cloudArray[i].transform.position += length * Vector3.right;
                                 cloudArray[i].Show();
-                                cloudArray[i].Recover();
                             }
                             else if (cloudArray[i].transform.position.x <= leftFadePos)
                             {
-                                cloudArray[i].Hide();
-                            }
-                            else
-                            {
-                                cloudArray[i].Show();
+                                cloudArray[i].Hide(2);
                             }
                         }
                     }
@@ -365,10 +344,6 @@ public class Item_Cloud : BaseItem
             // End
             delegate { }
             );
-
-        // go on
-
-        // e.isAffectFood = true;
         return e;
     }
 }

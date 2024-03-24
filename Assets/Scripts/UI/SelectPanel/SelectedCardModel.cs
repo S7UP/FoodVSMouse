@@ -48,6 +48,7 @@ public class SelectedCardModel : MonoBehaviour, IPointerEnterHandler, IPointerEx
             dataList.Add(new Dropdown.OptionData(GameManager.Instance.GetSprite("UI/Rank2/"+i)));
         }
         Dro_Rank.AddOptions(dataList);
+        Dro_Rank.onValueChanged.RemoveAllListeners();
         Dro_Rank.value = info.maxLevel;
         Dro_Rank.onValueChanged.AddListener(delegate { mAvailableCardInfo.maxLevel = Dro_Rank.value; });
         // 设置shape下拉列表
@@ -58,8 +59,14 @@ public class SelectedCardModel : MonoBehaviour, IPointerEnterHandler, IPointerEx
             dataList.Add(new Dropdown.OptionData(GameManager.Instance.GetSprite("Food/"+info.type+"/" + i + "/icon")));
         }
         Dro_Shape.AddOptions(dataList);
+        Dro_Shape.onValueChanged.RemoveAllListeners();
         Dro_Shape.value = info.maxShape;
-        Dro_Shape.onValueChanged.AddListener(delegate { mAvailableCardInfo.maxShape = Dro_Shape.value; });
+        Dro_Shape.onValueChanged.AddListener(delegate { 
+            mAvailableCardInfo.maxShape = Dro_Shape.value;
+            // 设置费用文本
+            Debug.Log("type=" + info.type + ",shape=" + Dro_Shape.value);
+            Tex_Cost.text = GameManager.Instance.attributeManager.GetCardBuilderAttribute(info.type, Dro_Shape.value).GetCost(info.maxLevel) + "";
+        });
         // 设置费用文本
         Tex_Cost.text = GameManager.Instance.attributeManager.GetCardBuilderAttribute(info.type, Dro_Shape.value).GetCost(info.maxLevel)+"";
         // 设置键控
@@ -205,7 +212,7 @@ public class SelectedCardModel : MonoBehaviour, IPointerEnterHandler, IPointerEx
         if (type != -1)
         {
             TextArea.Instance.SetText(FoodManager.GetFoodName(type, shape) + "\n" + FoodManager.GetVerySimpleFeature((FoodNameTypeMap)type));
-            TextArea.Instance.SetLocalPosition(transform, new Vector2(RectTrans.sizeDelta.x / 2, -RectTrans.sizeDelta.y / 2), new Vector2(1, -1));
+            TextArea.Instance.SetLocalPosition(transform, new Vector2(RectTrans.sizeDelta.x / 2, -RectTrans.sizeDelta.y / 2), new Vector2(1, -1.5f));
         }
     }
 

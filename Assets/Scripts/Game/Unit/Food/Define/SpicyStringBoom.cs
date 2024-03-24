@@ -11,9 +11,11 @@ public class SpicyStringBoom : FoodUnit
     private bool isTriggerBoom; // 是否被触爆
     private BoolModifier boolModifier = new BoolModifier(true);
     private FloatModifier burnMod = new FloatModifier(0);
+    private static Func<BaseUnit, BaseUnit, bool> noSelectedFunc = delegate { return false; };
+
     public override void MInit()
     {
-        totalPrepareTime = 60 * 5; // 5s准备时间
+        totalPrepareTime = 60 * 4; // 4s准备时间
         prepareTime = totalPrepareTime;
         isTriggerBoom = false;
         base.MInit();
@@ -21,6 +23,8 @@ public class SpicyStringBoom : FoodUnit
         AddCanBeSelectedAsTargetFunc((u1, u2) => {
             return u2!=null && u2.mHeight != 1;
         });
+        // 不被所有单位作为攻击目标
+        AddCanBeSelectedAsTargetFunc(noSelectedFunc);
     }
 
     /// <summary>
@@ -58,7 +62,6 @@ public class SpicyStringBoom : FoodUnit
         r.SetAffectHeight(1);
         Action<MouseUnit> action = (u) =>
         {
-            //if (r.isAlive && UnitManager.CanBeSelectedAsTarget(this, u))
             if (r.isAlive)
             {
                 isTriggerBoom = true;
@@ -105,6 +108,8 @@ public class SpicyStringBoom : FoodUnit
         NumericBox.RemoveDecideModifierToBoolDict(StringManager.Invincibility, boolModifier);
         NumericBox.BurnRate.RemoveModifier(burnMod);
         NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreStun, boolModifier);
+        // 移除不被选为攻击目标效果
+        RemoveCanBeSelectedAsTargetFunc(noSelectedFunc);
         // 添加检测范围
         CreateCheckArea();
     }
@@ -115,7 +120,7 @@ public class SpicyStringBoom : FoodUnit
         
         if(isTriggerBoom && IsFinishPrepare())
         {
-            // 如果是被触爆 且 已完成准备 则效果转化为强化爆破（强制秒杀以本格为中心半径为0.75格的非BOSS地面敌人，并对3*3范围内的所有敌人造成一次灰烬伤害）
+            // 如果是被触爆 且 已完成准备 则效果转化为强化爆破（强制秒杀以本格为中心半径为0.75格的非BOSS空中敌人，并对3*3范围内的所有敌人造成一次灰烬伤害）
             CreateFortifyBoom();
             // 原地产生一个爆炸特效
             {
@@ -157,30 +162,24 @@ public class SpicyStringBoom : FoodUnit
             GameController.Instance.AddAreaEffectExecution(r);
         }
 
-        // 3*3所有空军强制击坠效果
+        // 5*3所有空军强制击坠外加破盾
         {
-            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 3, 3, "ItemCollideEnemy");
+            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 5, 3, "ItemCollideEnemy");
             r.SetInstantaneous();
             r.isAffectMouse = true;
             r.SetAffectHeight(1);
             r.SetOnEnemyEnterAction((u) => {
-                BurnManager.BurnDamage(this, u);
-                ExecuteDropEnemyFlyUnit(u);
+                if (typeof(IFlyUnit).IsAssignableFrom(u.GetType()) && u.IsAlive())
+                {
+                    IFlyUnit flyUnit = (IFlyUnit)u;
+                    flyUnit.OnShootDown();
+                }
+                else
+                    BurnManager.BurnDamage(this, u);
+                // 移除护盾
+                u.NumericBox.DamageShield(u.NumericBox.Shield.Value);
             });
             GameController.Instance.AddAreaEffectExecution(r);
-        }
-    }
-
-    /// <summary>
-    /// 强制击坠非BOSS空军单位
-    /// </summary>
-    private void ExecuteDropEnemyFlyUnit(MouseUnit m)
-    {
-        // 非BOSS单位 且 是空军单位
-        if(!m.IsBoss() && typeof(IFlyUnit).IsAssignableFrom(m.GetType()) && m.IsAlive())
-        {
-            IFlyUnit flyUnit = (IFlyUnit)m;
-            flyUnit.ExecuteDrop();
         }
     }
 }

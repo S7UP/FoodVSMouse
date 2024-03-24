@@ -11,7 +11,6 @@ using UnityEngine;
 public class IceEggPitcher : FoodUnit
 {
     private static RuntimeAnimatorController[] BulletRuntimeAnimatorControllerArray;
-    private FloatModifier costMod = new FloatModifier(-15f/7/60);
 
     private float mainDamageRate; // 主要目标伤害倍率
     private float aoeDamageRate; // 范围伤害倍率
@@ -33,29 +32,13 @@ public class IceEggPitcher : FoodUnit
     public override void MInit()
     {
         base.MInit();
-        // 根据转职情况来确定首要目标与范围伤害的伤害比率
-        switch (mShape)
-        {
-            case 1:
-                mainDamageRate = 6f;
-                aoeDamageRate = 1.2f;
-                break;
-            case 2:
-                mainDamageRate = 6f;
-                aoeDamageRate = 1.2f;
-                break;
-            default:
-                mainDamageRate = 4.5f;
-                aoeDamageRate = 0.9f;
-                break;
-        }
+        mainDamageRate = 4.5f;
+        aoeDamageRate = 0.9f;
         targetPosition = Vector2.zero;
-        GameController.Instance.AddCostResourceModifier("Fire", costMod);
     }
 
     public override void MDestory()
     {
-        GameController.Instance.RemoveCostResourceModifier("Fire", costMod);
         base.MDestory();
     }
 
@@ -172,6 +155,9 @@ public class IceEggPitcher : FoodUnit
             {
                 if (u != null)
                 {
+                    // 一转后会对首要目标额外施加50冰冻损伤
+                    if(mShape >= 1)
+                        EnvironmentFacade.AddIceDebuff(u, 50);
                     // 产生AOE
                     CreateDamageArea(u.transform.position, ori_dmg);
                 }
@@ -242,12 +228,22 @@ public class IceEggPitcher : FoodUnit
     /// </summary>
     private void CreateDamageArea(Vector2 pos, float ori_dmg)
     {
-        RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(pos, 3, 3, "ItemCollideEnemy");
+        float range = 2.5f;
+        if (mShape >= 2)
+            range = 4.5f;
+
+        RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(pos, range, range, "ItemCollideEnemy");
         r.isAffectMouse = true;
         r.SetAffectHeight(0);
         r.SetInstantaneous();
         r.SetOnEnemyEnterAction((u) => {
-            EnvironmentFacade.AddIceDebuff(u, 35);
+            float ice_val = 50;
+            ITask t = EnvironmentFacade.GetIceDebuff(u);
+            if (t != null && (t as IceTask).IsForzen())
+                ice_val = 5;
+            // 为目标施加冰冻损伤
+            EnvironmentFacade.AddIceDebuff(u, ice_val);
+
             DamageAction d = new DamageAction(CombatAction.ActionType.CauseDamage, this, u, aoeDamageRate * ori_dmg);
             d.AddDamageType(DamageAction.DamageType.AOE);
             d.ApplyAction();

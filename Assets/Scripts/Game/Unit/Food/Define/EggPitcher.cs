@@ -11,7 +11,6 @@ public class EggPitcher : FoodUnit
     private static RuntimeAnimatorController BulletRuntimeAnimatorController;
 
     private float mainDamageRate; // 主要目标伤害倍率
-    private float aoeDamageRate; // 范围伤害倍率
     private Vector2 targetPosition;
 
     public override void MInit()
@@ -23,18 +22,16 @@ public class EggPitcher : FoodUnit
         switch (mShape)
         {
             case 1:
-                mainDamageRate = 6f;
-                aoeDamageRate = 1.2f;
+                mainDamageRate = 2.26f;
                 break;
             case 2:
-                mainDamageRate = 6f;
-                aoeDamageRate = 1.2f;
+                mainDamageRate = 2.26f;
                 break;
             default:
-                mainDamageRate = 4.5f;
-                aoeDamageRate = 0.9f;
+                mainDamageRate = 1.6f;
                 break;
         }
+
         targetPosition = Vector2.zero;
     }
 
@@ -52,12 +49,16 @@ public class EggPitcher : FoodUnit
     /// <returns></returns>
     protected override bool IsHasTarget()
     {
-        BaseUnit targetUnit = PitcherManager.FindTargetByPitcher(this, transform.position.x - MapManager.gridWidth / 2, GetRowIndex());
-        if (targetUnit != null)
+        int startIndex = Mathf.Max(0, GetRowIndex() - 1);
+        int endIndex = Mathf.Min(6, GetRowIndex() + 1);
+
+        for (int i = startIndex; i <= endIndex; i++)
         {
-            targetPosition = targetUnit.transform.position;
+            BaseUnit targetUnit = PitcherManager.FindTargetByPitcher(this, transform.position.x - MapManager.gridWidth / 2, i);
+            if (targetUnit != null)
+                return true;
         }
-        return targetUnit != null;
+        return false;
     }
 
     /// <summary>
@@ -89,6 +90,16 @@ public class EggPitcher : FoodUnit
         {
             mAttackFlag = false;
             ExecuteDamage();
+            if(mShape == 2)
+            {
+                CustomizationTask task = new CustomizationTask();
+                task.AddTimeTaskFunc(15);
+                task.AddOnExitAction(delegate {
+                    ExecuteDamage();
+                });
+                taskController.AddTask(task);
+            }
+
         }
     }
 
@@ -128,7 +139,44 @@ public class EggPitcher : FoodUnit
         // 选择目标
         BaseUnit target = PitcherManager.FindTargetByPitcher(this, transform.position.x - MapManager.gridWidth / 2, GetRowIndex());
 
-        CreateBullet(transform.position, mCurrentAttack, target);
+        if(target != null)
+        {
+            CreateBullet(transform.position, mCurrentAttack, target);
+        }
+        else
+        {
+            if(GetRowIndex() == 0)
+            {
+                target = PitcherManager.FindTargetByPitcher(this, transform.position.x - MapManager.gridWidth / 2, GetRowIndex() + 1);
+                if (target != null)
+                    CreateBullet(transform.position, mCurrentAttack, target);
+                else
+                    CreateBullet(transform.position, mCurrentAttack, MapManager.GetGridLocalPosition(8, GetRowIndex()));
+            }else if(GetRowIndex() == 6)
+            {
+                target = PitcherManager.FindTargetByPitcher(this, transform.position.x - MapManager.gridWidth / 2, GetRowIndex() - 1);
+                if (target != null)
+                    CreateBullet(transform.position, mCurrentAttack, target);
+                else
+                    CreateBullet(transform.position, mCurrentAttack, MapManager.GetGridLocalPosition(8.5f, GetRowIndex()));
+            }
+            else
+            {
+                BaseUnit target_down = PitcherManager.FindTargetByPitcher(this, transform.position.x - MapManager.gridWidth / 2, GetRowIndex() + 1);
+                BaseUnit target_up = PitcherManager.FindTargetByPitcher(this, transform.position.x - MapManager.gridWidth / 2, GetRowIndex() - 1);
+                float min_x = MapManager.GetColumnX(8.5f);
+                if(target_down != null && target_down.transform.position.x < min_x)
+                {
+                    min_x = target_down.transform.position.x;
+                }
+                if(target_up != null && target_up.transform.position.x < min_x)
+                {
+                    min_x = target_up.transform.position.x;
+                }
+                CreateBullet(transform.position, mCurrentAttack, new Vector2(min_x, MapManager.GetRowY(GetRowIndex())));
+            }
+        }
+        
     }
 
     /// <summary>
@@ -139,7 +187,7 @@ public class EggPitcher : FoodUnit
     /// <param name="target"></param>
     private BaseBullet CreateBullet(Vector2 startPosition, float ori_dmg, BaseUnit target)
     {
-        AllyBullet b = AllyBullet.GetInstance(BulletStyle.Throwing, BulletRuntimeAnimatorController, this, mainDamageRate * ori_dmg);
+        AllyBullet b = AllyBullet.GetInstance(BulletStyle.Throwing, BulletRuntimeAnimatorController, this, 0);
         b.AddSpriteOffsetY(new FloatModifier(0.5f * MapManager.gridHeight));
         b.isnDelOutOfBound = true; // 出屏不自删
         b.SetHitSoundEffect("Eggimpact"+GameManager.Instance.rand.Next(0, 2));
@@ -149,15 +197,7 @@ public class EggPitcher : FoodUnit
         {
             hitEnemyAction = (b, u) =>
             {
-                if (u != null)
-                {
-                    // 产生AOE
-                    CreateDamageArea(u.transform.position, ori_dmg);
-                }
-                else
-                {
-                    CreateDamageArea(b.transform.position, ori_dmg);
-                }
+                CreateDamageArea(b, b.transform.position, ori_dmg);
             };
         }
 
@@ -216,23 +256,76 @@ public class EggPitcher : FoodUnit
         return b;
     }
 
+    /// <summary>
+    /// 创建一发弹射子弹
+    /// </summary>
+    /// <param name="startPosition"></param>
+    /// <param name="ori_dmg"></param>
+    /// <param name="target"></param>
+    private BaseBullet CreateBullet(Vector2 startPosition, float ori_dmg, Vector2 endPos)
+    {
+        AllyBullet b = AllyBullet.GetInstance(BulletStyle.Throwing, BulletRuntimeAnimatorController, this, 0);
+        b.AddSpriteOffsetY(new FloatModifier(0.5f * MapManager.gridHeight));
+        b.isnDelOutOfBound = true; // 出屏不自删
+        b.SetHitSoundEffect("Eggimpact" + GameManager.Instance.rand.Next(0, 2));
+
+        b.AddHitAction((b, u) =>
+        {
+            CreateDamageArea(b, b.transform.position, ori_dmg);
+        });
+        PitcherManager.AddDefaultFlyTask(b, startPosition, endPos, true, false);
+        GameController.Instance.AddBullet(b);
+        return b;
+    }
 
     /// <summary>
     /// AOE伤害
     /// </summary>
-    private void CreateDamageArea(Vector2 pos, float ori_dmg)
+    private void CreateDamageArea(BaseBullet b, Vector2 pos, float ori_dmg)
     {
-        RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(pos, 3, 3, "ItemCollideEnemy");
-        r.isAffectMouse = true;
-        r.SetAffectHeight(0);
-        r.SetInstantaneous();
-        r.SetOnEnemyEnterAction((u) => {
-            // u.FlashWhenHited();
-            // 添加内伤
-            DamageAction d = new DamageAction(CombatAction.ActionType.CauseDamage, this, u, aoeDamageRate * ori_dmg);
-            d.AddDamageType(DamageAction.DamageType.AOE);
-            d.ApplyAction();
-        });
-        GameController.Instance.AddAreaEffectExecution(r);
+        {
+            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(pos, new Vector2(MapManager.gridWidth, 0.5f * MapManager.gridHeight), "ItemCollideEnemy");
+            r.isAffectMouse = true;
+            r.SetAffectHeight(0);
+            r.SetInstantaneous();
+            r.AddEnemyEnterConditionFunc((u) => {
+                return UnitManager.CanBeSelectedAsTarget(this, u);
+            });
+            r.AddBeforeDestoryAction(delegate {
+                if (r.mouseUnitList.Count > 0)
+                {
+                    float dmg = (mainDamageRate / r.mouseUnitList.Count) * ori_dmg;
+                    foreach (var u in r.mouseUnitList.ToArray())
+                    {
+                        // 平摊部分
+                        new DamageAction(CombatAction.ActionType.CauseDamage, this, u, dmg).ApplyAction();
+                    }
+                }
+            });
+            GameController.Instance.AddAreaEffectExecution(r);
+        }
+
+        {
+            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(pos, new Vector2(MapManager.gridWidth, 2.5f * MapManager.gridHeight), "ItemCollideEnemy");
+            r.isAffectMouse = true;
+            r.SetAffectHeight(0);
+            r.SetInstantaneous();
+            r.AddEnemyEnterConditionFunc((u) => {
+                return UnitManager.CanBeSelectedAsTarget(this, u);
+            });
+            r.AddBeforeDestoryAction(delegate {
+                if (r.mouseUnitList.Count > 0)
+                {
+                    foreach (var u in r.mouseUnitList.ToArray())
+                    {
+                        // 群伤部分
+                        DamageAction d = new DamageAction(CombatAction.ActionType.CauseDamage, this, u, 0.4f * ori_dmg);
+                        d.AddDamageType(DamageAction.DamageType.AOE);
+                        d.ApplyAction();
+                    }
+                }
+            });
+            GameController.Instance.AddAreaEffectExecution(r);
+        }
     }
 }

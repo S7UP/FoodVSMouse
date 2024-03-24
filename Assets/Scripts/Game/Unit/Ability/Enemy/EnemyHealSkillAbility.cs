@@ -60,8 +60,14 @@ public class EnemyHealSkillAbility : SkillAbility
         foreach (var unit in GameController.Instance.GetEachEnemy())
         {
             // 需要目标存活
-            if (!unit.IsAlive())
+            if (!unit.IsAlive() || !(unit is MouseUnit))
                 continue;
+
+            // 必须是常的老鼠单位，且不能是BOSS
+            MouseUnit m = unit as MouseUnit;
+            if (!MouseManager.IsGeneralMouse(m) || m.IsBoss())
+                continue;
+
             // 检测治疗有没有超过上限
             float realAdd = unit.GetRealCureValue(add);
             float leftAdd = realAdd - unit.mMaxHp + unit.mCurrentHp;

@@ -29,7 +29,7 @@ public class MelonShield : FoodUnit
         AddActionPointListener(ActionPointType.PostReceiveDamage, delegate { UpdateHertMap(); });
         // 一转后在受到伤害结算之前计算反伤
         if (mShape > 0)
-            AddActionPointListener(ActionPointType.PreReceiveDamage, ReBoundDamage);
+            AddActionPointListener(ActionPointType.PostReceiveDamage, ReBoundDamage);
         // 在接收治疗结算之后，更新受伤贴图状态
         AddActionPointListener(ActionPointType.PostReceiveCure, delegate { UpdateHertMap(); });
         Spr_Inside.sprite = GameManager.Instance.GetSprite("Food/" + mType + "/inside/" + mHertIndex);
@@ -97,7 +97,9 @@ public class MelonShield : FoodUnit
         {
             // 添加对应的判定检测器
             {
-                float dmg = Mathf.Min(mCurrentHp, dmgAction.DamageValue * GetFinalDamageRate()) * mCurrentAttack / 10;
+                //float dmg = Mathf.Min(mCurrentHp, dmgAction.DamageValue * GetFinalDamageRate()) * mCurrentAttack / 10;
+                //float dmg = Mathf.Min(mCurrentHp, dmgAction.RealCauseValue) * mCurrentAttack / 10;
+                float dmg = dmgAction.RealCauseValue * mCurrentAttack / 10;
                 RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 3, 3, "ItemCollideEnemy");
                 r.SetInstantaneous();
                 r.isAffectMouse = true;

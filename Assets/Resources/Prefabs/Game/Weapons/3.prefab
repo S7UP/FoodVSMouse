@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4290969488500188106}
   - component: {fileID: 5606188710407496618}
   - component: {fileID: 2250545717370899904}
-  - component: {fileID: 2645120725897921407}
+  - component: {fileID: 1045308660876376323}
   m_Layer: 6
   m_Name: 3
   m_TagString: Untagged
@@ -73,7 +73,7 @@ SpriteRenderer:
   m_SortingLayerID: 481756845
   m_SortingLayer: 5
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: 03db2f6e62240bf41873aa61d6482808, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 9faa0082fb603314c8f99334c2ff55d1, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -94,7 +94,7 @@ Animator:
   m_GameObject: {fileID: 3086529968066355295}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: e5abd44f02f6f9e458f19d7a6d247739, type: 2}
+  m_Controller: {fileID: 9100000, guid: 03258954919d13949a74f45d84f05f0b, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -103,7 +103,7 @@ Animator:
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorControllerStateOnDisable: 0
---- !u!114 &2645120725897921407
+--- !u!114 &1045308660876376323
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -112,7 +112,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 3086529968066355295}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 61375bb5f6a7c6b42b431438518940fc, type: 3}
+  m_Script: {fileID: 11500000, guid: 7d8691a8db9f6bb4b89e231879dd4330, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   animator: {fileID: 0}

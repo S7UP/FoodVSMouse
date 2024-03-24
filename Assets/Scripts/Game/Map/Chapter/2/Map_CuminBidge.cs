@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 
 using UnityEngine;
@@ -122,6 +121,50 @@ public class Map_CuminBidge : ChapterMap
                 false, false);
             gridGroupList.Add(gridGroup);
             gridGroup.transform.SetParent(transform);
+
+            Transform trans = GameController.Instance.mMapController.transform;
+            // 设置进入板块的检测域
+            {
+                RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(gridGroup.transform.position, new Vector2(3.5f * MapManager.gridWidth, 0.5f * MapManager.gridHeight), "ItemCollideEnemy");
+                r.name = "GridGroupEnterCheckArea";
+                r.transform.SetParent(trans);
+                r.isAffectMouse = true;
+                r.SetAffectHeight(0);
+                r.SetOnEnemyEnterAction((u) => {
+                    gridGroup.TryEnter(u);
+                });
+                r.SetOnEnemyExitAction((u) => {
+                    gridGroup.TryExit(u);
+                });
+                GameController.Instance.AddAreaEffectExecution(r);
+
+                // 跟随任务
+                CustomizationTask t = new CustomizationTask();
+                t.AddTaskFunc(delegate {
+                    r.transform.position = gridGroup.transform.position;
+                    return !gridGroup.IsAlive();
+                });
+                t.AddOnExitAction(delegate {
+                    r.MDestory();
+                });
+                r.taskController.AddTask(t);
+            }
+
+            // 整个大板块被视为承载域
+            {
+                RetangleAreaEffectExecution r = Environment.WaterManager.GetVehicleArea(gridGroup.transform.position, new Vector2(3.5f * MapManager.gridWidth, 0.5f * MapManager.gridHeight), new S7P.Numeric.FloatModifier(0));
+                r.name = "WaterVehicle(gridGroup)";
+                r.transform.SetParent(trans);
+                GameController.Instance.AddAreaEffectExecution(r);
+
+                CustomizationTask t = new CustomizationTask();
+                t.AddTaskFunc(delegate
+                {
+                    r.transform.position = gridGroup.transform.position;
+                    return !gridGroup.IsAlive();
+                });
+                r.taskController.AddTask(t);
+            }
         }
     }
 
@@ -191,37 +234,6 @@ public class Map_CuminBidge : ChapterMap
                 r.name = "WaterVehicle(" + v2.x + "," + v2.y + ")";
                 r.transform.SetParent(trans);
                 GameController.Instance.AddAreaEffectExecution(r);
-            }
-        }
-
-        // 创建与五大板块绑定的承载域
-        {
-            Action<BaseGrid> createVehicleAreaAction = (g) => {
-                RetangleAreaEffectExecution r = Environment.WaterManager.GetVehicleArea(g.transform.position, new Vector2(1 * MapManager.gridWidth, 0.5f * MapManager.gridHeight), new S7P.Numeric.FloatModifier(0));
-                r.name = "WaterVehicle(grid)";
-                r.transform.SetParent(trans);
-                GameController.Instance.AddAreaEffectExecution(r);
-
-                CustomizationTask t = new CustomizationTask();
-                t.AddTaskFunc(delegate {
-                    r.transform.position = g.transform.position;
-                    return !g.IsAlive();
-                });
-                r.taskController.AddTask(t);
-            };
-
-            // 2 4 6路
-            for (int i = 5; i < 9; i++)
-            {
-                createVehicleAreaAction(GetGrid(i, 1));
-                createVehicleAreaAction(GetGrid(i, 3));
-                createVehicleAreaAction(GetGrid(i, 5));
-            }
-            // 3 5路
-            for (int i = 2; i < 6; i++)
-            {
-                createVehicleAreaAction(GetGrid(i, 2));
-                createVehicleAreaAction(GetGrid(i, 4));
             }
         }
     }

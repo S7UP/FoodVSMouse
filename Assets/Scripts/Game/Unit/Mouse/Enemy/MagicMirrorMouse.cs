@@ -10,7 +10,6 @@ using UnityEngine.UI;
 public class MagicMirrorMouse : MouseUnit
 {
     private GeneralAttackSkillAbility generalAttackSkillAbility;
-    private StealFireEnergySkillAbiliby stealFireEnergySkillAbiliby;
 
     private float stealFire; // 偷到的火
     private int timeLeft; // 施法剩余时间

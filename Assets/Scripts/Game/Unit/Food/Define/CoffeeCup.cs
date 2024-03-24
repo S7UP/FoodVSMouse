@@ -11,6 +11,20 @@ public class CoffeeCup : FoodUnit
         base.Awake();
     }
 
+    public override void MInit()
+    {
+        base.MInit();
+        // 28ÃëÏûÊ§
+        {
+            CustomizationTask task = new CustomizationTask();
+            task.AddTimeTaskFunc(28 * 60);
+            task.AddOnExitAction(delegate {
+                ExecuteDeath();
+            });
+            taskController.AddTask(task);
+        }
+    }
+
     public override void AfterDeath()
     {
         base.AfterDeath();
@@ -101,34 +115,52 @@ public class CoffeeCup : FoodUnit
     public override void ExecuteDamage()
     {
         float dmg = mCurrentAttack;
-        AllyBullet b = AllyBullet.GetInstance(BulletStyle.NoStrengthenNormal, Bullet_Run, this, 0);
-        if (mShape >= 2)
-            b.isnKillSelf = true;
+        AllyBullet b = AllyBullet.GetInstance(BulletStyle.NoStrengthenNormal, Bullet_Run, this, dmg);
         b.transform.position = transform.position;
         b.SetStandardVelocity(24);
         b.SetRotate(Vector2.right);
         b.SetHitSoundEffect("Puff");
-        b.AddHitAction((bullet, u) => {
-            if(u is MouseUnit)
-                (u as MouseUnit).FlashWhenHited();
-            u.AddRecordDamage(dmg);
-            if(mShape >= 1)
-                StatusManager.AddDamageRateBuff(u, 1.05f, 60);
-        });
         GameController.Instance.AddBullet(b);
 
         float s = 0;
-        float maxDist = MapManager.gridWidth * 3;
-        CustomizationTask t = new CustomizationTask();
-        t.AddTaskFunc(delegate {
-            s += b.GetVelocity();
-            if (s >= maxDist)
-                return true;
-            return false;
-        });
-        t.AddOnExitAction(delegate {
-            b.KillThis();
-        });
-        b.AddTask(t);
+        float maxDist = MapManager.gridWidth * 3.5f;
+        if(mShape >= 1)
+            maxDist = MapManager.gridWidth * 6.5f;
+
+        if(mShape < 2)
+        {
+            CustomizationTask t = new CustomizationTask();
+            t.AddTaskFunc(delegate {
+                s += b.GetVelocity();
+                if (s >= maxDist)
+                    return true;
+                return false;
+            });
+            t.AddOnExitAction(delegate {
+                b.KillThis();
+            });
+            b.AddTask(t);
+        }
+        else
+        {
+            CustomizationTask t = new CustomizationTask();
+            t.AddTaskFunc(delegate {
+                s += b.GetVelocity();
+                if (s <= MapManager.gridWidth)
+                    b.SetDamage(2 * dmg);
+                else if (s <= 3 * MapManager.gridWidth)
+                    b.SetDamage((-0.5f*s / MapManager.gridWidth + 2.5f) * dmg);
+                else
+                    b.SetDamage(dmg);
+
+                if (s >= maxDist)
+                    return true;
+                return false;
+            });
+            t.AddOnExitAction(delegate {
+                b.KillThis();
+            });
+            b.AddTask(t);
+        }
     }
 }

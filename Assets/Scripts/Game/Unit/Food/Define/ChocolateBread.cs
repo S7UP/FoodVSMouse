@@ -1,4 +1,3 @@
-using S7P.Numeric;
 
 using System;
 using System.Collections.Generic;
@@ -10,7 +9,6 @@ using UnityEngine;
 public class ChocolateBread : FoodUnit
 {
     private static Sprite Shield_Sprite;
-    private FloatModifier costMod = new FloatModifier(-20f / 7 / 60);
 
     private int mHertIndex; // 受伤阶段 0：正常 1：小伤 2：重伤
     private List<float> mHertRateList = new List<float>()
@@ -32,19 +30,9 @@ public class ChocolateBread : FoodUnit
         base.MInit();
         // 在接收治疗结算之后，更新受伤贴图状态
         AddActionPointListener(ActionPointType.PostReceiveCure, delegate { UpdateHertMap(); });
-        AddActionPointListener(ActionPointType.PreReceiveDamage, (act) => { 
-            if(act is DamageAction)
-            {
-                DamageAction dmgAction = act as DamageAction;
-                if(dmgAction.DamageValue > 0.6f * mMaxHp)
-                {
-                    dmgAction.DamageValue = 0.6f * mMaxHp;
-                }
-            }
-        });
+        AddActionPointListener(ActionPointType.PreReceiveDamage, delegate { UpdateHertMap(); });
         Vector3[] v3Array = new Vector3[] {
-            new Vector2(-MapManager.gridWidth, 0), new Vector2(-2*MapManager.gridWidth, 0),
-            new Vector2(-MapManager.gridWidth, MapManager.gridHeight), new Vector2(-MapManager.gridWidth, -MapManager.gridHeight),
+            new Vector2(-MapManager.gridWidth, 0)
         };
         // 产生检测区域，检测区域内是否有可以提供庇护的目标
         foreach (var v3 in v3Array)
@@ -84,22 +72,23 @@ public class ChocolateBread : FoodUnit
             AddOnDestoryAction(action);
         }
 
-        if(mShape >= 1)
+        if (mShape >= 1)
         {
-            int timeLeft = 60;
-            CustomizationTask t = new CustomizationTask();
-            t.AddTaskFunc(delegate {
+            // 不受攻击5秒后每1秒回复2%最大生命值
+            int timeLeft = 0;
+            AddActionPointListener(ActionPointType.PreReceiveDamage, delegate { timeLeft = 300; });
+            CustomizationTask task = new CustomizationTask();
+            task.AddTaskFunc(delegate {
                 timeLeft--;
-                if(timeLeft <= 0)
+                if (timeLeft <= 0)
                 {
-                    new CureAction(CombatAction.ActionType.GiveCure, this, this, 0.02f * mMaxHp).ApplyAction();
                     timeLeft += 60;
+                    new CureAction(CombatAction.ActionType.GiveCure, this, this, 0.02f * mMaxHp).ApplyAction();
                 }
                 return false;
             });
-            AddTask(t);
+            taskController.AddTask(task);
         }
-        GameController.Instance.AddCostResourceModifier("Fire", costMod);
     }
 
     public override void MUpdate()
@@ -243,13 +232,14 @@ public class ChocolateBread : FoodUnit
             this.master = master;
             this.target = target;
             action = (act) => {
-                if(act is DamageAction)
-                {
-                    DamageAction DmgAction = act as DamageAction;
-                    float temp_dmg = DmgAction.DamageValue;
-                    DmgAction.DamageValue = 0;
-                    new DamageAction(DmgAction.mActionType, DmgAction.Creator, master, temp_dmg).ApplyAction();
-                }
+                if (!(act is DamageAction))
+                    return;
+                DamageAction DmgAction = act as DamageAction;
+                if (DmgAction.mActionType.Equals(DamageAction.ActionType.RealDamage) || DmgAction.mActionType.Equals(DamageAction.ActionType.BurnDamage))
+                    return;
+                float temp_dmg = DmgAction.DamageValue;
+                DmgAction.DamageValue = 0;
+                new DamageAction(DmgAction.mActionType, DmgAction.Creator, master, temp_dmg).ApplyAction();
             };
 
             // 特效生成

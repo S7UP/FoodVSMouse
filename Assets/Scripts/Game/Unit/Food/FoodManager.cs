@@ -12,7 +12,7 @@ public class FoodManager
         { FoodNameTypeMap.CupLight, new List<string>(){"酒杯灯","节能灯","高效节能灯" } },
         { FoodNameTypeMap.BigStove, new List<string>(){"大火炉","高能火炉","超能燃气炉" } },
         { FoodNameTypeMap.CoffeePowder, new List<string>(){"咖啡粉" } },
-        { FoodNameTypeMap.CherryPudding, new List<string>(){"樱桃反弹布丁","节能反弹布丁" } },
+        { FoodNameTypeMap.CherryPudding, new List<string>(){"樱桃反弹布丁","果肉反弹布丁" } },
         { FoodNameTypeMap.IceCream, new List<string>(){"冰淇淋","果蔬冰淇淋","极寒冰沙" } },
         { FoodNameTypeMap.WaterPipe, new List<string>(){"双向水管","控温双向水管","合金水管" } },
         { FoodNameTypeMap.ThreeLinesVine, new List<string>(){"三线酒架","强力三线酒架","终结者酒架" } },
@@ -22,28 +22,33 @@ public class FoodManager
         { FoodNameTypeMap.IceBucket, new List<string>(){"冰桶炸弹" } },
         { FoodNameTypeMap.MelonShield, new List<string>(){"瓜皮护罩","尖刺瓜皮护罩" } },
         { FoodNameTypeMap.Takoyaki, new List<string>(){"章鱼烧","两栖章鱼烧","火影章鱼烧" } },
-        { FoodNameTypeMap.FlourBag, new List<string>(){"面粉袋","超重面粉袋","粉碎性骨折铅袋" } },
+        { FoodNameTypeMap.FlourBag, new List<string>(){"面粉袋","超重面粉袋" } },
         { FoodNameTypeMap.WineBottleBoom, new List<string>(){"酒瓶炸弹" } },
         { FoodNameTypeMap.CokeBoom, new List<string>(){"可乐炸弹" } },
         { FoodNameTypeMap.BoiledWaterBoom, new List<string>(){"开水壶炸弹" } },
         { FoodNameTypeMap.WiskyBoom, new List<string>(){"威士忌炸弹" } },
         { FoodNameTypeMap.PineappleBreadBoom, new List<string>(){"菠萝爆炸面包","独角菠萝面包","皇冠菠萝面包" } },
         { FoodNameTypeMap.SpinCoffee, new List<string>(){"旋转咖啡喷壶","迷雾旋转咖啡喷壶","原子旋转咖啡喷壶" } },
-        //{ FoodNameTypeMap.Fan, new List<string>(){"换气扇" } },
-        { FoodNameTypeMap.MouseCatcher, new List<string>(){"老鼠夹子","节能老鼠夹子","黑猫老鼠夹子" } },
+        { FoodNameTypeMap.Bun, new List<string>(){"小笼包", "双层小笼包", "机枪小笼包" } },
+        { FoodNameTypeMap.MouseCatcher, new List<string>(){"老鼠夹子","坚韧夹子","黑猫鼠夹" } },
         { FoodNameTypeMap.SpicyStringBoom, new List<string>(){"麻辣串炸弹" } },
+        { FoodNameTypeMap.ChocolateCannon, new List<string>(){ "巧克力大炮","高频巧克力大炮","死神大炮" } },
         { FoodNameTypeMap.CoffeeCup, new List<string>(){ "咖啡杯","花纹咖啡杯","骨瓷咖啡杯" } },
+        { FoodNameTypeMap.IceBun, new List<string>(){"冰冻小笼包", "双层冰冻小笼包", "机枪冰冻小笼包" } },
         { FoodNameTypeMap.SugarGourd, new List<string>(){"糖葫芦炮弹","水果糖葫芦炮弹","七彩糖葫芦炮弹" } },
-        { FoodNameTypeMap.MushroomDestroyer, new List<string>(){ "毒菌破坏者" } },
-        { FoodNameTypeMap.PokerShield, new List<string>(){ "扑克护罩" } },
+        { FoodNameTypeMap.Hamburger, new List<string>(){ "汉堡包", "贪吃呱" } },
+        { FoodNameTypeMap.Fishbone, new List<string>(){ "钢鱼刺", "迟缓钢鱼刺", "利刃钢鱼刺" } },
+        { FoodNameTypeMap.CatBox, new List<string>(){ "猫猫盒", "猫猫箱" } },
+        //{ FoodNameTypeMap.MushroomDestroyer, new List<string>(){ "毒菌破坏者" } },
+        //{ FoodNameTypeMap.PokerShield, new List<string>(){ "扑克护罩" } },
         { FoodNameTypeMap.SaladPitcher, new List<string>(){ "色拉投手","果蔬色拉投手", "凯撒色拉投手" } },
         { FoodNameTypeMap.ChocolatePitcher, new List<string>(){ "巧克力投手", "浓情巧克力投手", "脆心巧克力投手" } },
         { FoodNameTypeMap.TofuPitcher, new List<string>(){ "臭豆腐投手", "什锦臭豆腐投手", "铁板臭豆腐投手" } },
         { FoodNameTypeMap.EggPitcher, new List<string>(){ "煮蛋器投手", "威力煮蛋器", "强袭煮蛋器" } },
         { FoodNameTypeMap.IceEggPitcher, new List<string>(){ "冰煮蛋器投手", "冰威力煮蛋器", "冰河煮蛋器" } },
-        { FoodNameTypeMap.ToastBread, new List<string>(){ "土司面包" } },
+        { FoodNameTypeMap.ToastBread, new List<string>(){ "土司面包", "冰皮月饼" } },
         { FoodNameTypeMap.ChocolateBread, new List<string>(){ "巧克力面包", "德芙面包" } },
-        { FoodNameTypeMap.RaidenBaguette, new List<string>(){ "雷电长棍面包", "节能雷电长棍面包", "负离子面包" } },
+        { FoodNameTypeMap.RaidenBaguette, new List<string>(){ "雷电长棍面包", "高频雷电长棍面包", "负离子面包" } },
         { FoodNameTypeMap.HotDog, new List<string>(){ "热狗大炮", "热狗高射炮", "热狗高射榴弹炮" } }
     };
 
@@ -60,7 +65,8 @@ public class FoodManager
     public static List<FoodNameTypeMap> AttackLevelMap = new List<FoodNameTypeMap>() {
         FoodNameTypeMap.WaterPipe, FoodNameTypeMap.ThreeLinesVine, FoodNameTypeMap.Takoyaki, FoodNameTypeMap.SpinCoffee, FoodNameTypeMap.SugarGourd,
         FoodNameTypeMap.SaladPitcher, FoodNameTypeMap.ChocolatePitcher, FoodNameTypeMap.TofuPitcher, FoodNameTypeMap.EggPitcher, FoodNameTypeMap.HotDog,
-        FoodNameTypeMap.CoffeeCup, FoodNameTypeMap.IceEggPitcher
+        FoodNameTypeMap.CoffeeCup, FoodNameTypeMap.IceEggPitcher, FoodNameTypeMap.Bun, FoodNameTypeMap.IceBun, FoodNameTypeMap.ChocolateCannon, FoodNameTypeMap.Fishbone,
+        FoodNameTypeMap.RaidenBaguette,
     };
 
     /// <summary>
@@ -68,7 +74,8 @@ public class FoodManager
     /// </summary>
     public static List<FoodNameTypeMap> HpLevelMap = new List<FoodNameTypeMap>() {
         FoodNameTypeMap.CherryPudding, FoodNameTypeMap.WoodenDisk, FoodNameTypeMap.CottonCandy, FoodNameTypeMap.MelonShield,
-        FoodNameTypeMap.PokerShield, FoodNameTypeMap.ToastBread, FoodNameTypeMap.ChocolateBread, FoodNameTypeMap.RaidenBaguette
+        FoodNameTypeMap.PokerShield, FoodNameTypeMap.ToastBread, FoodNameTypeMap.ChocolateBread, FoodNameTypeMap.RaidenBaguette,
+        FoodNameTypeMap.Hamburger, FoodNameTypeMap.CatBox
     };
 
     private static ExcelManager.CSV _FoodTypeInfoCsv;

@@ -185,12 +185,4 @@ public class RowboatMouse : MouseUnit, IInWater
     {
         
     }
-
-    /// <summary>
-    /// 划艇鼠完全不能离开水啊
-    /// </summary>
-    public override void SetGridDangerousWeightDict()
-    {
-        GridDangerousWeightDict[GridType.Water] = GridDangerousWeightDict[GridType.Default] - 1;
-    }
 }

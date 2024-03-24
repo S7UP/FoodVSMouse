@@ -410,6 +410,10 @@ public class IceSlag : BossUnit
         // 判断方法：取当前行最靠左一个
         Func<BaseUnit, BaseUnit, bool> RowCompareFunc = (u1, u2) =>
         {
+            // 不能把人物作为目标
+            if (u2 != null && u2 is CharacterUnit)
+                return false;
+
             if (u1 == null)
                 return true;
             else if (u2 == null)
@@ -452,8 +456,6 @@ public class IceSlag : BossUnit
         int num1_0 = Mathf.FloorToInt(GetParamValue("num1_0", mHertIndex)); // 光弹数
         int num1_1 = Mathf.FloorToInt(GetParamValue("num1_1", mHertIndex)); // 元素弹数
 
-        //int attack_time = Mathf.FloorToInt(animatorController.GetAnimatorStateRecorder("Attack0").aniTime); // 光弹的动作时间
-        //int ExcuteDamage_time = Mathf.FloorToInt(0.5f*animatorController.GetAnimatorStateRecorder("Attack0").aniTime); // 光弹的发射触发时机
         int attack_time = 85; // 光弹的动作时间
         int ExcuteDamage_time = Mathf.FloorToInt(0.5f * attack_time); // 光弹的发射触发时机
 
@@ -841,8 +843,11 @@ public class IceSlag : BossUnit
     /// </summary>
     private void CreateLightBullet(float minLeftX)
     {
+        float dmg = GetParamValue("dmg1");
+        float hp_percent = GetParamValue("hp_percent1") / 100;
+
         // 先去获取当前行最靠左的可攻击美食单位
-        BaseUnit targetUnit = FoodManager.GetSpecificRowFarthestLeftCanTargetedAlly(GetRowIndex(), transform.position.x, true);
+        BaseUnit targetUnit = FoodManager.GetSpecificRowFarthestLeftCanTargetedAlly(GetRowIndex(), transform.position.x, false);
         Vector3 targetPos;
         if (targetUnit == null)
             targetPos = new Vector2(minLeftX, MapManager.GetRowY(GetRowIndex()));
@@ -866,12 +871,15 @@ public class IceSlag : BossUnit
             if(u is CharacterUnit)
             {
                 // 如果击中人物，则为人物施加晕眩效果
-                u.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(u, stun1_0, false));
+                // u.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(u, stun1_0, false));
             }
             else
             {
                 if(u != null && u.IsAlive())
-                    UnitManager.Execute(this, u);
+                {
+                    new DamageAction(CombatAction.ActionType.BurnDamage, this, u, Mathf.Max(dmg, u.mMaxHp * hp_percent)).ApplyAction();
+                }
+                    //UnitManager.Execute(this, u);
             }
         });
 
@@ -914,7 +922,7 @@ public class IceSlag : BossUnit
         };
 
         // 先去获取当前行最靠左的可攻击美食单位
-        BaseUnit targetUnit = FoodManager.GetSpecificRowFarthestLeftCanTargetedAlly(GetRowIndex(), transform.position.x, true);
+        BaseUnit targetUnit = FoodManager.GetSpecificRowFarthestLeftCanTargetedAlly(GetRowIndex(), transform.position.x, false);
         Vector3 targetPos;
         if (targetUnit == null)
             targetPos = new Vector2(minLeftX, MapManager.GetRowY(GetRowIndex()));

@@ -1,1 +1,1 @@
-{"baseAttrbute":{"name":"毒菌破坏者","type":31,"shape":0,"baseHP":50.0,"baseAttack":0.0,"baseAttackSpeed":0.0,"attackPercent":0.0,"baseMoveSpeed":0.0,"baseDefense":0.0,"baseRange":0.0,"baseHeight":0},"valueList":[],"foodType":0}
+{"baseAttrbute":{"name":"汉堡包","type":31,"shape":0,"baseHP":0.0,"baseAttack":10.0,"baseAttackSpeed":1.0,"attackPercent":0.294,"baseMoveSpeed":0.0,"baseDefense":0.0,"baseRange":0.0,"baseHeight":0},"valueList":[50,60,70,80,90,100,110,130,150,170,210,250,290,330,370,410,450],"foodType":0}

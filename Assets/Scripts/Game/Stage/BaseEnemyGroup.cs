@@ -39,6 +39,23 @@ public class BaseEnemyGroup
             Defence = 0.0f;
             ParamDict = new Dictionary<string, List<float>>();
         }
+
+        public EnemyAttribute DeepCopy()
+        {
+            EnemyAttribute new_attr = new EnemyAttribute();
+            new_attr.HpRate = HpRate;
+            new_attr.AttackRate = AttackRate;
+            new_attr.MoveSpeedRate = MoveSpeedRate;
+            new_attr.Defence = Defence;
+            foreach (var keyValuePair in ParamDict)
+            {
+                List<float> ls = new List<float>();
+                foreach (var val in keyValuePair.Value)
+                    ls.Add(val);
+                new_attr.ParamDict.Add(keyValuePair.Key, ls);
+            }
+            return new_attr;
+        }
     }
 
     /// <summary>
@@ -155,5 +172,17 @@ public class BaseEnemyGroup
         if (mEnemyAttribute == null)
             mEnemyAttribute = new EnemyAttribute();
         return mEnemyAttribute;
+    }
+
+    public BaseEnemyGroup DeepCopy()
+    {
+        BaseEnemyGroup new_group = new BaseEnemyGroup();
+        new_group.mApartIndex = mApartIndex;
+        new_group.mStartIndex = mStartIndex;
+        new_group.mEnemyInfo = mEnemyInfo;
+        new_group.mCount = mCount;
+        new_group.mHp = mHp;
+        new_group.mEnemyAttribute = mEnemyAttribute.DeepCopy();
+        return new_group;
     }
 }

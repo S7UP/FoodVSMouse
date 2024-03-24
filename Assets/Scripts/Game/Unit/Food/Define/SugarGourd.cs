@@ -8,7 +8,6 @@ using UnityEngine;
 public class SugarGourd : FoodUnit
 {
     private static readonly int[] countArray = { 1, 1, 2 }; // 根据转职情况来确定发射几颗子弹
-    private static readonly float[] damageRateArray = { 1.0f, 1.0f, 0.75f}; // 伤害比率与转职关系
     private int currentAttackCount;
     private int maxAttackCount;
     private List<float> attackPercentList;
@@ -87,11 +86,6 @@ public class SugarGourd : FoodUnit
     /// </summary>
     public override void OnGeneralAttack()
     {
-        // 切换时的第一帧直接不执行update()，因为下述的info.normalizedTime的值还停留在上一个状态，逻辑会出问题！
-        if (currentStateTimer <= 0)
-        {
-            return;
-        }
         // 伤害判定帧应当执行判定
         if (IsDamageJudgment())
         {
@@ -140,8 +134,8 @@ public class SugarGourd : FoodUnit
         b.SetSearchEnemyEnable(true); // 开启索敌模式
         b.SetCompareFunc(BulletCompareFunc);
         b.SetVelocityChangeEvent(TransManager.TranToVelocity(12), TransManager.TranToVelocity(48), 90);
-        b.SetDamage(mCurrentAttack * damageRateArray[mShape]);
-        b.AddHitAction(BulletHitAction); // 设置击中后的事件
+        b.SetDamage(mCurrentAttack);
+        // b.AddHitAction(BulletHitAction); // 设置击中后的事件
     }
 
     ////////////////////////////////////////////////////////////以下是私有方法///////////////////////////////////////////////////////////////////////
@@ -163,23 +157,5 @@ public class SugarGourd : FoodUnit
             return (compareTarget.transform.position.x < currentTarget.transform.position.x);
         else
             return compareTarget.mMaxHp > currentTarget.mMaxHp;
-    }
-
-    /// <summary>
-    /// 子弹击中事件
-    /// </summary>
-    /// <param name="bullet">当前子弹</param>
-    /// <param name="targetUnit">被击中的目标</param>
-    private void BulletHitAction(BaseBullet b, BaseUnit u)
-    {
-        RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(b.transform.position, new Vector2(2.5f * MapManager.gridWidth, 2.5f * MapManager.gridHeight), "ItemCollideEnemy");
-        r.isAffectMouse = true;
-        r.SetInstantaneous();
-        r.SetAffectHeight(1);
-        r.SetOnEnemyEnterAction((m) =>
-        {
-            new DamageAction(CombatAction.ActionType.CauseDamage, this, m, 0.1f * mCurrentAttack).ApplyAction();
-        });
-        GameController.Instance.AddAreaEffectExecution(r);
     }
 }

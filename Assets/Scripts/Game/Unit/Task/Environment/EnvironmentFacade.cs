@@ -18,6 +18,9 @@ namespace Environment
             // 对人物无效
             if (u is CharacterUnit)
                 return;
+            // 对免疫冰冻损伤的目标无效
+            if (u.NumericBox.GetBoolNumericValue(StringManager.IgnoreFrozen))
+                return;
 
             ITask t = u.taskController.GetTask("IceTask");
             if (t == null)
@@ -29,6 +32,8 @@ namespace Environment
             {
                 (t as IceTask).AddValue(value);
             }
+
+            u.actionPointController.TriggerAction("AfterAddIceDebuff");
         }
 
         /// <summary>

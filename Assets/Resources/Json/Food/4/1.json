@@ -1,1 +1,1 @@
-{"baseAttrbute":{"name":"节能反弹布丁","type":4,"shape":1,"baseHP":0.0,"baseAttack":10.0,"baseAttackSpeed":1.0,"attackPercent":0.0,"baseMoveSpeed":0.0,"baseDefense":0.0,"baseRange":0.0,"baseHeight":0},"valueList":[50,60,70,80,90,100,110,130,150,170,210,250,290,330,370,410,450],"foodType":6}
+{"baseAttrbute":{"name":"果肉反弹布丁","type":4,"shape":1,"baseHP":0.0,"baseAttack":10.0,"baseAttackSpeed":1.0,"attackPercent":0.0,"baseMoveSpeed":0.0,"baseDefense":0.0,"baseRange":0.0,"baseHeight":0},"valueList":[75,90,105,120,135,150,165,195,225,255,315,375,435,495,555,615,675],"foodType":6}

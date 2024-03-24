@@ -1,12 +1,12 @@
 
 using UnityEngine;
 using S7P.Numeric;
+using Environment;
 /// <summary>
 /// 袋鼠类
 /// </summary>
 public class KangarooMouse : MouseUnit
 {
-    private BoolModifier IgnoreFrozenModifier = new BoolModifier(true); // 免疫冰冻修饰器
     private BoolModifier IgnoreStunModifier = new BoolModifier(true); // 免疫晕眩修饰器
     private bool isFirstRoot; // 是否有吃过定身效果  也可以作为是否定为跳跃状态的标准  false = 跳跃状态  true = 非跳跃状态
     private bool isJumping; // 正在跳跃过程中
@@ -17,33 +17,31 @@ public class KangarooMouse : MouseUnit
         isFirstRoot = false;
         isJumping = false;
         base.MInit();
-        // 免疫减速效果
-        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozenSlowDown, new BoolModifier(true));
-        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreSlowDown, new BoolModifier(true));
         // 第一次受到定身效果前免疫定身效果
-        NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozen, IgnoreFrozenModifier);
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, IgnoreStunModifier);
         // 添加监听
         // 在第一次定身效果结束后（由于免疫的原理是施加定身效果后立即结束），移除免疫定身效果
-        statusAbilityManager.AddAfterRemoveStatusAbilityEvent(StringManager.Frozen, 
-            delegate {
-                if (isFirstRoot)
-                    return;
-                isFirstRoot = true;
-                NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreFrozen, IgnoreFrozenModifier);
-                NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreStun, IgnoreStunModifier);
-                animatorController.Play("Drop");
-            });
         statusAbilityManager.AddAfterRemoveStatusAbilityEvent(StringManager.Stun,
             delegate {
                 if (isFirstRoot)
                     return;
                 isFirstRoot = true;
-                NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreFrozen, IgnoreFrozenModifier);
+                // NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreFrozen, IgnoreFrozenModifier);
+                // 清空所有冰冻损伤效果
+                IceTask t = Environment.EnvironmentFacade.GetIceDebuff(this) as IceTask;
+                if(t != null)
+                {
+                    t.AddValue(-t.GetValue());
+                }
                 NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreStun, IgnoreStunModifier);
                 animatorController.Play("Drop");
             });
-        jumpDistance = 1 + 0.5f * mShape;
+        if (mShape == 0 || mShape == 3)
+            jumpDistance = 1;
+        else if (mShape == 1 || mShape == 4)
+            jumpDistance = 1.5f;
+        else
+            jumpDistance = 2;
     }
 
     /// <summary>

@@ -6,5 +6,5 @@ public interface IFlyUnit
     /// <summary>
     /// »÷×¹Ð§¹û
     /// </summary>
-    public void ExecuteDrop();
+    public void OnShootDown();
 }

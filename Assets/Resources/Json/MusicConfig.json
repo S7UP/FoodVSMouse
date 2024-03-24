@@ -15,6 +15,10 @@
 {"refenceName":"YongShiShenDianBoss2","displayName":"泣け!わめけ!!","author":"並木学","resPath":"Ex1/YongShiShenDianBoss2","startTime":0.0,"loopStartTime":20.587,"loopEndTime":107.602,"volume":0.4},
 {"refenceName":"YongShiShenYuanRoad","displayName":"狂おしいほどに","author":"並木学","resPath":"Ex2/YongShiShenYuanRoad","startTime":0.309,"loopStartTime":0.309,"loopEndTime":240.298,"volume":0.25},
 {"refenceName":"YongShiShenYuanBoss1","displayName":"Mind Palette","author":"a_hisa","resPath":"Ex2/YongShiShenYuanBoss1","loopStartTime":0.0,"volume":0.5},
+
+{"refenceName":"WangShengNingHua1","displayName":"铃兰花海的游乐园 ～ Puppet March","author":"SHO","resPath":"LC1_1/WangShengNingHua1","loopStartTime":0.0,"volume":0.5},
+{"refenceName":"WangShengNingHua2","displayName":"人形剧场再演绎 ～ Recreate Dream Opera","author":"SHO","resPath":"LC1_1/WangShengNingHua2","loopStartTime":0.0,"volume":0.5},
+
 {"refenceName":"ShenYuanJueJing1","displayName":"Futile is the Fight Against the Fetters of Fear","author":"Spectral Nexus","resPath":"LittleCat/ShenYuanJueJing1","loopStartTime":0.0,"volume":0.5},
 {"refenceName":"ShenYuanJueJing2","displayName":"The Primadonna's Burnt Wings ~ Walpurgis Nightmare","author":"Spectral Nexus","resPath":"LittleCat/ShenYuanJueJing2","loopStartTime":0.0,"volume":0.5},
 {"refenceName":"ShenYuanJueJing3","displayName":"Sapphire Mothership ~ Thalassic Izanami","author":"Frogmask","resPath":"LittleCat/ShenYuanJueJing3","loopStartTime":0.0,"volume":0.5},
@@ -22,6 +26,13 @@
 {"refenceName":"JiXiangWuDay0","displayName":"Electric Vultures","author":"AsuraTian","resPath":"GuaGua/JiXiangWuDay0","loopStartTime":0.0,"volume":0.5},
 {"refenceName":"JiXiangWuNight0","displayName":"尘埃与流萤","author":"依旧在雨中等你&鹤见江野","resPath":"GuaGua/JiXiangWuNight0","loopStartTime":0.0,"volume":0.5},
 {"refenceName":"JiXiangWuBoss0","displayName":"Sealed Fate","author":"Sham Makdessi","resPath":"GuaGua/JiXiangWuBoss0","loopStartTime":0.0,"volume":0.5},
+{"refenceName":"JiXiangWuDay1","displayName":"Azure Sky","author":"a_hisa","resPath":"GuaGua/JiXiangWuDay1","loopStartTime":0.0,"volume":0.5},
+{"refenceName":"JiXiangWuNight1","displayName":"黄昏の聖痕","author":"市橋康弘","resPath":"GuaGua/JiXiangWuNight1","loopStartTime":0.0,"volume":0.5},
+{"refenceName":"JiXiangWuNight2","displayName":"忆夏思乡","author":"MoreanP","resPath":"GuaGua/JiXiangWuNight2","loopStartTime":0.0,"volume":0.5},
+
+{"refenceName":"SLPZ1","displayName":"业火地幔","author":"UI-70","resPath":"SLPZ/SLPZ1","loopStartTime":0.0,"volume":0.5},
+{"refenceName":"SLPZ2","displayName":"Cheer’s Floor (死体旅行)","author":"UI-70","resPath":"SLPZ/SLPZ2","loopStartTime":0.0,"volume":0.5},
+{"refenceName":"SLPZ3","displayName":"霊知の太陽信仰","author":"UI-70","resPath":"SLPZ/SLPZ3","loopStartTime":0.0,"volume":0.5},
 
 {"refenceName":"HuoShanDay0","displayName":"火山岛白天先锋段","author":"美食大战老鼠","resPath":"Default/HuoShanDay0","loopStartTime":0.0,"volume":0.5},
 {"refenceName":"HuoShanDay1","displayName":"火山岛白天精英段","author":"美食大战老鼠","resPath":"Default/HuoShanDay1","loopStartTime":0.0,"volume":0.5},
@@ -44,6 +55,8 @@
 {"refenceName":"RongYanLianYu1","displayName":"タタラ·ザ·ファーネース","author":"NED","resPath":"LittleCat/RongYanLianYu1","startTime":0.0,"loopStartTime":20.345,"loopEndTime":168.792,"volume":0.5},
 {"refenceName":"RongYanLianYu2","displayName":"桔梗塚伝説　～ Black Ventus","author":"Wanwan","resPath":"LittleCat/RongYanLianYu2","startTime":0.0,"loopStartTime":12.385,"loopEndTime":172.815,"volume":0.5},
 {"refenceName":"RongYanLianYu3","displayName":"軍神五兵の反逆者　～ REBELLION God Force","author":"Wanwan","resPath":"LittleCat/RongYanLianYu3","startTime":0.0,"volume":0.5},
+{"refenceName":"RongYanLianYu4","displayName":"クロカゲMyouki Kurokage","author":"Blue Archive","resPath":"LittleCat/RongYanLianYu4","startTime":0.0,"volume":0.5},
+{"refenceName":"RongYanLianYu5","displayName":"格里高利Gregorius","author":"Blue Archive","resPath":"LittleCat/RongYanLianYu5","startTime":0.0,"volume":0.5},
 {"refenceName":"ShenMinHuanXiang1","displayName":"深海星雲 ~ Nebura Stream","author":"Wanwan","resPath":"LittleCat/ShenMinHuanXiang1","loopStartTime":1.0,"startTime":1.0,"loopEndTime":179.90,"volume":0.5},
 {"refenceName":"ShenMinHuanXiang2","displayName":"星の源流、草薙の剣竜","author":"Wanwan","resPath":"LittleCat/ShenMinHuanXiang2","startTime":1.0,"loopStartTime":1.0,"loopEndTime":130.095,"volume":0.5},
 {"refenceName":"ShenMinHuanXiang3","displayName":"インヤンシーサーペント","author":"Wanwan","resPath":"LittleCat/ShenMinHuanXiang3","startTime":1.0,"loopStartTime":29.844,"loopEndTime":228.813,"volume":0.5},
@@ -59,9 +72,30 @@
 {"refenceName":"SkyLandBig0","displayName":"浮空岛皇冠关先锋段","author":"美食大战老鼠","resPath":"Default/SkyLandBig0","loopStartTime":0.0,"volume":0.5},
 {"refenceName":"SkyLandBig1","displayName":"浮空岛皇冠关精英段","author":"美食大战老鼠","resPath":"Default/SkyLandBig1","loopStartTime":0.0,"volume":0.5},
 
+{"refenceName":"YongShiHuaYuan1","displayName":"Galuda - 完全なるモノへ","author":"並木学","resPath":"Ex6/YongShiHuaYuan1","startTime":0.341,"loopStartTime":153.640,"loopEndTime":306.870,"volume":0.5},
+{"refenceName":"YongShiHuaYuan2","displayName":"Galuda - 完全なるモノへ（道イク REMIX）","author":"松本大輔,まさKING,山﨑道広","resPath":"Ex6/YongShiHuaYuan2","startTime":0.252,"loopStartTime":0.252,"loopEndTime":205.808,"volume":0.5},
+
+{"refenceName":"YongShiFeiChuan1","displayName":"夜空の始まる場所","author":"RTTF Records","resPath":"Ex7/YongShiFeiChuan1","startTime":0.0,"loopStartTime":0.0,"volume":0.5},
+{"refenceName":"YongShiFeiChuan2","displayName":"Descend","author":"並木学","resPath":"Ex7/YongShiFeiChuan2","startTime":0.0,"loopStartTime":4.562,"loopEndTime":68.555,"volume":0.5},
+{"refenceName":"YongShiFeiChuan3","displayName":"Kujaku","author":"並木学","resPath":"Ex7/YongShiFeiChuan3","startTime":0.0,"loopStartTime":12.731,"loopEndTime":100.097,"volume":0.5},
+
+{"refenceName":"YongShiShiSanXiang1","displayName":"Kleptomania","author":"TEVI OST","resPath":"Ex8/YongShiShiSanXiang1","startTime":0.0,"volume":0.5},
+{"refenceName":"YongShiShiSanXiang2","displayName":"Klazomania","author":"TEVI OST","resPath":"Ex8/YongShiShiSanXiang2","startTime":0.0,"volume":0.5},
+{"refenceName":"YongShiShiSanXiang3","displayName":"AKROMANIA","author":"TEVI OST","resPath":"Ex8/YongShiShiSanXiang3","startTime":0.0,"volume":0.5},
+{"refenceName":"YongShiShiSanXiang4","displayName":"ULTIMA・AKROMANIA","author":"TEVI OST","resPath":"Ex8/YongShiShiSanXiang4","startTime":0.0,"volume":0.5},
+
 {"refenceName":"WuYingHuanJing1","displayName":"Universum","author":"Laur","resPath":"LittleCat/WuYingHuanJing1","startTime":0.0,"loopStartTime":0,"volume":0.5},
 {"refenceName":"WuYingHuanJing2","displayName":"PRISTINE","author":"Laur","resPath":"LittleCat/WuYingHuanJing2","startTime":0.0,"loopStartTime":0,"volume":0.5},
 {"refenceName":"WuYingHuanJing3","displayName":"Viyella's Memory","author":"Laur","resPath":"LittleCat/WuYingHuanJing3","startTime":0.0,"volume":0.5},
+
+{"refenceName":"XingZhiShangJi1","displayName":"Trouble - Never/Always","author":"OMOCAT, LLC.","resPath":"LC1_8/XingZhiShangJi1","startTime":0.0,"volume":0.5},
+{"refenceName":"XingZhiShangJi2","displayName":"You Were Wrong. Go Back.","author":"OMOCAT, LLC.","resPath":"LC1_8/XingZhiShangJi2","startTime":0.0,"loopEndTime":76.929,"volume":0.5},
+{"refenceName":"XingZhiShangJi3","displayName":"Control's Wishes","author":"塞壬唱片-MSR; Steven Grove","resPath":"LC1_8/XingZhiShangJi3","startTime":0.0,"volume":0.5},
+
+{"refenceName":"JiuYangZhongYan1","displayName":"Miracle☆Chipstars (AMAZE Remix)","author":"RTTF Records","resPath":"LC1_9/JiuYangZhongYan1","startTime":0.0,"volume":0.5},
+{"refenceName":"JiuYangZhongYan2","displayName":"Star Prism","author":"a_hisa","resPath":"LC1_9/JiuYangZhongYan2","startTime":0.0,"loopStartTime":74.364,"loopEndTime":276.446,"volume":0.5},
+{"refenceName":"JiuYangZhongYan3","displayName":"Interstellar","author":"PIKASONIC","resPath":"LC1_9/JiuYangZhongYan3","startTime":0.0,"volume":0.5},
+{"refenceName":"JiuYangZhongYan4","displayName":"End Point","author":".banbanshi","resPath":"LC1_9/JiuYangZhongYan4","startTime":0.0,"volume":0.5},
 
 {"refenceName":"KuaFuDay0","displayName":"跨服远征白天道中段","author":"美食大战老鼠","resPath":"Default/KuaFuDay0","loopStartTime":0.0,"volume":0.5},
 {"refenceName":"KuaFuDayBoss0","displayName":"跨服远征白天BOSS段","author":"美食大战老鼠","resPath":"Default/KuaFuDayBoss0","loopStartTime":0.0,"volume":0.5},
@@ -70,8 +104,13 @@
 
 {"refenceName":"LeiCheng0","displayName":"Departure","author":"Kirara Magic/Couple N","resPath":"Default/LeiCheng0","loopStartTime":0.0,"volume":0.5},
 
-{"refenceName":"WonderLand0","displayName":"漫游奇境普通关道中段","author":"美食大战老鼠","resPath":"Default/WonderLand0","loopStartTime":0.0,"volume":0.5},
+{"refenceName":"WonderLand0","displayName":"漫游奇境普通关道中段","author":"美食大战老鼠","resPath":"Default/WonderLand0","loopStartTime":0,"volume":0.5},
 {"refenceName":"WonderLand1","displayName":"漫游奇境皇冠关道中段","author":"美食大战老鼠","resPath":"Default/WonderLand1","loopStartTime":0.0,"volume":0.5},
 {"refenceName":"WonderLandBoss0","displayName":"漫游奇境普通关BOSS段","author":"美食大战老鼠","resPath":"Default/WonderLandBoss0","loopStartTime":0.0,"volume":0.5},
-{"refenceName":"WonderLandBoss1","displayName":"漫游奇境皇冠关BOSS段","author":"美食大战老鼠","resPath":"Default/WonderLandBoss1","loopStartTime":0.0,"volume":0.5}
+{"refenceName":"WonderLandBoss1","displayName":"漫游奇境皇冠关BOSS段","author":"美食大战老鼠","resPath":"Default/WonderLandBoss1","loopStartTime":0.0,"volume":0.5},
+
+{"refenceName":"MT140","displayName":"Azure Galaxy","author":"Azure Galaxy [ HB.to巨蟹座们 ]","resPath":"140/MT140","loopStartTime":119.974,"loopEndTime":188.688,"volume":0.5},
+{"refenceName":"MT145","displayName":"Fevertime","author":"Blue Archive","resPath":"150/MT145","loopStartTime":0.0,"volume":0.5},
+{"refenceName":"MT145BOSS","displayName":"Kaiten Screw!!!","author":"Blue Archive","resPath":"150/MT145BOSS","loopStartTime":0.0,"volume":0.5},
+{"refenceName":"MT150","displayName":"Oxygen Destroyer","author":"Blue Archive","resPath":"150/MT150","loopStartTime":0.0,"volume":0.5},
 ]}

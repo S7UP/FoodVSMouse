@@ -71,10 +71,6 @@ public class Map_CheeseCastle : ChapterMap
     /// </summary>
     public override void OtherProcessing()
     {
-        // 为全图添加黑夜BUFF
-        ShadeAreaEffectExecution e = ShadeAreaEffectExecution.GetInstance(11, 7, new UnityEngine.Vector2(MapManager.GetColumnX(4), MapManager.GetRowY(3)));
-        GameController.Instance.AddAreaEffectExecution(e);
-
         // 在当前关卡添加监听——若检测到水转陆参数变化则执行对应的逻辑
         string key = "Change";
         GameController.Instance.mCurrentStage.AddParamChangeAction(key, ChangeAction);
@@ -134,31 +130,23 @@ public class Map_CheeseCastle : ChapterMap
                 for (int i = 0; i < 7; i++)
                     for (int j = 0; j < 9; j++)
                     {
-                        //BaseGrid g = GetGrid(j, i);
-                        //g.AddGridType(GridType.Water, BaseGridType.GetInstance(GridType.Water, 0));
                         list.Add(new Vector2(j, i));
                     }
                 break;
             case 1:
                 // (2,1)
                 {
-                    //BaseGrid g = GetGrid(2, 1);
-                    //g.AddGridType(GridType.Water, BaseGridType.GetInstance(GridType.Water, 0));
                     list.Add(new Vector2(2, 1));
                 }
                 // (3,1)到(3,4)
                 for (int i = 1; i < 5; i++)
                 {
-                    //BaseGrid g = GetGrid(3, i);
-                    //g.AddGridType(GridType.Water, BaseGridType.GetInstance(GridType.Water, 0));
                     list.Add(new Vector2(3, i));
                 }
                 // (4,1)到(8,5)的矩形区域
                 for (int i = 1; i < 6; i++)
                     for (int j = 4; j < 9; j++)
                     {
-                        //BaseGrid g = GetGrid(j, i);
-                        //g.AddGridType(GridType.Water, BaseGridType.GetInstance(GridType.Water, 0));
                         list.Add(new Vector2(j, i));
                     }
                 break;
@@ -166,15 +154,11 @@ public class Map_CheeseCastle : ChapterMap
                 // (7,2)到(7,3)
                 for (int i = 2; i < 4; i++)
                 {
-                    //BaseGrid g = GetGrid(7, i);
-                    //g.AddGridType(GridType.Water, BaseGridType.GetInstance(GridType.Water, 0));
                     list.Add(new Vector2(7, i));
                 }
                 // (8,2)到(8,5)
                 for (int i = 2; i < 6; i++)
                 {
-                    //BaseGrid g = GetGrid(8, i);
-                    //g.AddGridType(GridType.Water, BaseGridType.GetInstance(GridType.Water, 0));
                     list.Add(new Vector2(8, i));
                 }
                 break;

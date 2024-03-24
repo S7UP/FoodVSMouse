@@ -56,7 +56,7 @@ public class GrumpyJack : BossUnit
                 });
                 t.AddOnExitAction(delegate
                 {
-                    count = GetRandomNext(0, 2) % 2;
+                    count = 0;
                     RemoveCanHitFunc(noHitFunc);
                     RemoveCanBeSelectedAsTargetFunc(noSelcetedFunc);
                 });

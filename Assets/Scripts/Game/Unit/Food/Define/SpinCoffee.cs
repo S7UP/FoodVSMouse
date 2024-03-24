@@ -1,36 +1,20 @@
 using Environment;
-
-using S7P.Numeric;
 /// <summary>
 /// 旋转咖啡喷壶
 /// </summary>
 public class SpinCoffee : FoodUnit
 {
-    private FloatModifier costMod = new FloatModifier(-15f / 7 / 60);
-
     public override void MInit()
     {
         base.MInit();
-        // 一转施加不会被选为攻击目标和不可被阻挡的效果
-        if(mShape >= 1)
+        // 一转第一分支为不会被选为攻击目标和不可被阻挡的效果
+        if(mShape == 1)
         {
             AddCanBeSelectedAsTargetFunc(delegate { return false; });
             AddCanBlockFunc(delegate { return false; });
             // 添加隐匿特效
-            //BaseEffect e = BaseEffect.CreateInstance(GameManager.Instance.GetRuntimeAnimatorController("Effect/HiddenEffect"), "Appear", "Idle", "Disappear", true);
-            //e.SetSpriteRendererSorting("Effect", 2);
-            //GameController.Instance.AddEffect(e);
-            //mEffectController.AddEffectToDict("SpinCoffeeHidden", e, new Vector2(0, 0 * 0.5f * MapManager.gridWidth));
             EnvironmentFacade.AddFogBuff(this);
         }
-        // 每7秒15费
-        GameController.Instance.AddCostResourceModifier("Fire", costMod);
-    }
-
-    public override void MDestory()
-    {
-        GameController.Instance.RemoveCostResourceModifier("Fire", costMod);
-        base.MDestory();
     }
 
     /// <summary>
@@ -131,7 +115,10 @@ public class SpinCoffee : FoodUnit
         RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 3, 3, "ItemCollideEnemy");
         r.isAffectMouse = true;
         r.SetOnEnemyEnterAction((u) => {
-            DamageAction d = new DamageAction(CombatAction.ActionType.CauseDamage, this, u, dmg);
+            float dmg_rate = 1;
+            if (u.GetHeight() == 1)
+                dmg_rate = 0.25f;
+            DamageAction d = new DamageAction(CombatAction.ActionType.CauseDamage, this, u, dmg*dmg_rate);
             d.AddDamageType(DamageAction.DamageType.AOE);
             d.ApplyAction();
         });

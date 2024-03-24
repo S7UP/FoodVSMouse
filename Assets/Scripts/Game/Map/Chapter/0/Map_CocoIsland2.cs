@@ -48,7 +48,7 @@ public class Map_CocoIsland2 : ChapterMap
     public override void OtherProcessing()
     {
         // ÎªÈ«Í¼Ìí¼ÓºÚÒ¹BUFF
-        ShadeAreaEffectExecution e = ShadeAreaEffectExecution.GetInstance(11, 7, new UnityEngine.Vector2(MapManager.GetColumnX(4), MapManager.GetRowY(3)));
-        GameController.Instance.AddAreaEffectExecution(e);
+        //ShadeAreaEffectExecution e = ShadeAreaEffectExecution.GetInstance(11, 7, new UnityEngine.Vector2(MapManager.GetColumnX(4), MapManager.GetRowY(3)));
+        //GameController.Instance.AddAreaEffectExecution(e);
     }
 }

@@ -1,1 +1,1 @@
-{"baseAttrbute":{"name":"雷电长棍面包","type":40,"shape":0,"baseHP":300.0,"baseAttack":10.0,"baseAttackSpeed":1.0,"attackPercent":0.0,"baseMoveSpeed":0.0,"baseDefense":0.0,"baseRange":0.0,"baseHeight":0},"valueList":[0,25,50,75,100,140,180,220,260,300,375,450,525,600,700,800,900],"foodType":9}
+{"baseAttrbute":{"name":"雷电长棍面包","type":40,"shape":0,"baseHP":600.0,"baseAttack":0.0,"baseAttackSpeed":1.0,"attackPercent":0.0,"baseMoveSpeed":0.0,"baseDefense":0.0,"baseRange":0.0,"baseHeight":0},"valueList":[60,72,84,96,108,120,144,168,198,240,330,420,510,600,720,900,1200],"foodType":9}

@@ -36,6 +36,7 @@ public class BaseStage : MonoBehaviour
     [System.Serializable]
     public class StageInfo
     {
+        public string fileName; // 文件名
         public string name; // 关卡名
         public string background; // 关卡背景描述
         public string illustrate; // 关卡机制说明
@@ -52,6 +53,8 @@ public class BaseStage : MonoBehaviour
         public int cardCount; // 卡片数量
         public bool isEnableJewelCount; // 是否启用宝石数量限制
         public int jewelCount; // 宝石数量
+        public int pauseCount = -1; // 暂停次数
+        public int difficulty = 0; // 难度图标
 
         public List<BaseRound.RoundInfo> roundInfoList; // 关卡轮数表
         public StageMode defaultMode; // 默认关卡模式
@@ -261,15 +264,16 @@ public class BaseStage : MonoBehaviour
     /// 产生一个等待若干帧的IEnumerator
     /// </summary>
     /// <returns></returns>
-    public IEnumerator WaitForIEnumerator(int time)
+    public IEnumerator WaitForIEnumerator(int time, bool isSkipWhenBossDie)
     {
         for (int i = 0; i < time; i++)
         {
             if (GameController.Instance.isPause)
                 i--;
-            else if (!GameController.Instance.IsHasEnemyInScene())
+            else if (!GameController.Instance.IsHasEnemyInScene() || (isSkipWhenBossDie && !GameController.Instance.IsHasBossAlive()))
             {
-                mEarlyTime += time - i;
+                if(!isSkipWhenBossDie)
+                    mEarlyTime += time - i;
                 break; // 如果场上没有敌人了则跳过等待，提早下一轮
             }
             yield return null;
@@ -294,14 +298,12 @@ public class BaseStage : MonoBehaviour
                 mTotalRoundTime += round.GetTotalTimer();
         }
         // 先等一帧，第一帧要放人
-        yield return StartCoroutine(WaitForIEnumerator(1));
-        //Debug.Log("游戏开始了！现在是第"+GameController.Instance.GetCurrentStageFrame()+"帧");
+        yield return StartCoroutine(WaitForIEnumerator(1, false));
         // 然后是初始生成卡片
         ConstructeStartCard();
         // 播放BGM
         GameManager.Instance.audioSourceController.PlayBGMusic(mStageInfo.startBGMRefence);
         GameNormalPanel.Instance.ShowBGM(MusicManager.GetMusicInfo(mStageInfo.startBGMRefence));
-        // yield return StartCoroutine(WaitForIEnumerator(mStageInfo.perpareTime));
         for (int i = 0; i < mStageInfo.perpareTime; i++)
         {
             if (GameController.Instance.isPause)
@@ -317,7 +319,12 @@ public class BaseStage : MonoBehaviour
                 PushRandomToRowOffsetStack();
             else
                 PushZeroToRowOffsetStack();
-            yield return StartCoroutine(mCurrentRound.Execute());
+            //yield return StartCoroutine(mCurrentRound.Execute());
+            if(mCurrentRound.mRoundInfo.isBossRound)
+                yield return StartCoroutine(mCurrentRound.ExecuteSpawnBoss(mCurrentRound.mRoundInfo.isSkipWhenBossDie));
+            else
+                yield return StartCoroutine(mCurrentRound.ExecuteSpawnEnemy(false));
+
             PopRowOffsetStack();
         }
         isEndRound = true;
@@ -332,6 +339,10 @@ public class BaseStage : MonoBehaviour
         // 无猫
         if (mStageInfo.GetParamValue("isNoCat") == 1)
             GameController.Instance.mItemController.RemoveAllCats();
+
+        // 触发一次初始参数
+        foreach (var keyValuePair in mStageInfo.ParamArrayDict)
+            ChangeParamValue(keyValuePair.Key, keyValuePair.Value);
     }
 
     /// <summary>
@@ -476,7 +487,7 @@ public class BaseStage : MonoBehaviour
             //return (GetCurrentRoundIndex() + 1 + Mathf.Min(1.0f, (float)mCurrentRoundTimerLeft / mStageInfo.roundInfoList[GetCurrentRoundIndex()].GetTotalTimer())) * per;
             if (mTotalRoundTime == 0)
                 return 0;
-            return Mathf.Min(1, (float)(GameController.Instance.GetCurrentStageFrame() + mEarlyTime)/mTotalRoundTime);
+            return Mathf.Min(1, (float)(GameController.Instance.GetCurrentStageFrame() + mEarlyTime - mStageInfo.perpareTime)/mTotalRoundTime);
         }
     }
 

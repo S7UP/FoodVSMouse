@@ -1,8 +1,8 @@
 using System;
 
-using S7P.Numeric;
+using Environment;
 
-using UnityEngine;
+using S7P.Numeric;
 /// <summary>
 /// 老鼠夹子
 /// </summary>
@@ -16,20 +16,22 @@ public class MouseCatcher : FoodUnit
 
     public override void MInit()
     {
-        totalPrepareTime = 60 * 5; // 5s准备时间
+        totalPrepareTime = 60 * 4; // 4s准备时间
         prepareTime = totalPrepareTime;
         isTriggerBoom = false;
         base.MInit();
+
+        if(mShape >= 1)
+        {
+            StatusManager.AddIgnoreSettleDownBuff(this, new BoolModifier(true));
+            NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreFrozen, new BoolModifier(true));
+        }
 
         if(mShape >= 2)
         {
             AddCanBeSelectedAsTargetFunc(delegate { return false; });
             AddCanBlockFunc(delegate { return false; });
-            // 添加隐匿特效
-            BaseEffect e = BaseEffect.CreateInstance(GameManager.Instance.GetRuntimeAnimatorController("Effect/HiddenEffect"), "Appear", "Idle", "Disappear", true);
-            e.SetSpriteRendererSorting("Effect", 2);
-            GameController.Instance.AddEffect(e);
-            mEffectController.AddEffectToDict("SpinCoffeeHidden", e, new Vector2(0, 0 * 0.5f * MapManager.gridWidth));
+            EnvironmentFacade.AddFogBuff(this);
         }
     }
 

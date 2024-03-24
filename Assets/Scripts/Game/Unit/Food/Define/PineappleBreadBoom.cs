@@ -12,12 +12,30 @@ public class PineappleBreadBoom : FoodUnit
         0.67f, 0.33f
     };
     private float dmgRecord; // 接收到的有效伤害
+    private float low_burn_rate = 0; // 最低灰烬伤害
+    private float hightest_burn_rate = 0; // 最高灰烬伤害
 
     public override void MInit()
     {
         mHertIndex = 0;
         dmgRecord = 0;
         base.MInit();
+
+        switch (mShape)
+        {
+            case 1:
+                low_burn_rate = 0.5f;
+                hightest_burn_rate = 2.0f;
+                break;
+            case 2:
+                low_burn_rate = 0.5f;
+                hightest_burn_rate = 2.5f;
+                break;
+            default:
+                low_burn_rate = 0;
+                hightest_burn_rate = 1.5f;
+                break;
+        }
 
         // 在受到伤害结算之后，更新受伤贴图状态
         AddActionPointListener(ActionPointType.PostReceiveDamage, (action)=> { 
@@ -122,15 +140,9 @@ public class PineappleBreadBoom : FoodUnit
             r.SetInstantaneous();
             r.isAffectMouse = true;
             r.SetOnEnemyEnterAction((u) => {
-                BurnManager.BurnDamage(this, u, dmgRecord/500);
-                // new DamageAction(CombatAction.ActionType.BurnDamage, this, u, mCurrentAttack * (1 + pctAddValue / 100)).ApplyAction();
+                BurnManager.BurnDamage(this, u, Mathf.Min(hightest_burn_rate, Mathf.Max(low_burn_rate, dmgRecord/500)));
             });
             GameController.Instance.AddAreaEffectExecution(r);
-
-            //BombAreaEffectExecution bombEffect = BombAreaEffectExecution.GetInstance();
-            //bombEffect.Init(this, mCurrentAttack*(1 + pctAddValue/100), GetRowIndex(), 4, 3, -0.5f, 0, false, true);
-            //bombEffect.transform.position = this.GetPosition();
-            //GameController.Instance.AddAreaEffectExecution(bombEffect);
         }
     }
 }

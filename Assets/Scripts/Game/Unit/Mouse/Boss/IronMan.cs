@@ -10,19 +10,18 @@ using UnityEngine;
 
 public class IronMan : BossUnit
 {
-    private List<int>[] rowListArray;
-    private List<int> avaliableIndexList = new List<int>();
+    private RuntimeAnimatorController HeavyArmor_Run;
 
-    private Action<CombatAction> recordDamageAction;
     private float dmgRecord; // 受到的伤害总和
-    private bool canRecordDamage;
+    private Queue<float> lost_hp_percent_queue = new Queue<float>();
+    private float current_lost_hp_percent;
 
     private RingUI FinalSkillRingUI;
 
     private static RuntimeAnimatorController LaserHitEffect_Run;
     private static RuntimeAnimatorController Missile_Run;
     private static Sprite Laser_Spr;
-    private static RuntimeAnimatorController HeavyArmor_Run;
+    
 
     private FloatModifier p_dmgRateMod = new FloatModifier(1.0f);
 
@@ -33,6 +32,9 @@ public class IronMan : BossUnit
             LaserHitEffect_Run = GameManager.Instance.GetRuntimeAnimatorController("Boss/17/LaserHitEffect");
             Missile_Run = GameManager.Instance.GetRuntimeAnimatorController("Boss/17/Missile");
             Laser_Spr = GameManager.Instance.GetSprite("Boss/17/Laser");
+        }
+        // 默认皮肤
+        {
             HeavyArmor_Run = GameManager.Instance.GetRuntimeAnimatorController("Boss/17/0/HeavyArmor");
         }
         base.Awake();
@@ -41,43 +43,48 @@ public class IronMan : BossUnit
     public override void MInit()
     {
         dmgRecord = 0;
-        rowListArray = null;
-        avaliableIndexList.Clear();
         p_dmgRateMod.Value = 1.0f;
+        lost_hp_percent_queue.Clear();
+        current_lost_hp_percent = 9999;
         base.MInit();
         // 大招UI
         {
             FinalSkillRingUI = RingUI.GetInstance(0.3f * Vector2.one);
             GameNormalPanel.Instance.AddUI(FinalSkillRingUI);
-            taskController.AddTask(TaskManager.GetFinalSkillRingUITask(FinalSkillRingUI, this));
+            taskController.AddTask(TaskManager.GetFinalSkillRingUITask(FinalSkillRingUI, this, 0.25f * MapManager.gridHeight * Vector3.down));
             FinalSkillRingUI.Hide();
-            FinalSkillRingUI.SetPercent(1);
+            FinalSkillRingUI.SetPercent(0);
             AddOnDestoryAction(delegate { if (FinalSkillRingUI.IsValid()) FinalSkillRingUI.MDestory(); });
         }
         // 受击事件
         {
-            canRecordDamage = true;
-            recordDamageAction = (combatAction) =>
-            {
-                if (!canRecordDamage)
-                    return;
+            actionPointController.AddListener(ActionPointType.PostReceiveDamage, (combatAction) => {
                 if (combatAction is DamageAction)
                 {
-                    float triggerFinalSkillDamage = mMaxHp * GetParamValue("p_lost_hp_percent") / 100;
+                    float triggerFinalSkillDamage = mMaxHp * current_lost_hp_percent;
                     DamageAction dmgAction = combatAction as DamageAction;
                     dmgRecord += dmgAction.RealCauseValue;
-                    FinalSkillRingUI.SetPercent(1 - dmgRecord / triggerFinalSkillDamage);
+                    FinalSkillRingUI.SetPercent(dmgRecord / triggerFinalSkillDamage);
                     if (dmgRecord >= triggerFinalSkillDamage)
                     {
-                        FinalSkillRingUI.Hide();
+                        CustomizationTask task = TaskManager.GetRingUIChangeTask(FinalSkillRingUI, 60, 1, 0);
+                        task.AddOnExitAction(delegate {
+                            FinalSkillRingUI.Hide();
+                        });
+                        FinalSkillRingUI.mTaskController.AddTask(task);
                         dmgRecord -= triggerFinalSkillDamage;
                         CustomizationSkillAbility s = SKill2Init(AbilityManager.Instance.GetSkillAbilityInfoList(mUnitType, mType, mShape)[2]);
                         mSkillQueueAbilityManager.SetNextSkill(s);
-                        canRecordDamage = false; // 暂不记录伤害
+
+                        if (lost_hp_percent_queue.Count > 0)
+                            current_lost_hp_percent = lost_hp_percent_queue.Dequeue();
+                        else
+                        {
+                            current_lost_hp_percent = 9999;
+                        }
                     }
                 }
-            };
-            actionPointController.AddListener(ActionPointType.PostReceiveDamage, recordDamageAction);
+            });
         }
 
         // 添加出现的技能
@@ -97,7 +104,8 @@ public class IronMan : BossUnit
             c.AddSpellingFunc(delegate {
                 if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
                 {
-                    FinalSkillRingUI.Show();
+                    if(current_lost_hp_percent!=9999)
+                        FinalSkillRingUI.Show();
                     animatorController.Play("Idle", true);
                     return true;
                 }
@@ -112,6 +120,7 @@ public class IronMan : BossUnit
                 else
                 {
                     // 添加被动减伤
+                    NumericBox.DamageRate.RemoveModifier(p_dmgRateMod);
                     NumericBox.DamageRate.AddModifier(p_dmgRateMod);
 
                     RemoveCanHitFunc(noHitFunc);
@@ -151,31 +160,49 @@ public class IronMan : BossUnit
             AddParamArray(keyValuePair.Key, keyValuePair.Value);
 
         // 特殊参数初始化
-        // 获取Rset
+        // 获取大招损失生命值条件
         {
-            Action<float[]> action = (arr) =>
+            Action<float[]> action = delegate
             {
-                rowListArray = new List<int>[arr.Length];
-                for (int i = 0; i < arr.Length; i++)
+                float[] arr = GetParamArray("p_lost_hp_percent");
+                lost_hp_percent_queue.Clear();
+                foreach (var val in arr)
+                    lost_hp_percent_queue.Enqueue(val / 100);
+                if (lost_hp_percent_queue.Count > 0)
+                    current_lost_hp_percent = lost_hp_percent_queue.Dequeue();
+                else
                 {
-                    rowListArray[i] = new List<int>();
-                    int val = Mathf.FloorToInt(arr[i]);
-                    while (val > 0)
-                    {
-                        rowListArray[i].Insert(0, val % 10 - 1);
-                        val = val / 10;
-                    }
+                    current_lost_hp_percent = 9999;
+                    FinalSkillRingUI.Hide();
                 }
-                for (int i = 0; i < rowListArray.Length; i++)
-                    avaliableIndexList.Add(i);
             };
-            AddParamChangeAction("RSet0", action);
-            action(GetParamArray("RSet0"));
+            AddParamChangeAction("p_lost_hp_percent", action);
+            action(null);
         }
 
         // 被动减伤
         {
-            p_dmgRateMod.Value = 1 - GetParamValue("p_defence")/100;
+            Action<float[]> action = delegate
+            {
+                // 移除加防
+                NumericBox.DamageRate.RemoveModifier(p_dmgRateMod);
+                p_dmgRateMod.Value = 1 - GetParamValue("p_defence") / 100;
+                NumericBox.DamageRate.AddModifier(p_dmgRateMod);
+            };
+            AddParamChangeAction("p_defence", action);
+            action(null);
+        }
+
+        // 根据传入的skin换皮（0为原皮，1为变异）
+        {
+            Action<float[]> action = delegate
+            {
+                int skin = Mathf.FloorToInt(GetParamValue("skin"));
+                HeavyArmor_Run = GameManager.Instance.GetRuntimeAnimatorController("Boss/17/"+skin+"/HeavyArmor");
+                animator.runtimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Boss/17/" + skin + "/0");
+            };
+            action(null);
+            AddParamChangeAction("skin", action);
         }
     }
 
@@ -196,7 +223,7 @@ public class IronMan : BossUnit
     /// </summary>
     public override void SetCollider2DParam()
     {
-        mBoxCollider2D.offset = new Vector2(0.49f * MapManager.gridWidth, 0);
+        mBoxCollider2D.offset = new Vector2(0, 0);
         mBoxCollider2D.size = new Vector2(0.98f * MapManager.gridWidth, 0.49f * MapManager.gridHeight);
     }
 
@@ -245,142 +272,215 @@ public class IronMan : BossUnit
         }
     }
 
-    private void CreateS0Mouse(Vector2 pos)
+    private void CreateS0AttackDamageArea(Vector2 pos)
     {
-        int type = Mathf.FloorToInt(GetParamValue("type0"));
-        int shape = Mathf.FloorToInt(GetParamValue("shape0"));
-        int totalTime = 60;
-        float fly_height = 3*MapManager.gridHeight;
-
-        MouseUnit m = GameController.Instance.mMouseFactory.GetMouse(type, shape);
-        m.transform.position = pos;
-        GameController.Instance.AddMouseUnit(m);
-
-        // 出现动画
+        float dmg = GetParamValue("dmg0");
+        // 产生击中特效
         {
-            Func<BaseUnit, BaseUnit, bool> noBeSelectedAsTargetFunc = delegate { return false; };
-            Func<BaseUnit, BaseBullet, bool> noHitFunc = delegate { return false; };
-            FloatModifier yOffsetMod = new FloatModifier(0);
-
-            CustomizationTask task = new CustomizationTask();
-            task.AddOnEnterAction(delegate {
-                // 不可被击中、不可被选为攻击目标，不可阻挡
-                m.AddCanBeSelectedAsTargetFunc(noBeSelectedAsTargetFunc);
-                m.AddCanHitFunc(noHitFunc);
-                m.AddCanBlockFunc(noBeSelectedAsTargetFunc);
-                m.SetAlpha(0);
-                m.DisableMove(true);
-            });
-            task.AddTimeTaskFunc(totalTime, null,
-            (leftTime, totalTime) =>
-            {
-                float rate = 1 - (float)leftTime / totalTime;
-                m.SetAlpha(rate);
-                m.RemoveSpriteOffsetY(yOffsetMod);
-                yOffsetMod.Value = fly_height * (1 - Mathf.Sqrt(rate));
-                // yOffsetMod.Value = fly_height * rate;
-                m.AddSpriteOffsetY(yOffsetMod);
-            },
-            delegate
-            {
-            // 不可被击中、不可被选为攻击目标，不可阻挡
-            m.RemoveCanBeSelectedAsTargetFunc(noBeSelectedAsTargetFunc);
-                m.RemoveCanHitFunc(noHitFunc);
-                m.RemoveCanBlockFunc(noBeSelectedAsTargetFunc);
-                m.SetAlpha(1);
-                m.RemoveSpriteOffsetY(yOffsetMod);
-                m.DisableMove(false);
-            });
-            m.taskController.AddTask(task);
+            BaseEffect e = BaseEffect.CreateInstance(LaserHitEffect_Run, null, "Disappear", null, false);
+            e.SetSpriteRendererSorting("Effect", 10);
+            e.transform.position = pos;
+            GameController.Instance.AddEffect(e);
         }
+        // 击中毁卡判定
+        {
+            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(pos, new Vector2(MapManager.gridWidth / 2, MapManager.gridHeight / 2), "CollideGrid");
+            r.SetInstantaneous();
+            r.isAffectGrid = true;
+            r.AddBeforeDestoryAction(delegate {
+                BaseGrid g = null;
+                float min = float.MaxValue;
+                foreach (var _g in r.gridList.ToArray())
+                {
+                    float dist = (_g.transform.position - r.transform.position).magnitude;
+                    if (dist < min)
+                    {
+                        g = _g;
+                        min = dist;
+                    }
+                }
+                if (g != null)
+                    g.TakeDamage(this, dmg, false);
+            });
+            GameController.Instance.AddAreaEffectExecution(r);
+        }
+        // 击中处决老鼠判定
+        {
+            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(pos, new Vector2(MapManager.gridWidth, MapManager.gridHeight), "ItemCollideEnemy");
+            r.SetInstantaneous();
+            r.SetAffectHeight(0);
+            r.isAffectMouse = true;
+            r.AddEnemyEnterConditionFunc((u) => {
+                return !u.IsBoss() && MouseManager.IsGeneralMouse(u);
+            });
+            r.SetOnEnemyEnterAction((u) => {
+                UnitManager.Execute(this, u);
+            });
+            GameController.Instance.AddAreaEffectExecution(r);
+        }
+    }
+
+    private Vector2 FindS0Pos()
+    {
+        List<int> list = new List<int>() { 0, 1, 2, 4, 5, 6 };
+
+        float min = float.MaxValue;
+        List<int> selectedList = new List<int>() { 0, 1, 2, 4, 5, 6 };
+        foreach (var rowIndex in list)
+        {
+            BaseUnit unit = FoodManager.GetSpecificRowFarthestRightCanTargetedAlly(rowIndex, float.MinValue, float.MaxValue, false);
+            float xPos = MapManager.GetColumnX(0);
+            if (unit != null)
+            {
+                xPos = unit.transform.position.x;
+            }
+
+            if (xPos < min)
+            {
+                min = xPos;
+                selectedList.Clear();
+                selectedList.Add(rowIndex);
+            }
+            else if (xPos == min)
+            {
+                selectedList.Add(rowIndex);
+            }
+        }
+        // 在这些行里随机挑一行吧
+        {
+            int rowIndex = selectedList[GetRandomNext(0, selectedList.Count)];
+            BaseUnit unit = FoodManager.GetSpecificRowFarthestRightCanTargetedAlly(rowIndex, float.MinValue, float.MaxValue, false);
+            if(unit != null)
+                return MapManager.GetGridLocalPosition(unit.GetColumnIndex(), rowIndex);
+            else
+                return MapManager.GetGridLocalPosition(0, rowIndex);
+        }
+        
     }
 
     private CompoundSkillAbility SKill0Init(SkillAbility.SkillAbilityInfo info)
     {
         // 常量
-        float min_colIndex = 9 - GetParamValue("right_col0");
         int wait = Mathf.FloorToInt(GetParamValue("wait0") * 60);
+        int move_time = Mathf.FloorToInt(GetParamValue("move_time0")*60);
+        int interval = 15;
 
         int fly_time = 30;
         float fly_height = 10*MapManager.gridHeight;
 
         // 变量
-        List<int> rowIndexList = null;
         int timeLeft = 0;
+        int attack_timeLeft = 0;
         FloatModifier yOffsetMod = new FloatModifier(0);
+        Vector2 start = Vector2.zero;
+        Vector2 end = Vector2.zero;
 
         CompoundSkillAbility c = new CompoundSkillAbility(this, info);
         // 实现
         c.IsMeetSkillConditionFunc = delegate { return true; };
         c.BeforeSpellFunc = delegate
         {
-            if (avaliableIndexList.Count <= 0)
-                for (int i = 0; i < rowListArray.Length; i++)
-                    avaliableIndexList.Add(i);
 
-            int ranIndex = 0; // 固定成0
-            int index = avaliableIndexList[ranIndex];
-            avaliableIndexList.RemoveAt(ranIndex);
-            rowIndexList = rowListArray[index];
         };
         {
             c.AddCreateTaskFunc(delegate {
                 CustomizationTask task = new CustomizationTask();
-                for (int _i = 0; _i < rowIndexList.Count; _i++)
-                {
-                    int i = _i;
-                    task.AddTaskFunc(delegate {
-                        animatorController.Play("PreFly");
+                task.AddTaskFunc(delegate {
+                    animatorController.Play("PreFly");
+                    return true;
+                });
+                task.AddTaskFunc(delegate {
+                    if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
+                    {
+                        animatorController.Play("Fly1", true);
                         return true;
+                    }
+                    return false;
+                });
+                task.AddTimeTaskFunc(fly_time, null,
+                    (leftTime, totalTime) =>
+                    {
+                        RemoveSpriteOffsetY(yOffsetMod);
+                        float rate = 1 - (float)leftTime / totalTime;
+                        yOffsetMod.Value = fly_height * rate;
+                        AddSpriteOffsetY(yOffsetMod);
+                    }, null);
+                task.AddTimeTaskFunc(fly_time,
+                    delegate {
+                        transform.position = FindS0Pos();
+                        animatorController.Play("Down", true);
+                    },
+                    (leftTime, totalTime) =>
+                    {
+                        RemoveSpriteOffsetY(yOffsetMod);
+                        float rate = (float)leftTime / totalTime;
+                        yOffsetMod.Value = fly_height * rate;
+                        AddSpriteOffsetY(yOffsetMod);
+                    },
+                    delegate {
+                        RemoveSpriteOffsetY(yOffsetMod);
+                        animatorController.Play("Land");
+                            // 落地后造成范围伤害
+                            CreateS0LandDamageArea(transform.position);
                     });
+                task.AddTaskFunc(delegate {
+                    if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
+                    {
+                        animatorController.Play("PreFly1");
+                        return true;
+                    }
+                    return false;
+                });
+                task.AddTaskFunc(delegate {
+                    if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
+                    {
+                        animatorController.Play("Fly");
+                        start = transform.position;
+                        if (transform.position.y <= MapManager.GetRowY(3))
+                            end = new Vector2(transform.position.x, MapManager.GetRowY(0));
+                        else
+                            end = new Vector2(transform.position.x, MapManager.GetRowY(6));
+                        timeLeft = move_time;
+                        attack_timeLeft = interval;
+                        return true;
+                    }
+                    return false;
+                });
+                task.AddTaskFunc(delegate {
+                    timeLeft--;
+                    attack_timeLeft--;
+                    float r = 1 - (float)timeLeft / move_time;
+                    transform.position = Vector2.Lerp(start, end, r);
+                    if(attack_timeLeft <= 0)
+                    {
+                        attack_timeLeft += interval;
+                        CreateS0AttackDamageArea(transform.position);
+                    }
+
+                    if (timeLeft <= 0)
+                    {
+                        animatorController.Play("Land");
+                        return true;
+                    }
+                    return false;
+                });
+                if(wait > 0)
+                {
                     task.AddTaskFunc(delegate {
                         if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
                         {
-                            animatorController.Play("Fly1", true);
+                            animatorController.Play("Breakup");
                             return true;
                         }
                         return false;
                     });
-                    task.AddTimeTaskFunc(fly_time, null, 
-                        (leftTime, totalTime) => 
-                        {
-                            RemoveSpriteOffsetY(yOffsetMod);
-                            float rate = 1 - (float)leftTime / totalTime;
-                            yOffsetMod.Value = fly_height * rate;
-                            AddSpriteOffsetY(yOffsetMod);
-                        }, null);
-                    task.AddTimeTaskFunc(fly_time, 
-                        delegate {
-                            int rowIndex = rowIndexList[i];
-                            float colIndex = min_colIndex;
-                            {
-                                BaseUnit u = FoodManager.GetSpecificRowFarthestRightCanTargetedAlly(rowIndex, float.MinValue, false);
-                                if (u != null && u.transform.position.x > MapManager.GetColumnX(colIndex))
-                                    colIndex = MapManager.GetXIndexF(u.transform.position.x);
-                            }
-                            transform.position = MapManager.GetGridLocalPosition(colIndex, rowIndex);
-                            animatorController.Play("Down", true);
-                            // 召唤老鼠
-                            CreateS0Mouse(transform.position);
-                        }, 
-                        (leftTime, totalTime) => 
-                        {
-                            RemoveSpriteOffsetY(yOffsetMod);
-                            float rate = (float)leftTime / totalTime;
-                            yOffsetMod.Value = fly_height * rate;
-                            AddSpriteOffsetY(yOffsetMod);
-                        }, 
-                        delegate { 
-                            RemoveSpriteOffsetY(yOffsetMod);
-                            animatorController.Play("Land");
-                            // 落地后造成范围伤害
-                            CreateS0LandDamageArea(transform.position);
-                        });
                     task.AddTaskFunc(delegate {
                         if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
                         {
+                            // 移除加防
+                            NumericBox.DamageRate.RemoveModifier(p_dmgRateMod);
+                            animatorController.Play("Idle1", true);
                             timeLeft = wait;
-                            animatorController.Play("Idle", true);
                             return true;
                         }
                         return false;
@@ -389,9 +489,15 @@ public class IronMan : BossUnit
                         timeLeft--;
                         if (timeLeft <= 0)
                         {
+                            // 重新加防
+                            NumericBox.DamageRate.AddModifier(p_dmgRateMod);
+                            animatorController.Play("Appear");
                             return true;
                         }
                         return false;
+                    });
+                    task.AddTaskFunc(delegate {
+                        return animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce();
                     });
                 }
                 return task;
@@ -440,51 +546,52 @@ public class IronMan : BossUnit
         m.SetActionState(new IdleState(this));
         GameController.Instance.AddMouseUnit(m);
 
+        {
+            CustomizationTask task = new CustomizationTask();
+            task.AddTaskFunc(delegate {
+                return !IsAlive();
+            });
+            task.AddOnExitAction(delegate {
+                m.ExecuteDeath();
+            });
+            m.taskController.AddTask(task);
+        }
+
         return m;
     }
 
-    private Vector2 GetS1AttackPos()
+    private BaseGrid GetS1AttackGrid(List<BaseGrid> execludeGridList)
     {
-        float min_hp = GetParamValue("min_hp1");
-
-        List<BaseUnit> l1 = GameController.Instance.GetEachAlly();
-        if (l1.Count <= 0)
-            return new Vector2(MapManager.GetColumnX(0), transform.position.y);
-
-        float min_dist = float.MaxValue;
-        BaseUnit target = null;
-
-        foreach (var u in l1)
+        float max_hp = float.MinValue;
+        List<BaseUnit> l1 = new List<BaseUnit>();
+        foreach (var u in GameController.Instance.GetEachAlly().ToArray())
         {
-            if (u.GetCurrentHp() >= min_hp && !(u is CharacterUnit))
+            if((u is FoodUnit) && FoodManager.IsAttackableFoodType((u as FoodUnit)) && u.GetGrid()!=null && !execludeGridList.Contains(u.GetGrid()))
             {
-                float dist = (transform.position - u.transform.position).magnitude;
-                if(dist < min_dist)
+                if(u.mMaxHp > max_hp)
                 {
-                    target = u;
-                    min_dist = dist;
+                    l1.Clear();
+                    max_hp = u.mMaxHp;
+                    l1.Add(u);
+                }else if(u.mMaxHp == max_hp)
+                {
+                    l1.Add(u);
                 }
             }
         }
 
-        if(target != null)
-        {
-            return target.transform.position;
-        }
-
+        float max_dist = float.MinValue;
+        BaseGrid g = null;
         foreach (var u in l1)
         {
-            if (!(u is CharacterUnit))
+            float dist = (transform.position - u.transform.position).magnitude;
+            if(dist > max_dist)
             {
-                float dist = (transform.position - u.transform.position).magnitude;
-                if (dist < min_dist)
-                {
-                    target = u;
-                    min_dist = dist;
-                }
+                max_dist = dist;
+                g = u.GetGrid();
             }
         }
-        return target.transform.position;
+        return g;
     }
 
     private void CreateS1LaserAndHit(Vector2 start, Vector2 end)
@@ -540,10 +647,24 @@ public class IronMan : BossUnit
 
             // 对美食单位
             {
-                RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(end, new Vector2(0.5f * MapManager.gridWidth, 0.5f * MapManager.gridHeight), "ItemCollideAlly");
-                r.isAffectFood = true;
-                r.SetOnFoodEnterAction(action);
+                RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(end, new Vector2(MapManager.gridWidth / 2, MapManager.gridHeight / 2), "CollideGrid");
                 r.SetInstantaneous();
+                r.isAffectGrid = true;
+                r.AddBeforeDestoryAction(delegate {
+                    BaseGrid g = null;
+                    float min = float.MaxValue;
+                    foreach (var _g in r.gridList.ToArray())
+                    {
+                        float dist = (_g.transform.position - r.transform.position).magnitude;
+                        if (dist < min)
+                        {
+                            g = _g;
+                            min = dist;
+                        }
+                    }
+                    if (g != null)
+                        g.TakeAction(this, action, false);
+                });
                 GameController.Instance.AddAreaEffectExecution(r);
             }
 
@@ -563,13 +684,15 @@ public class IronMan : BossUnit
         // 常量
         float colIndex = 9 - GetParamValue("right_col1");
         int move_time = Mathf.FloorToInt(GetParamValue("move_time1")*60);
-        FloatModifier dmgRateMod = new FloatModifier(1-GetParamValue("defence1")/100);
         int num = Mathf.FloorToInt(GetParamValue("num1"));
-        int wait = Mathf.FloorToInt(GetParamValue("wait1") * 60);
+        int wait0 = Mathf.FloorToInt(GetParamValue("wait1_0") * 60);
+        int wait1 = Mathf.FloorToInt(GetParamValue("wait1_1") * 60);
         int stun_time = Mathf.FloorToInt(GetParamValue("stun_time1")*60);
 
         // 变量
+        FloatModifier dmgRateMod = new FloatModifier(1 - GetParamValue("defence1") / 100);
         int timeLeft = 0;
+        List<BaseGrid> execludeGridList = new List<BaseGrid>();
         MouseModel model = null;
         Vector3 laserStartPos = Vector2.zero;
         Vector3 laserEndPos = Vector2.zero;
@@ -579,7 +702,7 @@ public class IronMan : BossUnit
         c.IsMeetSkillConditionFunc = delegate { return true; };
         c.BeforeSpellFunc = delegate
         {
-
+            execludeGridList.Clear();
         };
         {
             // 准备起飞
@@ -611,6 +734,7 @@ public class IronMan : BossUnit
                     List<int> list = FoodManager.GetRowListWhichHasMaxCanTargetedAllyCount();
                     int rowIndex = list[GetRandomNext(0, list.Count)];
                     endPos = MapManager.GetGridLocalPosition(colIndex, rowIndex);
+                    NumericBox.DamageRate.AddModifier(dmgRateMod);
                 });
                 task.AddTimeTaskFunc(move_time, 
                     delegate { mHeight = 1; },
@@ -637,6 +761,7 @@ public class IronMan : BossUnit
                 task.AddTaskFunc(delegate {
                     if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
                     {
+                        NumericBox.DamageRate.RemoveModifier(dmgRateMod);
                         // 自身隐藏且取消判定，然后生成一个傀儡装甲代替自身
                         SetAlpha(0);
                         CloseCollision();
@@ -663,44 +788,47 @@ public class IronMan : BossUnit
                 {
                     int i = _i;
                     task.AddTaskFunc(delegate {
-                        model.animatorController.Play("Idle");
-                        timeLeft = wait;
-                        return true;
-                    });
-                    task.AddTaskFunc(delegate {
-                        timeLeft--;
-                        if(timeLeft <= 0)
+                        // 寻找攻击目标并攻击
+                        BaseGrid g = GetS1AttackGrid(execludeGridList);
+                        Vector3 attackPos = Vector3.zero; // 攻击点
+                        if (g != null)
                         {
-                            // 寻找攻击目标并攻击
-                            Vector3 attackPos = GetS1AttackPos(); // 攻击点
-                            Vector3 delta = attackPos - transform.position;
-                            if(attackPos.x <= 0 || attackPos.y >= 0)
-                            {
-                                laserStartPos = transform.position + new Vector3(-1.038f, 0.917f);
-                                model.animatorController.Play("AttackLeftUp");
-                            }else if(attackPos.x <= 0 || attackPos.y < 0)
-                            {
-                                laserStartPos = transform.position + new Vector3(-0.645f, 0.076f);
-                                model.animatorController.Play("AttackLeftDown");
-                            }else if(attackPos.x > 0 || attackPos.y < 0)
-                            {
-                                laserStartPos = transform.position + new Vector3(1.148f, 0.141f);
-                                model.animatorController.Play("AttackRightDown");
-                            }
-                            else
-                            {
-                                laserStartPos = transform.position + new Vector3(1.804f, 0.984f);
-                                model.animatorController.Play("AttackRightUp");
-                            }
-                            laserEndPos = attackPos;
-                            return true;
+                            execludeGridList.Add(g);
+                            attackPos = g.transform.position;
                         }
-                        return false;
+                        else
+                        {
+                            attackPos = MapManager.GetGridLocalPosition(0, GetRowIndex());
+                        }
+                        Vector3 delta = attackPos - transform.position;
+                        if (i == 0)
+                        {
+                            laserStartPos = transform.position + new Vector3(-1.038f, 0.917f);
+                            model.animatorController.Play("AttackLeftUp");
+                        }
+                        else if (i == 1)
+                        {
+                            laserStartPos = transform.position + new Vector3(-0.645f, 0.076f);
+                            model.animatorController.Play("AttackLeftDown");
+                        }
+                        else if (i == 2)
+                        {
+                            laserStartPos = transform.position + new Vector3(1.148f, 0.141f);
+                            model.animatorController.Play("AttackRightDown");
+                        }
+                        else
+                        {
+                            laserStartPos = transform.position + new Vector3(1.804f, 0.984f);
+                            model.animatorController.Play("AttackRightUp");
+                        }
+                        laserEndPos = attackPos;
+                        return true;
                     });
                     task.AddTaskFunc(delegate {
                         if (model.animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime()>0.5f)
                         {
                             CreateS1LaserAndHit(laserStartPos, laserEndPos);
+                            CreateS1LaserAndHit(laserStartPos, new Vector2(transform.position.x - MapManager.gridWidth * GetParamValue("left1", i), transform.position.y));
                             return true;
                         }
                         return false;
@@ -708,13 +836,34 @@ public class IronMan : BossUnit
                     task.AddTaskFunc(delegate {
                         if (model.animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
                         {
+                            model.animatorController.Play("Idle");
+                            timeLeft = wait0;
                             return true;
                         }
                         return false;
                     });
+                    task.AddTaskFunc(delegate {
+                        timeLeft--;
+                        if (timeLeft <= 0)
+                            return true;
+                        return false;
+                    });
                 }
+                // 等一下
+                task.AddTaskFunc(delegate {
+                    timeLeft = wait1;
+                    return true;
+                });
+                task.AddTaskFunc(delegate {
+                    timeLeft--;
+                    if (timeLeft <= 0)
+                        return true;
+                    return false;
+                });
                 return task;
             });
+
+
             // 解体自爆
             c.AddCreateTaskFunc(delegate {
                 CustomizationTask task = new CustomizationTask();
@@ -761,10 +910,7 @@ public class IronMan : BossUnit
     }
     #endregion
 
-
     #region 三技能
-
-
     private Vector2 GetS2AttackPos(int colIndex)
     {
         int[] valArray = new int[5];
@@ -859,20 +1005,46 @@ public class IronMan : BossUnit
         int wait0 = Mathf.FloorToInt(GetParamValue("wait2_0") * 60);
         int wait1 = Mathf.FloorToInt(GetParamValue("wait2_1") * 60);
         int stun_time = Mathf.FloorToInt(GetParamValue("stun2") * 60);
+        int max_add_time = Mathf.FloorToInt(GetParamValue("max_add_time2") * 60);
         int add_time = Mathf.FloorToInt(GetParamValue("add_time2") * 60);
+        float dmg_rate = 1 - GetParamValue("defence2")/100;
+        int count = Mathf.FloorToInt(GetParamValue("count2"));
 
         // 变量
         int timeLeft = 0;
+        int av_add_time_left = 0; // 还可以被用来延长的时间
         Vector2 startPos = Vector2.zero;
         Vector2 endPos = Vector2.zero;
         Vector2 attackPos = Vector2.zero;
+        FloatModifier dmgMod = new FloatModifier(dmg_rate);
         // 被炸后加2秒的设定
         Action<CombatAction> bombAction = (combat) => {
             if (combat is DamageAction)
             {
                 DamageAction dmgAction = combat as DamageAction;
                 if (dmgAction.IsDamageType(DamageAction.DamageType.BombBurn))
-                    timeLeft = Mathf.Min(wait0, timeLeft + add_time);
+                {
+                    int add = 0; // 初步确定要延长的时间
+                    if (av_add_time_left <= add_time)
+                    {
+                        add = av_add_time_left;
+                        av_add_time_left = 0;
+                    }
+                    else
+                    {
+                        add = add_time;
+                        av_add_time_left -= add_time;
+                    }
+
+                    if (wait0 - timeLeft > add)
+                        timeLeft += add;
+                    else
+                    {
+                        add -= (wait0 - timeLeft);
+                        av_add_time_left += add;
+                        timeLeft = wait0;
+                    }
+                }
             }
         };
 
@@ -880,7 +1052,10 @@ public class IronMan : BossUnit
         // 实现
         c.IsMeetSkillConditionFunc = delegate { return true; };
         c.BeforeSpellFunc = delegate
-        {};
+        {
+            // 获得减伤
+            NumericBox.DamageRate.AddModifier(dmgMod);
+        };
         {
             // 导弹攻击循环
             c.AddCreateTaskFunc(delegate {
@@ -923,8 +1098,9 @@ public class IronMan : BossUnit
                     task.AddTaskFunc(delegate {
                         if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
                         {
-                            animatorController.Play("Idle");
+                            animatorController.Play("PreAttack");
                             timeLeft = wait0;
+                            av_add_time_left = max_add_time;
                             // 加入读条UI
                             {
                                 ru = RingUI.GetInstance(0.3f * Vector2.one);
@@ -957,26 +1133,28 @@ public class IronMan : BossUnit
                             }
                             // 移除被炸加时
                             RemoveActionPointListener(ActionPointType.PreReceiveDamage, bombAction);
-                            animatorController.Play("Attack");
+
                             return true;
                         }
                         return false;
                     });
-                    task.AddTaskFunc(delegate {
-                        if (animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime()>=0.65f)
-                        {
+
+                    for (int j = 0; j < count; j++)
+                    {
+                        task.AddTaskFunc(delegate {
+                            animatorController.Play("Attack");
                             // 产生弹体
                             CreateS2Missile(attackPos);
                             return true;
-                        }
-                        return false;
-                    });
+                        });
+                        task.AddTaskFunc(delegate {
+                            return animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce();
+                        });
+                    }
+
                     task.AddTaskFunc(delegate {
-                        if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
-                        {
-                            return true;
-                        }
-                        return false;
+                        animatorController.Play("PostAttack");
+                        return true;
                     });
                     task.AddTaskFunc(delegate {
                         if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
@@ -1013,7 +1191,6 @@ public class IronMan : BossUnit
                         return false;
                     });
                 }
-
                 return task;
             });
 
@@ -1039,6 +1216,10 @@ public class IronMan : BossUnit
 
                 CustomizationTask task = new CustomizationTask();
                 task.AddOnEnterAction(delegate {
+                    // 移除加防
+                    NumericBox.DamageRate.RemoveModifier(p_dmgRateMod);
+                    // 移除减伤
+                    NumericBox.DamageRate.RemoveModifier(dmgMod);
                     animatorController.Play("Die");
                 });
                 task.AddTaskFunc(delegate {
@@ -1046,8 +1227,6 @@ public class IronMan : BossUnit
                     {
                         // 自我晕眩动画
                         animatorController.Play("Stun", true);
-                        // 移除加防
-                        NumericBox.DamageRate.RemoveModifier(p_dmgRateMod);
                         timeLeft = stun_time;
                         // 加入读条UI
                         {
@@ -1091,8 +1270,9 @@ public class IronMan : BossUnit
                         animatorController.Play("Appear");
                         // 移除计算此期间的受击伤害
                         actionPointController.RemoveListener(ActionPointType.PostReceiveDamage, hitAction);
-                        canRecordDamage = true; // 重新记录伤害
-                        FinalSkillRingUI.Show(); // 重新显示UI
+                        // 显示大招UI
+                        if (current_lost_hp_percent < 9999)
+                            FinalSkillRingUI.Show(); // 重新显示UI
                         NumericBox.DamageRate.AddModifier(p_dmgRateMod); // 重新加防
                         return true;
                     }

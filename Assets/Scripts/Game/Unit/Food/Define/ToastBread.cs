@@ -1,14 +1,10 @@
 using System.Collections.Generic;
-using UnityEngine;
 /// <summary>
 /// 土司面包
 /// </summary>
 public class ToastBread : FoodUnit
 {
-    private const string ToastBreadHealEffectKey = "ToastBreadHealEffectKey";
-    private static RuntimeAnimatorController HealEffect_RuntimeAnimatorController;
     private int mHertIndex; // 受伤阶段 0：正常 1：小伤 2：重伤
-    private int noHealTimeLeft; // 非自然回复倒计时
     private List<float> mHertRateList = new List<float>()
     {
         0.67f, 0.33f
@@ -16,50 +12,39 @@ public class ToastBread : FoodUnit
 
     public override void Awake()
     {
-        if (HealEffect_RuntimeAnimatorController == null)
-            HealEffect_RuntimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Food/38/HealEffect");
         base.Awake();
     }
 
     public override void MInit()
     {
         mHertIndex = 0;
-        noHealTimeLeft = 0;
         base.MInit();
 
         // 在受到伤害结算之后，更新受伤贴图状态
-        AddActionPointListener(ActionPointType.PostReceiveDamage, delegate { UpdateHertMap(); noHealTimeLeft = 300; });
+        AddActionPointListener(ActionPointType.PostReceiveDamage, delegate { UpdateHertMap(); });
         // 在接收治疗结算之后，更新受伤贴图状态
         AddActionPointListener(ActionPointType.PostReceiveCure, delegate { UpdateHertMap(); });
+
+        if(mShape >= 1)
+        {
+            // 每1秒回复2%最大生命值
+            int timeLeft = 0;
+            CustomizationTask task = new CustomizationTask();
+            task.AddTaskFunc(delegate {
+                timeLeft--;
+                if(timeLeft <= 0)
+                {
+                    timeLeft += 60;
+                    new CureAction(CombatAction.ActionType.GiveCure, this, this, 0.02f*mMaxHp).ApplyAction();
+                }
+                return false;
+            });
+            taskController.AddTask(task);
+        }
     }
 
     public override void MUpdate()
     {
-        // 自然回复功能
-        if (noHealTimeLeft > 0)
-        {
-            noHealTimeLeft--;
-            if (mEffectController.IsContainEffect(ToastBreadHealEffectKey))
-            {
-                mEffectController.RemoveEffectFromDict(ToastBreadHealEffectKey);
-            }
-        }
-        else
-        {
-            if (!mEffectController.IsContainEffect(ToastBreadHealEffectKey))
-            {
-                BaseEffect e = BaseEffect.CreateInstance(HealEffect_RuntimeAnimatorController, null, "Idle", null, true);
-                GameController.Instance.AddEffect(e);
-                mEffectController.AddEffectToDict(ToastBreadHealEffectKey, e, Vector2.zero);
-                string name;
-                int order;
-                if (TryGetSpriteRenternerSorting(out name, out order))
-                {
-                    e.SetSpriteRendererSorting(name, order + 1);
-                }
-            }
-            new CureAction(CombatAction.ActionType.GiveCure, this, this, mCurrentAttack / 60).ApplyAction();
-        }
         base.MUpdate();
     }
 

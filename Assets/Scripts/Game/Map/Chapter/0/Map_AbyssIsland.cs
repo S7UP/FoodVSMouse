@@ -45,7 +45,7 @@ public class Map_AbyssIsland : ChapterMap
     public override void OtherProcessing()
     {
         // ÎªÈ«Í¼Ìí¼ÓºÚÒ¹BUFF
-        ShadeAreaEffectExecution e = ShadeAreaEffectExecution.GetInstance(6, 7, new UnityEngine.Vector2(MapManager.GetColumnX(1.5f), MapManager.GetRowY(3)));
-        GameController.Instance.AddAreaEffectExecution(e);
+        //ShadeAreaEffectExecution e = ShadeAreaEffectExecution.GetInstance(6, 7, new UnityEngine.Vector2(MapManager.GetColumnX(1.5f), MapManager.GetRowY(3)));
+        //GameController.Instance.AddAreaEffectExecution(e);
     }
 }

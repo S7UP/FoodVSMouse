@@ -50,20 +50,20 @@ public class RankSelectPanel : BasePanel
 
     private void UpdateDisplay()
     {
-        int diff = PlayerData.GetInstance().GetDifficult();
-        for (int i = 0; i < ImgArray.Length; i++)
-        {
-            if(i == diff)
-            {
-                ImgArray[i].sprite = highLightSprArray[i];
-                BtnArray[i].interactable = false;
-            }
-            else
-            {
-                ImgArray[i].sprite = normalSprArray[i];
-                BtnArray[i].interactable = true;
-            }
-        }
+        //int diff = PlayerData.GetInstance().GetDifficult();
+        //for (int i = 0; i < ImgArray.Length; i++)
+        //{
+        //    if(i == diff)
+        //    {
+        //        ImgArray[i].sprite = highLightSprArray[i];
+        //        BtnArray[i].interactable = false;
+        //    }
+        //    else
+        //    {
+        //        ImgArray[i].sprite = normalSprArray[i];
+        //        BtnArray[i].interactable = true;
+        //    }
+        //}
     }
 
     /// <summary>
@@ -71,7 +71,7 @@ public class RankSelectPanel : BasePanel
     /// </summary>
     public void OnClickDiffItem(int diff)
     {
-        PlayerData.GetInstance().SetDifficult(diff);
+        // PlayerData.GetInstance().SetDifficult(diff);
         PlayerData.GetInstance().Save();
         UpdateDisplay();
 
@@ -86,7 +86,7 @@ public class RankSelectPanel : BasePanel
     /// </summary>
     public void OnClickExit()
     {
-        mUIFacade.currentScenePanelDict[StringManager.RankSelectPanel].ExitPanel();
+        //mUIFacade.currentScenePanelDict[StringManager.RankSelectPanel].ExitPanel();
     }
 
     public override void EnterPanel()

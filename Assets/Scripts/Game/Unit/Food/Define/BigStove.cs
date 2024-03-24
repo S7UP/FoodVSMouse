@@ -28,10 +28,18 @@ public class BigStove : FoodUnit
         // 如果原来的存在，要先移除原来的
         GameController.Instance.RemoveCostResourceModifier("Fire", floatModifier);
         // 根据星级计算出新的  算法为 生产效率（攻击力）*火苗数*44/间隔（秒）/60帧
-        if (mShape > 0)
-            fireCount = 3;
-        else
-            fireCount = 2;
+        switch (mShape)
+        {
+            case 0:
+                fireCount = 2;
+                break;
+            case 1:
+                fireCount = 3;
+                break;
+            default:
+                fireCount = 4;
+                break;
+        }
         floatModifier.Value = GetCurrentProductivity();
         lastProductivity = floatModifier.Value;
         // 加回去

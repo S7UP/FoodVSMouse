@@ -357,7 +357,7 @@ public class LieutenantHum : BossUnit
     {
         float sv = TransManager.TranToVelocity(GetParamValue("v0"));
         // Ìí¼Ó·çÓò
-        WindAreaEffectExecution r = WindAreaEffectExecution.GetInstance(8.6f, 1, new Vector2(MapManager.GetColumnX(4f), MapManager.GetRowY(GetRowIndex())));
+        WindAreaEffectExecution r = WindAreaEffectExecution.GetInstance(7.55f, 1, new Vector2(MapManager.GetColumnX(4.525f), MapManager.GetRowY(GetRowIndex())));
         CustomizationTask t = new CustomizationTask();
         t.AddTimeTaskFunc(Mathf.FloorToInt(GetParamValue("acc_time0") * 60), null, (lefttime, totaltime) => {
             float rate = 1 - (float)lefttime / totaltime;

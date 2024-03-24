@@ -1,4 +1,5 @@
 using System.Collections;
+
 public class EditorSceneState : BaseSceneState
 {
     public EditorSceneState(UIFacade uiFacade) : base(uiFacade)
@@ -20,6 +21,7 @@ public class EditorSceneState : BaseSceneState
 
     public override void ExitScene()
     {
+        GlobalData.Manager.Instance.mEditStage.CloseEditMode();
         base.ExitScene();
     }
 }

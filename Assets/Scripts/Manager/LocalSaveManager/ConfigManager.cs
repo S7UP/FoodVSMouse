@@ -18,7 +18,7 @@ public class ConfigManager
         public bool isPlaySE; // 是否播放音效
         public float BGMVolume; // BGM音量
         public float SEVolume;  // 音效音量
-        public bool isEnableQuickReleaseCard; // 是否开启快捷放卡模式
+        public bool isEnableQuickReleaseCard = true; // 是否开启快捷放卡模式
         public bool isHideCardInfo; // 是否隐藏关内卡片信息
     }
 

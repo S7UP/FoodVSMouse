@@ -239,12 +239,4 @@ public class PenguinMouse : MouseUnit
             // 这种情况下target不会赋值，单位保持继续前进直至有放卡
         }
     }
-
-    /// <summary>
-    /// 对于企鹅来说，在水地形的危险权重和陆地是一样的
-    /// </summary>
-    public override void SetGridDangerousWeightDict()
-    {
-        GridDangerousWeightDict[GridType.Water] = GridDangerousWeightDict[GridType.Default];
-    }
 }

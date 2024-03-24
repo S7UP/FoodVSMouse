@@ -6,30 +6,93 @@ using S7P.Numeric;
 /// </summary>
 public class WindAreaEffectExecution : RetangleAreaEffectExecution
 {
+    public class State
+    {
+        public int totoalTime = 0;
+        public float start_v = 0;
+        public float end_v = 0;
+    }
+
+    public List<State> stateList = new List<State>();
+    public int currentStateIndex = 0;
+    public int currentTimeLeft = 0;
+
     private const string TaskName = "WindTask"; // 专属的任务名
+
+    public const string IgnoreWind = "IgnoreWind"; // 无视风场的词条
     public float velocity; // 风速，默认方向是向右的，负数则表明向左
+    public float add_dmg_rate = 1;
+    public float dec_dmg_rate = 1;
 
     // 自身所覆盖云层组
     private List<RetangleAreaEffectExecution> cloudGroupList = new List<RetangleAreaEffectExecution>();
 
-    public override void Awake()
-    {
-        base.Awake();
-    }
 
     public override void MInit()
     {
+        stateList.Clear();
+        currentStateIndex = -1;
+        currentTimeLeft = 0;
         velocity = 0;
         base.MInit();
+
         AddEnemyEnterConditionFunc((m) => {
-            if (m.IsBoss())
+            if (m.IsBoss() || m.NumericBox.GetBoolNumericValue(IgnoreWind) || !MouseManager.IsGeneralMouse(m))
                 return false;
             return true;
+        });
+
+        SetOnEnemyEnterAction((u) => {
+            // 获取目标身上唯一的风任务
+            WindTask t = null;
+            if (u.GetTask(TaskName) == null)
+            {
+                t = new WindTask(u, this, add_dmg_rate, dec_dmg_rate);
+                u.AddUniqueTask(TaskName, t);
+            }
+            else
+            {
+                t = u.GetTask(TaskName) as WindTask;
+                t.Add(this);
+            }
+        });
+
+        SetOnEnemyExitAction((u) => {
+            // 获取目标身上唯一的风任务
+            if (u.GetTask(TaskName) != null)
+            {
+                WindTask t = u.GetTask(TaskName) as WindTask;
+                t.Remove(this);
+            }
         });
     }
 
     public override void MUpdate()
     {
+        currentTimeLeft--;
+        // 更新速度
+        {
+            State s = GetCurrentState();
+            if (s != null)
+                velocity = Mathf.Lerp(s.start_v, s.end_v, 1 - (float)currentTimeLeft / s.totoalTime);
+            //else
+            //    velocity = 0;
+        }
+        if (currentTimeLeft <= 0)
+        {
+            // 进入下一阶段
+            currentStateIndex++;
+            if (stateList.Count == 0)
+                currentStateIndex = -1;
+            else
+                currentStateIndex = currentStateIndex % stateList.Count;
+            // 下面的state是下一阶段的
+            State s = GetCurrentState();
+            if (s != null)
+                currentTimeLeft = s.totoalTime;
+        }
+
+
         // 更新云组的位置 
         List<RetangleAreaEffectExecution> delList = new List<RetangleAreaEffectExecution>();
         foreach (var e in cloudGroupList)
@@ -46,6 +109,27 @@ public class WindAreaEffectExecution : RetangleAreaEffectExecution
             e.FloatDict["offsetX"] += velocity;
         }
         base.MUpdate();
+    }
+
+    /// <summary>
+    /// 获取某个状态
+    /// </summary>
+    /// <param name="index"></param>
+    /// <returns></returns>
+    public State GetState(int index)
+    {
+        if (index <= stateList.Count)
+            for (int i = 0; i < index - stateList.Count + 1; i++)
+                stateList.Add(new State());
+        return stateList[index];
+    }
+
+    private State GetCurrentState()
+    {
+        if (currentStateIndex >= 0 && currentStateIndex < stateList.Count)
+            return stateList[currentStateIndex];
+        else
+            return null;
     }
 
     public override void OnCollision(Collider2D collision)
@@ -76,38 +160,6 @@ public class WindAreaEffectExecution : RetangleAreaEffectExecution
         {
             base.OnExit(collision);
         }
-    }
-
-    public override void OnEnemyEnter(MouseUnit unit)
-    {
-        // 获取目标身上唯一的风任务
-        WindTask t = null;
-        if (unit.GetTask(TaskName) == null)
-        {
-            t = new WindTask(unit, this);
-            unit.AddUniqueTask(TaskName, t);
-        }
-        else
-        {
-            t = unit.GetTask(TaskName) as WindTask;
-            t.Add(this);
-        }
-        base.OnEnemyEnter(unit);
-    }
-
-    public override void OnEnemyExit(MouseUnit unit)
-    {
-        // 获取目标身上唯一的风任务
-        if (unit.GetTask(TaskName) == null)
-        {
-            Debug.LogWarning("目标在没有风域任务的情况下就退出了风域！");
-        }
-        else
-        {
-            WindTask t = unit.GetTask(TaskName) as WindTask;
-            t.Remove(this);
-        }
-        base.OnEnemyExit(unit);
     }
 
     public float GetVelocity()
@@ -229,16 +281,18 @@ public class WindAreaEffectExecution : RetangleAreaEffectExecution
     // 风域任务
     private class WindTask : ITask
     {
-        private static FloatModifier AddDamageRate = new FloatModifier(1.5f); // 顺风，受伤增幅
-        private static FloatModifier DecDamageRate = new FloatModifier(0.5f); // 逆风，减伤
+        private static FloatModifier AddDamageRate = new FloatModifier(1); // 顺风，受伤增幅
+        private static FloatModifier DecDamageRate = new FloatModifier(1); // 逆风，减伤
 
         private List<WindAreaEffectExecution> list = new List<WindAreaEffectExecution>(); // 进入的风域
         private BaseUnit unit;
         private bool isWind; // 当前是否受风
         private bool isDownWind; // 当前是否顺风（目标移动方向与风向一致）
 
-        public WindTask(BaseUnit unit, WindAreaEffectExecution w)
+        public WindTask(BaseUnit unit, WindAreaEffectExecution w, float add_dmg_rate, float dec_dmg_rate)
         {
+            AddDamageRate.Value = add_dmg_rate;
+            DecDamageRate.Value = dec_dmg_rate;
             this.unit = unit;
             list.Add(w);
         }
@@ -257,9 +311,7 @@ public class WindAreaEffectExecution : RetangleAreaEffectExecution
             {
                 velocity += w.GetVelocity();
             }
-            //unit.SetPosition(unit.GetPosition() +  new Vector3(velocity, 0));
             unit.transform.position = unit.transform.position + new Vector3(velocity, 0, 0);
-            //unit.SetPosition((Vector2)unit.GetPosition() + new Vector2(velocity, 0));
             // 检测状态是否发生变化及后续处理
 
             if (isWind) 

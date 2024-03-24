@@ -16,6 +16,13 @@ public class BaseMap : MonoBehaviour, IGameControllerMember
 
     private float symY = 0; // y方向上同步目标y坐标的速率
     private Dictionary<BaseUnit, List<GridGroup>> unit_gridGroupMapDict = new Dictionary<BaseUnit, List<GridGroup>>(); // 单位-所<接触>的格子的映射字典
+    //private class GridGroupInfo
+    //{
+    //    public List<BaseUnit> unitList = new List<BaseUnit>();
+    //    public List<BaseUnit> canUpdateYList = new List<BaseUnit>();
+    //    public float deltaY = 0;
+    //}
+    //private Dictionary<GridGroup, GridGroupInfo> groupInfoDict = new Dictionary<GridGroup, GridGroupInfo>();
 
     // 地图
     [HideInInspector]
@@ -89,6 +96,7 @@ public class BaseMap : MonoBehaviour, IGameControllerMember
         mGridList.Clear();
         gridGroupList.Clear();
         unit_gridGroupMapDict.Clear();
+        // groupInfoDict.Clear();
 
         CalculateSize();
 
@@ -104,6 +112,9 @@ public class BaseMap : MonoBehaviour, IGameControllerMember
         {
             foreach (var group in gridGroupList)
             {
+                //GridGroupInfo info = new GridGroupInfo();
+                //groupInfoDict.Add(group, info);
+
                 // 进入条件
                 group.AddOnUnitEnterCondiFunc((u) => {
                     if (u.GetHeight() != 0)
@@ -125,33 +136,10 @@ public class BaseMap : MonoBehaviour, IGameControllerMember
                 group.AddOnUnitExitAction((u) => {
                     if (unit_gridGroupMapDict.ContainsKey(u))
                         unit_gridGroupMapDict[u].Remove(group);
+                    
+                    //info.unitList.Remove(u);
+                    //info.canUpdateYList.Remove(u);
                 });
-
-                // 为所有格子添加一个范围检测
-                foreach (var g in group.GetGridList())
-                {
-                    RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(g.transform.position, new Vector2(0.75f*MapManager.gridWidth, 0.5f*MapManager.gridHeight), "ItemCollideEnemy");
-                    r.isAffectMouse = true;
-                    r.SetAffectHeight(0);
-                    r.SetOnEnemyEnterAction((u) => {
-                        group.TryEnter(u);
-                    });
-                    r.SetOnEnemyExitAction((u) => {
-                        group.TryExit(u);
-                    });
-                    GameController.Instance.AddAreaEffectExecution(r);
-
-                    // 跟随任务
-                    CustomizationTask t = new CustomizationTask();
-                    t.AddTaskFunc(delegate {
-                        r.transform.position = g.transform.position;
-                        return !g.IsAlive();
-                    });
-                    t.AddOnExitAction(delegate {
-                        r.MDestory();
-                    });
-                    r.taskController.AddTask(t);
-                }
             }
         }
     }
@@ -187,33 +175,63 @@ public class BaseMap : MonoBehaviour, IGameControllerMember
                 delList.Add(u);
             else
             {
-                // 取最先接触的格子组（也就是第一位）作为<位于>判定，并执行对应的同步逻辑
+                // 取最先接触的格子组（也就是第一位）作为<位于>判定，并执行对应的同步x坐标逻辑
                 GridGroup group = groupList[0];
-                u.transform.position += (Vector3)group.GetDeltaPos();
+
+                //if(groupInfoDict.ContainsKey(group) && !groupInfoDict[group].unitList.Contains(u) && !groupInfoDict[group].canUpdateYList.Contains(u))
+                //    groupInfoDict[group].unitList.Add(u);
+                u.transform.position += group.GetDeltaPos().x * Vector3.right;
                 // 在这个格子组里找离目标最近的格子，然后试图在y方向上同步y坐标
-                BaseGrid g = null;
-                float min = float.MaxValue;
-                foreach (var _g in group.GetGridList())
-                {
-                    float dist = (u.transform.position - _g.transform.position).magnitude;
-                    if(dist < min)
-                    {
-                        g = _g;
-                        min = dist;
-                    }
-                }
-                if (g != null)
-                {
-                    float deltaY = g.transform.position.y - u.transform.position.y;
-                    float sign = Mathf.Sign(deltaY);
-                    u.transform.position += new Vector3(0, sign * Mathf.Min(symY, Mathf.Abs(deltaY)));
-                }
+                //BaseGrid g = null;
+                //float min = float.MaxValue;
+                //foreach (var _g in group.GetGridList())
+                //{
+                //    float dist = (u.transform.position - _g.transform.position).magnitude;
+                //    if(dist < min)
+                //    {
+                //        g = _g;
+                //        min = dist;
+                //    }
+                //}
+                //if (g != null)
+                //{
+                //    float deltaY = g.transform.position.y - u.transform.position.y;
+                //    float sign = Mathf.Sign(deltaY);
+                //    u.transform.position += new Vector3(0, sign * Mathf.Min(symY, Mathf.Abs(deltaY)));
+                //}
             }
         }
         foreach (var u in delList)
         {
             unit_gridGroupMapDict.Remove(u);
         }
+
+
+        //// 更新格子组-单位的y同步关系
+        //foreach (var keyValuePair in groupInfoDict)
+        //{
+        //    GridGroup group = keyValuePair.Key;
+        //    GridGroupInfo info = keyValuePair.Value;
+
+        //    foreach (var u in info.unitList)
+        //        u.transform.position += group.GetDeltaPos().x * Vector3.right;
+
+        //    foreach (var u in info.canUpdateYList)
+        //        u.transform.position += group.GetDeltaPos().y * Vector3.up;
+
+        //    info.deltaY += group.GetDeltaPos().y;
+        //    if(Mathf.Abs(info.deltaY) >= MapManager.gridHeight || group.GetDeltaPos().y == 0)
+        //    {
+        //        info.deltaY -= Mathf.Sign(info.deltaY)*MapManager.gridHeight;
+        //        foreach (var u in info.unitList)
+        //        {
+        //            u.transform.position += info.deltaY * Vector3.up;
+        //            info.canUpdateYList.Add(u);
+        //        }
+        //        info.unitList.Clear();
+        //        info.deltaY = 0;
+        //    }
+        //}
 
         AfterUpdate();
     }

@@ -49,6 +49,7 @@ public class SelectEquipmentUI : MonoBehaviour
             BaseStage.StageInfo info = data.GetCurrentStageInfo();
             PlayerData.StageInfo_Dynamic info_dynamic = data.GetCurrentDynamicStageInfo();
             string id = info_dynamic.id;
+            info_dynamic.isNoLimit = Tog_NoLimit.isOn;
             // 如果是从公测面版进入的关卡，则可以更新一下选择情况
             if (id != null)
             {
@@ -119,7 +120,7 @@ public class SelectEquipmentUI : MonoBehaviour
     public void SelectCard(FoodNameTypeMap type)
     {
         int cardCount = 18;
-        if (PlayerData.GetInstance().GetCurrentStageInfo().isEnableCardCount)
+        if (PlayerData.GetInstance().GetCurrentStageInfo().isEnableCardCount && !PlayerData.GetInstance().GetCurrentDynamicStageInfo().isNoLimit)
             cardCount = PlayerData.GetInstance().GetCurrentStageInfo().cardCount;
         if (mSelectedCardUI.GetSelectedCardCount() < cardCount)
         {

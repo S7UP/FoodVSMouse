@@ -1,7 +1,5 @@
 using System.Collections.Generic;
 
-using S7P.Numeric;
-
 using UnityEngine;
 /// <summary>
 /// 雷电长棍面包
@@ -12,11 +10,11 @@ public class RaidenBaguette : FoodUnit
     private static List<RaidenBaguette> thisUnitList = new List<RaidenBaguette>();
     private static List<BaseUnit> hitedUnitList = new List<BaseUnit>();
     private static Sprite Lightning_Sprite;
+    private static int currentLevel;
     private static int currentShape; // 当前为几转
     private static int nextAttackTimeLeft; // 下次攻击剩余时间
 
     private GeneralAttackSkillAbility generalAttackSkillAbility;
-    private FloatModifier decMaxHpPercentMod = new FloatModifier(0); // 降低最大生命值上限的标签
 
     public override void Awake()
     {
@@ -27,16 +25,16 @@ public class RaidenBaguette : FoodUnit
 
     public override void MInit()
     {
+        base.MInit();
+        currentShape = mShape;
+        
+
         // 当第一个雷电被放下时，激活全局计时器
-        if(GetThisUnitList().Count == 0)
+        if (GetThisUnitList().Count == 0)
             GameController.Instance.mTaskController.AddUniqueTask("RaidenBaguette_Attack_Task", GetGlobalAttackTimerTask());
 
         if (!thisUnitList.Contains(this))
             thisUnitList.Add(this);
-        decMaxHpPercentMod.Value = 0;
-        base.MInit();
-        NumericBox.Hp.AddFinalPctAddModifier(decMaxHpPercentMod);
-        currentShape = mShape;
     }
 
     public override void MUpdate()
@@ -57,7 +55,9 @@ public class RaidenBaguette : FoodUnit
     /// </summary>
     public override void UpdateAttributeByLevel()
     {
-        SetMaxHpAndCurrentHp((float)(attr.baseAttrbute.baseHP + attr.valueList[mLevel]));
+        //NumericBox.Attack.SetBase((float)(attr.baseAttrbute.baseAttack + attr.valueList[mLevel]));
+        NumericBox.Attack.SetBase(FoodManager.GetAttack(FoodNameTypeMap.RaidenBaguette, mLevel, mShape));
+        currentLevel = mLevel;
     }
 
     public override void OnCastStateEnter()
@@ -70,24 +70,6 @@ public class RaidenBaguette : FoodUnit
     {
         if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
             SetActionState(new IdleState(this));
-    }
-
-    /// <summary>
-    /// 降低一次最大生命值上限
-    /// </summary>
-    private void DecMaxHp()
-    {
-        NumericBox.Hp.RemoveFinalPctAddModifier(decMaxHpPercentMod);
-        if (mShape < 1)
-            decMaxHpPercentMod.Value -= 20;
-        else
-            decMaxHpPercentMod.Value -= 15;
-        NumericBox.Hp.AddFinalPctAddModifier(decMaxHpPercentMod);
-
-        if (decMaxHpPercentMod.Value <= -100)
-            ExecuteDeath();
-        else if (mCurrentHp > mMaxHp)
-            mCurrentHp = mMaxHp;
     }
 
     #region 禁用普通攻击
@@ -245,11 +227,6 @@ public class RaidenBaguette : FoodUnit
                 GameController.Instance.AddAreaEffectExecution(r);
             }
         }
-        // 遍历完后再结算扣血
-        for (int i = 0; i < list.Count; i++)
-        {
-            list[i].DecMaxHp();
-        }
     }
 
     /// <summary>
@@ -260,16 +237,7 @@ public class RaidenBaguette : FoodUnit
     {
         if (hitedUnitList.Contains(u))
             return;
-        // 计算折前伤害
-        float dmg = u.mMaxHp * u.mBurnRate * u.mAoeRate; 
-        // 先作用于护盾
-        dmg = u.NumericBox.DamageShield(dmg);
-        // 剩余伤害转为灰烬伤害
-        if (dmg > 0)
-            new DamageAction(CombatAction.ActionType.BurnDamage, null, u, dmg).ApplyAction();
-        //  如果是二转还会施加2秒晕眩效果
-        if(currentShape >= 2)
-            u.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(u, 120, false));
+        new DamageAction(CombatAction.ActionType.BurnDamage, null, u, Mathf.Max(0.2f*u.mMaxHp*u.mBurnRate, FoodManager.GetAttack(FoodNameTypeMap.RaidenBaguette, currentLevel, currentShape)*u.NumericBox.AoeRate.TotalValue)).ApplyAction();
         // 记录已被电击过一次
         hitedUnitList.Add(u);
     }
@@ -280,9 +248,18 @@ public class RaidenBaguette : FoodUnit
     /// <returns></returns>
     private static CustomizationTask GetGlobalAttackTimerTask()
     {
+        int[] attackTimeArray;
+        int index = 0;
+        if (currentShape == 0)
+            attackTimeArray = new int[] { 180 };
+        else if (currentShape == 1)
+            attackTimeArray = new int[] { 120 };
+        else
+            attackTimeArray = new int[] { 90, 30 };
+
         CustomizationTask task = new CustomizationTask();
         task.AddOnEnterAction(delegate {
-            nextAttackTimeLeft = 600;
+            nextAttackTimeLeft = attackTimeArray[index];
         });
         task.AddTaskFunc(delegate {
             List<RaidenBaguette> l1 = GetThisUnitList();
@@ -302,7 +279,8 @@ public class RaidenBaguette : FoodUnit
                 if (l2.Count >= 2)
                 {
                     ExecuteAttack(l2);
-                    nextAttackTimeLeft = 600;
+                    index = (index + 1) % attackTimeArray.Length;
+                    nextAttackTimeLeft = attackTimeArray[index];
                 }
             }
             return false;

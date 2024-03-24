@@ -109,11 +109,24 @@ public class Map_PepperFloatingIsland : ChapterMap
         List<Vector2> endList = new List<Vector2>()
         {
             mapCenter + 2.5f * MapManager.gridWidth * Vector3.left + 2 * MapManager.gridHeight * Vector3.up,
-            mapCenter + 3 * MapManager.gridWidth * Vector3.left + 2.5f * MapManager.gridHeight * Vector3.down,
+            mapCenter + 2 * MapManager.gridWidth * Vector3.left + 2.5f * MapManager.gridHeight * Vector3.down,
             mapCenter + 2.5f * MapManager.gridWidth * Vector3.right + 2 * MapManager.gridHeight * Vector3.down,
-            mapCenter + 3 * MapManager.gridWidth * Vector3.right + 2.5f * MapManager.gridHeight * Vector3.up,
+            mapCenter + 2 * MapManager.gridWidth * Vector3.right + 2.5f * MapManager.gridHeight * Vector3.up,
         };
 
+        Vector2[] checkAreaList = new Vector2[]
+        {
+            // 左
+            new Vector2(1.5f, 2.5f),
+            // 下
+            new Vector2(2.5f, 1.5f),
+            // 右
+            new Vector2(1.5f, 2.5f),
+            // 上
+            new Vector2(2.5f, 1.5f),
+        };
+
+        Transform trans = GameController.Instance.mMapController.transform;
         for (int k = 0; k < 4; k++)
         {
             MovementGridGroup gridGroup = MovementGridGroup.GetInstance();
@@ -130,14 +143,14 @@ public class Map_PepperFloatingIsland : ChapterMap
                     new MovementGridGroup.PointInfo()
                     {
                         targetPosition = centerList[k],
-                        moveTime = 540,
-                        strandedTime = 900
+                        moveTime = 360,
+                        strandedTime = 540
                     },
                     new MovementGridGroup.PointInfo()
                     {
                         targetPosition = endList[k],
-                        moveTime = 540,
-                        strandedTime = 900
+                        moveTime = 360,
+                        strandedTime = 540
                     }
                 },
                 GameManager.Instance.GetSprite(GetSpritePath() + (k+1) +""),
@@ -145,6 +158,34 @@ public class Map_PepperFloatingIsland : ChapterMap
                 false, false);
             gridGroupList.Add(gridGroup);
             gridGroup.transform.SetParent(transform);
+
+            // 设置进入板块的检测域
+            {
+                Vector3 size = new Vector3(checkAreaList[k].x * MapManager.gridWidth, checkAreaList[k].y * MapManager.gridHeight);
+                RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(gridGroup.transform.position, size, "ItemCollideEnemy");
+                r.name = "GridGroupEnterCheckArea";
+                r.transform.SetParent(trans);
+                r.isAffectMouse = true;
+                r.SetAffectHeight(0);
+                r.SetOnEnemyEnterAction((u) => {
+                    gridGroup.TryEnter(u);
+                });
+                r.SetOnEnemyExitAction((u) => {
+                    gridGroup.TryExit(u);
+                });
+                GameController.Instance.AddAreaEffectExecution(r);
+
+                // 跟随任务
+                CustomizationTask t = new CustomizationTask();
+                t.AddTaskFunc(delegate {
+                    r.transform.position = gridGroup.transform.position;
+                    return !gridGroup.IsAlive();
+                });
+                t.AddOnExitAction(delegate {
+                    r.MDestory();
+                });
+                r.taskController.AddTask(t);
+            }
         }
     }
 

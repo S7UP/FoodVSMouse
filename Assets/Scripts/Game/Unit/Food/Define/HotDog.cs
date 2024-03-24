@@ -13,11 +13,7 @@ public class HotDog : FoodUnit
 {
     private static RuntimeAnimatorController BulletRuntimeAnimatorController;
 
-    private float airUnitDamageRate; // 对空中目标伤害倍率
-    private float airAoeDamageRate; // 对空中范围伤害倍率
-    private float groundUnitDamageRate; // 对地面目标伤害倍率
-    private int airSlowTime; // 对空减速时间
-    private int groundSlowTime; // 对地减速时间
+    private float ice_rate; // 附加冰冻损伤倍率
     private Vector2 targetPosition;
     private BaseUnit airTarget; // 当前被选为目标的空中单位
     private BaseUnit groundTarget; // 当前被选为目标的地面单位
@@ -41,24 +37,20 @@ public class HotDog : FoodUnit
         switch (mShape)
         {
             case 1:
-                airUnitDamageRate = 2.66f;
+                ice_rate = 2f;
                 attackCount = 1;
                 break;
             case 2:
-                airUnitDamageRate = 2.66f;
+                ice_rate = 2f;
                 attackCount = 2;
                 break;
             default:
-                airUnitDamageRate = 2.0f;
+                ice_rate = 1f;
                 attackCount = 1;
                 break;
         }
         attackLeft = attackCount;
         targetPosition = Vector2.zero;
-        groundUnitDamageRate = 1.0f;
-        airAoeDamageRate = 0.2f;
-        airSlowTime = 180;
-        groundSlowTime = 30;
         airTarget = null;
         groundTarget = null;
     }
@@ -94,7 +86,8 @@ public class HotDog : FoodUnit
         List<BaseUnit> unitList = new List<BaseUnit>();
         foreach (var unit in GameController.Instance.GetSpecificRowEnemyList(GetRowIndex()))
         {
-            if(unit.transform.position.x > transform.position.x && UnitManager.CanBeSelectedAsTarget(this, unit))
+            //if(unit.transform.position.x > (transform.position.x - MapManager.gridWidth / 2) && UnitManager.CanBeSelectedAsTarget(this, unit))
+            if(UnitManager.CanBeSelectedAsTarget(this, unit))
             {
                 unitList.Add(unit);
             }
@@ -107,8 +100,9 @@ public class HotDog : FoodUnit
             {
                 airTarget = m;
             }
-            else if (m.GetHeight() == 0 && (GetGroundTarget() == null || m.transform.position.x < GetGroundTarget().transform.position.x))
+            else if (m.transform.position.x > transform.position.x && m.GetHeight() == 0 && (GetGroundTarget() == null || m.transform.position.x < GetGroundTarget().transform.position.x))
             {
+                // 对地必须满足在右侧
                 groundTarget = m;
             }
         }
@@ -207,17 +201,7 @@ public class HotDog : FoodUnit
         GameManager.Instance.audioSourceController.PlayEffectMusic("Throw" + GameManager.Instance.rand.Next(0, 2));
         // 立即进行一次索敌更新
         FindTarget();
-        int c = attackCount - attackLeft; // 计算当前是第几次攻击(0,1)
-        if(c == 0)
-        {
-            // 优先对空索敌
-            CreateBullet(transform.position, mCurrentAttack, (GetAirTarget() != null ? GetAirTarget() : GetGroundTarget()));
-        }
-        else if(c == 1)
-        {
-            // 优先对地索敌
-            CreateBullet(transform.position, mCurrentAttack, (GetGroundTarget() != null ? GetGroundTarget() : GetAirTarget()));
-        }
+        CreateBullet(transform.position, mCurrentAttack, (GetAirTarget() != null ? GetAirTarget() : GetGroundTarget()));
     }
 
     /// <summary>
@@ -230,7 +214,7 @@ public class HotDog : FoodUnit
     {
         bool isAirTarget = (target != null && target.GetHeight() == 1); // 是否为空中单位
 
-        AllyBullet b = AllyBullet.GetInstance(BulletStyle.Throwing, BulletRuntimeAnimatorController, this, (isAirTarget ? airUnitDamageRate:groundUnitDamageRate) * ori_dmg);
+        AllyBullet b = AllyBullet.GetInstance(BulletStyle.Throwing, BulletRuntimeAnimatorController, this, ori_dmg);
         b.SetHitSoundEffect("Splat" + GameManager.Instance.rand.Next(0, 3));
         b.AddSpriteOffsetY(new FloatModifier(0.5f * MapManager.gridHeight));
         b.SetHeight(isAirTarget ? 1:0);
@@ -243,9 +227,22 @@ public class HotDog : FoodUnit
             {
                 if (u != null)
                 {
-                    float ice_val = (isAirTarget ? 60 : 30);
+                    float ice_val = (isAirTarget ? 50 : 0);
+                    if(isAirTarget)
+                    {
+                        ITask t = EnvironmentFacade.GetIceDebuff(u);
+                        if (t != null && (t as IceTask).IsForzen())
+                        {
+                            ice_val = 25;
+                        }
+                        // 对空额外伤害
+                        float dmg_rate = 1.5f;
+                        if (mShape >= 1)
+                            dmg_rate = 2f;
+                        new DamageAction(CombatAction.ActionType.CauseDamage, this, u, dmg_rate * ori_dmg).ApplyAction(); // 造成额外150%伤害
+                    }
                     // 为目标施加冰冻损伤
-                    EnvironmentFacade.AddIceDebuff(u, ice_val);
+                    EnvironmentFacade.AddIceDebuff(u, ice_val * ice_rate);
                 }
             };
         }

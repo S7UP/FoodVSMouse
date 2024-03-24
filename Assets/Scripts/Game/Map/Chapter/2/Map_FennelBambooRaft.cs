@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 
 using UnityEngine;
@@ -96,6 +95,50 @@ public class Map_FennelBambooRaft : ChapterMap
                 false, false);
             gridGroupList.Add(gridGroup);
             gridGroup.transform.SetParent(transform);
+
+            Transform trans = GameController.Instance.mMapController.transform;
+            // 设置进入板块的检测域
+            {
+                RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(gridGroup.transform.position, new Vector2(3.5f * MapManager.gridWidth, 4.5f * MapManager.gridHeight), "ItemCollideEnemy");
+                r.name = "GridGroupEnterCheckArea";
+                r.transform.SetParent(trans);
+                r.isAffectMouse = true;
+                r.SetAffectHeight(0);
+                r.SetOnEnemyEnterAction((u) => {
+                    gridGroup.TryEnter(u);
+                });
+                r.SetOnEnemyExitAction((u) => {
+                    gridGroup.TryExit(u);
+                });
+                GameController.Instance.AddAreaEffectExecution(r);
+
+                // 跟随任务
+                CustomizationTask t = new CustomizationTask();
+                t.AddTaskFunc(delegate {
+                    r.transform.position = gridGroup.transform.position;
+                    return !gridGroup.IsAlive();
+                });
+                t.AddOnExitAction(delegate {
+                    r.MDestory();
+                });
+                r.taskController.AddTask(t);
+            }
+
+            // 整个大板块被视为承载域
+            {
+                RetangleAreaEffectExecution r = Environment.WaterManager.GetVehicleArea(gridGroup.transform.position, new Vector2(3.5f * MapManager.gridWidth, 4.5f * MapManager.gridHeight), new S7P.Numeric.FloatModifier(0));
+                r.name = "WaterVehicle(gridGroup)";
+                r.transform.SetParent(trans);
+                GameController.Instance.AddAreaEffectExecution(r);
+
+                CustomizationTask t = new CustomizationTask();
+                t.AddTaskFunc(delegate
+                {
+                    r.transform.position = gridGroup.transform.position;
+                    return !gridGroup.IsAlive();
+                });
+                r.taskController.AddTask(t);
+            }
         }
     }
 
@@ -135,36 +178,6 @@ public class Map_FennelBambooRaft : ChapterMap
             r.name = "WaterVehicle(left)";
             r.transform.SetParent(trans);
             GameController.Instance.AddAreaEffectExecution(r);
-        }
-
-        // 创建与两大板块绑定的承载域
-        {
-            Action<BaseGrid> createVehicleAreaAction = (g)=>{
-                RetangleAreaEffectExecution r = Environment.WaterManager.GetVehicleArea(g.transform.position, new Vector2(1 * MapManager.gridWidth, 0.5f * MapManager.gridHeight), new S7P.Numeric.FloatModifier(0));
-                r.name = "WaterVehicle(grid)";
-                r.transform.SetParent(trans);
-                GameController.Instance.AddAreaEffectExecution(r);
-
-                CustomizationTask t = new CustomizationTask();
-                t.AddTaskFunc(delegate {
-                    r.transform.position = g.transform.position;
-                    return !g.IsAlive();
-                });
-                r.taskController.AddTask(t);
-            };
-
-            // 左板
-            for (int i = 0; i < 5; i++)
-            {
-                for (int j = 1; j < 5; j++)
-                    createVehicleAreaAction(GetGrid(j, i));
-            }
-            // 右板
-            for (int i = 2; i < 7; i++)
-            {
-                for (int j = 5; j < 9; j++)
-                    createVehicleAreaAction(GetGrid(j, i));
-            }
         }
     }
 }

@@ -1,4 +1,6 @@
 using S7P.Numeric;
+
+using System;
 /// <summary>
 /// 飞行路障鼠
 /// </summary>
@@ -11,6 +13,8 @@ public class FlyBarrierMouse : MouseUnit, IFlyUnit
     private int maxDropBarrierColumn;
     private FloatModifier speedRateModifier = new FloatModifier(100.0f); // 飞行状态下2倍速
     private BoolModifier boolMod = new BoolModifier(true);
+    private static Func<BaseUnit, BaseUnit, bool> noBeSelectFunc = delegate { return false; };
+    private static Func<BaseUnit, BaseBullet, bool> noHitFunc = delegate { return false; };
 
     public override void MInit()
     {
@@ -41,7 +45,7 @@ public class FlyBarrierMouse : MouseUnit, IFlyUnit
 
         if (IsMeetDropCondition())
         {
-            ExecuteDrop();
+            OnShootDown();
         }
     }
 
@@ -142,20 +146,20 @@ public class FlyBarrierMouse : MouseUnit, IFlyUnit
     /// </summary>
     private bool IsMeetDropCondition()
     {
-        return (!isDrop && transform.position.x <= MapManager.GetColumnX(dropColumn + 0.4f));
+        return (!isDrop && transform.position.x <= MapManager.GetColumnX(dropColumn));
     }
 
     /// <summary>
     /// 执行降落，仅一次
     /// </summary>
-    public void ExecuteDrop()
+    public void OnShootDown()
     {
         if (!isDrop)
         {
             isDrop = true;
             isDropBarrier = true;
             // 若当前生命值大于飞行状态临界点，则需要强制同步生命值至临界点
-            if (mCurrentHp > mHertRateList[1] * mMaxHp)
+            // if (mCurrentHp > mHertRateList[1] * mMaxHp)
             {
                 mCurrentHp = (float)mHertRateList[1] * mMaxHp;
             }
@@ -208,7 +212,7 @@ public class FlyBarrierMouse : MouseUnit, IFlyUnit
 
         if (mHertIndex > 1 && mHertIndex <= 2 && !isDrop)
         {
-            ExecuteDrop();
+            OnShootDown();
         }
     }
 
@@ -221,6 +225,8 @@ public class FlyBarrierMouse : MouseUnit, IFlyUnit
         StatusManager.RemoveAllSettleDownDebuff(this);
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, boolMod);
         animatorController.Play("Drop");
+        AddCanBeSelectedAsTargetFunc(noBeSelectFunc);
+        AddCanHitFunc(noHitFunc);
     }
 
     public override void OnTransitionState()
@@ -241,6 +247,8 @@ public class FlyBarrierMouse : MouseUnit, IFlyUnit
     public override void OnTransitionStateExit()
     {
         NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreStun, boolMod);
+        RemoveCanBeSelectedAsTargetFunc(noBeSelectFunc);
+        RemoveCanHitFunc(noHitFunc);
         mHeight = 0; // 高度降低为地面高度
     }
 }

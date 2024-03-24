@@ -24,19 +24,19 @@ public enum FoodNameTypeMap
     WiskyBoom = 18,
     PineappleBreadBoom = 19,
     SpinCoffee = 20, // 旋转咖啡喷壶
-    Fan = 21,
+    Bun = 21, // 小笼包
     MouseCatcher = 22,
     SpicyStringBoom = 23,
-    ThreeD_Icedun = 24,
+    ChocolateCannon = 24, // 巧克力大炮
     CoffeeCup = 25,
     IceEggPitcher = 26,
-    Octopus = 27,
-    CoffeeCan = 28,
-    RotatedCoffeeCan = 29,
+    IceBun = 27,
+    Pitaya = 28, // 火龙果
+    Durian = 29, // 榴莲
     SugarGourd = 30,
-    MushroomDestroyer = 31, // 炸炸菇
-    LuminescentMold = 32, // 发光霉菌
-    PokerShield = 33, // 扑克护罩
+    Hamburger = 31, // 汉堡包
+    Fishbone = 32, // 钢鱼刺
+    CatBox = 33, // 猫猫盒
     SaladPitcher = 34, // 色拉投手
     ChocolatePitcher = 35, // 巧克力投手
     TofuPitcher = 36, // 臭豆腐投手
@@ -45,5 +45,9 @@ public enum FoodNameTypeMap
     ChocolateBread = 39, // 巧克力面包
     RaidenBaguette = 40, // 雷电长棍面包
     HotDog = 41, // 热狗大炮
-    
+
+    MushroomDestroyer = 997, // 炸炸菇
+    LuminescentMold = 999, // 发光霉菌
+    PokerShield = 998, // 扑克护罩
+
 }

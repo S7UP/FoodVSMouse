@@ -146,7 +146,7 @@ public class ThreeLineGun : BaseWeapons
                         MouseUnit m = u as MouseUnit;
                         if (!m.IsBoss())
                         {
-                            new DamageAction(CombatAction.ActionType.RealDamage, master, u, 0.01f * u.GetCurrentHp()).ApplyAction();
+                            new DamageAction(CombatAction.ActionType.CauseDamage, master, u, 0.01f * u.GetCurrentHp()).ApplyAction();
                         }
                     }
                 });
@@ -155,19 +155,15 @@ public class ThreeLineGun : BaseWeapons
                 {
                     // 添加一个纵向位移的任务
                     b.AddTask(new StraightMovePresetTask(b.transform, MapManager.gridHeight / 30, 0, Vector3.up * 0, MapManager.gridHeight));
-                    //GameController.Instance.AddTasker(new StraightMovePresetTasker(b, MapManager.gridHeight / 30, 0, Vector3.up * 0, MapManager.gridHeight));
                     // 横向位移
                     b.AddTask(new StraightMovePresetTask(b.transform, MapManager.gridWidth / 30 * (j + 0.5f), 0, Vector3.right, 60));
-                    //GameController.Instance.AddTasker(new StraightMovePresetTasker(b, MapManager.gridWidth / 30 * (j + 0.5f), 0, Vector3.right, 60));
                 }
                 else
                 {
                     // 添加一个纵向位移的任务
                     b.AddTask(new StraightMovePresetTask(b.transform, MapManager.gridHeight / 30, 0, Vector3.up * i, MapManager.gridHeight));
-                    //GameController.Instance.AddTasker(new StraightMovePresetTasker(b, MapManager.gridHeight / 30, 0, Vector3.up * i, MapManager.gridHeight));
                     // 横向位移
                     b.AddTask(new StraightMovePresetTask(b.transform, MapManager.gridWidth / 30 * j, 0, Vector3.right, 60));
-                    //GameController.Instance.AddTasker(new StraightMovePresetTasker(b, MapManager.gridWidth / 30 * j, 0, Vector3.right, 60));
                 }
             }
         }

@@ -46,7 +46,7 @@ public class SaladPitcher : FoodUnit
     /// </summary>
     public override void UpdateAttributeByLevel()
     {
-        NumericBox.Attack.SetBase((float)(attr.baseAttrbute.baseAttack + attr.valueList[mLevel])*1.2f);
+        NumericBox.Attack.SetBase((float)attr.baseAttrbute.baseAttack + attr.valueList[mLevel]);
     }
 
     /// <summary>
@@ -176,7 +176,7 @@ public class SaladPitcher : FoodUnit
                     if (mShape < 2)
                     {
                         // 非二转，去找最右的单位
-                        target = MouseManager.FindTheMostRightTarget(this, u.transform.position.x, float.MaxValue, b.GetRowIndex());
+                        target = MouseManager.FindTheMostRightTarget(this, u.transform.position.x, MapManager.GetColumnX(9), b.GetRowIndex());
                     }
                     else
                     {
@@ -187,7 +187,7 @@ public class SaladPitcher : FoodUnit
                 else if (bounceLeft == 2)
                 {
                     // 这是只有二转会出现的情况，等效于一转最后一次索敌
-                    target = MouseManager.FindTheMostRightTarget(this, u.transform.position.x, float.MaxValue, b.GetRowIndex());
+                    target = MouseManager.FindTheMostRightTarget(this, u.transform.position.x, MapManager.GetColumnX(9), b.GetRowIndex());
                 }
 
                 if (target != null)

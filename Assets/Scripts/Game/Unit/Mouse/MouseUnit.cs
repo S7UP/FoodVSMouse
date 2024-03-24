@@ -38,9 +38,6 @@ public class MouseUnit : BaseUnit
     protected bool isBlock { get; set; } // 是否被阻挡
     protected BaseUnit mBlockUnit; // 阻挡者
 
-    // 换行相关
-    // 地形危险度权重表，可以修改特定值使得某些类型的敌人有特殊地形的趋向
-    public Dictionary<GridType, int> GridDangerousWeightDict;
 
     /// <summary>
     /// 只有对象被创建时做一次，主要是用来获取各组件的引用
@@ -81,17 +78,6 @@ public class MouseUnit : BaseUnit
         currentYIndex = 0;
         moveRotate = Vector2.left;
         canDrivenAway = true;
-
-        // 初始化
-        GridDangerousWeightDict = new Dictionary<GridType, int>()
-        {
-            { GridType.Default, 10},
-            { GridType.NotBuilt, 10},
-            { GridType.Water, 12}, // 众所周知水是剧毒的
-            { GridType.Lava, 11},
-            { GridType.Sky, 13}, // 老鼠更恐高
-            { GridType.Teleport, 10 }, // 传送装置？太cool了！！
-        };
 
         // 初始为移动状态
         SetActionState(new MoveState(this));
@@ -327,7 +313,8 @@ public class MouseUnit : BaseUnit
     /// </summary>
     public override bool CanBlock(BaseUnit unit)
     {
-        return ((unit is FoodUnit || unit is CharacterUnit) && UnitManager.CanBeSelectedAsTarget(this, unit) && GetRowIndex() == unit.GetRowIndex() && mHeight == unit.mHeight);
+        //return ((unit is FoodUnit || unit is CharacterUnit) && UnitManager.CanBeSelectedAsTarget(this, unit) && GetRowIndex() == unit.GetRowIndex() && mHeight == unit.mHeight);
+        return ((unit is FoodUnit || unit is CharacterUnit) && UnitManager.CanBeSelectedAsTarget(this, unit) && Mathf.Abs(transform.position.y - unit.transform.position.y) <= 0.1f*MapManager.gridHeight && mHeight == unit.mHeight);
     }
 
     /// <summary>
@@ -740,66 +727,41 @@ public class MouseUnit : BaseUnit
 
         // 计算上中下格的危险权重，然后取危险权重小的换行
         int currentRowIndex = GetRowIndex();
-        int currentColumnIndex = GetColumnIndex();
         int startIndex = Mathf.Max(0, currentRowIndex - 1);
         int endIndex = Mathf.Min(6, currentRowIndex + 1);
         List<int> rowIndexList = new List<int>();
-        // 这步是取出权重最小的几个格子
-        int min = int.MaxValue;
         for (int i = startIndex; i <= endIndex; i++)
-        {
-            int weight;
-            BaseGrid grid = GameController.Instance.mMapController.GetGrid(currentColumnIndex, i);
-            if(grid != null)
-            {
-                weight = GetDangerousWeight(grid);
-            }
-            else
-            {
-                // 如果相邻没有有效格子，那么视为默认格子类型计算
-                weight = GridDangerousWeightDict[GridType.Default];
-            }
-            if(weight < min)
-            {
-                min = weight;
-                rowIndexList.Clear();
-                rowIndexList.Add(i);
-            }
-            else if(weight == min)
-            {
-                rowIndexList.Add(i);
-            }
-        }
+            rowIndexList.Add(i);
         // 超过一个结果时需要优先移除本路，此目的旨在尽可能不让老鼠停留在本路
         if (rowIndexList.Count > 1)
-        {
             rowIndexList.Remove(currentRowIndex);
-        }
-        // 然后从剩下的里面随机抽取一名幸运观众作为最终移动行
-        int selectedIndex = Random.Range(0, rowIndexList.Count); // 还是注意，生成整形时不包括最大值
-        // 纵向位移
-        AddUniqueTask("DrivenAway", new StraightMovePresetTask(transform, MapManager.gridHeight / 60 * (currentRowIndex - rowIndexList[selectedIndex]), Vector3.up, 60));
-        // AddTask(new StraightMovePresetTask(transform, MapManager.gridHeight / 60 * (currentRowIndex - rowIndexList[selectedIndex]), Vector3.up, 60));
-        // GameController.Instance.AddTasker(new StraightMovePresetTasker(this, MapManager.gridHeight / 60 * (currentRowIndex - rowIndexList[selectedIndex]), Vector3.up, 60));
-    }
-
-    /// <summary>
-    /// 获取该单位在某格上的地形危险权重
-    /// </summary>
-    /// <param name="g"></param>
-    /// <returns></returns>
-    public int GetDangerousWeight(BaseGrid g)
-    {
-        int maxDangerous = int.MinValue; // 最大危险权重
-        foreach (var t in g.GetAllGridType())
+        // 然后在剩余结果里找老鼠数量少的
+        List<int> selectedList = new List<int>();
+        //if(rowIndexList.Count > 1)
         {
-            if (GridDangerousWeightDict.ContainsKey(t))
+            int min = int.MaxValue;
+            foreach (var rowIndex in rowIndexList)
             {
-                if (GridDangerousWeightDict[t] > maxDangerous)
-                    maxDangerous = GridDangerousWeightDict[t];
+                int count = 0;
+                foreach (var m in GameController.Instance.GetSpecificRowEnemyList(rowIndex))
+                {
+                    if (MouseManager.IsGeneralMouse(m) && m is MouseUnit && !(m as MouseUnit).IsBoss())
+                        count++;
+                }
+                if(count < min)
+                {
+                    selectedList.Clear();
+                    selectedList.Add(rowIndex);
+                    min = count;
+                }else if(count == min)
+                    selectedList.Add(rowIndex);
             }
         }
-        return maxDangerous;
+
+        // 然后从剩下的里面随机抽取一名幸运观众作为最终移动行
+        int selectedIndex = Random.Range(0, selectedList.Count); // 还是注意，生成整形时不包括最大值
+        // 纵向位移
+        AddUniqueTask("DrivenAway", new StraightMovePresetTask(transform, MapManager.gridHeight / 60 * (currentRowIndex - selectedList[selectedIndex]), Vector3.up, 60));
     }
 
     /// <summary>
@@ -808,7 +770,7 @@ public class MouseUnit : BaseUnit
     /// <returns></returns>
     public virtual bool CanTriggerCat()
     {
-        return true;
+        return moveRotate.x < 0;
     }
 
     /// <summary>

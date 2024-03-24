@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 6560605702601517123}
   - component: {fileID: 2273559529684654033}
-  - component: {fileID: 856692935310889654}
   m_Layer: 7
   m_Name: 0
   m_TagString: AreaEffectItem
@@ -54,33 +53,6 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
---- !u!114 &856692935310889654
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6560605702601517120}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 414b20f2792c98542a450da37cff6f3b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  mUnitType: 0
-  mCurrentHp: 0
-  mCurrentTotalShieldValue: 0
-  mHeight: 0
-  moveRotate: {x: 0, y: 0}
-  isFrozenState: 0
-  mName: 
-  mType: 0
-  mShape: 0
-  typeAndShapeValue: 0
-  currentStateTimer: 0
-  mGrid: {fileID: 0}
-  spriteRenderer: {fileID: 0}
-  animator: {fileID: 0}
-  mBoxCollider2D: {fileID: 0}
 --- !u!1 &7911401160402135796
 GameObject:
   m_ObjectHideFlags: 0
@@ -175,7 +147,7 @@ Animator:
   m_GameObject: {fileID: 7911401160402135796}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 1d556786d235664418b591a0a2df85ad, type: 2}
+  m_Controller: {fileID: 9100000, guid: d62c7c7ef4f9e7d46a0e6177b8584933, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0

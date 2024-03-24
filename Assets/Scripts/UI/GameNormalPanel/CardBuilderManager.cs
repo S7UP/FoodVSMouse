@@ -23,8 +23,7 @@ public class CardBuilderManager
         FoodNameTypeMap.BigStove,
         FoodNameTypeMap.SpinCoffee,
         FoodNameTypeMap.Takoyaki,
-        FoodNameTypeMap.ChocolateBread,
-        FoodNameTypeMap.TofuPitcher,
+        FoodNameTypeMap.ChocolateCannon,
         FoodNameTypeMap.IceEggPitcher
     };
 
@@ -60,8 +59,7 @@ public class CardBuilderManager
             d.Add(FoodNameTypeMap.WoodenDisk, AfterBuildWoodenDisk);
             d.Add(FoodNameTypeMap.PokerShield, AfterBuildPokerShield);
             d.Add(FoodNameTypeMap.CottonCandy, AfterBuildCottonCandy);
-            d.Add(FoodNameTypeMap.ChocolateBread, AfterBuildChocolateBread);
-            //d.Add(FoodNameTypeMap.RaidenBaguette, AfterBuildRaidenBaguette);
+            d.Add(FoodNameTypeMap.RaidenBaguette, AfterBuildRaidenBaguette);
             d.Add(FoodNameTypeMap.IceBucket, AfterBuildIceBucketFoodUnit);
             d.Add(FoodNameTypeMap.BoiledWaterBoom, AfterBuildBoiledWaterBoom);
             //d.Add(FoodNameTypeMap.SpinCoffee, AfterBuildSpinCoffee);
@@ -85,8 +83,7 @@ public class CardBuilderManager
             d.Add(FoodNameTypeMap.WoodenDisk, AfterDestructeWoodenDisk);
             d.Add(FoodNameTypeMap.PokerShield, AfterDestructePokerShield);
             d.Add(FoodNameTypeMap.CottonCandy, AfterDestructeCottonCandy);
-            d.Add(FoodNameTypeMap.ChocolateBread, AfterDestructeChocolateBread);
-            //d.Add(FoodNameTypeMap.RaidenBaguette, AfterDestructeRaidenBaguette);
+            d.Add(FoodNameTypeMap.RaidenBaguette, AfterDestructeRaidenBaguette);
             d.Add(FoodNameTypeMap.IceBucket, AfterDestructeIceBucketFoodUnit);
             d.Add(FoodNameTypeMap.BoiledWaterBoom, AfterDestructeBoiledWaterBoom);
             //d.Add(FoodNameTypeMap.SpinCoffee, AfterDestructeSpinCoffee);
@@ -238,12 +235,21 @@ public class CardBuilderManager
         if (nextBuilder != null && !nextBuilder.IsColdDown() && icecreamBuilder != nextBuilder && !CardBuilderManager.IsGoldenCard((FoodNameTypeMap)nextBuilder.mType))
         {
             icecreamBuilder.Cost();
-            int cd = nextBuilder.mCDLeft;
-            nextBuilder.ResetCD();
-            GameController.Instance.mCardController.CancelSelectCard();
-            // 如果是二转冰淇淋还会返还CD
+            // 如果是二转冰淇淋还会冷却全部卡片
             if (icecreamBuilder.mShape >= 2)
-                icecreamBuilder.mCDLeft = UnityEngine.Mathf.Min(icecreamBuilder.mCD, cd);
+            {
+                foreach (var builder in GameController.Instance.mCardController.mCardBuilderList)
+                {
+                    if (!CardBuilderManager.IsGoldenCard((FoodNameTypeMap)builder.mType) && builder != icecreamBuilder)
+                        builder.ResetCD();
+                }
+            }
+            else
+            {
+                nextBuilder.ResetCD();
+            }
+            GameController.Instance.mCardController.CancelSelectCard();
+
         }
     }
 
@@ -336,14 +342,6 @@ public class CardBuilderManager
     //}
 
     /// <summary>
-    /// 种植巧克力面包后的增值效果
-    /// </summary>
-    private void AfterBuildChocolateBread(BaseCardBuilder builder)
-    {
-        builder.mCostDict["Fire"] = builder.mCostDict["Fire"] + 75f;
-    }
-
-    /// <summary>
     /// 移除巧克力面包后的减值效果
     /// </summary>
     private void AfterDestructeChocolateBread(BaseCardBuilder builder)
@@ -356,14 +354,15 @@ public class CardBuilderManager
     /// </summary>
     private void AfterBuildRaidenBaguette(BaseCardBuilder builder)
     {
-        if (builder.mShape < 1)
-        {
-            builder.mCostDict["Fire"] = builder.mCostDict["Fire"] + 300f;
-        }
-        else
-        {
-            builder.mCostDict["Fire"] = builder.mCostDict["Fire"] + 250f;
-        }
+        //if (builder.mShape < 1)
+        //{
+        //    builder.mCostDict["Fire"] = builder.mCostDict["Fire"] + 300f;
+        //}
+        //else
+        //{
+        //    builder.mCostDict["Fire"] = builder.mCostDict["Fire"] + 250f;
+        //}
+        builder.mCostDict["Fire"] = builder.mCostDict["Fire"] * 1.5f;
     }
 
     /// <summary>
@@ -371,14 +370,15 @@ public class CardBuilderManager
     /// </summary>
     private void AfterDestructeRaidenBaguette(BaseCardBuilder builder)
     {
-        if (builder.mShape < 1)
-        {
-            builder.mCostDict["Fire"] = builder.mCostDict["Fire"] - 300f;
-        }
-        else
-        {
-            builder.mCostDict["Fire"] = builder.mCostDict["Fire"] - 250f;
-        }
+        //if (builder.mShape < 1)
+        //{
+        //    builder.mCostDict["Fire"] = builder.mCostDict["Fire"] - 300f;
+        //}
+        //else
+        //{
+        //    builder.mCostDict["Fire"] = builder.mCostDict["Fire"] - 250f;
+        //}
+        builder.mCostDict["Fire"] = builder.mCostDict["Fire"] / 1.5f;
     }
 
     /// <summary>

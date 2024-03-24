@@ -50,23 +50,6 @@ public class AttributeManager
     }
 
     /// <summary>
-    /// 获取特定老鼠单位的属性
-    /// </summary>
-    /// <param name="type"></param>
-    /// <param name="shape"></param>
-    /// <returns></returns>
-    public MouseUnit.Attribute GetMouseUnitAttribute(int type, int shape)
-    {
-        MouseUnit.Attribute attr;
-        if (!mouseAttributeDict.ContainsKey(type))
-            mouseAttributeDict.Add(type, new Dictionary<int, MouseUnit.Attribute>());
-        if (!mouseAttributeDict[type].ContainsKey(shape) && JsonManager.TryLoadFromResource("Mouse/" + type + "/" + shape + "", out attr))
-            //mouseAttributeDict[type].Add(shape, JsonManager.Load<MouseUnit.Attribute>("Mouse/" + type + "/" + shape + ""));
-            mouseAttributeDict[type].Add(shape, attr);
-        return mouseAttributeDict[type][shape];
-    }
-
-    /// <summary>
     /// 获取特定BOSS单位的属性
     /// </summary>
     /// <param name="type"></param>
@@ -101,21 +84,6 @@ public class AttributeManager
     }
 
     /// <summary>
-    /// 获取特定角色单位的属性
-    /// </summary>
-    /// <param name="type"></param>
-    /// <param name="shape"></param>
-    /// <returns></returns>
-    //public BaseUnit.Attribute GetCharacterUnitAttribute(int type, int shape)
-    //{
-    //    if (!characterAttributeDict.ContainsKey(type))
-    //        characterAttributeDict.Add(type, new Dictionary<int, BaseUnit.Attribute>());
-    //    if (!characterAttributeDict[type].ContainsKey(shape))
-    //        characterAttributeDict[type].Add(shape, JsonManager.Load<BaseUnit.Attribute>("Character/" + type + "/" + shape + ""));
-    //    return characterAttributeDict[type][shape];
-    //}
-
-    /// <summary>
     /// 获取特定卡片的建造信息
     /// </summary>
     /// <param name="type"></param>
@@ -127,7 +95,6 @@ public class AttributeManager
         if (!cardBuilderAttributeDict.ContainsKey(type))
             cardBuilderAttributeDict.Add(type, new Dictionary<int, BaseCardBuilder.Attribute>());
         if (!cardBuilderAttributeDict[type].ContainsKey(shape) && JsonManager.TryLoadFromResource("CardBuilder/" + type + "/" + shape + "", out attr))
-            //cardBuilderAttributeDict[type].Add(shape, JsonManager.Load<BaseCardBuilder.Attribute>("CardBuilder/" + type + "/" + shape + ""));
             cardBuilderAttributeDict[type].Add(shape, attr);
         return cardBuilderAttributeDict[type][shape];
     }
@@ -205,10 +172,13 @@ public class AttributeManager
             stageInfoDict.Add(chapterIndex, new Dictionary<int, Dictionary<int, StageInfo>>());
         if (!stageInfoDict[chapterIndex].ContainsKey(sceneIndex))
             stageInfoDict[chapterIndex].Add(sceneIndex, new Dictionary<int, StageInfo>());
-        //if (!stageInfoDict[chapterIndex][sceneIndex].ContainsKey(arrayIndex) && JsonManager.TryLoadFromResource("Stage/Chapter/" + chapterIndex + "/" + sceneIndex + "/" + arrayIndex, out info))
-        //    stageInfoDict[chapterIndex][sceneIndex].Add(arrayIndex, info);
         if (!stageInfoDict[chapterIndex][sceneIndex].ContainsKey(arrayIndex))
-            stageInfoDict[chapterIndex][sceneIndex].Add(arrayIndex, JsonManager.Load<StageInfo>("Stage/Chapter/" + chapterIndex + "/" + sceneIndex + "/" + arrayIndex));
+        {
+            BaseStage.StageInfo info = JsonManager.Load<StageInfo>("Stage/Chapter/" + chapterIndex + "/" + sceneIndex + "/" + arrayIndex);
+            if (info.fileName == null || info.fileName.Equals(""))
+                info.fileName = info.name;
+            stageInfoDict[chapterIndex][sceneIndex].Add(arrayIndex, info);
+        }
         return stageInfoDict[chapterIndex][sceneIndex][arrayIndex];
     }
 }

@@ -11,82 +11,122 @@ using UnityEngine;
 /// </summary>
 public class CaptainAmerica : BossUnit
 {
-    private static RuntimeAnimatorController ShieldBulletAnimaotrController;
-    private static RuntimeAnimatorController StrikeEffect_Run;
-    private static RuntimeAnimatorController RainBow_Run;
     private static Sprite Wait_Icon_Sprite;
-    private static Sprite Shield_Spr;
+    private static Sprite AttackLeft_Icon_Sprite;
 
-    private List<int>[] rowListArray;
-    private List<int> avaliableIndexList = new List<int>();
+    private RuntimeAnimatorController ShieldBullet_Run;
+    private RuntimeAnimatorController StrikeEffect_Run;
+    private RuntimeAnimatorController RainBow_Run;
+    private Sprite Shield_Spr;
 
-    private Action<CombatAction> recordDamageAction;
     private float dmgRecord; // 受到的伤害总和
-    private bool canRecordDamage;
+    private Queue<float> lost_hp_percent_queue = new Queue<float>();
+    private float current_lost_hp_percent;
 
     private FloatModifier p_dmgRateMod = new FloatModifier(1.0f);
     private RetangleAreaEffectExecution ShieldArea;
 
+    private RingUI AttackLeftRingUI;
     private RingUI FinalSkillRingUI;
 
     public override void Awake()
     {
-        if (ShieldBulletAnimaotrController == null)
+        if (Wait_Icon_Sprite == null)
         {
-            ShieldBulletAnimaotrController = GameManager.Instance.GetRuntimeAnimatorController("Boss/16/ShieldBullet");
-            StrikeEffect_Run = GameManager.Instance.GetRuntimeAnimatorController("Boss/16/Strike");
-            RainBow_Run = GameManager.Instance.GetRuntimeAnimatorController("Boss/16/RainBow");
-            Shield_Spr = GameManager.Instance.GetSprite("Boss/16/Shield");
             Wait_Icon_Sprite = GameManager.Instance.GetSprite("UI/GameNormalPanel/Ring/Icon/Wait");
+            AttackLeft_Icon_Sprite = GameManager.Instance.GetSprite("UI/GameNormalPanel/Ring/Icon/AttackLeft");
         }
-            
+        // 默认皮肤
+        {
+            ShieldBullet_Run = GameManager.Instance.GetRuntimeAnimatorController("Boss/16/0/ShieldBullet");
+            StrikeEffect_Run = GameManager.Instance.GetRuntimeAnimatorController("Boss/16/0/Strike");
+            RainBow_Run = GameManager.Instance.GetRuntimeAnimatorController("Boss/16/0/RainBow");
+            Shield_Spr = GameManager.Instance.GetSprite("Boss/16/0/Shield");
+        }
         base.Awake();
     }
 
     public override void MInit()
     {
         ShieldArea = null;
-        rowListArray = null;
-        avaliableIndexList.Clear();
-        p_dmgRateMod = new FloatModifier(1.0f);
+        p_dmgRateMod.Value = 1;
         dmgRecord = 0;
+        lost_hp_percent_queue.Clear();
+        current_lost_hp_percent = 9999;
         base.MInit();
+
         // 大招UI
         {
             FinalSkillRingUI = RingUI.GetInstance(0.3f * Vector2.one);
             GameNormalPanel.Instance.AddUI(FinalSkillRingUI);
-            taskController.AddTask(TaskManager.GetFinalSkillRingUITask(FinalSkillRingUI, this));
-            FinalSkillRingUI.SetPercent(1);
+            taskController.AddTask(TaskManager.GetFinalSkillRingUITask(FinalSkillRingUI, this, 0.25f * MapManager.gridHeight * Vector3.down));
+            FinalSkillRingUI.SetPercent(0);
             FinalSkillRingUI.Hide();
             AddOnDestoryAction(delegate { if (FinalSkillRingUI.IsValid()) FinalSkillRingUI.MDestory(); });
         }
+        // 攻击次数显示UI
+        {
+            RingUI rUI = RingUI.GetInstance(0.3f * Vector2.one);
+            GameNormalPanel.Instance.AddUI(rUI);
+            // 添加绑定任务
+            {
+                float r = 199f / 255;
+                float g = 233f / 255;
+                float b = 255f / 255;
+
+                CustomizationTask task = new CustomizationTask();
+                task.AddOnEnterAction(delegate {
+                    rUI.Show();
+                    rUI.SetIcon(AttackLeft_Icon_Sprite);
+                    rUI.SetPercent(0);
+                    rUI.SetColor(new Color(r, g, b, 0.75f));
+                });
+                task.AddTaskFunc(delegate {
+                    rUI.transform.position = transform.position + 0.25f * MapManager.gridHeight * Vector3.up;
+                    float per = rUI.GetPercent();
+                    rUI.SetColor(new Color(r, g, b, 0.75f));
+                    return !IsAlive();
+                });
+                task.AddOnExitAction(delegate {
+                    rUI.MDestory();
+                });
+                taskController.AddTask(task);
+            }
+            rUI.Hide();
+            rUI.SetPercent(0);
+            AddOnDestoryAction(delegate { if (rUI.IsValid()) rUI.MDestory(); });
+            AttackLeftRingUI = rUI;
+        }
         // 受击事件
         {
-            canRecordDamage = true;
-            recordDamageAction = (combatAction) =>
-            {
-                if (!canRecordDamage)
-                    return;
+            actionPointController.AddListener(ActionPointType.PostReceiveDamage, (combatAction) => {
                 if (combatAction is DamageAction)
                 {
-                    float triggerFinalSkillDamage = mMaxHp * GetParamValue("p_lost_hp_percent") / 100;
+                    float triggerFinalSkillDamage = mMaxHp * current_lost_hp_percent;
                     DamageAction dmgAction = combatAction as DamageAction;
                     dmgRecord += dmgAction.RealCauseValue;
-                    FinalSkillRingUI.SetPercent(1-dmgRecord/ triggerFinalSkillDamage);
+                    FinalSkillRingUI.SetPercent(dmgRecord / triggerFinalSkillDamage);
                     if (dmgRecord >= triggerFinalSkillDamage)
                     {
-                        FinalSkillRingUI.Hide();
+                        CustomizationTask task = TaskManager.GetRingUIChangeTask(FinalSkillRingUI, 60, 1, 0);
+                        task.AddOnExitAction(delegate {
+                            FinalSkillRingUI.Hide();
+                        });
+                        FinalSkillRingUI.mTaskController.AddTask(task);
                         dmgRecord -= triggerFinalSkillDamage;
                         CustomizationSkillAbility s = SKill2Init(AbilityManager.Instance.GetSkillAbilityInfoList(mUnitType, mType, mShape)[2]);
                         mSkillQueueAbilityManager.SetNextSkill(s);
-                        canRecordDamage = false; // 暂不记录伤害
+
+                        if (lost_hp_percent_queue.Count > 0)
+                            current_lost_hp_percent = lost_hp_percent_queue.Dequeue();
+                        else
+                        {
+                            current_lost_hp_percent = 9999;
+                        }
                     }
                 }
-            };
-            actionPointController.AddListener(ActionPointType.PostReceiveDamage, recordDamageAction);
+            });
         }
-        // 添加被动
-        AddP();
 
         // 添加出现的技能
         {
@@ -105,7 +145,8 @@ public class CaptainAmerica : BossUnit
             c.AddSpellingFunc(delegate {
                 if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
                 {
-                    FinalSkillRingUI.Show();
+                    if (current_lost_hp_percent != 9999)
+                        FinalSkillRingUI.Show();
                     animatorController.Play("Idle0", true);
                     return true;
                 }
@@ -121,6 +162,10 @@ public class CaptainAmerica : BossUnit
                 {
                     RemoveCanHitFunc(noHitFunc);
                     RemoveCanBeSelectedAsTargetFunc(noSelcetedFunc);
+                    // 先移除一次被动减伤（保险措施）
+                    RemoveP();
+                    // 添加被动减伤
+                    AddP();
                     return true;
                 }
             });
@@ -141,29 +186,51 @@ public class CaptainAmerica : BossUnit
             AddParamArray(keyValuePair.Key, keyValuePair.Value);
 
         // 特殊参数初始化
-        // 获取Rset
+        // 获取大招损失生命值条件
         {
-            Action<float[]> action = (arr) =>
+            Action<float[]> action = delegate
             {
-                rowListArray = new List<int>[arr.Length];
-                for (int i = 0; i < arr.Length; i++)
+                float[] arr = GetParamArray("p_lost_hp_percent");
+                lost_hp_percent_queue.Clear();
+                foreach (var val in arr)
+                    lost_hp_percent_queue.Enqueue(val / 100);
+                if (lost_hp_percent_queue.Count > 0)
+                    current_lost_hp_percent = lost_hp_percent_queue.Dequeue();
+                else
                 {
-                    rowListArray[i] = new List<int>();
-                    int val = Mathf.FloorToInt(arr[i]);
-                    while (val > 0)
-                    {
-                        rowListArray[i].Insert(0, val % 10 - 1);
-                        val = val / 10;
-                    }
+                    current_lost_hp_percent = 9999;
+                    FinalSkillRingUI.Hide();
                 }
-                for (int i = 0; i < rowListArray.Length; i++)
-                    avaliableIndexList.Add(i);
             };
-            AddParamChangeAction("RSet0", action);
-            action(GetParamArray("RSet0"));
+            AddParamChangeAction("p_lost_hp_percent", action);
+            action(null);
         }
-
-        p_dmgRateMod = new FloatModifier(1 - GetParamValue("p_defence")/100);
+        // 被动减伤
+        {
+            Action<float[]> action = delegate
+            {
+                RemoveP();
+                p_dmgRateMod.Value = 1 - GetParamValue("p_defence") / 100;
+                AddP();
+            };
+            AddParamChangeAction("p_defence", action);
+            action(null);
+        }
+        // 根据传入的skin换皮（0为原皮，1为变异）
+        {
+            Action<float[]> action = delegate
+            {
+                int skin = Mathf.FloorToInt(GetParamValue("skin"));
+                ShieldBullet_Run = GameManager.Instance.GetRuntimeAnimatorController("Boss/16/" + skin + "/ShieldBullet");
+                StrikeEffect_Run = GameManager.Instance.GetRuntimeAnimatorController("Boss/16/" + skin + "/Strike");
+                RainBow_Run = GameManager.Instance.GetRuntimeAnimatorController("Boss/16/" + skin + "/RainBow");
+                Shield_Spr = GameManager.Instance.GetSprite("Boss/16/" + skin + "/Shield");
+                animator.runtimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Boss/16/" + skin+"/0");
+            };
+            action(null);
+            AddParamChangeAction("skin", action);
+        }
+        
     }
 
     /// <summary>
@@ -183,7 +250,7 @@ public class CaptainAmerica : BossUnit
     /// </summary>
     public override void SetCollider2DParam()
     {
-        mBoxCollider2D.offset = new Vector2(0.49f * MapManager.gridWidth, 0);
+        mBoxCollider2D.offset = new Vector2(0, 0);
         mBoxCollider2D.size = new Vector2(0.98f * MapManager.gridWidth, 0.49f * MapManager.gridHeight);
     }
 
@@ -221,6 +288,8 @@ public class CaptainAmerica : BossUnit
             }
         };
 
+        int skin = Mathf.FloorToInt(GetParamValue("skin"));
+
         RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, w, h, "ItemCollideEnemy");
         r.name = "ShieldArea";
         r.isAffectMouse = true;
@@ -236,9 +305,10 @@ public class CaptainAmerica : BossUnit
                 string name;
                 int order;
                 if (m.TryGetSpriteRenternerSorting(out name, out order))
-                    e.SetSpriteRendererSorting(name, order);
+                    e.SetSpriteRendererSorting(name, order+1);
                 GameController.Instance.AddEffect(e);
-                m.mEffectController.AddEffectToDict("MeiDui_Shield", e, Vector2.zero);
+                // m.mEffectController.AddEffectToGroup("MeiDui_Shield" + skin, 0, e);
+                m.mEffectController.AddEffectToDict("MeiDui_Shield" + skin, e, Vector2.zero);
             }
 
         });
@@ -246,7 +316,8 @@ public class CaptainAmerica : BossUnit
             m.NumericBox.DamageRate.RemoveModifier(dmgRateMod);
             m.actionPointController.RemoveListener(ActionPointType.PreReceiveDamage, action);
             // 移除庇护特效
-            m.mEffectController.RemoveEffectFromDict("MeiDui_Shield");
+            // m.mEffectController.RemoveEffectFromGroup("MeiDui_Shield" + skin, e);
+            m.mEffectController.RemoveEffectFromDict("MeiDui_Shield" + skin);
         });
         GameController.Instance.AddAreaEffectExecution(r);
 
@@ -283,22 +354,48 @@ public class CaptainAmerica : BossUnit
     }
 
     #region 一技能
-    private void CreateS0Area()
+    private Vector2 FindS1Pos(List<int> rowIndexList, out int rowIndex)
     {
-        float dmg_trans = GetParamValue("dmg_trans0") / 100;
-        float dist = GetParamValue("dist0")*MapManager.gridWidth;
-        float lost_hp_percent = GetParamValue("lost_hp_percent0")/100;
-        int stun_time = Mathf.FloorToInt(GetParamValue("stun_time0") * 60);
-        float shield_vale = GetParamValue("shield0");
+        float xMax = MapManager.GetColumnX(9 - GetParamValue("right_col0_0"));
+        float xMin = MapManager.GetColumnX(9 - GetParamValue("right_col0_1"));
 
+        BaseUnit target = null;
+        float min = float.MaxValue;
+        foreach (var u in GameController.Instance.GetEachEnemy())
+        {
+            if(u.transform.position.x < min && (u is MouseUnit && !(u as MouseUnit).IsBoss()) && 
+                MouseManager.IsGeneralMouse(u) && u.transform.position.x >= xMin &&
+                u.transform.position.x <= xMax && rowIndexList.Contains(u.GetRowIndex()) &&
+                u.GetHeight() == 0 && !UnitManager.IsFlying(u))
+            {
+                min = u.transform.position.x;
+                target = u;
+            }
+        }
+
+        rowIndex = rowIndexList[GetRandomNext(0, rowIndexList.Count)];
+        if(target != null)
+        {
+            rowIndex = target.GetRowIndex();
+            return new Vector2(target.transform.position.x, MapManager.GetRowY(rowIndex));
+        }
+        else
+        {
+            return MapManager.GetGridLocalPosition(9 - GetParamValue("right_col0_0"), rowIndex);
+        }
+    }
+
+    private void CreateS0Area(float dmg_trans, float dmg, float dist,  bool isLeft, int stun_time, float min_x, float max_x)
+    {
         // 处决格子
         {
-            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position + 0.5f*MapManager.gridWidth*Vector3.left, 1f, 0.5f, "CollideGrid");
+            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position + 0.5f*MapManager.gridWidth*Vector3.left*(isLeft?1:-1), 1f, 0.5f, "CollideGrid");
             r.SetInstantaneous();
             r.isAffectGrid = true;
             r.SetOnGridEnterAction((g) => {
                 g.TakeAction(this, (u) => {
-                    DamageAction action = UnitManager.Execute(this, u);
+                    DamageAction action = new DamageAction(CombatAction.ActionType.RealDamage, this, u, dmg);
+                    action.ApplyAction();
                     new DamageAction(CombatAction.ActionType.CauseDamage, this, this, action.RealCauseValue * dmg_trans).ApplyAction();
                 }, false);
             });
@@ -306,29 +403,69 @@ public class CaptainAmerica : BossUnit
         }
 
         // 助推老鼠
-        {
-            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position + MapManager.gridWidth * Vector3.left, 2f, 0.5f, "ItemCollideEnemy");
-            r.SetInstantaneous();
-            r.isAffectMouse = true;
-            r.AddEnemyEnterConditionFunc((m) => {
-                return !m.IsBoss() && MouseManager.IsGeneralMouse(m);
-            });
-            r.SetOnEnemyEnterAction((u) => 
-            {
-                u.taskController.AddTask(TaskManager.GetAccDecMoveTask(u.transform, dist*Vector2.left, 30));
-                new DamageAction(CombatAction.ActionType.CauseDamage, this, u, lost_hp_percent * u.mCurrentHp).ApplyAction();
-                u.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(u, stun_time, false));
-                // 武装护盾
-                new ShieldAction(CombatAction.ActionType.GiveShield, this, u, shield_vale).ApplyAction();
-            });
-            GameController.Instance.AddAreaEffectExecution(r);
-        }
+        RetangleAreaEffectExecution push_area = CreateS0PushArea(isLeft, stun_time, min_x, max_x);
 
         // 自身也会位移！
         {
-            taskController.AddTask(TaskManager.GetAccDecMoveTask(transform, dist * Vector2.left, 30));
+            Vector2 v2 = Vector2.zero;
+            if (isLeft)
+                v2 = new Vector2(-Mathf.Max(0, Mathf.Min(dist, transform.position.x - min_x)), 0);
+            else
+                v2 = new Vector2(Mathf.Max(0, Mathf.Min(-dist, max_x - transform.position.x)), 0);
+            CustomizationTask task = TaskManager.GetAccDecMoveTask(transform, v2, 30);
+            task.AddOnExitAction(delegate {
+                if (push_area != null && push_area.IsValid())
+                    push_area.MDestory();
+            });
+            taskController.AddTask(task);
         }
 
+    }
+
+    private RetangleAreaEffectExecution CreateS0PushArea(bool isLeft, int stun_time, float min_x, float max_x)
+    {
+        RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, 2f, 0.5f, "ItemCollideEnemy");
+        r.isAffectMouse = true;
+        r.SetAffectHeight(0);
+        r.SetOnEnemyEnterAction((u) =>
+        {
+            u.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(u, stun_time, false));
+        });
+        r.AddEnemyEnterConditionFunc((m) => {
+            return !m.IsBoss() && MouseManager.IsGeneralMouse(m) && (!m.NumericBox.IntDict.ContainsKey(StringManager.Flying) || m.NumericBox.IntDict[StringManager.Flying].Value <= 0);
+        });
+        if(isLeft)
+        {
+            r.SetOnEnemyStayAction((m) => {
+                if (m.transform.position.x > r.transform.position.x && m.transform.position.x > min_x)
+                {
+                    m.transform.position += (r.transform.position.x - m.transform.position.x) * Vector3.right;
+                }
+            });
+        }
+        else
+        {
+            r.SetOnEnemyStayAction((m) => {
+                if (m.transform.position.x < r.transform.position.x && m.transform.position.x < max_x)
+                {
+                    m.transform.position += (r.transform.position.x - m.transform.position.x) * Vector3.right;
+                }
+            });
+        }
+        GameController.Instance.AddAreaEffectExecution(r);
+
+        CustomizationTask t = new CustomizationTask();
+        t.AddTaskFunc(delegate
+        {
+            r.transform.position = transform.position;
+            return !IsAlive();
+        });
+        t.AddOnExitAction(delegate {
+            r.MDestory();
+        });
+        r.AddTask(t);
+        
+        return r;
     }
 
     /// <summary>
@@ -339,9 +476,17 @@ public class CaptainAmerica : BossUnit
         // 常量
         int colIndex = 9 - Mathf.FloorToInt(GetParamValue("right_col0", mHertIndex));
         int wait0 = Mathf.FloorToInt(GetParamValue("wait0", mHertIndex) * 60);
+        int num = Mathf.FloorToInt(GetParamValue("num0"));
+        float dmg = GetParamValue("dmg0");
+        float dmg_trans = GetParamValue("dmg_trans0") / 100;
+        float dist = GetParamValue("dist0") * MapManager.gridWidth;
+        bool isLeft = GetParamValue("dist0") >= 0? true:false;
+        int stun_time = Mathf.FloorToInt(GetParamValue("stun_time0") * 60);
+        float min_x = MapManager.GetColumnX(GetParamValue("left_col0") - 1);
+        float max_x = MapManager.GetColumnX(9 - GetParamValue("max_right_col0"));
 
         // 变量
-        List<int> rowIndexList = null;
+        List<int> rowIndexList = new List<int>();
         int timeLeft = 0;
 
         CompoundSkillAbility c = new CompoundSkillAbility(this, info);
@@ -350,20 +495,16 @@ public class CaptainAmerica : BossUnit
         // 一些变量初始化
         c.BeforeSpellFunc = delegate 
         {
-            if (avaliableIndexList.Count <= 0)
-                for (int i = 0; i < rowListArray.Length; i++)
-                    avaliableIndexList.Add(i);
-
-            // int ranIndex = GetRandomNext(0, avaliableIndexList.Count);
-            int ranIndex = 0;
-            int index = avaliableIndexList[ranIndex];
-            avaliableIndexList.RemoveAt(ranIndex);
-            rowIndexList = rowListArray[index];
+            rowIndexList.Clear();
+            for (int i = 0; i < 7; i++)
+                rowIndexList.Add(i);
+            AttackLeftRingUI.SetPercent(0);
+            AttackLeftRingUI.Show();
         };
         {
             c.AddCreateTaskFunc(delegate {
                 CustomizationTask task = new CustomizationTask();
-                for (int _i = 0; _i < rowIndexList.Count; _i++)
+                for (int _i = 0; _i < num; _i++)
                 {
                     int i = _i;
                     // 先瞬移
@@ -374,8 +515,42 @@ public class CaptainAmerica : BossUnit
                     task.AddTaskFunc(delegate {
                         if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
                         {
-                            transform.position = MapManager.GetGridLocalPosition(colIndex, rowIndexList[i]);
+                            int selected_rowIndex = -1;
+                            transform.position = FindS1Pos(rowIndexList, out selected_rowIndex);
+                            rowIndexList.Remove(selected_rowIndex);
+                            if(rowIndexList.Count <= 0)
+                                for (int k = 0; k < 7; k++)
+                                    rowIndexList.Add(k);
+                            if (!isLeft)
+                                transform.localScale = new Vector2(-1, 1);
                             animatorController.Play("PostMove0");
+                            return true;
+                        }
+                        return false;
+                    });
+                    task.AddTaskFunc(delegate {
+                        if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
+                        {
+                            animatorController.Play("Attack");
+                            return true;
+                        }
+                        return false;
+                    });
+                    task.AddTaskFunc(delegate {
+                        if (animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime() > 0.47f)
+                        {
+                            // 特效
+                            {
+                                BaseEffect e = BaseEffect.CreateInstance(StrikeEffect_Run, null, "StrikeEffect", null, false);
+                                e.transform.position = transform.position;
+                                if (!isLeft)
+                                    e.transform.localScale = new Vector2(-1, 1);
+                                GameController.Instance.AddEffect(e);
+                            }
+                            // 对前方两格造成伤害以及对老鼠的推进效果
+                            CreateS0Area(dmg_trans, dmg, dist, isLeft, stun_time, min_x, max_x);
+                            // 环形UI+1
+                            AttackLeftRingUI.SetPercent((float)(i+1)/num);
                             return true;
                         }
                         return false;
@@ -392,29 +567,6 @@ public class CaptainAmerica : BossUnit
                     task.AddTaskFunc(delegate {
                         timeLeft--;
                         if (timeLeft <= 0)
-                        {
-                            animatorController.Play("Attack");
-                            return true;
-                        }
-                        return false;
-                    });
-                    task.AddTaskFunc(delegate {
-                        if (animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime() > 0.47f)
-                        {
-                            // 特效
-                            {
-                                BaseEffect e = BaseEffect.CreateInstance(StrikeEffect_Run, null, "StrikeEffect", null, false);
-                                e.transform.position = transform.position;
-                                GameController.Instance.AddEffect(e);
-                            }
-                            // 对前方两格造成伤害以及对老鼠的推进效果
-                            CreateS0Area();
-                            return true;
-                        }
-                        return false;
-                    });
-                    task.AddTaskFunc(delegate {
-                        if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
                             return true;
                         return false;
                     });
@@ -423,7 +575,7 @@ public class CaptainAmerica : BossUnit
             });
         }
         c.OnNoSpellingFunc = delegate { };
-        c.AfterSpellFunc = delegate { };
+        c.AfterSpellFunc = delegate { AttackLeftRingUI.Hide(); };
         return c;
     }
     #endregion
@@ -470,10 +622,8 @@ public class CaptainAmerica : BossUnit
     /// </summary>
     /// <param name="rowIndex"></param>
     /// <returns></returns>
-    private List<int> GetS1SpawnRowIndexList(int rowIndex)
+    private List<int> GetS1SpawnRowIndexList(int num, int rowIndex)
     {
-        int num = Mathf.FloorToInt(GetParamValue("num1"));
-
         List<int> rowIndexList = new List<int>();
         rowIndexList.Add(rowIndex);
         int count = 1;
@@ -501,12 +651,8 @@ public class CaptainAmerica : BossUnit
     /// <summary>
     /// 产生一个敌人生成器
     /// </summary>
-    private void CreateS1EnemySpawner(Vector2 pos)
+    private void CreateS1EnemySpawner(int type, int shape, int wait, Vector2 pos)
     {
-        int type = Mathf.FloorToInt(GetParamValue("type1"));
-        int shape = Mathf.FloorToInt(GetParamValue("shape1"));
-        int wait = Mathf.FloorToInt(GetParamValue("wait1") * 60);
-
         CustomizationItem item = CustomizationItem.GetInstance(pos, RainBow_Run);
 
         // 召唤敌人的任务
@@ -561,7 +707,14 @@ public class CaptainAmerica : BossUnit
     {
         // 常量
         int colIndex = 9 - Mathf.FloorToInt(GetParamValue("right_col1"));
-        int wait = Mathf.FloorToInt(GetParamValue("wait1")*60);
+        float start_summon_xIndex = 9 - Mathf.FloorToInt(GetParamValue("summon_right_col1_0"));
+        float end_summon_xIndex = 9 - Mathf.FloorToInt(GetParamValue("summon_right_col1_1"));
+        int num_y = Mathf.FloorToInt(GetParamValue("num1_0"));
+        int num_x = Mathf.FloorToInt(GetParamValue("num1_1"));
+
+        int type = Mathf.FloorToInt(GetParamValue("type1"));
+        int shape = Mathf.FloorToInt(GetParamValue("shape1"));
+        int wait = Mathf.FloorToInt(GetParamValue("wait1") * 60);
 
         // 变量
         int rowIndex = 0;
@@ -588,6 +741,7 @@ public class CaptainAmerica : BossUnit
                         rowIndex = FindR1();
                         transform.position = MapManager.GetGridLocalPosition(colIndex, rowIndex);
                         animatorController.Play("PostMove0");
+                        transform.localScale = new Vector2(1, 1);
                         return true;
                     }
                     return false;
@@ -596,6 +750,7 @@ public class CaptainAmerica : BossUnit
                     if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
                     {
                         animatorController.Play("PreStand");
+                        RemoveP(); // 失去减伤
                         return true;
                     }
                     return false;
@@ -605,8 +760,9 @@ public class CaptainAmerica : BossUnit
                     {
                         timeLeft = wait;
                         // 召唤术
-                        foreach (var r in GetS1SpawnRowIndexList(rowIndex))
-                            CreateS1EnemySpawner(MapManager.GetGridLocalPosition(colIndex, r));
+                        foreach (var r in GetS1SpawnRowIndexList(num_y, rowIndex))
+                            for (int i = 0; i < num_x; i++)
+                                CreateS1EnemySpawner(type, shape, wait, MapManager.GetGridLocalPosition(start_summon_xIndex + (end_summon_xIndex - start_summon_xIndex)*((float)i/Mathf.Max(1, num_x-1)), r));
                         animatorController.Play("Stand", true);
                         return true;
                     }
@@ -623,7 +779,10 @@ public class CaptainAmerica : BossUnit
                 });
                 task.AddTaskFunc(delegate {
                     if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
+                    {
+                        AddP(); // 重获减伤
                         return true;
+                    }
                     return false;
                 });
                 return task;
@@ -662,8 +821,8 @@ public class CaptainAmerica : BossUnit
     private void FindS2RowIndex(out int rowIndex)
     {
         rowIndex = 3;
-        // 获取可作为目标的美食数最多的几行
-        List<int> rowList = FoodManager.GetRowListWhichHasMaxCanTargetedAllyCount();
+        // 获取可作为目标的美食数最少的几行
+        List<int> rowList = FoodManager.GetRowListWhichHasMinCanTargetedAllyCount();
         // 从中随机取一行
         if (rowList.Count > 0)
             rowIndex = rowList[GetRandomNext(0, rowList.Count)];
@@ -705,13 +864,18 @@ public class CaptainAmerica : BossUnit
         int wait1 = Mathf.FloorToInt(GetParamValue("wait2_1") * 60);
         int wait2 = Mathf.FloorToInt(GetParamValue("wait2_2") * 60);
         int move_time = Mathf.FloorToInt(GetParamValue("move_time2") * 60);
+        int max_add_time = Mathf.FloorToInt(GetParamValue("max_add_time2") * 60);
         int add_time = Mathf.FloorToInt(GetParamValue("add_time2") * 60);
+        float dmg_rate = 1 - GetParamValue("defence2") / 100;
+
 
         // 变量
         int except_rowIndex = 0;
         int rowIndex = 0;
+        int av_add_time_left = 0; // 还可以被用来延长的时间
         int timeLeft = 0;
         int totalTime = 0;
+        FloatModifier DamageRateMod = new FloatModifier(dmg_rate);
         RingUI ru = null;
         CustomizationTask ruTask = null;
         // 被炸后加2秒的设定
@@ -720,7 +884,28 @@ public class CaptainAmerica : BossUnit
             {
                 DamageAction dmgAction = combat as DamageAction;
                 if (dmgAction.IsDamageType(DamageAction.DamageType.BombBurn))
-                    timeLeft = Mathf.Min(totalTime, timeLeft + add_time);
+                {
+                    int add = 0; // 初步确定要延长的时间
+                    if (av_add_time_left <= add_time)
+                    {
+                        add = av_add_time_left;
+                        av_add_time_left = 0;
+                    }
+                    else
+                    {
+                        add = add_time;
+                        av_add_time_left -= add_time;
+                    }
+
+                    if (totalTime - timeLeft > add)
+                        timeLeft += add;
+                    else
+                    {
+                        add -= (totalTime - timeLeft);
+                        av_add_time_left += add;
+                        timeLeft = totalTime;
+                    }
+                }
             }
         };
 
@@ -746,6 +931,7 @@ public class CaptainAmerica : BossUnit
                         except_rowIndex = rowIndex;
                         transform.position = MapManager.GetGridLocalPosition(colIndex, rowIndex);
                         animatorController.Play("PostMove0");
+                        transform.localScale = new Vector2(1, 1);
                         return true;
                     }
                     return false;
@@ -771,8 +957,10 @@ public class CaptainAmerica : BossUnit
                         // 添加被炸后加时设定
                         {
                             AddActionPointListener(ActionPointType.PreReceiveDamage, bombAction);
+                            // 获得减伤
+                            NumericBox.DamageRate.AddModifier(DamageRateMod);
                         }
-
+                        av_add_time_left = max_add_time;
                         timeLeft = wait0;
                         totalTime = wait0;
                         animatorController.Play("Drop", true);
@@ -796,7 +984,8 @@ public class CaptainAmerica : BossUnit
                         }
                         // 移除被炸加时
                         RemoveActionPointListener(ActionPointType.PreReceiveDamage, bombAction);
-
+                        // 移除减伤
+                        NumericBox.DamageRate.RemoveModifier(DamageRateMod);
                         animatorController.Play("PostDrop");
                         return true;
                     }
@@ -827,7 +1016,7 @@ public class CaptainAmerica : BossUnit
                         {
                             AddActionPointListener(ActionPointType.PreReceiveDamage, bombAction);
                         }
-
+                        av_add_time_left = max_add_time;
                         timeLeft = wait1;
                         totalTime = wait1;
 
@@ -924,8 +1113,8 @@ public class CaptainAmerica : BossUnit
                     if (animatorController.GetCurrentAnimatorStateRecorder().IsFinishOnce())
                     {
                         AddP(); // 添加被动效果
-                        canRecordDamage = true; // 重新记录伤害
-                        FinalSkillRingUI.Show(); // 重新显示UI
+                        if(current_lost_hp_percent < 9999)
+                            FinalSkillRingUI.Show(); // 重新显示UI
                         return true;
                     }
                     return false;
@@ -945,7 +1134,7 @@ public class CaptainAmerica : BossUnit
     {
         int move_time = Mathf.FloorToInt(GetParamValue("move_time2") * 60);
 
-        BaseEffect e = BaseEffect.CreateInstance(ShieldBulletAnimaotrController, null, "Fly", null, true);
+        BaseEffect e = BaseEffect.CreateInstance(ShieldBullet_Run, null, "Fly", null, true);
         e.SetSpriteRendererSorting("Effect", 10);
         e.transform.position = start;
         GameController.Instance.AddEffect(e);
@@ -970,7 +1159,7 @@ public class CaptainAmerica : BossUnit
 
         // 格子判定检测
         {
-            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(e.transform.position, new Vector2(0.5f * MapManager.gridWidth, 0.5f * MapManager.gridHeight), "CollideGrid");
+            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(e.transform.position, new Vector2(0.1f * MapManager.gridWidth, 0.1f * MapManager.gridHeight), "CollideGrid");
             r.isAffectGrid = true;
             r.SetOnGridEnterAction((g) => {
                 g.TakeAction(this, (u) => {

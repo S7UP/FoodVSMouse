@@ -1,11 +1,22 @@
 
 using Environment;
 
+using System.Collections.Generic;
+
 using UnityEngine;
 
 public class IceGun : BaseWeapons
 {
     private static RuntimeAnimatorController Bullet_RuntimeAnimatorController;
+    private static int[] attackCountArray = new int[] { 1, 2, 4 };
+    private static float[] speed_rate = new float[] { 1, 1, 2f };
+
+    private int maxAttackCount;
+    private int currentAttackCount; // 当前攻击计数器
+    private List<float> attackPercentList;
+    private float dmgValue;
+    private int shape;
+
 
     public override void Awake()
     {
@@ -13,7 +24,6 @@ public class IceGun : BaseWeapons
         {
             Bullet_RuntimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Weapons/6/Bullet");
         }
-            
         base.Awake();
     }
 
@@ -39,7 +49,34 @@ public class IceGun : BaseWeapons
 
     public override void MInit()
     {
+        shape = 0;
         base.MInit();
+        // 根据携带小笼包卡片的转职情况来计算发射数
+        int level = 0;
+        BaseCardBuilder builder = GameController.Instance.mCardController.GetCardBuilderByType(FoodNameTypeMap.IceBun);
+        if (builder != null)
+        {
+            shape = builder.mShape;
+            level = builder.mLevel;
+        }
+        // 根据转职情况来计算前后发射数
+        maxAttackCount = attackCountArray[shape];
+
+        attackPercentList = new List<float>();
+        if (shape == 0)
+        {
+            attackPercentList.Add(attackPercent);
+        }
+        else
+        {
+            float end = 1.0f;
+            for (int i = 0; i < maxAttackCount; i++)
+                attackPercentList.Add(attackPercent + (end - attackPercent) * i / (maxAttackCount - 1));
+        }
+
+        currentAttackCount = 0;
+        // 获取单发子弹伤害
+        dmgValue = FoodManager.GetAttack(FoodNameTypeMap.IceBun, level, shape);
     }
 
     /// <summary>
@@ -65,8 +102,8 @@ public class IceGun : BaseWeapons
     /// </summary>
     public override void AfterGeneralAttack()
     {
+        currentAttackCount = 0;
         base.AfterGeneralAttack();
-        mAttackFlag = true;
     }
 
     /// <summary>
@@ -78,7 +115,7 @@ public class IceGun : BaseWeapons
         if (IsDamageJudgment())
         {
             ExecuteDamage();
-            mAttackFlag = false;
+            currentAttackCount++;
         }
     }
 
@@ -88,7 +125,7 @@ public class IceGun : BaseWeapons
     /// <returns></returns>
     public override bool IsDamageJudgment()
     {
-        return (animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime() >= attackPercent && mAttackFlag);
+        return currentAttackCount < attackPercentList.Count && animatorController.GetCurrentAnimatorStateRecorder().GetNormalizedTime() >= attackPercentList[currentAttackCount];
     }
 
     /// <summary>
@@ -96,16 +133,22 @@ public class IceGun : BaseWeapons
     /// </summary>
     public override void ExecuteDamage()
     {
-        GameManager.Instance.audioSourceController.PlayEffectMusic("Throw" + GameManager.Instance.rand.Next(0, 2));
-        AllyBullet b = AllyBullet.GetInstance(BulletStyle.NoStrengthenNormal, Bullet_RuntimeAnimatorController, master, master.mCurrentAttack);
-        b.SetHitSoundEffect("Splat" + GameManager.Instance.rand.Next(0, 3));
-        b.SetStandardVelocity(36);
+        AllyBullet b = AllyBullet.GetInstance(BulletStyle.NoStrengthenNormal, Bullet_RuntimeAnimatorController, master, master.mCurrentAttack / 10 * dmgValue);
+        b.transform.position = transform.position;
+        b.SetStandardVelocity(24 * speed_rate[shape]);
         b.SetRotate(Vector2.right);
-        // 击中后附带冰冻效果
-        b.AddHitAction((b, u) => {
-            // u.AddNoCountUniqueStatusAbility(StringManager.Frozen, new FrozenStatusAbility(u, 90, false));
-            EnvironmentFacade.AddIceDebuff(u, 37.5f);
-        });
+        b.SetHitSoundEffect("Splat" + GameManager.Instance.rand.Next(0, 3));
         GameController.Instance.AddBullet(b);
+
+        b.AddHitAction((b, u) => {
+            if (u == null)
+                return;
+            float ice_val = 25;
+            ITask t = EnvironmentFacade.GetIceDebuff(u);
+            if (t != null && (t as IceTask).IsForzen())
+                ice_val = 0;
+            // 为目标施加冰冻损伤
+            EnvironmentFacade.AddIceDebuff(u, ice_val);
+        });
     }
 }

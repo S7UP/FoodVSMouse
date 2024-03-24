@@ -88,12 +88,4 @@ public class NormalWaterMouse : MouseUnit, IInWater
         // EffectManager.RemoveWaterWaveEffectFromUnit(this);
         base.AfterDeath();
     }
-
-    /// <summary>
-    /// 对于水上的普通老鼠来说，在水地形的危险权重和陆地是一样的
-    /// </summary>
-    public override void SetGridDangerousWeightDict()
-    {
-        GridDangerousWeightDict[GridType.Water] = GridDangerousWeightDict[GridType.Default];
-    }
 }

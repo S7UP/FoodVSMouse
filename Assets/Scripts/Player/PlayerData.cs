@@ -22,10 +22,10 @@ public class PlayerData
     public string name = "不知名的冒险家"; // 玩家名
     public float currentExp = 0; // 玩家当前经验值
     public int level = 1; // 玩家当前等级
-    public int weapons = 5; // 玩家武器
+    public int weapons = 0; // 玩家武器
     public int suit = 0; // 玩家套装种类
     public int[] jewelArray = new int[3] { -1, -1, -1 }; // 宝石（3个）
-    public int difficult = 0; // 难度(0,1,2,3)
+    public float playTime = 0; // 关卡时间
 
 
     /// <summary>
@@ -207,23 +207,6 @@ public class PlayerData
     }
 
     /// <summary>
-    /// 获取当前游戏难度
-    /// </summary>
-    /// <returns></returns>
-    public int GetDifficult()
-    {
-        return difficult;
-    }
-
-    /// <summary>
-    /// 设置当前游戏难度
-    /// </summary>
-    public void SetDifficult(int diff)
-    {
-        difficult = diff;
-    }
-
-    /// <summary>
     /// 获取当前级从0开始升到下一级所需经验值
     /// </summary>
     public float GetNextLevelExp()
@@ -312,13 +295,14 @@ public class PlayerData
     /// <returns></returns>
     public List<string> GetTagList(int chapterIndex, int sceneIndex, int stageIndex)
     {
-        if (!SelectedTagListDict.ContainsKey(chapterIndex))
-            SelectedTagListDict.Add(chapterIndex, new Dictionary<int, Dictionary<int, List<string>>>());
-        if (!SelectedTagListDict[chapterIndex].ContainsKey(sceneIndex))
-            SelectedTagListDict[chapterIndex].Add(sceneIndex, new Dictionary<int, List<string>>());
-        if (!SelectedTagListDict[chapterIndex][sceneIndex].ContainsKey(stageIndex))
-            SelectedTagListDict[chapterIndex][sceneIndex].Add(stageIndex, new List<string>());
-        return SelectedTagListDict[chapterIndex][sceneIndex][stageIndex];
+        //if (!SelectedTagListDict.ContainsKey(chapterIndex))
+        //    SelectedTagListDict.Add(chapterIndex, new Dictionary<int, Dictionary<int, List<string>>>());
+        //if (!SelectedTagListDict[chapterIndex].ContainsKey(sceneIndex))
+        //    SelectedTagListDict[chapterIndex].Add(sceneIndex, new Dictionary<int, List<string>>());
+        //if (!SelectedTagListDict[chapterIndex][sceneIndex].ContainsKey(stageIndex))
+        //    SelectedTagListDict[chapterIndex][sceneIndex].Add(stageIndex, new List<string>());
+        //return SelectedTagListDict[chapterIndex][sceneIndex][stageIndex];
+        return new List<string>(); // 现在禁用Tag系统了所以默认返回未选择任何Tag的情况
     }
 
     /// <summary>

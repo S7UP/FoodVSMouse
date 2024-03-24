@@ -72,8 +72,8 @@ public class Map_CheeseCastle2 : ChapterMap
     public override void OtherProcessing()
     {
         // 为全图添加黑夜BUFF
-        ShadeAreaEffectExecution e = ShadeAreaEffectExecution.GetInstance(11, 7, new UnityEngine.Vector2(MapManager.GetColumnX(4), MapManager.GetRowY(3)));
-        GameController.Instance.AddAreaEffectExecution(e);
+        //ShadeAreaEffectExecution e = ShadeAreaEffectExecution.GetInstance(11, 7, new UnityEngine.Vector2(MapManager.GetColumnX(4), MapManager.GetRowY(3)));
+        //GameController.Instance.AddAreaEffectExecution(e);
 
         // 在当前关卡添加监听——若检测到水转陆参数变化则执行对应的逻辑
         string key = "Change";

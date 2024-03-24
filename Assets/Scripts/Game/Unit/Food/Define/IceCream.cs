@@ -1,13 +1,27 @@
-using UnityEngine;
 using S7P.Numeric;
+
+using System.Collections.Generic;
 /// <summary>
 /// 冰淇淋
 /// </summary>
 public class IceCream : FoodUnit
 {
+    private Dictionary<FoodInGridType, bool> IsCdDict = new Dictionary<FoodInGridType, bool>()
+    {
+        { FoodInGridType.Default, false }, { FoodInGridType.Bomb, false }, { FoodInGridType.Shield, false }, { FoodInGridType.LavaVehicle, false }, { FoodInGridType.WaterVehicle, false }, { FoodInGridType.NoAttach, false },
+    };
+
     public override void MInit()
     {
         base.MInit();
+        {
+            List<FoodInGridType> list = new List<FoodInGridType>();
+            foreach (var keyValuePair in IsCdDict)
+                list.Add(keyValuePair.Key);
+            foreach (var key in list)
+                IsCdDict[key] = false;
+        }
+
         // 获取100%减伤，接近无限的生命值，以及免疫灰烬秒杀效果
         NumericBox.Defense.SetBase(1);
         NumericBox.AddDecideModifierToBoolDict(StringManager.Invincibility, new BoolModifier(true));
@@ -53,10 +67,27 @@ public class IceCream : FoodUnit
     public override void OnGeneralAttack()
     {
         // 伤害判定帧应当执行判定
-        if (IsDamageJudgment())
+        //if (IsDamageJudgment())
+        //{
+        //    mAttackFlag = false;
+        //    ExecuteDamage();
+        //}
+        // 二转以后是其他功能
+        if (mShape >= 2)
+            return;
+        // 以下是一转的功能
+        BaseGrid g = GetGrid();
+        if (g == null)
+            return;
+        // 持续重置不同类型卡的CD
+        foreach (var f in g.GetFoodUnitList())
         {
-            mAttackFlag = false;
-            ExecuteDamage();
+            if (!IsCdDict[f.GetFoodInGridType()] && !CardBuilderManager.IsGoldenCard((FoodNameTypeMap)f.mType) && f.GetCardBuilder() != null && !f.GetCardBuilder().IsColdDown() && f.mType != mType)
+            {
+                BaseCardBuilder builder = f.GetCardBuilder();
+                builder.ResetCD();
+                IsCdDict[f.GetFoodInGridType()] = true;
+            }
         }
     }
 
@@ -64,22 +95,22 @@ public class IceCream : FoodUnit
     /// 是否为伤害判定时刻
     /// </summary>
     /// <returns></returns>
-    public override bool IsDamageJudgment()
-    {
-        BaseGrid g = GetGrid();
-        if (g == null)
-            return false;
-        bool flag = false;
-        foreach (var f in g.GetAttackableFoodUnitList())
-        {
-            if(!CardBuilderManager.IsGoldenCard((FoodNameTypeMap)f.mType) && f.GetCardBuilder()!=null && !f.GetCardBuilder().IsColdDown())
-            {
-                flag = true;
-                break;
-            }
-        }
-        return (mAttackFlag && flag);
-    }
+    //public override bool IsDamageJudgment()
+    //{
+    //    BaseGrid g = GetGrid();
+    //    if (g == null)
+    //        return false;
+    //    bool flag = false;
+    //    foreach (var f in g.GetAttackableFoodUnitList())
+    //    {
+    //        if(!CardBuilderManager.IsGoldenCard((FoodNameTypeMap)f.mType) && f.GetCardBuilder()!=null && !f.GetCardBuilder().IsColdDown())
+    //        {
+    //            flag = true;
+    //            break;
+    //        }
+    //    }
+    //    return (mAttackFlag && flag);
+    //}
 
     /// <summary>
     /// 退出普通攻击的条件
@@ -96,35 +127,29 @@ public class IceCream : FoodUnit
     public override void AfterGeneralAttack()
     {
         // 如果不小心空放了冰淇淋还会重置CD
-        if (mAttackFlag)
-            GetCardBuilder().ResetCD();
-        // 灰烬型卡片直接销毁自身
-        ExecuteDeath();
-    }
-
-    /// <summary>
-    /// 执行具体的攻击，位于伤害判定为真之后
-    /// </summary>
-    public override void ExecuteDamage()
-    {
-        int totalCD = 0; // 被冷却卡片剩余CD之和统计
-        // 使当前格所有卡片CD重置
-        foreach (var unit in GetGrid().GetFoodUnitList())
+        bool flag = true;
+        if (mShape < 2)
         {
-            if(unit.mType != mType && !CardBuilderManager.IsGoldenCard((FoodNameTypeMap)unit.mType))
+            foreach (var keyValuePair in IsCdDict)
             {
-                BaseCardBuilder builder = unit.GetCardBuilder();
-                totalCD += builder.mCDLeft;
-                builder.ResetCD();
+                if(keyValuePair.Value)
+                {
+                    flag = false;
+                    break;
+                }
+            }
+            if(flag)
+                GetCardBuilder().ResetCD();
+        }
+        else
+        {
+            foreach (var builder in GameController.Instance.mCardController.mCardBuilderList)
+            {
+                if (!CardBuilderManager.IsGoldenCard((FoodNameTypeMap)builder.mType) && builder.mType != mType)
+                    builder.ResetCD();
             }
         }
-
-        // 如果是二转，可以根据被冷却的卡片在被冷却前的剩余CD来返还自身CD
-        if(mShape >= 2)
-        {
-            BaseCardBuilder builder = GetCardBuilder();
-            int returnCD = Mathf.Max(builder.mCDLeft - totalCD, 0);
-            builder.mCDLeft -= returnCD;
-        }
+        // 灰烬型卡片直接销毁自身
+        ExecuteDeath();
     }
 }

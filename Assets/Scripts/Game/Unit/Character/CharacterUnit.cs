@@ -53,6 +53,42 @@ public class CharacterUnit : BaseUnit
         weapons.master = this;
         // 角色开始免疫控制
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, new S7P.Numeric.BoolModifier(true));
+        // 角色未受伤30秒后每秒恢复10生命值
+        {
+            int interval = 60;
+            int stop_time = 0;
+            int heal_timeLeft = 0;
+            AddActionPointListener(ActionPointType.PostReceiveDamage, (combat)=> {
+                if(combat is DamageAction)
+                {
+                    DamageAction d = combat as DamageAction;
+                    if(d.RealCauseValue > 0)
+                    {
+                        stop_time = 1800;
+                        heal_timeLeft = 0;
+                    }    
+                }
+            });
+
+            CustomizationTask task = new CustomizationTask();
+            task.AddTaskFunc(delegate {
+                if(stop_time > 0)
+                {
+                    stop_time--;
+                }
+                else
+                {
+                    heal_timeLeft--;
+                    if(heal_timeLeft <= 0)
+                    {
+                        new CureAction(CombatAction.ActionType.GiveCure, this, this, 10).ApplyAction();
+                        heal_timeLeft += interval;
+                    }
+                }
+                return false;
+            });
+            taskController.AddTask(task);
+        }
     }
 
     public override void MDestory()

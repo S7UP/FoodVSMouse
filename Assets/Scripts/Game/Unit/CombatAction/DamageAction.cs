@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 /// <summary>
 /// 伤害行动
@@ -72,7 +73,36 @@ public class DamageAction : CombatAction
         // 如果伤害小于等于0那么它不会生效
         if (DamageValue <= 0)
             return;
-        PreProcess();
+
+        // 在伤害出之前，获取目标的受伤前事件与受伤后事件
+        List<Action<CombatAction>> creatorPreCauseDamageActionList = null;
+        List<Action<CombatAction>> targetPreReceiveDamageActionList = null;
+
+        List<Action<CombatAction>> creatorPostCauseDamageActionList = null;
+        List<Action<CombatAction>> targetPostReceiveDamageActionList = null;
+
+        if (Creator != null)
+        {
+            creatorPreCauseDamageActionList = Creator.actionPointController.GetActionPointListeners(ActionPointType.PreCauseDamage);
+            creatorPostCauseDamageActionList = Creator.actionPointController.GetActionPointListeners(ActionPointType.PostCauseDamage);
+        }
+        if (Target != null)
+        {
+            targetPreReceiveDamageActionList = Target.actionPointController.GetActionPointListeners(ActionPointType.PreReceiveDamage);
+            targetPostReceiveDamageActionList = Target.actionPointController.GetActionPointListeners(ActionPointType.PostReceiveDamage);
+        }
+
+        // 前置处理
+        {
+            if(creatorPreCauseDamageActionList != null)
+                foreach (var action in creatorPreCauseDamageActionList)
+                    action(this);
+            if (targetPreReceiveDamageActionList != null)
+                foreach (var action in targetPreReceiveDamageActionList)
+                    action(this);
+        }
+
+        // PreProcess();
         if (Creator != null)
             Creator.TriggerActionPoint(ActionPointType.WhenCauseDamage, this);
         if (Target != null)
@@ -82,7 +112,17 @@ public class DamageAction : CombatAction
             if(Target.IsUseDefaultRecieveDamageActionMethod())
                 UnitManager.ReceiveDamageAction(Target, this);
         }
-        PostProcess();
+        // 后置处理
+        {
+            if (creatorPostCauseDamageActionList != null)
+                foreach (var action in creatorPostCauseDamageActionList)
+                    action(this);
+            if (targetPostReceiveDamageActionList != null)
+                foreach (var action in targetPostReceiveDamageActionList)
+                    action(this);
+        }
+
+        // PostProcess();
     }
 
     //后置处理

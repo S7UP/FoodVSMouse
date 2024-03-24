@@ -7,8 +7,6 @@ using System.Collections.Generic;
 public class Takoyaki : FoodUnit
 {
     private static RuntimeAnimatorController Bullet_RuntimeAnimatorController;
-    private float hpRate;
-    private float addDamage;
     private int maxAttackCount;
     private int currentAttackCount; // 当前攻击计数器
     private float endAttackPercent; // 发射最后一发子弹时的动画播放百分比
@@ -25,26 +23,11 @@ public class Takoyaki : FoodUnit
     public override void MInit()
     {
         base.MInit();
-        hpRate = 0.75f; // 受到伤害增幅度时的血线
-        if(mShape == 1)
-        {
-            addDamage = 0.5f;
-        }else if(mShape == 2)
-        {
-            addDamage = 1.5f;
-        }
-        else
-        {
-            addDamage = 0;
-        }
-
         maxAttackCount = 2;
         endAttackPercent = 0.769f;
         attackPercentList = new List<float>();
         for (int i = 0; i < maxAttackCount; i++)
-        {
             attackPercentList.Add(attackPercent + (endAttackPercent - attackPercent) * i / (maxAttackCount - 1));
-        }
         currentAttackCount = 0;
     }
 
@@ -151,15 +134,11 @@ public class Takoyaki : FoodUnit
         b.SetStandardVelocity(36);
         b.SetRotate(Vector2.right);
         b.SetHitSoundEffect("Hit");
-        b.AddHitAction((b, u) => {
-            if(mShape > 0 && u.GetHeathPercent() <= hpRate)
-                new DamageAction(CombatAction.ActionType.CauseDamage, this, u, addDamage*dmg).ApplyAction();
-        });
         GameController.Instance.AddBullet(b);
         // 以下任务的变量
         Func<BaseBullet, BaseUnit, bool> canHitFunc = null; // 只允许击中目标的引用
         float angleDeltaRate = 0;
-        int aliveTime = 3 * 60;
+        int aliveTime = 10 * 60;
         // 添加追踪任务
         TaskManager.AddTrackAbility(b,
                 // Func < BaseBullet, BaseUnit > FindTargetFunc
@@ -167,18 +146,34 @@ public class Takoyaki : FoodUnit
                 {
                     // 找生命值最低的可被选取的敌人
                     float minHp = float.MaxValue;
-                    BaseUnit targetUnit = null;
+                    List<BaseUnit> list = new List<BaseUnit>();
                     foreach (var unit in GameController.Instance.GetEachEnemy())
                     {
                         if (UnitManager.CanBeSelectedAsTarget(this, unit) && UnitManager.CanBulletHit(unit, b))
                         {
-                            if (unit.mCurrentHp < minHp)
+                            if (unit.mMaxHp < minHp)
                             {
-                                minHp = unit.mCurrentHp;
-                                targetUnit = unit;
-                            }
+                                minHp = unit.mMaxHp;
+                                list.Clear();
+                                list.Add(unit);
+                            }else if(unit.mMaxHp == minHp)
+                            {
+                                list.Add(unit);
+                            }    
                         }
                     }
+                    // 找最左的可被选取的敌人
+                    BaseUnit targetUnit = null;
+                    float minX = float.MaxValue;
+                    foreach (var u in list)
+                    {
+                        if(u.transform.position.x < minX)
+                        {
+                            minX = u.transform.position.x;
+                            targetUnit = u;
+                        }
+                    }
+
                     // 添加只能击中被选取目标的效果
                     if (targetUnit != null)
                     {
@@ -200,7 +195,7 @@ public class Takoyaki : FoodUnit
                 // Action < BaseBullet, BaseUnit > TrackAction,
                 (bullet, unit) =>
                 {
-                    angleDeltaRate = Mathf.Min(1, angleDeltaRate + 0.0025f);
+                    angleDeltaRate = Mathf.Min(1, angleDeltaRate + 0.0035f);
                     Vector2 currentRotate = bullet.GetRotate();
                     Vector2 targetRotate = (unit.transform.position - bullet.transform.position).normalized; // 计算得出最终需要达到的方向
                     float dAngle = Vector2.Angle(currentRotate, targetRotate); // 算出二者的夹角（一定是正的，取值范围是0~180）

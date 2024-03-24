@@ -1,5 +1,6 @@
 using S7P.Numeric;
 
+using System;
 using System.Collections.Generic;
 
 using UnityEngine;
@@ -18,6 +19,8 @@ public class AerialBombardmentMouse : MouseUnit, IFlyUnit
     private int dropColumn; // 降落列
     private BoolModifier boolMod = new BoolModifier(true);
     private FloatModifier moveSpeedMod = new FloatModifier(100);
+    private static Func<BaseUnit, BaseUnit, bool> noBeSelectFunc = delegate { return false; };
+    private static Func<BaseUnit, BaseBullet, bool> noHitFunc = delegate { return false; };
 
     private void Awake()
     {
@@ -41,7 +44,7 @@ public class AerialBombardmentMouse : MouseUnit, IFlyUnit
         base.MUpdate();
         if (IsMeetDropCondition())
         {
-            ExecuteDrop();
+            OnShootDown();
         }
     }
 
@@ -50,7 +53,7 @@ public class AerialBombardmentMouse : MouseUnit, IFlyUnit
     /// </summary>
     private bool IsMeetDropCondition()
     {
-        return (transform.position.x <= MapManager.GetColumnX(dropColumn + 0.4f) && !isDrop);
+        return (transform.position.x <= MapManager.GetColumnX(dropColumn) && !isDrop);
     }
 
     /// <summary>
@@ -147,24 +150,39 @@ public class AerialBombardmentMouse : MouseUnit, IFlyUnit
             e.transform.position = Vector3.Lerp(start, end, rate*rate);
         }, null);
         task.AddOnExitAction(delegate {
-            // 产生伤害判定
-            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(e.transform.position, new Vector2(0.5f * MapManager.gridWidth, 0.5f * MapManager.gridHeight), "BothCollide");
-            r.SetAffectHeight(0);
-            r.isAffectFood = true;
-            r.isAffectMouse = true;
-            r.SetTotoalTimeAndTimeLeft(2);
-            r.AddExcludeMouseUnit(this);
-            r.AddBeforeDestoryAction(delegate
+            // 对美食
             {
-                // 所有美食单位分摊伤害
-                int count = r.foodUnitList.Count;
-                foreach (var u in r.foodUnitList.ToArray())
-                    new DamageAction(CombatAction.ActionType.BurnDamage, this, u, u.mMaxHp / count).ApplyAction();
-                // 所有老鼠单位受到一次灰烬效果
-                foreach (var u in r.mouseUnitList.ToArray())
-                    BurnManager.BurnDamage(this, u);
-            });
-            GameController.Instance.AddAreaEffectExecution(r);
+                RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, new Vector2(0.5f * MapManager.gridWidth, 0.5f * MapManager.gridHeight), "ItemCollideAlly");
+                r.SetAffectHeight(0);
+                r.isAffectFood = true;
+                r.isAffectMouse = true;
+                r.SetTotoalTimeAndTimeLeft(2);
+                r.AddExcludeMouseUnit(this);
+                r.AddBeforeDestoryAction(delegate
+                {
+                    // 所有美食单位分摊伤害
+                    int count = r.foodUnitList.Count;
+                    foreach (var u in r.foodUnitList.ToArray())
+                        new DamageAction(CombatAction.ActionType.BurnDamage, this, u, Mathf.Max(50, u.mMaxHp / 2) / count).ApplyAction();
+                });
+                GameController.Instance.AddAreaEffectExecution(r);
+            }
+            // 对老鼠
+            {
+                RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(transform.position, new Vector2(1f * MapManager.gridWidth, 1f * MapManager.gridHeight), "ItemCollideEnemy");
+                r.SetAffectHeight(0);
+                r.isAffectMouse = true;
+                r.SetTotoalTimeAndTimeLeft(2);
+                r.AddExcludeMouseUnit(this);
+                r.AddBeforeDestoryAction(delegate
+                {
+                    // 所有老鼠单位受到一次灰烬效果
+                    foreach (var u in r.mouseUnitList.ToArray())
+                        BurnManager.BurnDamage(this, u);
+                });
+                GameController.Instance.AddAreaEffectExecution(r);
+            }
+
             e.ExecuteDeath();
         });
         e.taskController.AddTask(task);
@@ -173,13 +191,13 @@ public class AerialBombardmentMouse : MouseUnit, IFlyUnit
     /// <summary>
     /// 执行降落，仅一次
     /// </summary>
-    public void ExecuteDrop()
+    public void OnShootDown()
     {
         if (!isDrop)
         {
             isDrop = true;
             // 若当前生命值大于飞行状态临界点，则需要强制同步生命值至临界点
-            if(mCurrentHp> mHertRateList[0] * mMaxHp)
+            // if(mCurrentHp> mHertRateList[0] * mMaxHp)
             {
                 mCurrentHp = (float)mHertRateList[0]*mMaxHp;
             }
@@ -203,7 +221,7 @@ public class AerialBombardmentMouse : MouseUnit, IFlyUnit
         // 2 受伤移动
         if (mHertIndex > 0 && mHertIndex <= 2 && !isDrop)
         {
-            ExecuteDrop();
+            OnShootDown();
         }
     }
 
@@ -216,6 +234,8 @@ public class AerialBombardmentMouse : MouseUnit, IFlyUnit
         StatusManager.RemoveAllSettleDownDebuff(this);
         NumericBox.AddDecideModifierToBoolDict(StringManager.IgnoreStun, boolMod);
         animatorController.Play("Drop");
+        AddCanBeSelectedAsTargetFunc(noBeSelectFunc);
+        AddCanHitFunc(noHitFunc);
     }
 
     public override void OnTransitionState()
@@ -232,6 +252,8 @@ public class AerialBombardmentMouse : MouseUnit, IFlyUnit
     {
         NumericBox.RemoveDecideModifierToBoolDict(StringManager.IgnoreStun, boolMod);
         mHeight = 0; // 高度降低为地面高度
+        RemoveCanBeSelectedAsTargetFunc(noBeSelectFunc);
+        RemoveCanHitFunc(noHitFunc);
     }
 
     public override void OnMoveStateEnter()

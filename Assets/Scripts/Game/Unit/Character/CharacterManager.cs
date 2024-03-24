@@ -24,6 +24,15 @@ public class CharacterManager
         { CharacterNameShapeMap.MoYingShengYi_M, "Ä§Ó°Ê¥ÒÂ" },
         { CharacterNameShapeMap.MoYingShengYi_F, "Ä§Ó°Ê¥ÒÂ" },
         { CharacterNameShapeMap.TiLaMiShu, "ÌáÀ­Ã×ËÕ" },
+        { CharacterNameShapeMap.XueQiuTuTu, "Ñ©ÇòÍÃÍÃ" },
+        { CharacterNameShapeMap.BaiTuXianSheng, "°×ÍÃÏÈÉú" },
+        { CharacterNameShapeMap.FuGuLuoLiTa_F, "¸´¹ÅÂåÀöËş£¨Å®£©" },
+        { CharacterNameShapeMap.FuGuLuoLiTa_M, "¸´¹ÅÂåÀöËş£¨ÄĞ£©" },
+        { CharacterNameShapeMap.MaoMao, "£¿£¿" },
+        { CharacterNameShapeMap.JiaQiRuMeng, "¼ÑÆÚÈçÃÎ" },
+        { CharacterNameShapeMap.XianNv, "£¿£¿" },
+        { CharacterNameShapeMap.TuTu, "£¿£¿" },
+        { CharacterNameShapeMap.Aahao, "aahao" },
     };
 
     private static Dictionary<CharacterNameShapeMap, string> AuthorNameDict = new Dictionary<CharacterNameShapeMap, string>()

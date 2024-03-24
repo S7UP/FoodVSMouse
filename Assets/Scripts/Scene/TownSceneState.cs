@@ -16,20 +16,20 @@ public class TownSceneState : BaseSceneState
 
     public override void EnterScene()
     {
-        // SceneManager.LoadScene("TownScene");
-        // GameManager.Instance.LoadSceneAsync("TownScene");
         GameManager.Instance.audioSourceController.PlayBGMusic("SelectScene");
         mUIFacade.AddPanelToDict(StringManager.PlayerInfoPanel);
         mUIFacade.AddPanelToDict(StringManager.EncyclopediaPanel);
         mUIFacade.AddPanelToDict(StringManager.BigChapterPanel);
+        mUIFacade.AddPanelToDict(StringManager.LocalStagePanel);
         mUIFacade.AddPanelToDict(StringManager.StageConfigPanel);
-        mUIFacade.AddPanelToDict(StringManager.RankSelectPanel);
+        //mUIFacade.AddPanelToDict(StringManager.RankSelectPanel);
         base.EnterScene();
         // 一开始要隐藏的面板
         mUIFacade.currentScenePanelDict[StringManager.EncyclopediaPanel].ExitPanel();
         mUIFacade.currentScenePanelDict[StringManager.BigChapterPanel].ExitPanel();
+        mUIFacade.currentScenePanelDict[StringManager.LocalStagePanel].ExitPanel();
         mUIFacade.currentScenePanelDict[StringManager.StageConfigPanel].ExitPanel();
-        mUIFacade.currentScenePanelDict[StringManager.RankSelectPanel].ExitPanel();
+        //mUIFacade.currentScenePanelDict[StringManager.RankSelectPanel].ExitPanel();
     }
 
     public override void ExitScene()

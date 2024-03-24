@@ -30,12 +30,16 @@ public class RatTrain1 : BaseRatTrain
 
     private List<int> attack_orderList = new List<int>(); // 攻击顺序表
 
+    private Queue<float> lost_hp_percent_queue = new Queue<float>();
+    private float current_lost_hp_percent;
     private float dmgRecord; // 受到的伤害总和
+    private int max_stun_time; // 最大晕眩时间
     private int stun_timeLeft; // 晕眩时间
     private Action<CombatAction> burnAction; // 被炸事件
+    private FloatModifier extra_burn_rate = new FloatModifier(0); // 额外灰烬抗性
 
     private RingUI FinalSkillRingUI;
-
+    private RingUI WaitRingUI;
 
     public override void Awake()
     {
@@ -51,21 +55,28 @@ public class RatTrain1 : BaseRatTrain
             Bomb_RuntimeAnimatorController = GameManager.Instance.GetRuntimeAnimatorController("Boss/19/Bomb");
         }
         // 被炸事件定义
-        burnAction = (combat) =>
         {
-            if (combat is DamageAction)
+            burnAction = (combat) =>
             {
-                DamageAction dmgAction = combat as DamageAction;
-                if (dmgAction.IsDamageType(DamageAction.DamageType.BombBurn))
-                    stun_timeLeft += Mathf.FloorToInt(GetParamValue("p_stun_time") * 60);
-            }
-        };
+                if (combat is DamageAction)
+                {
+                    DamageAction dmgAction = combat as DamageAction;
+                    if (dmgAction.IsDamageType(DamageAction.DamageType.BombBurn))
+                    {
+                        stun_timeLeft = Mathf.Min(max_stun_time, stun_timeLeft + Mathf.FloorToInt(GetParamValue("p_stun_time") * 60));
+                    }
+                }
+            };
+        }
         base.Awake();
     }
 
     public override void MInit()
     {
+        extra_burn_rate.Value = 0;
         retinueList.Clear();
+        lost_hp_percent_queue.Clear();
+        current_lost_hp_percent = 9999;
         base.MInit();
         // 创建13节车厢
         CreateHeadAndBody(13);
@@ -79,28 +90,34 @@ public class RatTrain1 : BaseRatTrain
         // 默认速度为2.4横格/每秒
         NumericBox.MoveSpeed.SetBase(2.4f*MapManager.gridWidth/60);
         SetAllComponentNoBeSelectedAsTargetAndHited();
-
-        // 登场处理（先在屏幕外随便走一下，否则第一次放技能出现动画不会正常播放）
-        {
-            // AddRouteListByGridIndex(new List<Vector2[]>() { new Vector2[] { MapManager.GetGridLocalPosition(40, 0), MapManager.GetGridLocalPosition(40, 1) }  });
-        }
         SetActionState(new MoveState(this));
 
         // 大招UI
         {
             FinalSkillRingUI = RingUI.GetInstance(0.3f * Vector2.one);
             GameNormalPanel.Instance.AddUI(FinalSkillRingUI);
-            taskController.AddTask(TaskManager.GetFinalSkillRingUITask(FinalSkillRingUI, GetHead()));
+            taskController.AddTask(TaskManager.GetFinalSkillRingUITask(FinalSkillRingUI, GetHead(), 0.25f * MapManager.gridHeight * Vector3.down));
             AddOnDestoryAction(delegate { if (FinalSkillRingUI.IsValid()) FinalSkillRingUI.MDestory(); });
             FinalSkillRingUI.Hide();
-            FinalSkillRingUI.SetPercent(1);
+            FinalSkillRingUI.SetPercent(0);
 
             CustomizationTask task = new CustomizationTask();
-            task.AddTimeTaskFunc(240);
+            task.AddTimeTaskFunc(1);
             task.AddOnExitAction(delegate {
-                FinalSkillRingUI.Show();
+                if (current_lost_hp_percent != 9999)
+                    FinalSkillRingUI.Show();
             });
             taskController.AddTask(task);
+        }
+        // 停滞UI
+        {
+            RingUI rUI = RingUI.GetInstance(0.3f * Vector2.one);
+            GameNormalPanel.Instance.AddUI(rUI);
+            taskController.AddTask(TaskManager.GetWaitRingUITask(rUI, GetHead(), 0.25f * MapManager.gridHeight * Vector3.up));
+            AddOnDestoryAction(delegate { if (rUI.IsValid()) rUI.MDestory(); });
+            rUI.Show();
+            rUI.SetPercent(0);
+            WaitRingUI = rUI;
         }
         // 受击事件
         {
@@ -108,16 +125,27 @@ public class RatTrain1 : BaseRatTrain
             {
                 if (combatAction is DamageAction)
                 {
-                    float triggerFinalSkillDamage = mMaxHp * GetParamValue("p_lost_hp_percent") / 100;
+                    float triggerFinalSkillDamage = mMaxHp * current_lost_hp_percent;
                     DamageAction dmgAction = combatAction as DamageAction;
                     dmgRecord += dmgAction.RealCauseValue;
-                    FinalSkillRingUI.SetPercent(1 - dmgRecord / triggerFinalSkillDamage);
+                    FinalSkillRingUI.SetPercent(dmgRecord / triggerFinalSkillDamage);
                     if (dmgRecord >= triggerFinalSkillDamage)
                     {
-                        FinalSkillRingUI.Hide();
+                        CustomizationTask task = TaskManager.GetRingUIChangeTask(FinalSkillRingUI, 60, 1, 0);
+                        task.AddOnExitAction(delegate {
+                            FinalSkillRingUI.Hide();
+                        });
+                        FinalSkillRingUI.mTaskController.AddTask(task);
                         dmgRecord -= triggerFinalSkillDamage;
                         CustomizationSkillAbility s = GetUltimateSkill();
                         mSkillQueueAbilityManager.SetNextSkill(s);
+
+                        if (lost_hp_percent_queue.Count > 0)
+                            current_lost_hp_percent = lost_hp_percent_queue.Dequeue();
+                        else
+                        {
+                            current_lost_hp_percent = 9999;
+                        }
                     }
                 }
             });
@@ -146,12 +174,55 @@ public class RatTrain1 : BaseRatTrain
     protected override void InitBossParam()
     {
         // 切换阶段血量百分比
-        AddParamArray("hpRate", new float[] { 0.667f, 0.333f });
+        AddParamArray("hpRate", new float[] { 0.66f, 0.33f });
         // 读取参数
         foreach (var keyValuePair in BossManager.GetParamDict(BossNameTypeMap.RatTrain, 1))
             AddParamArray(keyValuePair.Key, keyValuePair.Value);
 
         // 特殊参数处理
+        // 获取大招损失生命值条件
+        {
+            Action<float[]> action = delegate
+            {
+                float[] arr = GetParamArray("p_lost_hp_percent");
+                lost_hp_percent_queue.Clear();
+                foreach (var val in arr)
+                    lost_hp_percent_queue.Enqueue(val / 100);
+                if (lost_hp_percent_queue.Count > 0)
+                    current_lost_hp_percent = lost_hp_percent_queue.Dequeue();
+                else
+                {
+                    current_lost_hp_percent = 9999;
+                    FinalSkillRingUI.Hide();
+                }
+            };
+            AddParamChangeAction("p_lost_hp_percent", action);
+            action(null);
+        }
+        {
+            Action<float[]> action = delegate
+            {
+                max_stun_time = Mathf.FloorToInt(GetParamValue("p_max_stun_time") * 60);
+            };
+            AddParamChangeAction("p_max_stun_time", action);
+            action(null);
+        }
+        {
+            Action<float[]> action = delegate {
+                if (NumericBox.BurnRate.Contains(extra_burn_rate))
+                {
+                    NumericBox.BurnRate.RemoveModifier(extra_burn_rate);
+                    extra_burn_rate.Value = 1 - GetParamValue("p_extra_burn_defence") / 100;
+                    NumericBox.BurnRate.AddModifier(extra_burn_rate);
+                }
+                else
+                {
+                    extra_burn_rate.Value = 1 - GetParamValue("p_extra_burn_defence") / 100;
+                }
+            };
+            AddParamChangeAction("p_extra_burn_defence", action);
+            action(null);
+        }
         {
             // 攻击顺序
             attack_orderList.Clear();
@@ -175,11 +246,11 @@ public class RatTrain1 : BaseRatTrain
 
         if (mHertIndex == 0)
         {
-            LoadP1SkillAbility();
+            LoadP3SkillAbility();
         }
         else if (mHertIndex == 1)
         {
-            LoadP2SkillAbility();
+            LoadP3SkillAbility();
         }
         else
         {
@@ -192,149 +263,12 @@ public class RatTrain1 : BaseRatTrain
         NumericBox.MoveSpeed.AddPctAddModifier(moveSpeedModifier);
     }
 
-    /// <summary>
-    /// 获取终极技能
-    /// </summary>
-    /// <returns></returns>
-    //private CustomizationSkillAbility GetUltimateSkill()
-    //{
-    //    CompoundSkillAbility c = new CompoundSkillAbility(this);
-    //    BaseUnit u = null;
-    //    // 实现
-    //    c.IsMeetSkillConditionFunc = delegate {
-    //        // 移速更新
-    //        NumericBox.MoveSpeed.RemovePctAddModifier(moveSpeedModifier);
-    //        moveSpeedModifier.Value = (GetParamValue("speed_rate", mHertIndex) - 1) * 100;
-    //        NumericBox.MoveSpeed.AddPctAddModifier(moveSpeedModifier);
-    //        return true;
-    //    };
-    //    c.BeforeSpellFunc = delegate {
-    //        u = CreateFireBulletAttackerTrain();
-    //    };
-    //    {
-    //        // 判断炮台是否消失，消失则为该技能结束的标志
-    //        c.AddSpellingFunc(delegate {
-    //            return u == null || !u.IsAlive();
-    //        });
-    //    }
-    //    c.OnNoSpellingFunc = delegate { };
-    //    c.AfterSpellFunc = delegate { };
-    //    return c;
-    //}
-
-    private void LoadP1SkillAbility()
-    {
-        int t0_0 = Mathf.FloorToInt(GetParamValue("t0_0", mHertIndex) * 60);
-        int fog0_0 = Mathf.FloorToInt(GetParamValue("fog0_0", mHertIndex) * 60);
-        int soldier_type = Mathf.FloorToInt(GetParamValue("soldier_type", mHertIndex));
-        int soldier_shape = Mathf.FloorToInt(GetParamValue("soldier_shape", mHertIndex));
-        int stun0_0 = Mathf.FloorToInt(GetParamValue("stun0_0", mHertIndex) * 60);
-        float hp = GetParamValue("hp0", mHertIndex);
-        float burn_rate0 = 1 - GetParamValue("burn_defence0") / 100;
-        
-        int t2_0 = Mathf.FloorToInt(GetParamValue("t2_0", mHertIndex) * 60);
-        int num2_0 = Mathf.FloorToInt(GetParamValue("num2_0", mHertIndex));
-        float dmg2_0 = GetParamValue("dmg2_0", mHertIndex);
-        float dmg2_1 = GetParamValue("dmg2_1", mHertIndex);
-        float burn_rate1 = 1 - GetParamValue("burn_defence1") / 100;
-
-        List<SkillAbility> list = new List<SkillAbility>();
-        list.Add(Movement0(
-            delegate
-            {
-                List<Action<int, int>> actionList = new List<Action<int, int>>();
-                actionList.Add(CreateLaserAttackerAction(burn_rate1));
-                return actionList;
-            }
-            ));
-        list.Add(Movement1(
-            delegate
-            {
-            List<Action<int, int>> actionList = new List<Action<int, int>>();
-            actionList.Add(CreateLaserAttackerAction(burn_rate1));
-            return actionList;
-            }
-            ));
-        list.Add(Movement2(
-            delegate
-            {
-                List<Action<int, int>> actionList = new List<Action<int, int>>();
-                actionList.Add(CreateFogCreatorAction(t0_0, soldier_type, soldier_shape, stun0_0, fog0_0, hp, burn_rate0));
-                return actionList;
-            }
-            ));
-        list.Add(Movement3(
-            delegate
-            {
-                List<Action<int, int>> actionList = new List<Action<int, int>>();
-                actionList.Add(CreateFogCreatorAction(t0_0, soldier_type, soldier_shape, stun0_0, fog0_0, hp, burn_rate0));
-                return actionList;
-            }
-            ));
-        mSkillQueueAbilityManager.ClearAndAddSkillList(list);
-    }
-
-    private void LoadP2SkillAbility()
-    {
-        int t0_0 = Mathf.FloorToInt(GetParamValue("t0_0", mHertIndex) * 60);
-        int fog0_0 = Mathf.FloorToInt(GetParamValue("fog0_0", mHertIndex) * 60);
-        int soldier_type = Mathf.FloorToInt(GetParamValue("soldier_type", mHertIndex));
-        int soldier_shape = Mathf.FloorToInt(GetParamValue("soldier_shape", mHertIndex));
-        int stun0_0 = Mathf.FloorToInt(GetParamValue("stun0_0", mHertIndex) * 60);
-        float hp = GetParamValue("hp0", mHertIndex);
-        float burn_rate0 = 1 - GetParamValue("burn_defence0") / 100;
-        float burn_rate1 = 1 - GetParamValue("burn_defence1") / 100;
-
-        int t2_0 = Mathf.FloorToInt(GetParamValue("t2_0", mHertIndex) * 60);
-        int num2_0 = Mathf.FloorToInt(GetParamValue("num2_0", mHertIndex));
-        float dmg2_0 = GetParamValue("dmg2_0", mHertIndex);
-        float dmg2_1 = GetParamValue("dmg2_1", mHertIndex);
-
-        List<SkillAbility> list = new List<SkillAbility>();
-        list.Add(Movement0(
-            delegate
-            {
-                List<Action<int, int>> actionList = new List<Action<int, int>>();
-                actionList.Add(CreateLaserAttackerAction(burn_rate1));
-                actionList.Add(CreateFogCreatorAction(t0_0, soldier_type, soldier_shape, stun0_0, fog0_0, hp, burn_rate0));
-                return actionList;
-            }
-            ));
-        list.Add(Movement1(
-            delegate
-            {
-                List<Action<int, int>> actionList = new List<Action<int, int>>();
-                actionList.Add(CreateLaserAttackerAction(burn_rate1));
-                actionList.Add(CreateFogCreatorAction(t0_0, soldier_type, soldier_shape, stun0_0, fog0_0, hp, burn_rate0));
-                return actionList;
-            }
-            ));
-        list.Add(Movement2(
-            delegate
-            {
-                List<Action<int, int>> actionList = new List<Action<int, int>>();
-                actionList.Add(CreateFogCreatorAction(t0_0, soldier_type, soldier_shape, stun0_0, fog0_0, hp, burn_rate0));
-                return actionList;
-            }
-            ));
-        list.Add(Movement3(
-            delegate
-            {
-                List<Action<int, int>> actionList = new List<Action<int, int>>();
-                actionList.Add(CreateFogCreatorAction(t0_0, soldier_type, soldier_shape, stun0_0, fog0_0, hp, burn_rate0));
-                return actionList;
-            }
-            ));
-        mSkillQueueAbilityManager.ClearAndAddSkillList(list);
-    }
-
     private void LoadP3SkillAbility()
     {
         int t0_0 = Mathf.FloorToInt(GetParamValue("t0_0", mHertIndex) * 60);
         int fog0_0 = Mathf.FloorToInt(GetParamValue("fog0_0", mHertIndex) * 60);
         int soldier_type = Mathf.FloorToInt(GetParamValue("soldier_type", mHertIndex));
         int soldier_shape = Mathf.FloorToInt(GetParamValue("soldier_shape", mHertIndex));
-        int stun0_0 = Mathf.FloorToInt(GetParamValue("stun0_0", mHertIndex) * 60);
         float hp = GetParamValue("hp0", mHertIndex);
         float burn_rate0 = 1 - GetParamValue("burn_defence0") / 100;
         float burn_rate1 = 1 - GetParamValue("burn_defence1") / 100;
@@ -350,7 +284,7 @@ public class RatTrain1 : BaseRatTrain
             {
                 List<Action<int, int>> actionList = new List<Action<int, int>>();
                 actionList.Add(CreateLaserAttackerAction(burn_rate1));
-                actionList.Add(CreateFogCreatorAction(t0_0, soldier_type, soldier_shape, stun0_0, fog0_0, hp, burn_rate0));
+                actionList.Add(CreateFogCreatorAction(t0_0, false, soldier_type, soldier_shape, fog0_0, hp, burn_rate0));
                 return actionList;
             }
             ));
@@ -359,7 +293,7 @@ public class RatTrain1 : BaseRatTrain
             {
                 List<Action<int, int>> actionList = new List<Action<int, int>>();
                 actionList.Add(CreateLaserAttackerAction(burn_rate1));
-                actionList.Add(CreateFogCreatorAction(t0_0, soldier_type, soldier_shape, stun0_0, fog0_0, hp, burn_rate0));
+                actionList.Add(CreateFogCreatorAction(t0_0, false, soldier_type, soldier_shape, fog0_0, hp, burn_rate0));
                 return actionList;
             }
             ));
@@ -368,7 +302,7 @@ public class RatTrain1 : BaseRatTrain
             {
                 List<Action<int, int>> actionList = new List<Action<int, int>>();
                 actionList.Add(CreateLaserAttackerAction(burn_rate1));
-                actionList.Add(CreateFogCreatorAction(t0_0, soldier_type, soldier_shape, stun0_0, fog0_0, hp, burn_rate0));
+                actionList.Add(CreateFogCreatorAction(t0_0, false, soldier_type, soldier_shape, fog0_0, hp, burn_rate0));
                 return actionList;
             }
             ));
@@ -377,7 +311,7 @@ public class RatTrain1 : BaseRatTrain
             {
                 List<Action<int, int>> actionList = new List<Action<int, int>>();
                 actionList.Add(CreateLaserAttackerAction(burn_rate1));
-                actionList.Add(CreateFogCreatorAction(t0_0, soldier_type, soldier_shape, stun0_0, fog0_0, hp, burn_rate0));
+                actionList.Add(CreateFogCreatorAction(t0_0, false, soldier_type, soldier_shape, fog0_0, hp, burn_rate0));
                 return actionList;
             }
             ));
@@ -441,6 +375,7 @@ public class RatTrain1 : BaseRatTrain
                 m.animatorController.Play("Attack", true);
                 Vector2 rot = m.transform.position.y > MapManager.GetRowY(3f) ? Vector2.down : Vector2.up;
                 BaseEffect e = BaseEffect.CreateInstance(LaserEffect_RuntimeAnimatorController, null, "PreAttack", "Disappear", true);
+                e.spriteRenderer.material = GameManager.Instance.GetMaterial("LinearDodge");
                 e.SetSpriteRendererSorting("Effect", 9);
                 GameController.Instance.AddEffect(e);
                 m.mEffectController.AddEffectToDict(LaserEffectKey, e, 1f * Vector2.up * MapManager.gridHeight);
@@ -459,13 +394,16 @@ public class RatTrain1 : BaseRatTrain
                 // 移除蓄力特效
                 m.mEffectController.RemoveEffectFromDict(LaserEffectKey);
                 Vector2 rot = m.transform.localScale.y > 0 ? Vector2.up : Vector2.down;
+                Vector2 pos = new Vector2(MapManager.GetColumnX(MapManager.GetXIndex(m.transform.position.x)), m.transform.position.y + rot.y * MapManager.gridHeight);
                 // 产生一道激光
                 {
                     BaseEffect e = BaseEffect.CreateInstance(LaserEffect_RuntimeAnimatorController, null, "PostAttack", null, false);
+                    e.spriteRenderer.material = GameManager.Instance.GetMaterial("LinearDodge");
+                    e.transform.right = rot;
+                    e.transform.position = pos; // 对x进行补正
                     e.SetSpriteRendererSorting("Effect", 10);
                     GameController.Instance.AddEffect(e);
-                    m.mEffectController.AddEffectToDict(LaserEffectKey, e, 1f * Vector2.up * MapManager.gridHeight);
-                    e.transform.right = rot;
+                    //m.mEffectController.AddEffectToDict(LaserEffectKey, e, 1f * Vector2.up * MapManager.gridHeight);
                 }
                 // 产生真正的激光判定
                 {
@@ -474,11 +412,12 @@ public class RatTrain1 : BaseRatTrain
                         ITask t = EnvironmentFacade.GetIceDebuff(u);
                         if (t != null)
                             new DamageAction(CombatAction.ActionType.BurnDamage, this, u, (t as IceTask).GetValue() * dmg_rate).ApplyAction();
+
                         if (ice_val > 0)
                             EnvironmentFacade.AddIceDebuff(u, ice_val);
                     };
 
-                    RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(m.transform.position + (Vector3)rot*(1+2/2)*MapManager.gridHeight,  0.4f, 2, "BothCollide");
+                    RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(pos + rot*1.5f*MapManager.gridHeight, 0.4f, 3f, "BothCollide");
                     r.SetInstantaneous();
                     r.isAffectMouse = true;
                     r.isAffectFood = true;
@@ -513,17 +452,16 @@ public class RatTrain1 : BaseRatTrain
     /// <summary>
     /// 召唤士兵
     /// </summary>
-    private void SpawnEnemy(Vector2 startV2, Vector2 endV2, Vector2 rot, int type, int shape, int stun_time)
+    private void SpawnEnemy(Vector2 startV2, Vector2 endV2, Vector2 rot, int type, int shape)
     {
         MouseUnit m = GameController.Instance.CreateMouseUnit(GetColumnIndex(), 0,
                         new BaseEnemyGroup.EnemyInfo() { type = type, shape = shape });
         m.moveRotate = rot;
-        if (m.moveRotate.x > 0)
-            m.transform.localScale = new Vector2(-1, 1);
         // 一些初始出现动画不能被击中的效果
         Func<BaseUnit, BaseUnit, bool> noSelectedAsTargetFunc = delegate { return false; };
         Func<BaseUnit, BaseUnit, bool> noBlockFunc = delegate { return false; };
         Func<BaseUnit, BaseBullet, bool> noHitFunc = delegate { return false; };
+        BoolModifier noUseBearMod = new BoolModifier(true);
 
         CustomizationTask task = new CustomizationTask();
         int totalTime = 90;
@@ -534,6 +472,8 @@ public class RatTrain1 : BaseRatTrain
             m.AddCanBeSelectedAsTargetFunc(noSelectedAsTargetFunc); // 不可作为选取的目标
             m.AddCanBlockFunc(noBlockFunc); // 不可被阻挡
             m.AddCanHitFunc(noHitFunc); // 不可被子弹击中
+            m.NumericBox.AddDecideModifierToBoolDict(StringManager.NoBearInSky, noUseBearMod); // 不占用承载数
+            Environment.SkyManager.AddNoAffectBySky(m, noUseBearMod); // 不会掉下去
             m.SetAlpha(0); // 0透明度
         });
         task.AddTaskFunc(delegate
@@ -546,15 +486,18 @@ public class RatTrain1 : BaseRatTrain
                 m.SetAlpha(t);
                 return false;
             }
-            return true;
+            else
+            {
+                m.NumericBox.RemoveDecideModifierToBoolDict(StringManager.NoBearInSky, noUseBearMod);
+                return true;
+            }
         });
         task.AddOnExitAction(delegate
         {
             m.RemoveCanBeSelectedAsTargetFunc(noSelectedAsTargetFunc);
             m.RemoveCanBlockFunc(noBlockFunc);
             m.RemoveCanHitFunc(noHitFunc);
-            // 自我晕眩
-            m.AddNoCountUniqueStatusAbility(StringManager.Stun, new StunStatusAbility(m, stun_time, false));
+            Environment.SkyManager.RemoveNoAffectBySky(m, noUseBearMod);
         });
         m.AddTask(task);
     }
@@ -562,7 +505,7 @@ public class RatTrain1 : BaseRatTrain
     /// <summary>
     /// 创建一个喷雾器
     /// </summary>
-    private BaseUnit CreateFogCreator(MouseUnit master, float hp, bool isLeft, int waitTime, int type, int shape, int stun_time, int fog_time, float burn_rate)
+    private BaseUnit CreateFogCreator(MouseUnit master, float hp, bool isLeft, int waitTime, bool use_type_and_shape, int type, int shape, int fog_time, float burn_rate)
     {
         MouseModel m = MouseModel.GetInstance(FogCreator_RuntimeAnimatorController);
         {
@@ -613,23 +556,60 @@ public class RatTrain1 : BaseRatTrain
                         if (m.IsAlive())
                         {
                             Vector2 rot = m.transform.localScale.y > 0 ? Vector2.up : Vector2.down;
-                            Vector2 pos = new Vector2(m.transform.position.x, MapManager.GetRowY(m.GetRowIndex()));
-                            FogAreaEffectExecution e = FogAreaEffectExecution.GetInstance(pos + MapManager.gridHeight*rot);
-                            e.SetOpen();
-                            CustomizationTask t = new CustomizationTask();
-                            t.AddTaskFunc(delegate {
-                                if (fog_time > 0)
-                                    fog_time--;
-                                else
-                                    return true;
-                                return false;
-                            });
-                            t.AddOnExitAction(delegate {
-                                e.SetDisappear();
-                            });
-                            e.AddTask(t);
-                            GameController.Instance.AddAreaEffectExecution(e);
-                            SpawnEnemy(pos + 0.5f * rot * MapManager.gridWidth, pos + 1.0f * rot * MapManager.gridWidth, Vector2.left, type, shape, stun_time);
+                            Vector2 pos = new Vector2(m.transform.position.x, m.transform.position.y);
+                            for (int i = -1; i <= 1; i+=2)
+                            {
+                                FogAreaEffectExecution e = FogAreaEffectExecution.GetInstance(pos + MapManager.gridHeight * rot + MapManager.gridWidth * Vector2.right * i/2);
+                                e.SetOpen();
+                                int timeLeft = fog_time;
+                                CustomizationTask t = new CustomizationTask();
+                                t.AddOnEnterAction(delegate {
+                                    if (e.transform.position.x < MapManager.GetColumnX(GetParamValue("left_col0") - 1) || e.transform.position.x > MapManager.GetColumnX(9 - GetParamValue("right_col0")))
+                                        timeLeft = Mathf.Min(timeLeft, 60);
+                                });
+                                t.AddTaskFunc(delegate {
+                                    if (timeLeft > 0)
+                                        timeLeft--;
+                                    else
+                                        return true;
+                                    return false;
+                                });
+                                t.AddOnExitAction(delegate {
+                                    e.SetDisappear();
+                                });
+                                e.AddTask(t);
+                                GameController.Instance.AddAreaEffectExecution(e);
+                            }
+
+                            Vector2 startV2 = pos + 0.5f * rot * MapManager.gridWidth;
+                            if (startV2.x <= MapManager.GetColumnX(8.5f) && startV2.x >= MapManager.GetColumnX(0))
+                            {
+                                if (!use_type_and_shape)
+                                {
+                                    // 根据startV2的横坐标来决定召唤的老鼠
+                                    if (startV2.x > MapManager.GetColumnX(6.5f))
+                                    {
+                                        type = Mathf.FloorToInt(GetParamValue("type0_0"));
+                                        shape = Mathf.FloorToInt(GetParamValue("shape0_0"));
+                                    }
+                                    else if (startV2.x > MapManager.GetColumnX(4.5f))
+                                    {
+                                        type = Mathf.FloorToInt(GetParamValue("type0_1"));
+                                        shape = Mathf.FloorToInt(GetParamValue("shape0_1"));
+                                    }
+                                    else if (startV2.x > MapManager.GetColumnX(2.5f))
+                                    {
+                                        type = Mathf.FloorToInt(GetParamValue("type0_2"));
+                                        shape = Mathf.FloorToInt(GetParamValue("shape0_2"));
+                                    }
+                                    else
+                                    {
+                                        type = Mathf.FloorToInt(GetParamValue("type0_3"));
+                                        shape = Mathf.FloorToInt(GetParamValue("shape0_3"));
+                                    }
+                                }
+                                SpawnEnemy(startV2, pos + 1.0f * rot * MapManager.gridWidth, Vector2.left, type, shape);
+                            }
                             m.CloseCollision();
                         }
                         return true;
@@ -659,31 +639,100 @@ public class RatTrain1 : BaseRatTrain
     /// 发射一枚火炮
     /// </summary>
     /// <returns></returns>
-    private EnemyBullet CreateFireBullet(BaseUnit master, Vector2 pos, Vector2 rotate)
+    private EnemyBullet CreateFireBullet(MouseUnit master, Vector2 pos, Vector2 rotate)
     {
         EnemyBullet b = EnemyBullet.GetInstance(FireBullet_RuntimeAnimatorController, master, 0);
+        b.CloseCollision();
         b.isAffectFood = true;
         b.isAffectCharacter = false;
         b.SetStandardVelocity(36);
         b.transform.position = pos;
         b.SetRotate(rotate);
         b.mCircleCollider2D.radius = 0.25f*MapManager.gridWidth;
-        b.AddHitAction((b, u)=> {
-            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(u.transform.position, 0.5f, 0.5f, "BothCollide");
-            r.SetInstantaneous();
-            r.isAffectMouse = true;
+        GameController.Instance.AddBullet(b);
+
+        // 添加范围检测
+        {
+            Action<BaseUnit> hitAction = delegate 
+            {
+                // 伤害格子
+                DamageGrid(b.transform.position);
+
+                // 伤害老鼠
+                {
+                    RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(b.transform.position, 1f, 1f, "ItemCollideEnemy");
+                    r.SetInstantaneous();
+                    r.isAffectMouse = true;
+                    r.AddExcludeMouseUnit(master);
+                    r.SetOnEnemyEnterAction((u) => {
+                        if (!u.IsBoss())
+                            BurnManager.BurnDamage(master, u);
+                    });
+                    GameController.Instance.AddAreaEffectExecution(r);
+                }
+                b.KillThis(); // 子弹爆炸
+            };
+
+            bool isHit = false;
+            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(b.transform.position, 0.25f, 0.25f, "BothCollide");
             r.isAffectFood = true;
+            r.isAffectMouse = true;
             r.SetAffectHeight(0);
-            r.SetOnFoodEnterAction((u) => {
-                BurnManager.BurnDamage(master, u);
+            r.SetOnFoodEnterAction(delegate {
+                if(!isHit)
+                {
+                    isHit = true;
+                    hitAction(null);
+                }
             });
-            r.SetOnEnemyEnterAction((u) => {
-                BurnManager.BurnDamage(master, u);
+            r.SetOnEnemyEnterAction(delegate {
+                if (!isHit)
+                {
+                    isHit = true;
+                    hitAction(null);
+                }
             });
             GameController.Instance.AddAreaEffectExecution(r);
-        });
-        GameController.Instance.AddBullet(b);
+
+            CustomizationTask task = new CustomizationTask();
+            task.AddTaskFunc(delegate {
+                r.transform.position = b.transform.position;
+                return !b.IsAlive() || isHit;
+            });
+            task.AddOnExitAction(delegate {
+                r.MDestory();
+            });
+            r.taskController.AddTask(task);
+        }
         return b;
+    }
+
+    private void DamageGrid(Vector2 pos)
+    {
+        // 伤害最近的格子
+        {
+            RetangleAreaEffectExecution r = RetangleAreaEffectExecution.GetInstance(pos, 0.5f, 0.5f, "CollideGrid");
+            r.SetInstantaneous();
+            r.isAffectGrid = true;
+            r.AddBeforeDestoryAction(delegate {
+                BaseGrid targetGrid = null;
+                float minDist = float.MaxValue;
+                foreach (var g in r.gridList.ToArray())
+                {
+                    float dist = (r.transform.position - g.transform.position).magnitude;
+                    if (dist < minDist)
+                    {
+                        targetGrid = g;
+                        minDist = dist;
+                    }
+                }
+                if (targetGrid != null)
+                {
+                    targetGrid.TakeAction(this, (u) => { BurnManager.BurnDamage(this, u); }, false);
+                }
+            });
+            GameController.Instance.AddAreaEffectExecution(r);
+        }
     }
 
     /// <summary>
@@ -1007,7 +1056,7 @@ public class RatTrain1 : BaseRatTrain
             {
                 // 爆炸特效
                 {
-                    BaseEffect e = BaseEffect.CreateInstance(Bomb_RuntimeAnimatorController, null, "BoomDie", null, false);
+                    BaseEffect e = BaseEffect.CreateInstance(Bomb_RuntimeAnimatorController, null, "Die", null, false);
                     e.transform.position = fireBulletAttacker.transform.position;
                     GameController.Instance.AddEffect(e);
                 }
@@ -1043,16 +1092,15 @@ public class RatTrain1 : BaseRatTrain
         int fog2_0 = Mathf.FloorToInt(GetParamValue("fog2_0", mHertIndex) * 60);
         int soldier_type2_0 = Mathf.FloorToInt(GetParamValue("soldier_type2_0", mHertIndex));
         int soldier_shape2_0 = Mathf.FloorToInt(GetParamValue("soldier_shape2_0", mHertIndex));
-        int stun2_0 = Mathf.FloorToInt(GetParamValue("stun0_0", mHertIndex) * 60);
         float fog_hp2_0 = GetParamValue("fog_hp2_0", mHertIndex);
         float burn_rate = 1 - GetParamValue("burn_defence2")/100;
 
 
         BaseUnit[] arr = new BaseUnit[2];
-        arr[0] = CreateFogCreator(master, fog_hp2_0, true, t2_1, soldier_type2_0, soldier_shape2_0, stun2_0, fog2_0, burn_rate);
+        arr[0] = CreateFogCreator(master, fog_hp2_0, true, t2_1, false, soldier_type2_0, soldier_shape2_0, fog2_0, burn_rate);
         arr[0].NumericBox.BurnRate.AddModifier(new FloatModifier(0.25f));
         arr[0].GetSpriteRenderer().sortingOrder = sortingOrder;
-        arr[1] = CreateFogCreator(master, fog_hp2_0, false, t2_1, soldier_type2_0, soldier_shape2_0, stun2_0, fog2_0, burn_rate);
+        arr[1] = CreateFogCreator(master, fog_hp2_0, false, t2_1, false, soldier_type2_0, soldier_shape2_0, fog2_0, burn_rate);
         arr[1].NumericBox.BurnRate.AddModifier(new FloatModifier(0.25f));
         arr[1].GetSpriteRenderer().sortingOrder = sortingOrder;
         
@@ -1095,7 +1143,34 @@ public class RatTrain1 : BaseRatTrain
                             e.AddTask(t);
                             GameController.Instance.AddAreaEffectExecution(e);
 
-                            SpawnEnemy(pos + 0.5f * new Vector2(v2.x, v2.y * r), pos + 1.0f * new Vector2(v2.x, v2.y * r), Vector2.left, soldier_type2_0, soldier_shape2_0, stun2_0);
+                            Vector2 startV2 = pos + 0.5f * new Vector2(v2.x, v2.y * r);
+                            if (startV2.x <= MapManager.GetColumnX(8.5f) && startV2.x >= MapManager.GetColumnX(0))
+                            {
+                                int type, shape;
+                                // 根据startV2的横坐标来决定召唤的老鼠
+                                if (startV2.x > MapManager.GetColumnX(6.5f))
+                                {
+                                    type = Mathf.FloorToInt(GetParamValue("type0_0"));
+                                    shape = Mathf.FloorToInt(GetParamValue("shape0_0"));
+                                }
+                                else if (startV2.x > MapManager.GetColumnX(4.5f))
+                                {
+                                    type = Mathf.FloorToInt(GetParamValue("type0_1"));
+                                    shape = Mathf.FloorToInt(GetParamValue("shape0_1"));
+                                }
+                                else if (startV2.x > MapManager.GetColumnX(2.5f))
+                                {
+                                    type = Mathf.FloorToInt(GetParamValue("type0_2"));
+                                    shape = Mathf.FloorToInt(GetParamValue("shape0_2"));
+                                }
+                                else
+                                {
+                                    type = Mathf.FloorToInt(GetParamValue("type0_3"));
+                                    shape = Mathf.FloorToInt(GetParamValue("shape0_3"));
+                                }
+                                SpawnEnemy(startV2, pos + 1.0f * new Vector2(v2.x, v2.y * r), Vector2.left, type, shape);
+                            }
+                            // SpawnEnemy(pos + 0.5f * new Vector2(v2.x, v2.y * r), pos + 1.0f * new Vector2(v2.x, v2.y * r), Vector2.left, soldier_type2_0, soldier_shape2_0);
                         }
                     }
                 }
@@ -1116,7 +1191,7 @@ public class RatTrain1 : BaseRatTrain
         int num = Mathf.FloorToInt(GetParamValue("num2_0"));
         float colIndex = 9 - GetParamValue("right_col3");
 
-        BaseUnit fireBulletAttacker = CreateProjection(FireBulletAttacker_RuntimeAnimatorController, true);
+        MouseUnit fireBulletAttacker = CreateProjection(FireBulletAttacker_RuntimeAnimatorController, true);
 
         Func<BaseUnit, BaseUnit, bool> noBeSelectedAsTargetFunc = delegate { return false; };
         Func<BaseUnit, BaseBullet, bool> noHitFunc = delegate { return false; };
@@ -1269,7 +1344,7 @@ public class RatTrain1 : BaseRatTrain
         t.AddTaskFunc(delegate {
             // 爆炸特效
             {
-                BaseEffect e = BaseEffect.CreateInstance(Bomb_RuntimeAnimatorController, null, "BoomDie", null, false);
+                BaseEffect e = BaseEffect.CreateInstance(Bomb_RuntimeAnimatorController, null, "Die", null, false);
                 e.SetSpriteRendererSorting("Effect", 10);
                 e.transform.position = fireBulletAttacker.transform.position;
                 GameController.Instance.AddEffect(e);
@@ -1309,11 +1384,11 @@ public class RatTrain1 : BaseRatTrain
                 {
                     if (body != null && body.transform.position.x >= MapManager.GetColumnX(-1) && body.transform.position.x <= MapManager.GetColumnX(9))
                     {
-                        if (body.transform.position.y > MapManager.GetRowY(2.5f))
+                        if (body.transform.position.y > MapManager.GetRowY(0.5f))
                         {
                             CreateLaserAttacker(body, false, burn_rate);
                         }
-                        else if (body.transform.position.y < MapManager.GetRowY(3.5f))
+                        else if (body.transform.position.y < MapManager.GetRowY(5.5f))
                         {
                             CreateLaserAttacker(body, true, burn_rate);
                         }
@@ -1333,7 +1408,7 @@ public class RatTrain1 : BaseRatTrain
     /// 指令-雾袭
     /// </summary>
     /// <returns></returns>
-    private Action<int, int> CreateFogCreatorAction(int waitTime, int type, int shape, int stun_time, int fog0_0, float fog_hp0_0, float burn_rate)
+    private Action<int, int> CreateFogCreatorAction(int waitTime, bool use_type_and_shape, int type, int shape, int fog0_0, float fog_hp0_0, float burn_rate)
     {
         Action<int, int> action = (timeLeft, totalTime) => {
             if (timeLeft == totalTime - 30)
@@ -1344,15 +1419,15 @@ public class RatTrain1 : BaseRatTrain
                     {
                         if(body.transform.position.y > MapManager.GetRowY(0.5f))
                         {
-                            CreateFogCreator(body, fog_hp0_0, false, waitTime, type, shape, stun_time, fog0_0, burn_rate);
+                            CreateFogCreator(body, fog_hp0_0, false, waitTime, use_type_and_shape, type, shape, fog0_0, burn_rate);
                         }else if(body.transform.position.y < MapManager.GetRowY(5.5f))
                         {
-                            CreateFogCreator(body, fog_hp0_0, true, waitTime, type, shape, stun_time, fog0_0, burn_rate);
+                            CreateFogCreator(body, fog_hp0_0, true, waitTime, use_type_and_shape, type, shape, fog0_0, burn_rate);
                         }
                         else
                         {
-                            CreateFogCreator(body, fog_hp0_0, true, waitTime, type, shape, stun_time, fog0_0, burn_rate);
-                            CreateFogCreator(body, fog_hp0_0, false, waitTime, type, shape, stun_time, fog0_0, burn_rate);
+                            CreateFogCreator(body, fog_hp0_0, true, waitTime, use_type_and_shape, type, shape, fog0_0, burn_rate);
+                            CreateFogCreator(body, fog_hp0_0, false, waitTime, use_type_and_shape, type, shape, fog0_0, burn_rate);
                         }
                     }
                 }
@@ -1529,12 +1604,11 @@ public class RatTrain1 : BaseRatTrain
     {
         int t0_0 = Mathf.FloorToInt(GetParamValue("t0_0", mHertIndex) * 60);
         int fog0_0 = Mathf.FloorToInt(GetParamValue("fog0_0", mHertIndex) * 60);
-        int soldier_type = Mathf.FloorToInt(GetParamValue("soldier_type", mHertIndex));
-        int soldier_shape = Mathf.FloorToInt(GetParamValue("soldier_shape", mHertIndex));
-        int stun0_0 = Mathf.FloorToInt(GetParamValue("stun0_0", mHertIndex) * 60);
+        int soldier_type = Mathf.FloorToInt(GetParamValue("extra_type0", mHertIndex));
+        int soldier_shape = Mathf.FloorToInt(GetParamValue("extra_shape0", mHertIndex));
         float hp = GetParamValue("hp0", mHertIndex);
-        float burn_rate0 = 1 - GetParamValue("burn_defence0") / 100;
-        float burn_rate1_1 = 1 - GetParamValue("burn_defence1_1") / 100;
+        float burn_rate0 = 1 - GetParamValue("extra_burn_defence0") / 100;
+        float burn_rate1 = 1 - GetParamValue("extra_burn_defence1") / 100;
 
         float x1 = 9, x2 = 1, x3 = 1, x4 = 9, x5 = 10, x6 = -3;
 
@@ -1546,6 +1620,7 @@ public class RatTrain1 : BaseRatTrain
         c.IsMeetSkillConditionFunc = delegate { return true; };
         c.BeforeSpellFunc = delegate
         {
+            FinalSkillRingUI.Hide();
             c.ActivateChildAbility(CreateMovementFunc(
                 new List<Vector2[]>() {
                     new Vector2[2]{ new Vector2(x1, 0f), new Vector2(x2, 0f) },
@@ -1556,8 +1631,8 @@ public class RatTrain1 : BaseRatTrain
                 Mathf.FloorToInt(GetParamValue("wait1", mHertIndex) * 60), // 获取停靠时间
                 delegate {
                     List<Action<int, int>> actionList = new List<Action<int, int>>();
-                    actionList.Add(CreateLaserAttackerAction(burn_rate1_1));
-                    actionList.Add(CreateFogCreatorAction(t0_0, soldier_type, soldier_shape, stun0_0, fog0_0, hp, burn_rate0));
+                    actionList.Add(CreateLaserAttackerAction(burn_rate1));
+                    actionList.Add(CreateFogCreatorAction(t0_0, true, soldier_type, soldier_shape, fog0_0, hp, burn_rate0));
                     return actionList;
                 } // 产生（停靠时执行的指令集合）的方法
                 ));
@@ -1599,6 +1674,8 @@ public class RatTrain1 : BaseRatTrain
                 if (IsHeadMoveToDestination())
                 {
                     SetActionState(new IdleState(this));
+                    if (current_lost_hp_percent < 9999)
+                        FinalSkillRingUI.Show();
                     return true;
                 }
                 return false;
@@ -1614,8 +1691,9 @@ public class RatTrain1 : BaseRatTrain
     /// </summary>
     public override void OnMoveStateEnter()
     {
-        if (GetBodyList().Count > 0)
-            GetBody(GetBodyList().Count - 1).AddActionPointListener(ActionPointType.PostReceiveDamage, burnAction);
+        if (GetHead() != null)
+            GetHead().AddActionPointListener(ActionPointType.PostReceiveDamage, burnAction);
+        NumericBox.BurnRate.AddModifier(extra_burn_rate);
         base.OnMoveStateEnter();
     }
 
@@ -1623,11 +1701,14 @@ public class RatTrain1 : BaseRatTrain
     {
         if (stun_timeLeft > 0)
         {
+            WaitRingUI.Show();
+            WaitRingUI.SetPercent((float)stun_timeLeft / max_stun_time);
             DisableMove(true);
             stun_timeLeft--;
         }
         else
         {
+            WaitRingUI.Hide();
             DisableMove(false);
         }
         base.OnMoveState();
@@ -1635,8 +1716,9 @@ public class RatTrain1 : BaseRatTrain
 
     public override void OnMoveStateExit()
     {
-        if (GetBodyList().Count > 0)
-            GetBody(GetBodyList().Count - 1).RemoveActionPointListener(ActionPointType.PostReceiveDamage, burnAction);
+        if (GetHead() != null)
+            GetHead().RemoveActionPointListener(ActionPointType.PostReceiveDamage, burnAction);
+        NumericBox.BurnRate.RemoveModifier(extra_burn_rate);
         base.OnMoveStateExit();
     }
 }

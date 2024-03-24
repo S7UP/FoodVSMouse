@@ -17,6 +17,7 @@ public abstract class RatTrainComponent : MouseModel
         dmgRate = 0;
         burnDmgRate = 0;
         base.MInit();
+        transform.position = MapManager.GetGridLocalPosition(10, 3);
         // 添加等同于BOSS的免疫机制
         BossUnit.AddBossIgnoreDebuffEffect(this);
         canTriggerCat = false;

@@ -9,9 +9,10 @@ public class StringManager
     public const string MainPanel = "MainPanel";
     public const string EncyclopediaPanel = "EncyclopediaPanel";
     public const string BigChapterPanel = "BigChapterPanel";
+    public const string LocalStagePanel = "LocalStagePanel";
     public const string PlayerInfoPanel = "PlayerInfoPanel";
     public const string StageConfigPanel = "StageConfigPanel";
-    public const string RankSelectPanel = "RankSelectPanel";
+    //public const string RankSelectPanel = "RankSelectPanel";
     public const string StaffPanel = "StaffPanel";
 
     // 常用标签
@@ -35,6 +36,7 @@ public class StringManager
     public const string WaterPerCentDamge = "水地形百分比伤害";
 
     public const string BearInSky = "高空承载";
+    public const string NoBearInSky = "不被高空承载";
 
     public const string LavaGridState = "在岩浆里游泳";
     public const string IgnoreLavaDeBuff = "免疫岩浆负面效果";
@@ -46,7 +48,6 @@ public class StringManager
     public const string IgnoreSlowDown = "减速免疫";
     public const string IgnoreDecAttackSpeed = "攻速降低免疫";
     public const string IgnoreStun = "晕眩免疫";
-    // public const string IgnoreBombInstantKill = "免疫炸弹的秒杀效果";
     public const string Invincibility = "免疫伤害（无敌）";
     public const string IgnoreDropFromSky = "免疫高空坠落";
 }

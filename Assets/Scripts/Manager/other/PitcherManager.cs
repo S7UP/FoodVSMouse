@@ -95,7 +95,7 @@ public class PitcherManager
                 canSelect = !pud.isFrozenState;
             }
 
-            if (item.GetHeight() == 0 && canSelect && item.transform.position.x >= minX && (otherConditionFunc==null|| otherConditionFunc(unit, item)))
+            if (item.GetHeight() == 0 && canSelect && item.transform.position.x >= minX && item.transform.position.x <= MapManager.GetColumnX(9) && (otherConditionFunc==null|| otherConditionFunc(unit, item)))
                 list.Add(item);
         }
         // 去找坐标最小的单位

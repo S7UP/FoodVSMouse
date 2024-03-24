@@ -32,7 +32,7 @@ namespace Environment
             // 定义敌方入水条件
             {
                 Func<MouseUnit, bool> OnEnemyEnterCondiFunc = (u) => {
-                    return u.aliveTime > 5 && !u.IsBoss() && u.GetHeight() <= 0;
+                    return u.aliveTime > 5 && !u.IsBoss() && u.GetHeight() <= 0 && !UnitManager.IsFlying(u);
                 };
                 r.AddEnemyEnterConditionFunc(OnEnemyEnterCondiFunc);
             }

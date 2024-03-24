@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 using UnityEngine;
 /// <summary>
 /// 棉花糖天空（夜）
@@ -45,23 +47,76 @@ public class Map_MarshmallowSky2 : ChapterMap
     /// </summary>
     public override void OtherProcessing()
     {
+        // 添加云层
         {
-            // 为全图添加黑夜BUFF
-            ShadeAreaEffectExecution e = ShadeAreaEffectExecution.GetInstance(11, 7, new UnityEngine.Vector2(MapManager.GetColumnX(4), MapManager.GetRowY(3)));
-            GameController.Instance.AddAreaEffectExecution(e);
-        }
-
-        {
-            // 添加云层
             for (int i = 0; i < 7; i++)
             {
-                Item_Cloud.GetCloudGroup(1, new Vector2(MapManager.GetColumnX(4f), MapManager.GetRowY(i)), 8);
+                Item_Cloud.GetCloudGroup(1, new Vector2(MapManager.GetColumnX(4f), MapManager.GetRowY(i)), 9);
             }
+        }
 
-            // 添加风域
-            WindAreaEffectExecution e = WindAreaEffectExecution.GetInstance(8.6f, 7, new Vector2(MapManager.GetColumnX(4f), MapManager.GetRowY(3)));
-            WindAreaEffectExecution.SetClassicalWindAreaEffectMode(e, 0, 360, 120, 1440, true); // 等待时间、速度变化时间、匀速时间
-            GameController.Instance.AddAreaEffectExecution(e);
+        // 添加风域
+        {
+            int[] timeArray = new int[] { 360, 120, 1440, 120, 360, 120, 1440, 120 };
+            float[] start_vArray = new float[] { 0, 0, 1, 1, 0, 0, -1, -1 };
+            float[] end_vArray = new float[] { 0, 1, 1, 0, 0, -1, -1, 0 };
+
+            List<WindAreaEffectExecution> wList = new List<WindAreaEffectExecution>();
+            WindAreaEffectExecution w = WindAreaEffectExecution.GetInstance(7.55f, 7, new Vector2(MapManager.GetColumnX(4.525f), MapManager.GetRowY(3)));
+            for (int k = 0; k < timeArray.Length; k++)
+            {
+                WindAreaEffectExecution.State s = w.GetState(k);
+                s.totoalTime = timeArray[k];
+                s.start_v = TransManager.TranToVelocity(start_vArray[k]);
+                s.end_v = TransManager.TranToVelocity(end_vArray[k]);
+            }
+            GameController.Instance.AddAreaEffectExecution(w);
+            wList.Add(w);
+
+            GameController.Instance.mCurrentStage.AddParamChangeAction("wind_time", (key, oldArray, newArray) => {
+                foreach (var w in wList)
+                {
+                    for (int i = 0; i < newArray.Count; i++)
+                    {
+                        WindAreaEffectExecution.State s = w.GetState(i);
+                        s.totoalTime = (int)newArray[i];
+                    }
+                }
+            });
+            GameController.Instance.mCurrentStage.AddParamChangeAction("wind_start_v", (key, oldArray, newArray) => {
+                foreach (var w in wList)
+                {
+                    for (int i = 0; i < newArray.Count; i++)
+                    {
+                        WindAreaEffectExecution.State s = w.GetState(i);
+                        s.start_v = TransManager.TranToVelocity((int)newArray[i]);
+                    }
+                }
+            });
+            GameController.Instance.mCurrentStage.AddParamChangeAction("wind_end_v", (key, oldArray, newArray) => {
+                foreach (var w in wList)
+                {
+                    for (int i = 0; i < newArray.Count; i++)
+                    {
+                        WindAreaEffectExecution.State s = w.GetState(i);
+                        s.end_v = TransManager.TranToVelocity((int)newArray[i]);
+                    }
+                }
+            });
+            GameController.Instance.mCurrentStage.AddParamChangeAction("wind_add_dmg", (key, oldArray, newArray) => {
+                foreach (var w in wList)
+                {
+                    if (newArray != null)
+                        w.add_dmg_rate = newArray[0];
+                }
+            });
+            GameController.Instance.mCurrentStage.AddParamChangeAction("wind_dec_dmg", (key, oldArray, newArray) => {
+                foreach (var w in wList)
+                {
+                    if (newArray != null)
+                        w.dec_dmg_rate = newArray[0];
+                }
+            });
         }
     }
 }

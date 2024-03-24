@@ -84,6 +84,11 @@ namespace GameNormalPanel_UI
             Img_Ring.fillAmount = percent;
         }
 
+        public float GetPercent()
+        {
+            return Img_Ring.fillAmount;
+        }
+
         /// <summary>
         /// …Ë÷√Õº±Í
         /// </summary>

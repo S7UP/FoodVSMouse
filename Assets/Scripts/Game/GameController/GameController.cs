@@ -55,6 +55,7 @@ public class GameController : MonoBehaviour
     private int mFrameNum; //+ 当前游戏帧
     public bool isPause;
     public int pauseCount = -1; // 暂停次数
+    public bool isOver; // 游戏是否结束（出现胜利或失败判定）
     public bool isEnableNoTargetAttackMode{ get { return IsEnableNoTargetAttackModeNumeric.Value; } } // 是否开启无目标的攻击模式
     private BoolNumeric IsEnableNoTargetAttackModeNumeric = new BoolNumeric();
     public System.Random rand;
@@ -165,6 +166,7 @@ public class GameController : MonoBehaviour
         // 自身变量初始化
         mFrameNum = 0;
         isPause = false;
+        isOver = false;
         pauseCount = -1;
         IsEnableNoTargetAttackModeNumeric.Initialize();
         // 焦点目标重置
@@ -288,6 +290,11 @@ public class GameController : MonoBehaviour
     /// </summary>
     public void Win()
     {
+        if (isOver)
+            return;
+
+        isOver = true;
+
         PlayerData data = PlayerData.GetInstance();
         // 如果是正式收录的关，还需要更新通过信息，处理首通奖励
         PlayerData.StageInfo_Dynamic info_dynamic = data.GetCurrentDynamicStageInfo();
@@ -295,6 +302,9 @@ public class GameController : MonoBehaviour
         {
             string id = info_dynamic.id;
             StageInfoManager.StageInfo_Local local_info = StageInfoManager.GetLocalStageInfo(id);
+            // 总用时记录（不需要解限要求）
+            local_info.totalPlayTime += mGameNormalPanel.GetRealTime();
+            data.playTime += mGameNormalPanel.GetRealTime();
             if (local_info.rank == -1)
             {
                 // 尝试触发首通奖励
@@ -316,13 +326,11 @@ public class GameController : MonoBehaviour
             if (!info_dynamic.isNoLimit)
             {
                 // 更新通过最高的难度记录
-                int rank = data.GetDifficult();
-                local_info.rank = Mathf.Max(rank, local_info.rank);
+                local_info.rank = 3;
                 // 如果当前为遗忘级，还可以记录词条等级与低配情况
-                if (rank >= 3)
+                local_info.diffRate = Mathf.Max(local_info.diffRate, data.GetRankRate());
+                // 记录最高两星的卡片数量
                 {
-                    local_info.diffRate = Mathf.Max(local_info.diffRate, data.GetRankRate());
-                    // 记录最高两星的卡片数量
                     int[] cardLevelArray = new int[] { -1, -1 };
                     int[] cardCountArray = new int[] { 0, 0 };
                     int max = -1;
@@ -378,12 +386,22 @@ public class GameController : MonoBehaviour
                         local_info.cardCountArray = cardCountArray;
                     }
                 }
-                StageInfoManager.Save();
+                // 记录两个时间
+                {
+                    // 速通记录
+                    if (local_info.minPassTime < 0 || GetCurrentStageFrame() < local_info.minPassTime)
+                        local_info.minPassTime = GetCurrentStageFrame();
+                    // 首次通过时间记录
+                    if (local_info.firstPassPlayTime < 0)
+                        local_info.firstPassPlayTime = local_info.totalPlayTime;
+                }
             }
+            StageInfoManager.Save();
         }
         else
         {
             mGameNormalPanel.SetExpTips("胜利啦！获得" + GetDefaultExpReward().ToString("#0") + "点经验值！");
+            data.playTime += mGameNormalPanel.GetRealTime();
             data.AddExp(GetDefaultExpReward());
         }
         
@@ -397,8 +415,23 @@ public class GameController : MonoBehaviour
     /// </summary>
     public void Lose()
     {
+        if (isOver)
+            return;
+
+        isOver = true;
+
         PlayerData data = PlayerData.GetInstance();
+        // 如果是正式收录的关，还需要更新通过信息，处理首通奖励
+        PlayerData.StageInfo_Dynamic info_dynamic = data.GetCurrentDynamicStageInfo();
+        if (info_dynamic != null && info_dynamic.id != null)
+        {
+            string id = info_dynamic.id;
+            StageInfoManager.StageInfo_Local local_info = StageInfoManager.GetLocalStageInfo(id);
+            // 总用时记录
+            local_info.totalPlayTime += mGameNormalPanel.GetRealTime();
+        }
         mGameNormalPanel.SetExpTips("失败啦，没关系，再加把劲就可以啦！给你" + GetDefaultExpReward().ToString("#0") + "点经验值！");
+        data.playTime += mGameNormalPanel.GetRealTime();
         data.AddExp(GetDefaultExpReward());
         mGameNormalPanel.EnterLosePanel();
         pauseCount--;
@@ -945,6 +978,20 @@ public class GameController : MonoBehaviour
         return false;
     }
 
+    /// <summary>
+    /// 是否还存在BOSS活在场上（与上面的方法有一定差别，在于这个BOSS在死亡判定时就返回false
+    /// </summary>
+    /// <returns></returns>
+    public bool IsHasBossAlive()
+    {
+        foreach (var unit in mEnemyList)
+        {
+            if (unit is BossUnit && (unit as BossUnit).IsAlive())
+                return true;
+        }
+        return false;
+    }
+
     // Update is called once per frame
     void Update()
     {
@@ -1161,6 +1208,8 @@ public class GameController : MonoBehaviour
         }
         mTaskController.Update();
 
+        PlayerData data = PlayerData.GetInstance();
+        PlayerData.StageInfo_Dynamic info_dynamic = data.GetCurrentDynamicStageInfo();
         if (mCurrentStage.isWinWhenClearAllBoss && mCurrentStage.bossLeft <= 0)
         {
             // 胜利判定（消灭了最终BOSS）
@@ -1170,7 +1219,7 @@ public class GameController : MonoBehaviour
         {
             // 胜利判定（当前道中已完成且场上不存在敌人）
             Win();
-        }else if (mProgressController.IsTimeOut())
+        }else if (!info_dynamic.isNoLimit && mProgressController.IsTimeOut())
         {
             // 超时判定
             if (mCurrentStage.isWinWhenClearAllBoss)

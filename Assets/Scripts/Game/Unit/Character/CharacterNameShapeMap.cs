@@ -21,4 +21,13 @@ public enum CharacterNameShapeMap
     MoYingShengYi_M = 15,
     MoYingShengYi_F = 16,
     TiLaMiShu = 17,
+    XueQiuTuTu = 18,
+    BaiTuXianSheng = 19,
+    FuGuLuoLiTa_F = 20,
+    FuGuLuoLiTa_M = 21,
+    MaoMao = 22,
+    JiaQiRuMeng = 23,
+    XianNv = 24,
+    TuTu = 25,
+    Aahao = 26, 
 }

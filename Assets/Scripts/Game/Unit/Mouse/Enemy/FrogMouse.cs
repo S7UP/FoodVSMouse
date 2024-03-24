@@ -181,12 +181,4 @@ public class FrogMouse : MouseUnit, IInWater
         else
             animatorController.Play("Die0", true);
     }
-
-    /// <summary>
-    /// 青蛙王子鼠更倾向于水地形，而非陆地
-    /// </summary>
-    public override void SetGridDangerousWeightDict()
-    {
-        GridDangerousWeightDict[GridType.Water] = GridDangerousWeightDict[GridType.Default] - 1;
-    }
 }
